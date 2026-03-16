@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Radio Telescope Interferometry Simulator</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- App styles -->
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<header>
+    <h1>Radio Telescope Interferometry Simulator</h1>
+    <p>
+        Upload an image, place telescopes on the map, and watch sparse Fourier sampling
+        reconstruct it — simulating how the Event Horizon Telescope images a black hole.
+    </p>
+</header>
+
+<main>
+
+    <!-- Controls ─────────────────────────────────────────────── -->
+    <section class="controls">
+
+        <div class="control-group">
+            <label for="image-upload">Image to reconstruct</label>
+            <input type="file" id="image-upload" accept="image/*" />
+        </div>
+
+        <div class="control-group">
+            <label for="declination">
+                Source declination: <span id="declination-val">45°</span>
+            </label>
+            <input type="range" id="declination" min="-90" max="90" value="45" step="1" />
+        </div>
+
+        <div class="control-group">
+            <label for="ha-range">
+                Hour angle range: <span id="ha-range-val">±90°</span>
+            </label>
+            <input type="range" id="ha-range" min="10" max="360" value="180" step="10" />
+        </div>
+
+        <div class="control-group buttons">
+            <button id="load-presets">Load EHT Presets</button>
+            <button id="clear-telescopes">Clear Telescopes</button>
+        </div>
+
+        <p id="status" class="status">
+            Upload an image and place telescopes (or load EHT presets) to begin.
+        </p>
+
+    </section>
+
+    <!-- Three panels ─────────────────────────────────────────── -->
+    <div class="panels">
+
+        <!-- Panel 1: Telescope map -->
+        <section class="panel">
+            <h2>
+                Telescope Array
+                <span class="hint">Click map to add · drag to move</span>
+            </h2>
+            <div id="map"></div>
+        </section>
+
+        <!-- Panel 2: UV-plane coverage -->
+        <section class="panel">
+            <h2>
+                UV-Plane Coverage
+                <span id="uv-count" class="hint"></span>
+            </h2>
+            <canvas id="uv-canvas" width="256" height="256"></canvas>
+            <p class="caption">
+                Each dot is one sampled Fourier coefficient. More coverage and wider
+                spread → sharper reconstruction. The arcs appear as Earth rotates.
+            </p>
+        </section>
+
+        <!-- Panel 3: Image comparison -->
+        <section class="panel">
+            <h2>Image Reconstruction</h2>
+            <div class="image-row">
+                <div class="image-col">
+                    <p>Original</p>
+                    <canvas id="original-canvas" width="256" height="256"></canvas>
+                </div>
+                <div class="image-col">
+                    <p>Reconstructed</p>
+                    <canvas id="reconstructed-canvas" width="256" height="256"></canvas>
+                </div>
+            </div>
+        </section>
+
+    </div>
+</main>
+
+<!-- Libraries (CDN) -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.0/math.min.js"></script>
+
+<!-- App modules (order matters: dependencies before dependents) -->
+<script src="js/fft2d.js"></script>
+<script src="js/interferometry.js"></script>
+<script src="js/imageProcessor.js"></script>
+<script src="js/mapController.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
