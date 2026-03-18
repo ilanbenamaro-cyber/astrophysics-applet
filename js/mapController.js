@@ -1,13 +1,17 @@
 /**
  * mapController.js
- * Leaflet map for interactive telescope placement.
- * Telescopes are draggable markers; each update triggers the onChange callback.
+ * Globe.gl 3D Earth for interactive telescope placement.
+ * Click globe surface to add a telescope; click an existing point to remove it.
  *
- * NOTE: removeTelescope must be a function declaration (not const/let) so it is
- * accessible on the global scope from Leaflet popup inline onclick handlers.
+ * NOTE: removeTelescope must remain a function declaration (not const/let) so it is
+ * hoisted and callable from Globe.gl's onPointClick callback without ordering issues.
  */
 
-// Approximate positions of real EHT array sites used as default presets.
+const TELESCOPE_COLORS = [
+    '#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#ff922b',
+    '#cc5de8', '#20c997', '#f06595', '#74c0fc', '#a9e34b',
+];
+
 const PRESET_TELESCOPES = [
     { name: 'ALMA',     lat: -23.029, lon:  -67.755 },
     { name: 'IRAM 30m', lat:  37.066, lon:   -3.392 },
@@ -17,69 +21,59 @@ const PRESET_TELESCOPES = [
     { name: 'LMT',      lat:  18.986, lon:  -97.315 },
 ];
 
-let map             = null;
-let telescopes      = [];   // { id, lat, lon, name, marker }
-let nextId          = 0;
+let globe            = null;
+let telescopes       = [];   // { id, lat, lon, name, color }
+let nextId           = 0;
 let onChangeCallback = null;
 
 /**
- * Initialize the Leaflet map inside the element with the given ID.
- * Clicking the map adds a new telescope at the clicked location.
+ * Initialize the Globe.gl 3D Earth inside the element with the given ID.
  * @param {string} divId
- * @param {function} onChange - called with [{lat, lon, name}] whenever the list changes
+ * @param {function} onChange - called with [{lat, lon, name, color}] on every change
  */
-function initMap(divId, onChange) {
+function initGlobe(divId, onChange) {
     onChangeCallback = onChange;
+    const el = document.getElementById(divId);
 
-    map = L.map(divId, { worldCopyJump: true }).setView([20, 0], 2);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        maxZoom: 6,
-    }).addTo(map);
-
-    map.on('click', (e) => {
-        addTelescope(e.latlng.lat, e.latlng.lng, 'Custom');
-    });
+    globe = Globe()(el)
+        .globeImageUrl('https://unpkg.com/globe.gl/example/img/earth-blue-marble.jpg')
+        .backgroundColor('#08081a')
+        .pointsData(telescopes)
+        .pointLat(d => d.lat)
+        .pointLng(d => d.lon)
+        .pointColor(d => d.color)
+        .pointRadius(0.6)
+        .pointAltitude(0.01)
+        .pointLabel(d => `<b>${d.name}</b><br>${d.lat.toFixed(2)}°, ${d.lon.toFixed(2)}°`)
+        .onGlobeClick(({ lat, lng }) => addTelescope(lat, lng, 'Custom'))
+        .onPointClick(point => removeTelescope(point.id));
 }
 
 /**
- * Add a telescope marker at the given coordinates.
+ * Add a telescope at the given coordinates with an auto-assigned color.
  * @param {number} lat
  * @param {number} lon
  * @param {string} [name]
  */
 function addTelescope(lat, lon, name) {
-    const id     = nextId++;
-    const label  = name || 'Telescope';
-    const marker = L.marker([lat, lon], { draggable: true }).addTo(map);
-
-    marker.bindPopup(
-        `<b>${label}</b><br>${lat.toFixed(2)}°, ${lon.toFixed(2)}°` +
-        `<br><button onclick="removeTelescope(${id})" style="margin-top:6px;cursor:pointer">Remove</button>`
-    );
-
-    marker.on('dragend', () => {
-        const pos = marker.getLatLng();
-        const tel = telescopes.find(t => t.id === id);
-        if (tel) { tel.lat = pos.lat; tel.lon = pos.lng; }
-        if (onChangeCallback) onChangeCallback(getTelescopes());
-    });
-
-    telescopes.push({ id, lat, lon, name: label, marker });
+    const id    = nextId++;
+    const label = name || 'Telescope';
+    const color = TELESCOPE_COLORS[id % TELESCOPE_COLORS.length];
+    telescopes.push({ id, lat, lon, name: label, color });
+    _refreshGlobe();
     if (onChangeCallback) onChangeCallback(getTelescopes());
 }
 
 /**
- * Remove the telescope with the given ID and trigger onChange.
- * Declared as a function (not const) for global scope accessibility from popup onclick.
+ * Remove the telescope with the given ID.
+ * Declared as a function declaration (not const) for hoisting.
  * @param {number} id
  */
 function removeTelescope(id) {
     const idx = telescopes.findIndex(t => t.id === id);
     if (idx === -1) return;
-    map.removeLayer(telescopes[idx].marker);
     telescopes.splice(idx, 1);
+    _refreshGlobe();
     if (onChangeCallback) onChangeCallback(getTelescopes());
 }
 
@@ -92,18 +86,23 @@ function loadPresets() {
 }
 
 /**
- * Remove all telescope markers.
+ * Remove all telescopes from the globe.
  */
 function clearTelescopes() {
-    telescopes.forEach(t => map.removeLayer(t.marker));
     telescopes = [];
+    _refreshGlobe();
     if (onChangeCallback) onChangeCallback([]);
 }
 
 /**
- * Return the current telescope positions.
- * @returns {Array<{lat: number, lon: number, name: string}>}
+ * Return the current telescope positions (without internal marker references).
+ * @returns {Array<{lat: number, lon: number, name: string, color: string}>}
  */
 function getTelescopes() {
-    return telescopes.map(({ lat, lon, name }) => ({ lat, lon, name }));
+    return telescopes.map(({ lat, lon, name, color }) => ({ lat, lon, name, color }));
+}
+
+/** Push current telescope array to Globe.gl to trigger re-render. */
+function _refreshGlobe() {
+    if (globe) globe.pointsData([...telescopes]);
 }

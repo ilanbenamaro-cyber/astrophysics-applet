@@ -132,9 +132,10 @@ function applyUVMask(fftData, mask) {
 }
 
 /**
- * Draw UV-plane coverage as white/blue dots on a dark canvas.
- * Axes are drawn through the center; each sampled point is a 1×1px dot.
- * @param {Array<{u: number, v: number}>} uvPoints - centered pixel coordinates
+ * Draw UV-plane coverage with per-baseline colors on a dark canvas.
+ * Each point is colored by the blended color of the telescope pair that produced it.
+ * Points are grouped by color to minimize ctx.fillStyle changes.
+ * @param {Array<{u: number, v: number, color: string}>} uvPoints
  * @param {number} N
  * @param {HTMLCanvasElement} canvas
  */
@@ -154,15 +155,51 @@ function drawUVPlane(uvPoints, N, canvas) {
     ctx.moveTo(0, N / 2);   ctx.lineTo(N, N / 2);
     ctx.stroke();
 
-    // UV samples
-    ctx.fillStyle = '#00aaff';
-    for (const { u, v } of uvPoints) {
+    // Group points by color to minimize fillStyle switches
+    const byColor = new Map();
+    for (const { u, v, color } of uvPoints) {
         const x = u + N / 2;
         const y = v + N / 2;
         if (x >= 0 && x < N && y >= 0 && y < N) {
-            ctx.fillRect(x, y, 1, 1);
+            const key = color || '#00aaff';
+            if (!byColor.has(key)) byColor.set(key, []);
+            byColor.get(key).push(x, y);
         }
     }
+    for (const [color, coords] of byColor) {
+        ctx.fillStyle = color;
+        for (let i = 0; i < coords.length; i += 2) {
+            ctx.fillRect(coords[i], coords[i + 1], 1, 1);
+        }
+    }
+}
+
+/**
+ * Compute the dirty beam (PSF) of the array by taking the IFFT of the UV mask alone.
+ * The result is the point spread function — what a perfect point source would look like.
+ * @param {Array<{u: number, v: number}>} uvPoints
+ * @param {number} N
+ * @returns {number[][]} dirty beam as a real N×N array (ready for grayscaleToCanvas)
+ */
+function computeDirtyBeam(uvPoints, N) {
+    const mask = buildUVMask(uvPoints, N);
+    const spectrum = mask.map(row =>
+        row.map(v => v ? math.complex(1, 0) : math.complex(0, 0))
+    );
+    return ifft2d(spectrum);
+}
+
+/**
+ * Compute the fraction of the independent UV half-plane that is sampled.
+ * @param {Array<{u: number, v: number}>} uvPoints
+ * @param {number} N
+ * @returns {string} fill percentage, e.g. "4.3"
+ */
+function computeUVFill(uvPoints, N) {
+    const mask = buildUVMask(uvPoints, N);
+    let count = 0;
+    for (const row of mask) for (const c of row) if (c) count++;
+    return (count / (N * N / 2) * 100).toFixed(1);
 }
 
 /**

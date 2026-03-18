@@ -13,6 +13,27 @@
  * where H = hour angle, δ = source declination, (Bx,By,Bz) = baseline in ECEF km.
  */
 
+/**
+ * Linear interpolation between two hex color strings at parameter t ∈ [0,1].
+ * @param {string} hex1 - e.g. '#ff6b6b'
+ * @param {string} hex2
+ * @param {number} t
+ * @returns {string} blended hex color
+ */
+function _lerpColor(hex1, hex2, t) {
+    const parse = h => [
+        parseInt(h.slice(1, 3), 16),
+        parseInt(h.slice(3, 5), 16),
+        parseInt(h.slice(5, 7), 16),
+    ];
+    const [r1, g1, b1] = parse(hex1);
+    const [r2, g2, b2] = parse(hex2);
+    const r = Math.round(r1 + (r2 - r1) * t);
+    const g = Math.round(g1 + (g2 - g1) * t);
+    const b = Math.round(b1 + (b2 - b1) * t);
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+}
+
 const EARTH_RADIUS_KM = 6371;
 
 /**
@@ -97,13 +118,19 @@ function computeUVCoverage(telescopes, declinationDeg, hourAngleRangeDeg, steps,
         const H = haStart + s * haStep;
         for (let i = 0; i < telescopes.length; i++) {
             for (let j = i + 1; j < telescopes.length; j++) {
+                // Blend the two telescope colors at the midpoint of this baseline
+                const color = _lerpColor(
+                    telescopes[i].color || '#00aaff',
+                    telescopes[j].color || '#00aaff',
+                    0.5
+                );
                 const baseline = computeBaseline(telescopes[i], telescopes[j]);
                 const { u, v } = baselineToUV(baseline, H, declinationDeg);
                 const up = Math.round(u * scale);
                 const vp = Math.round(v * scale);
                 if (Math.abs(up) < half && Math.abs(vp) < half) {
-                    points.push({ u: up, v: vp });
-                    points.push({ u: -up, v: -vp });
+                    points.push({ u: up, v: vp, color });
+                    points.push({ u: -up, v: -vp, color });
                 }
             }
         }
