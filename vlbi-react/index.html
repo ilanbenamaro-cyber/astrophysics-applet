@@ -1,0 +1,2322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VLBI Interferometry Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@18.3.1",
+      "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
+      "htm": "https://esm.sh/htm@3.1.1",
+      "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/",
+      "topojson-client": "https://esm.sh/topojson-client@3.1.0"
+    }
+  }
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    :root {
+      --bg-0: #060614;
+      --bg-1: #0a0a1e;
+      --bg-2: #0f0f2e;
+      --bg-3: #161634;
+      --border: #1e1e50;
+      --accent-teal: #00d2d3;
+      --accent-amber: #feca57;
+      --accent-blue: #48dbfb;
+      --text-primary: #e8e8f0;
+      --text-secondary: #8888b0;
+      --danger: #ff6b6b;
+      --success: #55efc4;
+      --font: 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg-0);
+      color: var(--text-primary);
+      font-family: var(--font);
+      overflow: hidden;
+      height: 100%;
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    /* ── Header ── */
+    .header {
+      height: 60px;
+      min-height: 60px;
+      background: var(--bg-1);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+    .header-inner h1 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent-teal);
+      letter-spacing: 0.02em;
+    }
+    .header-inner p {
+      margin: 0;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .header-stats {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    .stat {
+      font-size: 11px;
+      color: var(--text-secondary);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+    }
+    .stat-val {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent-teal);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Layout ── */
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr 360px;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      background: var(--bg-1);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar-section {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-section h2 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-secondary);
+      margin: 0 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ── Globe ── */
+    .globe-wrapper {
+      position: relative;
+      overflow: hidden;
+      background: #060614;
+    }
+    .globe-container {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ── Right Panel ── */
+    .right-panel {
+      background: var(--bg-1);
+      border-left: 1px solid var(--border);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .panel-section {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-section h2 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-secondary);
+      margin: 0 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ── UV Map ── */
+    .uv-canvas {
+      border: 1px solid var(--border);
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .caption {
+      margin: 6px 0 0;
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+
+    /* ── Images Row ── */
+    .images-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .image-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .image-panel-header {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .image-label {
+      margin: 0;
+      font-size: 10px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .image-panel canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+
+    /* ── Info button ── */
+    .info-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 13px;
+      padding: 0 2px;
+      line-height: 1;
+      transition: color 150ms ease;
+      display: inline-flex;
+      align-items: center;
+    }
+    .info-btn:hover { color: var(--accent-blue); }
+
+    /* ── Info Modal ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(6,6,20,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      animation: fadeIn 150ms ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .modal-card {
+      background: var(--bg-3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px 28px;
+      max-width: 420px;
+      width: 90%;
+      position: relative;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    }
+    .modal-title {
+      margin: 0 0 12px;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--accent-teal);
+    }
+    .modal-body {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--text-primary);
+    }
+    .modal-close {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 20px;
+      line-height: 1;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: background 150ms ease, color 150ms ease;
+    }
+    .modal-close:hover { background: var(--bg-2); color: var(--text-primary); }
+
+    /* ── Telescope List ── */
+    .tel-list {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .tel-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 5px 8px;
+      font-size: 11px;
+    }
+    .tel-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .tel-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      min-width: 38px;
+    }
+    .tel-coords {
+      color: var(--text-secondary);
+      flex: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .tel-actions {
+      display: flex;
+      gap: 3px;
+    }
+    .tel-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 12px;
+      padding: 1px 4px;
+      border-radius: 3px;
+      transition: background 150ms ease, color 150ms ease;
+      line-height: 1.4;
+    }
+    .tel-btn:hover { background: var(--bg-3); color: var(--text-primary); }
+    .tel-btn.danger:hover { color: var(--danger); }
+    .tel-btn.dim { opacity: 0.4; }
+    .tel-empty {
+      font-size: 11px;
+      color: var(--text-secondary);
+      text-align: center;
+      padding: 12px 0;
+    }
+    .telescope-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    /* ── Image Gallery ── */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .gallery-btn {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 4px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: border-color 150ms ease, background 150ms ease;
+      color: var(--text-primary);
+    }
+    .gallery-btn:hover { border-color: var(--accent-teal); background: var(--bg-3); }
+    .gallery-btn.selected { border-color: var(--accent-teal); background: var(--bg-3); }
+    .gallery-btn .icon { font-size: 16px; line-height: 1; }
+    .gallery-btn .glabel { font-size: 9px; color: var(--text-secondary); text-align: center; }
+    .upload-zone {
+      border: 1px dashed var(--border);
+      border-radius: 6px;
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 11px;
+      color: var(--text-secondary);
+      transition: border-color 150ms ease, background 150ms ease;
+    }
+    .upload-zone:hover { border-color: var(--accent-teal); background: var(--bg-2); color: var(--text-primary); }
+
+    /* ── Controls Panel ── */
+    .control-row {
+      margin-bottom: 10px;
+    }
+    .control-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+    .control-label span.val {
+      margin-left: auto;
+      color: var(--text-primary);
+      font-variant-numeric: tabular-nums;
+    }
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 3px;
+      background: var(--bg-3);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--accent-teal);
+      cursor: pointer;
+      box-shadow: 0 0 4px rgba(0,210,211,0.5);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--accent-teal);
+      cursor: pointer;
+      border: none;
+    }
+    .method-row {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 10px;
+    }
+    .method-btn {
+      flex: 1;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 5px 4px;
+      font-size: 10px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      text-align: center;
+      transition: all 150ms ease;
+    }
+    .method-btn.selected {
+      background: var(--bg-3);
+      border-color: var(--accent-teal);
+      color: var(--accent-teal);
+    }
+    .method-btn:hover:not(.selected) { border-color: #2e2e60; color: var(--text-primary); }
+
+    /* ── Buttons ── */
+    .btn {
+      border: none;
+      border-radius: 5px;
+      padding: 7px 12px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 150ms ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: var(--font);
+    }
+    .btn-primary {
+      background: var(--accent-teal);
+      color: #060614;
+    }
+    .btn-primary:hover { filter: brightness(1.1); }
+    .btn-ghost {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+    .btn-ghost:hover { border-color: #2e2e60; color: var(--text-primary); }
+    .btn-reset {
+      margin: 12px 16px;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      color: var(--danger);
+      width: calc(100% - 32px);
+      justify-content: center;
+    }
+    .btn-reset:hover { border-color: var(--danger); background: rgba(255,107,107,0.08); }
+
+    /* ── Status Bar ── */
+    .status-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(6,6,20,0.85);
+      border-top: 1px solid var(--border);
+      padding: 6px 16px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      backdrop-filter: blur(4px);
+    }
+    .status-bar.success { color: var(--success); }
+    .status-bar.error { color: var(--danger); }
+    .status-bar.loading { color: var(--accent-blue); }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 12px;
+      height: 12px;
+      border: 2px solid rgba(72,219,251,0.3);
+      border-top-color: var(--accent-blue);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── CSS2D Labels ── */
+    .tel-label {
+      font-family: var(--font);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 5px;
+      border-radius: 3px;
+      color: #060614;
+      pointer-events: none;
+      white-space: nowrap;
+      transform: translateY(-16px);
+      display: block;
+    }
+    .country-label {
+      font-family: var(--font);
+      font-size: 10px;
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.75);
+      pointer-events: none;
+      white-space: nowrap;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+    }
+    .ocean-label {
+      font-family: var(--font);
+      font-size: 10px;
+      font-weight: 300;
+      font-style: italic;
+      color: rgba(180, 210, 255, 0.5);
+      pointer-events: none;
+      white-space: nowrap;
+      letter-spacing: 0.12em;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    }
+
+    /* ── Scrollbar styling ── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg-1); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #2e2e70; }
+
+    /* ── Responsive ── */
+    @media (max-width: 1100px) {
+      .layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 400px auto;
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+      body, html { overflow: auto; }
+      .app { height: auto; min-height: 100vh; }
+      .sidebar, .right-panel { max-height: none; overflow-y: visible; }
+      .globe-wrapper { min-height: 400px; }
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="module">
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { createRoot } from 'react-dom/client';
+import htm from 'htm';
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
+import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
+import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
+import * as topojson from 'topojson-client';
+
+const html = htm.bind(React.createElement);
+
+// ─────────────────────────────────────────────
+// SECTION B — CONSTANTS
+// ─────────────────────────────────────────────
+const IMAGE_SIZE = 256;
+const EARTH_RADIUS_KM = 6371;
+const TELESCOPE_COLORS = [
+  '#ff6b6b','#4ecdc4','#feca57','#48dbfb',
+  '#ff9f43','#a29bfe','#55efc4','#fd79a8'
+];
+const EHT_PRESETS = [
+  { name:'ALMA',  lat:-23.029, lon:-67.755 },
+  { name:'APEX',  lat:-23.006, lon:-67.759 },
+  { name:'SPT',   lat:-89.99,  lon:-44.65  },
+  { name:'JCMT',  lat: 19.823, lon:-155.478},
+  { name:'SMT',   lat: 32.702, lon:-109.891},
+  { name:'IRAM',  lat: 37.066, lon: -3.392 },
+  { name:'LMT',   lat: 18.985, lon: -97.315},
+  { name:'NOEMA', lat: 44.634, lon:  5.909 },
+];
+
+// ─────────────────────────────────────────────
+// SECTION C — WORKER CODE
+// ─────────────────────────────────────────────
+const WORKER_SRC = String.raw`
+'use strict';
+
+function fft1d(data, n, inverse) {
+  // Bit-reversal permutation
+  let j = 0;
+  for (let i = 1; i < n; i++) {
+    let bit = n >> 1;
+    for (; j & bit; bit >>= 1) j ^= bit;
+    j ^= bit;
+    if (i < j) {
+      let tr = data[2*i], ti = data[2*i+1];
+      data[2*i]   = data[2*j]; data[2*i+1] = data[2*j+1];
+      data[2*j]   = tr;        data[2*j+1] = ti;
+    }
+  }
+  // Butterfly stages
+  for (let len = 2; len <= n; len <<= 1) {
+    const ang = (inverse ? 2 : -2) * Math.PI / len;
+    const wRe = Math.cos(ang), wIm = Math.sin(ang);
+    for (let i = 0; i < n; i += len) {
+      let curRe = 1, curIm = 0;
+      for (let k = 0; k < len / 2; k++) {
+        const uRe = data[2*(i+k)],         uIm = data[2*(i+k)+1];
+        const vRe = data[2*(i+k+len/2)],   vIm = data[2*(i+k+len/2)+1];
+        const tmpRe = curRe*vRe - curIm*vIm;
+        const tmpIm = curRe*vIm + curIm*vRe;
+        data[2*(i+k)]         = uRe + tmpRe;
+        data[2*(i+k)+1]       = uIm + tmpIm;
+        data[2*(i+k+len/2)]   = uRe - tmpRe;
+        data[2*(i+k+len/2)+1] = uIm - tmpIm;
+        const nextRe = curRe*wRe - curIm*wIm;
+        const nextIm = curRe*wIm + curIm*wRe;
+        curRe = nextRe; curIm = nextIm;
+      }
+    }
+  }
+  if (inverse) {
+    for (let i = 0; i < 2*n; i++) data[i] /= n;
+  }
+}
+
+function fft2d(data, N, inverse) {
+  const row = new Float64Array(2*N);
+  // Row FFTs
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      row[2*c]   = data[2*(r*N+c)];
+      row[2*c+1] = data[2*(r*N+c)+1];
+    }
+    fft1d(row, N, inverse);
+    for (let c = 0; c < N; c++) {
+      data[2*(r*N+c)]   = row[2*c];
+      data[2*(r*N+c)+1] = row[2*c+1];
+    }
+  }
+  const col = new Float64Array(2*N);
+  // Column FFTs
+  for (let c = 0; c < N; c++) {
+    for (let r = 0; r < N; r++) {
+      col[2*r]   = data[2*(r*N+c)];
+      col[2*r+1] = data[2*(r*N+c)+1];
+    }
+    fft1d(col, N, inverse);
+    for (let r = 0; r < N; r++) {
+      data[2*(r*N+c)]   = col[2*r];
+      data[2*(r*N+c)+1] = col[2*r+1];
+    }
+  }
+}
+
+function buildMask(uvPoints, N) {
+  // uvPoints arrive with display-space offset (+N/2) applied in computeUVPoints.
+  // Strip that offset to recover centered FFT-bin coordinates before modulo mapping.
+  const mask = new Uint8Array(N * N);
+  const half = N / 2;
+  for (const pt of uvPoints) {
+    const cu = pt.u - half; // centered: can be negative
+    const cv = pt.v - half;
+    const iu = (Math.round(cu) % N + N) % N;
+    const iv = (Math.round(cv) % N + N) % N;
+    mask[iv * N + iu] = 1;
+  }
+  return mask;
+}
+
+function addNoise(data, mask, N, amplitude) {
+  if (amplitude <= 0) return;
+  // Compute RMS of sampled visibilities
+  let sumSq = 0, cnt = 0;
+  for (let i = 0; i < N*N; i++) {
+    if (mask[i]) {
+      const re = data[2*i], im = data[2*i+1];
+      sumSq += re*re + im*im;
+      cnt++;
+    }
+  }
+  const rms = cnt > 0 ? Math.sqrt(sumSq / cnt) : 1;
+  const sigma = amplitude * rms;
+  // Box-Muller Gaussian noise on sampled visibilities
+  for (let i = 0; i < N*N; i++) {
+    if (mask[i]) {
+      let u1, u2;
+      do { u1 = Math.random(); } while (u1 === 0);
+      u2 = Math.random();
+      const z0 = Math.sqrt(-2*Math.log(u1)) * Math.cos(2*Math.PI*u2);
+      const z1 = Math.sqrt(-2*Math.log(u1)) * Math.sin(2*Math.PI*u2);
+      data[2*i]   += z0 * sigma;
+      data[2*i+1] += z1 * sigma;
+    }
+  }
+}
+
+function gaussConvolve(img, N, sigma) {
+  const radius = Math.ceil(3*sigma);
+  const size = 2*radius+1;
+  const kernel = new Float64Array(size);
+  let ksum = 0;
+  for (let i = 0; i < size; i++) {
+    const x = i - radius;
+    kernel[i] = Math.exp(-x*x / (2*sigma*sigma));
+    ksum += kernel[i];
+  }
+  for (let i = 0; i < size; i++) kernel[i] /= ksum;
+
+  const tmp = new Float64Array(N*N);
+  // Horizontal pass with wrap-around
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      let v = 0;
+      for (let k = 0; k < size; k++) {
+        const cc = ((c + k - radius) % N + N) % N;
+        v += img[r*N+cc] * kernel[k];
+      }
+      tmp[r*N+c] = v;
+    }
+  }
+  const out = new Float64Array(N*N);
+  // Vertical pass with wrap-around
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      let v = 0;
+      for (let k = 0; k < size; k++) {
+        const rr = ((r + k - radius) % N + N) % N;
+        v += tmp[rr*N+c] * kernel[k];
+      }
+      out[r*N+c] = v;
+    }
+  }
+  return out;
+}
+
+function reconstruct(grayscale, uvPoints, params) {
+  const { N, noise, method, dishDiameter = 25, frequency = 230 } = params;
+
+  // 1. Build complex array from grayscale, applying primary-beam Gaussian taper.
+  //    FWHM ∝ λ/D: larger dish or higher frequency → narrower beam → tighter taper.
+  //    sigma_px = N/2 * (25/dishDiameter) * (230/frequency) * 1.5 (calibrated constant)
+  const sigmaPx = (N / 2) * (25 / dishDiameter) * (230 / frequency) * 1.5;
+  const twoSig2 = 2 * sigmaPx * sigmaPx;
+  const vis = new Float64Array(2*N*N);
+  const cx = N / 2, cy = N / 2;
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      const dr = r - cy, dc = c - cx;
+      const taper = Math.exp(-(dr*dr + dc*dc) / twoSig2);
+      vis[2*(r*N+c)]   = grayscale[r*N+c] * taper;
+      vis[2*(r*N+c)+1] = 0;
+    }
+  }
+
+  // 2. Forward FFT
+  fft2d(vis, N, false);
+
+  // 3. Build mask and apply (zero unsampled frequencies)
+  const mask = buildMask(uvPoints, N);
+
+  // 4. Add noise before masking application (noise on sampled vis)
+  addNoise(vis, mask, N, noise);
+
+  // Apply mask
+  const masked = new Float64Array(2*N*N);
+  for (let i = 0; i < N*N; i++) {
+    if (mask[i]) {
+      masked[2*i]   = vis[2*i];
+      masked[2*i+1] = vis[2*i+1];
+    }
+  }
+
+  // 5. Dirty image: IFFT of masked
+  const dirtyVis = masked.slice();
+  fft2d(dirtyVis, N, true);
+
+  const dirtyImg = new Float64Array(N*N);
+  for (let i = 0; i < N*N; i++) {
+    dirtyImg[i] = dirtyVis[2*i];
+  }
+
+  let restoredImg;
+
+  if (method === 'wiener') {
+    // Wiener filter: apply weighting to sampled visibilities
+    const NSR = Math.max(noise*noise, 0.001);
+    const weight = 1 / (1 + NSR);
+    const wienerVis = new Float64Array(2*N*N);
+    for (let i = 0; i < N*N; i++) {
+      if (mask[i]) {
+        wienerVis[2*i]   = masked[2*i]   * weight;
+        wienerVis[2*i+1] = masked[2*i+1] * weight;
+      }
+    }
+    fft2d(wienerVis, N, true);
+    restoredImg = new Float64Array(N*N);
+    for (let i = 0; i < N*N; i++) restoredImg[i] = wienerVis[2*i];
+
+  } else if (method === 'clean') {
+    // Högbom CLEAN
+    const ITERATIONS = 150;
+    const GAIN = 0.1;
+
+    // PSF: IFFT of mask (ones where sampled)
+    const psfVis = new Float64Array(2*N*N);
+    for (let i = 0; i < N*N; i++) {
+      psfVis[2*i]   = mask[i] ? 1 : 0;
+      psfVis[2*i+1] = 0;
+    }
+    fft2d(psfVis, N, true);
+    const psf = new Float64Array(N*N);
+    for (let i = 0; i < N*N; i++) psf[i] = psfVis[2*i];
+    // Normalize PSF
+    let psfPeak = 0;
+    for (let i = 0; i < N*N; i++) if (psf[i] > psfPeak) psfPeak = psf[i];
+    if (psfPeak > 0) for (let i = 0; i < N*N; i++) psf[i] /= psfPeak;
+
+    const residual = dirtyImg.slice();
+    const model = new Float64Array(N*N);
+
+    // Find peak amplitude for threshold
+    let peakAbs = 0;
+    for (let i = 0; i < N*N; i++) {
+      const a = Math.abs(residual[i]);
+      if (a > peakAbs) peakAbs = a;
+    }
+    const threshold = 0.02 * peakAbs;
+
+    for (let iter = 0; iter < ITERATIONS; iter++) {
+      // Find peak in residual
+      let peakVal = 0, peakIdx = 0;
+      for (let i = 0; i < N*N; i++) {
+        const a = Math.abs(residual[i]);
+        if (a > peakVal) { peakVal = a; peakIdx = i; }
+      }
+      if (peakVal < threshold) break;
+
+      const pr = Math.floor(peakIdx / N);
+      const pc = peakIdx % N;
+      const comp = GAIN * residual[peakIdx];
+      model[peakIdx] += comp;
+
+      // Subtract shifted PSF from residual
+      for (let r = 0; r < N; r++) {
+        for (let c = 0; c < N; c++) {
+          const psfR = ((r - pr) % N + N) % N;
+          const psfC = ((c - pc) % N + N) % N;
+          residual[r*N+c] -= comp * psf[psfR*N+psfC];
+        }
+      }
+    }
+
+    // Convolve model with clean beam (Gaussian sigma=2.5)
+    const cleanBeam = gaussConvolve(model, N, 2.5);
+    restoredImg = new Float64Array(N*N);
+    for (let i = 0; i < N*N; i++) restoredImg[i] = cleanBeam[i] + residual[i];
+
+  } else {
+    // 'dirty' only
+    restoredImg = dirtyImg.slice();
+  }
+
+  return { dirty: dirtyImg, restored: restoredImg };
+}
+
+self.onmessage = function(e) {
+  const { type, id, grayscale, uvPoints, params } = e.data;
+  if (type !== 'reconstruct') return;
+  try {
+    const { dirty, restored } = reconstruct(grayscale, uvPoints, params);
+    self.postMessage(
+      { type: 'result', id, dirty, restored, uvCount: uvPoints.length },
+      [dirty.buffer, restored.buffer]
+    );
+  } catch(err) {
+    self.postMessage({ type: 'error', id, message: err.message });
+  }
+};
+`;
+
+// ─────────────────────────────────────────────
+// SECTION D — INTERFEROMETRY MATH
+// ─────────────────────────────────────────────
+function latLonToECEF(lat, lon) {
+  const phi = lat * Math.PI / 180;
+  const lam = lon * Math.PI / 180;
+  return {
+    x: EARTH_RADIUS_KM * Math.cos(phi) * Math.cos(lam),
+    y: EARTH_RADIUS_KM * Math.cos(phi) * Math.sin(lam),
+    z: EARTH_RADIUS_KM * Math.sin(phi),
+  };
+}
+
+function computeBaseline(t1, t2) {
+  const p1 = latLonToECEF(t1.lat, t1.lon);
+  const p2 = latLonToECEF(t2.lat, t2.lon);
+  return { bx: p2.x - p1.x, by: p2.y - p1.y, bz: p2.z - p1.z };
+}
+
+function baselineToUV(b, H, decDeg) {
+  const d = decDeg * Math.PI / 180;
+  const u =  Math.sin(H) * b.bx + Math.cos(H) * b.by;
+  const v = -Math.sin(d) * Math.cos(H) * b.bx + Math.sin(d) * Math.sin(H) * b.by + Math.cos(d) * b.bz;
+  return { u, v };
+}
+
+function lerpColor(h1, h2, t) {
+  const parse = h => [
+    parseInt(h.slice(1,3),16),
+    parseInt(h.slice(3,5),16),
+    parseInt(h.slice(5,7),16),
+  ];
+  const c1 = parse(h1), c2 = parse(h2);
+  const r = Math.round(c1[0] + (c2[0]-c1[0])*t);
+  const g = Math.round(c1[1] + (c2[1]-c1[1])*t);
+  const b = Math.round(c1[2] + (c2[2]-c1[2])*t);
+  return '#' + [r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+
+function computeUVPoints(telescopes, { declination, duration, frequency, N }) {
+  const visible = telescopes.filter(t => t.visible !== false);
+  if (visible.length < 2) return [];
+  const STEPS = 200;
+  const halfDur = (duration * Math.PI / 24);
+  const freqRatio = frequency / 230;
+  const scale = (N / 2) / (2 * EARTH_RADIUS_KM) * freqRatio;
+  const pts = [];
+  for (let i = 0; i < visible.length; i++) {
+    for (let j = i+1; j < visible.length; j++) {
+      const t1 = visible[i], t2 = visible[j];
+      const b = computeBaseline(t1, t2);
+      const color = lerpColor(t1.color, t2.color, 0.5);
+      const pairId = `${t1.id}-${t2.id}`;
+      for (let s = 0; s <= STEPS; s++) {
+        const H = -halfDur + (s / STEPS) * 2 * halfDur;
+        const uv = baselineToUV(b, H, declination);
+        const pu = uv.u * scale;
+        const pv = uv.v * scale;
+        pts.push({ u:  pu + N/2, v:  pv + N/2, color, pairId });
+        pts.push({ u: -pu + N/2, v: -pv + N/2, color, pairId });
+      }
+    }
+  }
+  return pts;
+}
+
+function computeUVFill(uvPoints, N) {
+  if (uvPoints.length === 0) return 0;
+  const seen = new Set();
+  for (const p of uvPoints) {
+    const iu = ((Math.round(p.u)) % N + N) % N;
+    const iv = ((Math.round(p.v)) % N + N) % N;
+    seen.add(iv * N + iu);
+  }
+  return (seen.size / (N * N)) * 100;
+}
+
+// ─────────────────────────────────────────────
+// SECTION E — PRESET IMAGE GENERATORS
+// ─────────────────────────────────────────────
+function generatePreset(name) {
+  const N = IMAGE_SIZE;
+  const canvas = (typeof OffscreenCanvas !== 'undefined')
+    ? new OffscreenCanvas(N, N)
+    : document.createElement('canvas');
+  canvas.width = N;
+  canvas.height = N;
+  const ctx = canvas.getContext('2d');
+  const imageData = ctx.createImageData(N, N);
+  const d = imageData.data;
+  const cx = N / 2, cy = N / 2;
+  const grayscale = new Float64Array(N * N);
+
+  function setPixel(x, y, v) {
+    if (x < 0 || x >= N || y < 0 || y >= N) return;
+    const idx = (y * N + x);
+    grayscale[idx] = Math.max(grayscale[idx], v);
+  }
+
+  function addGaussian(px, py, sigma, amp) {
+    const r = Math.ceil(4*sigma);
+    for (let dy = -r; dy <= r; dy++) {
+      for (let dx = -r; dx <= r; dx++) {
+        const v = amp * Math.exp(-(dx*dx+dy*dy)/(2*sigma*sigma));
+        setPixel(Math.round(px+dx), Math.round(py+dy), v);
+      }
+    }
+  }
+
+  if (name === 'blackhole') {
+    const ringR = 45, ringW = 18, shadowR = 25;
+    for (let y = 0; y < N; y++) {
+      for (let x = 0; x < N; x++) {
+        const dx = x - cx, dy = y - cy;
+        const r = Math.sqrt(dx*dx + dy*dy);
+        const theta = Math.atan2(dy, dx);
+        if (r < shadowR) {
+          grayscale[y*N+x] = 0;
+        } else {
+          const ring = Math.exp(-Math.pow(r - ringR, 2) / (2 * (ringW/2.5) * (ringW/2.5)));
+          // Doppler brightening: brighter on approaching side
+          const doppler = 0.5 + 0.5 * Math.cos(theta + Math.PI);
+          grayscale[y*N+x] = ring * (0.3 + 0.7 * doppler);
+        }
+      }
+    }
+  } else if (name === 'point') {
+    addGaussian(cx, cy, 3, 1.0);
+  } else if (name === 'binary') {
+    addGaussian(cx - 25, cy, 4, 1.0);
+    addGaussian(cx + 25, cy, 3, 0.7);
+  } else if (name === 'jet') {
+    // Core
+    addGaussian(cx, cy, 6, 1.0);
+    // One-sided jet along +x axis (exponential decay)
+    for (let x = cx+5; x < N-5; x++) {
+      const dist = x - cx;
+      const amp = Math.exp(-dist / 40);
+      const jetWidth = 2 + dist * 0.04;
+      for (let y = Math.floor(cy - jetWidth); y <= Math.ceil(cy + jetWidth); y++) {
+        const dy = y - cy;
+        const v = amp * Math.exp(-dy*dy / (2*jetWidth*jetWidth));
+        setPixel(x, y, v);
+      }
+    }
+  } else if (name === 'ring') {
+    const ringR = 50, sigma = 8;
+    for (let y = 0; y < N; y++) {
+      for (let x = 0; x < N; x++) {
+        const dx = x - cx, dy = y - cy;
+        const r = Math.sqrt(dx*dx + dy*dy);
+        grayscale[y*N+x] = Math.exp(-Math.pow(r - ringR, 2) / (2 * sigma * sigma));
+      }
+    }
+  } else if (name === 'galaxy') {
+    for (let y = 0; y < N; y++) {
+      for (let x = 0; x < N; x++) {
+        const dx = (x - cx) / 1.6;  // stretch horizontally
+        const dy = y - cy;
+        const r = Math.sqrt(dx*dx + dy*dy);
+        grayscale[y*N+x] = Math.exp(-r / 30);
+      }
+    }
+  } else {
+    // Fallback: point
+    addGaussian(cx, cy, 3, 1.0);
+  }
+
+  // Normalize to 0-255 and render
+  let maxV = 0;
+  for (let i = 0; i < N*N; i++) if (grayscale[i] > maxV) maxV = grayscale[i];
+  if (maxV > 0) {
+    for (let i = 0; i < N*N; i++) {
+      const v = Math.round((grayscale[i] / maxV) * 255);
+      d[i*4]   = v;
+      d[i*4+1] = v;
+      d[i*4+2] = v;
+      d[i*4+3] = 255;
+    }
+  } else {
+    for (let i = 0; i < N*N*4; i += 4) { d[i]=d[i+1]=d[i+2]=0; d[i+3]=255; }
+  }
+  ctx.putImageData(imageData, 0, 0);
+
+  // Return a regular canvas for display (OffscreenCanvas can't be placed in DOM)
+  let previewCanvas;
+  if (typeof OffscreenCanvas !== 'undefined' && canvas instanceof OffscreenCanvas) {
+    previewCanvas = document.createElement('canvas');
+    previewCanvas.width = N; previewCanvas.height = N;
+    const pCtx = previewCanvas.getContext('2d');
+    pCtx.drawImage(canvas, 0, 0);
+  } else {
+    previewCanvas = canvas;
+  }
+
+  // Re-normalize grayscale to 0..255 range
+  if (maxV > 0) {
+    for (let i = 0; i < N*N; i++) grayscale[i] = (grayscale[i] / maxV) * 255;
+  }
+
+  return { previewCanvas, grayscale };
+}
+
+// ─────────────────────────────────────────────
+// SECTION F — INFO CONTENT
+// ─────────────────────────────────────────────
+const INFO = {
+  globe:       { title: 'Radio Telescope Globe',    body: 'Click anywhere on Earth to place a radio telescope. Every pair of telescopes forms a "baseline" — like a giant antenna spanning the distance between them. More telescopes = more baselines = sharper images.' },
+  uvmap:       { title: 'UV-Plane Coverage',        body: 'As Earth rotates, each telescope pair sweeps an arc through "Fourier space" (the UV-plane). Each point sampled here corresponds to one spatial frequency of the sky. Dense, uniform coverage → high-fidelity reconstruction.' },
+  dirty:       { title: 'Dirty Image',              body: 'The raw result of taking the inverse Fourier transform of only the sampled UV points (with zeros elsewhere). Artifacts called "sidelobes" appear because we only measured some Fourier frequencies.' },
+  restored:    { title: 'Restored Image',           body: 'After applying a deconvolution algorithm (Wiener filter or CLEAN), many sidelobes are suppressed. This is closer to the true sky, but resolution is still limited by the longest baseline.' },
+  ground:      { title: 'Ground Truth',             body: 'The original image we are trying to reconstruct. In real radio astronomy, we never have this — only the raw telescope data. This simulator lets you compare what we recover vs. the actual source.' },
+  noise:       { title: 'Thermal Noise',            body: 'Radio receivers add random electronic noise to every measurement. Higher noise amplitude makes the reconstruction blurrier and noisier. Real arrays average many measurements to reduce this.' },
+  frequency:   { title: 'Observing Frequency',      body: 'Higher frequencies (shorter wavelengths) give finer resolution because the UV coordinates scale as u = baseline/λ. The EHT observes at 230 GHz (1.3 mm wavelength) for maximum resolution.' },
+  duration:    { title: 'Synthesis Duration',       body: 'Earth rotates 360° in 24 hours. Longer observations allow each baseline to sweep more of the UV-plane, improving image quality. The EHT typically observes a source for 6–12 hours per night.' },
+  declination: { title: 'Source Declination',       body: 'The angular distance of the target source from the celestial equator. Sources near the equator (δ ≈ 0°) produce roughly circular UV tracks; polar sources produce more compact, circular tracks.' },
+  method:      { title: 'Reconstruction Method',    body: '"Dirty only": raw IFFT with no cleanup. "Wiener filter": adds noise suppression. "CLEAN": iteratively subtracts the point spread function (PSF) to remove sidelobe artifacts — the standard method in radio astronomy.' },
+  dish:        { title: 'Dish Diameter',            body: 'Larger dishes collect more signal (better sensitivity). The angular field of view of each telescope is roughly λ/D radians. This does not change the UV coverage but affects sensitivity and how much sky is imaged at once.' },
+};
+
+// ─────────────────────────────────────────────
+// SECTION G — COMPONENTS
+// ─────────────────────────────────────────────
+
+function InfoTooltip({ infoKey, onOpen }) {
+  return html`<button
+    className="info-btn"
+    onClick=${() => onOpen(infoKey)}
+    aria-label=${'Learn about ' + infoKey}
+    title="Click for explanation"
+  >ⓘ</button>`;
+}
+
+function InfoModal({ infoKey, onClose }) {
+  useEffect(() => {
+    if (!infoKey) return;
+    const handler = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [infoKey, onClose]);
+
+  if (!infoKey) return null;
+  const info = INFO[infoKey];
+  if (!info) return null;
+
+  return html`
+    <div className="modal-overlay" onClick=${onClose} role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div className="modal-card" onClick=${(e) => e.stopPropagation()}>
+        <button className="modal-close" onClick=${onClose} aria-label="Close">×</button>
+        <h3 className="modal-title" id="modal-title">${info.title}</h3>
+        <p className="modal-body">${info.body}</p>
+      </div>
+    </div>
+  `;
+}
+
+// ISO 3166-1 numeric → display name for dynamic country label generation
+const ISO_COUNTRY_NAMES = {
+  4:'Afghanistan', 8:'Albania', 12:'Algeria', 24:'Angola', 32:'Argentina',
+  36:'Australia', 40:'Austria', 50:'Bangladesh', 56:'Belgium', 64:'Bhutan',
+  68:'Bolivia', 72:'Botswana', 76:'Brazil', 100:'Bulgaria', 104:'Myanmar',
+  116:'Cambodia', 120:'Cameroon', 124:'Canada', 140:'C. African Rep.',
+  144:'Sri Lanka', 152:'Chile', 156:'China', 170:'Colombia', 178:'Congo',
+  180:'DR Congo', 188:'Costa Rica', 192:'Cuba', 196:'Cyprus', 203:'Czech Rep.',
+  204:'Benin', 208:'Denmark', 218:'Ecuador', 222:'El Salvador', 231:'Ethiopia',
+  232:'Eritrea', 246:'Finland', 250:'France', 266:'Gabon', 276:'Germany',
+  288:'Ghana', 300:'Greece', 304:'Greenland', 320:'Guatemala', 324:'Guinea',
+  332:'Haiti', 340:'Honduras', 348:'Hungary', 356:'India', 360:'Indonesia',
+  364:'Iran', 368:'Iraq', 372:'Ireland', 376:'Israel', 380:'Italy',
+  388:'Jamaica', 392:'Japan', 398:'Kazakhstan', 400:'Jordan', 404:'Kenya',
+  408:'N. Korea', 410:'S. Korea', 414:'Kuwait', 418:'Laos', 422:'Lebanon',
+  426:'Lesotho', 428:'Latvia', 430:'Liberia', 434:'Libya', 440:'Lithuania',
+  442:'Luxembourg', 450:'Madagascar', 454:'Malawi', 458:'Malaysia', 466:'Mali',
+  484:'Mexico', 496:'Mongolia', 498:'Moldova', 504:'Morocco', 508:'Mozambique',
+  516:'Namibia', 524:'Nepal', 528:'Netherlands', 540:'New Caledonia',
+  554:'New Zealand', 558:'Nicaragua', 562:'Niger', 566:'Nigeria', 578:'Norway',
+  586:'Pakistan', 591:'Panama', 598:'Papua NG', 600:'Paraguay', 604:'Peru',
+  608:'Philippines', 616:'Poland', 620:'Portugal', 634:'Qatar', 642:'Romania',
+  643:'Russia', 682:'Saudi Arabia', 686:'Senegal', 694:'Sierra Leone',
+  703:'Slovakia', 705:'Slovenia', 706:'Somalia', 710:'S. Africa', 716:'Zimbabwe',
+  724:'Spain', 729:'Sudan', 740:'Suriname', 748:'Eswatini', 752:'Sweden',
+  756:'Switzerland', 760:'Syria', 762:'Tajikistan', 764:'Thailand',
+  780:'Trinidad', 788:'Tunisia', 792:'Turkey', 795:'Turkmenistan',
+  800:'Uganda', 804:'Ukraine', 784:'UAE', 818:'Egypt', 826:'UK',
+  840:'USA', 858:'Uruguay', 860:'Uzbekistan', 862:'Venezuela', 887:'Yemen',
+  894:'Zambia', 704:'Vietnam', 158:'Taiwan', 807:'N. Macedonia',
+  70:'Bosnia & Herz.', 191:'Croatia', 499:'Montenegro', 688:'Serbia',
+  51:'Armenia', 31:'Azerbaijan', 268:'Georgia', 112:'Belarus',
+  233:'Estonia', 484:'Mexico', 630:'Puerto Rico', 736:'Chad',
+  174:'Comoros', 262:'Djibouti', 226:'Eq. Guinea', 270:'Gambia',
+  384:'Ivory Coast', 430:'Liberia', 454:'Malawi', 466:'Mali',
+  478:'Mauritania', 508:'Mozambique', 646:'Rwanda', 686:'Senegal',
+  706:'Somalia', 728:'S. Sudan', 768:'Togo', 800:'Uganda',
+};
+
+/**
+ * Load NASA Blue Marble photo textures (diffuse, bump, specular) onto earthMat.
+ * Falls back gracefully — tries multiple CDN URLs for diffuse; skips bump/specular on failure.
+ * The dark navy fallback sphere remains visible while textures load.
+ * @param {THREE.MeshPhongMaterial} earthMat
+ * @param {() => boolean} isCancelled
+ */
+async function loadEarthTextures(earthMat, isCancelled) {
+  const loader = new THREE.TextureLoader();
+  const tryLoad = (url) => new Promise((resolve, reject) => {
+    loader.load(url, resolve, undefined, reject);
+  });
+
+  // Diffuse map — try 3 CDN URLs in sequence
+  const diffuseUrls = [
+    'https://unpkg.com/three-globe@2.41.12/example/img/earth-blue-marble.jpg',
+    'https://cdn.jsdelivr.net/npm/three-globe@2.41.12/example/img/earth-blue-marble.jpg',
+    'https://cdn.jsdelivr.net/npm/three@0.163.0/examples/textures/planets/earth_atmos_2048.jpg',
+  ];
+  for (const url of diffuseUrls) {
+    if (isCancelled()) return;
+    try {
+      const tex = await tryLoad(url);
+      if (isCancelled()) { tex.dispose(); return; }
+      tex.colorSpace = THREE.SRGBColorSpace;
+      earthMat.map = tex;
+      earthMat.color.setHex(0xffffff);
+      earthMat.needsUpdate = true;
+      console.log('[Globe] diffuse loaded:', url);
+      break;
+    } catch (_) {
+      console.warn('[Globe] diffuse failed:', url);
+    }
+  }
+  // If all diffuse URLs fail, the dark navy sphere remains (borders/labels still visible)
+
+  if (isCancelled()) return;
+
+  // Bump map
+  try {
+    const bumpTex = await tryLoad('https://unpkg.com/three-globe@2.41.12/example/img/earth-topology.png');
+    if (!isCancelled()) {
+      earthMat.bumpMap = bumpTex;
+      earthMat.bumpScale = 0.05;
+      earthMat.needsUpdate = true;
+    }
+  } catch (_) {}
+
+  if (isCancelled()) return;
+
+  // Specular map
+  try {
+    const specTex = await tryLoad('https://cdn.jsdelivr.net/npm/three@0.163.0/examples/textures/planets/earth_specular_2048.jpg');
+    if (!isCancelled()) {
+      earthMat.specularMap = specTex;
+      earthMat.specular = new THREE.Color(0x333333);
+      earthMat.shininess = 60;
+      earthMat.needsUpdate = true;
+    }
+  } catch (_) {}
+}
+
+const OCEAN_LABELS = [
+  { name: 'Pacific Ocean',     lat:   0, lon: -160 },
+  { name: 'Atlantic Ocean',    lat:   0, lon:  -30 },
+  { name: 'Indian Ocean',      lat: -20, lon:   80 },
+  { name: 'Arctic Ocean',      lat:  85, lon:    0 },
+  { name: 'Southern Ocean',    lat: -65, lon:    0 },
+  { name: 'Mediterranean Sea', lat:  35, lon:   18 },
+  { name: 'Caribbean Sea',     lat:  15, lon:  -75 },
+];
+
+// Module-level ref so the resize handler can update LineMaterial resolution
+let borderLineMat = null;
+
+/**
+ * Fetch world-atlas TopoJSON and:
+ *   1. Add country boundary LineSegments to the scene
+ *   2. Generate CSS2DObject labels for all countries in the dataset
+ *   3. Add CSS2DObject ocean labels
+ * Degrades gracefully — catches all errors silently.
+ * @param {THREE.Scene} scene
+ * @param {THREE.Group} labelGroup  - group to receive CSS2DObject country labels
+ * @param {() => boolean} isCancelled - returns true if the Globe unmounted mid-fetch
+ */
+async function loadCountryBoundaries(scene, labelGroup, isCancelled) {
+  try {
+    const res = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
+    if (!res.ok || isCancelled()) return;
+    const topo = await res.json();
+    if (isCancelled()) return;
+
+    // ── 1. Border LineSegments ───────────────────────────────────────────────
+    const borderMesh = topojson.mesh(topo, topo.objects.countries);
+    const R = 1.001;
+    const lonLatToVec3 = (lon, lat) => {
+      const phi = lat * Math.PI / 180;
+      const lam = lon * Math.PI / 180;
+      return [
+        R * Math.cos(phi) * Math.cos(lam),
+        R * Math.sin(phi),
+        -R * Math.cos(phi) * Math.sin(lam),
+      ];
+    };
+
+    const positions = [];
+    for (const line of borderMesh.coordinates) {
+      for (let i = 0; i < line.length - 1; i++) {
+        positions.push(...lonLatToVec3(line[i][0],   line[i][1]));
+        positions.push(...lonLatToVec3(line[i+1][0], line[i+1][1]));
+      }
+    }
+
+    const geo = new LineSegmentsGeometry();
+    geo.setPositions(positions);
+    borderLineMat = new LineMaterial({
+      color: 0xffff88, transparent: true, opacity: 0.75, depthWrite: false,
+      linewidth: 1.5,
+      resolution: new THREE.Vector2(window.innerWidth, window.innerHeight),
+    });
+    scene.add(new LineSegments2(geo, borderLineMat));
+
+    // ── 3. Dynamically label all countries from TopoJSON features ────────────
+    const countryFeatures = topojson.feature(topo, topo.objects.countries);
+    for (const feature of countryFeatures.features) {
+      if (isCancelled()) return;
+      const name = ISO_COUNTRY_NAMES[+feature.id];
+      if (!name) continue;
+
+      // Find the polygon ring with the most vertices (proxy for largest region)
+      const allRings = feature.geometry.type === 'Polygon'
+        ? [feature.geometry.coordinates[0]]
+        : feature.geometry.coordinates.map(p => p[0]);
+      let ring = allRings[0];
+      for (const r of allRings) { if (r.length > ring.length) ring = r; }
+
+      // Centroid = mean of ring coordinates
+      let sumLon = 0, sumLat = 0;
+      for (const [lon, lat] of ring) { sumLon += lon; sumLat += lat; }
+      const cLon = sumLon / ring.length;
+      const cLat = sumLat / ring.length;
+
+      const [x, y, z] = lonLatToVec3(cLon, cLat);
+      const div = document.createElement('div');
+      div.className = 'country-label';
+      div.textContent = name;
+      const obj = new CSS2DObject(div);
+      obj.position.set(x, y, z);
+      labelGroup.add(obj);
+    }
+
+    // Ocean labels
+    for (const ocean of OCEAN_LABELS) {
+      const [x, y, z] = lonLatToVec3(ocean.lon, ocean.lat);
+      const div = document.createElement('div');
+      div.className = 'ocean-label';
+      div.textContent = ocean.name;
+      const obj = new CSS2DObject(div);
+      obj.position.set(x, y, z);
+      labelGroup.add(obj);
+    }
+  } catch (_) {
+    // Degrade gracefully — no borders or texture rendered
+  }
+}
+
+function Globe({ telescopes, onTelescopeAdd, showCountryLabels }) {
+  const containerRef = useRef(null);
+  const rendererRef = useRef(null);
+  const labelRendererRef = useRef(null);
+  const sceneRef = useRef(null);
+  const cameraRef = useRef(null);
+  const controlsRef = useRef(null);
+  const earthMeshRef = useRef(null);
+  const markerGroupRef = useRef(null);
+  const baselineGroupRef = useRef(null);
+  const animFrameRef = useRef(null);
+  const autoRotateTimerRef = useRef(null);
+  const countryLabelGroupRef = useRef(null);
+  const onAddRef = useRef(onTelescopeAdd);
+  const showCountryLabelsRef = useRef(showCountryLabels);
+
+  useEffect(() => { onAddRef.current = onTelescopeAdd; }, [onTelescopeAdd]);
+  useEffect(() => { showCountryLabelsRef.current = showCountryLabels; }, [showCountryLabels]);
+
+  // Effect 1: Initialize Three.js scene ONCE
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const W = container.clientWidth;
+    const H = container.clientHeight;
+
+    // Renderer
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(W, H);
+    renderer.shadowMap.enabled = false;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
+    container.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
+
+    // CSS2D Renderer for labels
+    const labelRenderer = new CSS2DRenderer();
+    labelRenderer.setSize(W, H);
+    labelRenderer.domElement.style.position = 'absolute';
+    labelRenderer.domElement.style.top = '0';
+    labelRenderer.domElement.style.left = '0';
+    labelRenderer.domElement.style.pointerEvents = 'none';
+    container.appendChild(labelRenderer.domElement);
+    labelRendererRef.current = labelRenderer;
+
+    // Scene
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#060614');
+    sceneRef.current = scene;
+
+    // Stars
+    const starGeo = new THREE.BufferGeometry();
+    const starPositions = [];
+    const starColors = [];
+    for (let i = 0; i < 8000; i++) {
+      const r = 70 + Math.random() * 20;
+      const theta = Math.acos(2 * Math.random() - 1);
+      const phi = 2 * Math.PI * Math.random();
+      starPositions.push(
+        r * Math.sin(theta) * Math.cos(phi),
+        r * Math.sin(theta) * Math.sin(phi),
+        r * Math.cos(theta)
+      );
+      const v = 0.4 + Math.random() * 0.6;
+      starColors.push(v, v, v);
+    }
+    starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
+    starGeo.setAttribute('color', new THREE.Float32BufferAttribute(starColors, 3));
+    const starMat = new THREE.PointsMaterial({ size: 0.12, sizeAttenuation: true, vertexColors: true });
+    scene.add(new THREE.Points(starGeo, starMat));
+
+    // Earth — ocean-navy fallback color until TopoJSON canvas texture is drawn
+    const earthGeo = new THREE.SphereGeometry(1, 64, 64);
+    const earthMat = new THREE.MeshPhongMaterial({ color: 0x071628, shininess: 12 });
+    const earthMesh = new THREE.Mesh(earthGeo, earthMat);
+    scene.add(earthMesh);
+    earthMeshRef.current = earthMesh;
+
+    // Cloud layer — transparent sphere at r=1.01, rotates slowly
+    const cloudGeo = new THREE.SphereGeometry(1.01, 64, 64);
+    const cloudMat = new THREE.MeshPhongMaterial({
+      transparent: true, opacity: 0.10, depthWrite: false, side: THREE.DoubleSide,
+    });
+    const cloudMesh = new THREE.Mesh(cloudGeo, cloudMat);
+    scene.add(cloudMesh);
+    new THREE.TextureLoader().load(
+      'https://unpkg.com/three-globe@2.41.12/example/img/earth-clouds.png',
+      (tex) => { cloudMat.map = tex; cloudMat.needsUpdate = true; },
+      undefined,
+      () => { scene.remove(cloudMesh); } // hide if texture fails
+    );
+
+    // Atmosphere
+    const atmoGeo = new THREE.SphereGeometry(1.02, 64, 64);
+    const atmoMat = new THREE.MeshBasicMaterial({
+      color: 0x6699dd, transparent: true, opacity: 0.06,
+      side: THREE.FrontSide, depthWrite: false,
+    });
+    scene.add(new THREE.Mesh(atmoGeo, atmoMat));
+
+    // Outer glow — Fresnel ShaderMaterial for realistic atmospheric rim
+    const glowGeo = new THREE.SphereGeometry(1.06, 64, 64);
+    const glowMat = new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false, side: THREE.BackSide,
+      blending: THREE.AdditiveBlending,
+      uniforms: {},
+      vertexShader: `
+        varying vec3 vNormal;
+        varying vec3 vViewPos;
+        void main() {
+          vNormal = normalize(normalMatrix * normal);
+          vec4 mv = modelViewMatrix * vec4(position, 1.0);
+          vViewPos = -mv.xyz;
+          gl_Position = projectionMatrix * mv;
+        }
+      `,
+      fragmentShader: `
+        varying vec3 vNormal;
+        varying vec3 vViewPos;
+        void main() {
+          float rim = 1.0 - abs(dot(normalize(vNormal), normalize(vViewPos)));
+          float intensity = pow(rim, 2.5);
+          float outerFade = smoothstep(0.0, 0.4, rim);
+          vec3 innerColor = vec3(0.6, 0.8, 1.0);
+          vec3 outerColor = vec3(0.15, 0.4, 0.8);
+          vec3 color = mix(outerColor, innerColor, pow(rim, 4.0));
+          gl_FragColor = vec4(color, intensity * outerFade * 0.7);
+        }
+      `,
+    });
+    scene.add(new THREE.Mesh(glowGeo, glowMat));
+
+    // Lights — uniform ambient for consistent illumination across all faces
+    const ambient = new THREE.AmbientLight(0xffffff, 1.8);
+    scene.add(ambient);
+
+    // Groups
+    const markerGroup = new THREE.Group();
+    const baselineGroup = new THREE.Group();
+    const countryLabelGroup = new THREE.Group();
+    scene.add(markerGroup);
+    scene.add(baselineGroup);
+    scene.add(countryLabelGroup);
+    markerGroupRef.current = markerGroup;
+    baselineGroupRef.current = baselineGroup;
+    countryLabelGroupRef.current = countryLabelGroup;
+
+    // Load photo textures + country borders in parallel; track cancellation for unmount
+    let cancelled = false;
+    loadEarthTextures(earthMat, () => cancelled);
+    loadCountryBoundaries(scene, countryLabelGroup, () => cancelled);
+
+    // Camera
+    const camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 1000);
+    camera.position.set(0, 0, 2.8);
+    cameraRef.current = camera;
+
+    // OrbitControls
+    const orbitControls = new OrbitControls(camera, renderer.domElement);
+    orbitControls.enableDamping = true;
+    orbitControls.dampingFactor = 0.06;
+    orbitControls.minDistance = 1.4;
+    orbitControls.maxDistance = 6;
+    orbitControls.autoRotate = true;
+    orbitControls.autoRotateSpeed = 0.3;
+    controlsRef.current = orbitControls;
+
+    // Stop autorotate on user interaction, resume after 3s
+    const stopAutoRotate = () => {
+      orbitControls.autoRotate = false;
+      clearTimeout(autoRotateTimerRef.current);
+      autoRotateTimerRef.current = setTimeout(() => {
+        orbitControls.autoRotate = true;
+      }, 3000);
+    };
+    renderer.domElement.addEventListener('pointerdown', stopAutoRotate);
+
+    // Click-to-place: track pointer position
+    let downX = 0, downY = 0;
+    const onPointerDown = (e) => { downX = e.clientX; downY = e.clientY; };
+    const onPointerUp = (e) => {
+      const dx = e.clientX - downX;
+      const dy = e.clientY - downY;
+      if (Math.abs(dx) >= 5 || Math.abs(dy) >= 5) return; // drag, not click
+      const rect = container.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
+      const hits = raycaster.intersectObject(earthMesh);
+      if (hits.length > 0) {
+        const pt = hits[0].point;
+        const lat = Math.asin(pt.y) * 180 / Math.PI;
+        const lon = Math.atan2(pt.z, pt.x) * 180 / Math.PI;
+        onAddRef.current(lat, lon);
+      }
+    };
+    renderer.domElement.addEventListener('pointerdown', onPointerDown);
+    renderer.domElement.addEventListener('pointerup', onPointerUp);
+
+    // ResizeObserver
+    const resizeObserver = new ResizeObserver(() => {
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+      labelRenderer.setSize(w, h);
+      if (borderLineMat) borderLineMat.resolution.set(w, h);
+    });
+    resizeObserver.observe(container);
+
+    // Animation loop
+    const _occVec = new THREE.Vector3(); // reused each frame to avoid GC pressure
+    function animate() {
+      animFrameRef.current = requestAnimationFrame(animate);
+      orbitControls.update();
+      cloudMesh.rotation.y += 0.0001;
+
+      // Per-frame label occlusion: hide any CSS2DObject whose world position is on
+      // the back hemisphere relative to the camera (dot product with camera pos < 0).
+      // This prevents telescope and country labels from bleeding through the Earth.
+      for (const group of [markerGroup, countryLabelGroup]) {
+        const isCountryGroup = group === countryLabelGroup;
+        for (const child of group.children) {
+          child.getWorldPosition(_occVec);
+          const onFront = _occVec.dot(camera.position) > 0;
+          const visible = isCountryGroup
+            ? showCountryLabelsRef.current && onFront
+            : onFront;
+          child.traverse(obj => {
+            if (obj.isCSS2DObject) obj.visible = visible;
+          });
+          if (child.isCSS2DObject) child.visible = visible;
+        }
+      }
+
+      renderer.render(scene, camera);
+      labelRenderer.render(scene, camera);
+    }
+    animate();
+
+    return () => {
+      cancelled = true; // stop any in-flight loadCountryBoundaries fetch
+      cancelAnimationFrame(animFrameRef.current);
+      clearTimeout(autoRotateTimerRef.current);
+      resizeObserver.disconnect();
+      renderer.domElement.removeEventListener('pointerdown', stopAutoRotate);
+      renderer.domElement.removeEventListener('pointerdown', onPointerDown);
+      renderer.domElement.removeEventListener('pointerup', onPointerUp);
+      // Clean up country label DOM nodes
+      countryLabelGroup.traverse(obj => {
+        if (obj.isCSS2DObject && obj.element) obj.element.remove();
+      });
+      renderer.dispose();
+      if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
+      if (container.contains(labelRenderer.domElement)) container.removeChild(labelRenderer.domElement);
+    };
+  }, []);
+
+  // Effect 2: Update markers when telescopes array changes
+  useEffect(() => {
+    const markerGroup = markerGroupRef.current;
+    const baselineGroup = baselineGroupRef.current;
+    if (!markerGroup || !baselineGroup) return;
+
+    // Clear — must explicitly remove CSS2DObject DOM nodes before unlinking from scene,
+    // otherwise the CSS2DRenderer leaves them orphaned in its DOM layer (BUG 2 fix).
+    while (markerGroup.children.length) {
+      const child = markerGroup.children[0];
+      child.traverse(obj => {
+        if (obj.isCSS2DObject && obj.element) obj.element.remove();
+      });
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) child.material.dispose();
+      markerGroup.remove(child);
+    }
+    while (baselineGroup.children.length) {
+      const child = baselineGroup.children[0];
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) child.material.dispose();
+      baselineGroup.remove(child);
+    }
+
+    const R = 1.012;
+    const latLonToThreeJS = (lat, lon) => {
+      const phi = lat * Math.PI / 180;
+      const lam = lon * Math.PI / 180;
+      return new THREE.Vector3(
+        R * Math.cos(phi) * Math.cos(lam),
+        R * Math.sin(phi),
+        R * Math.cos(phi) * Math.sin(lam),
+      );
+    };
+
+    // Add markers
+    for (const tel of telescopes) {
+      const pos = latLonToThreeJS(tel.lat, tel.lon);
+      const geo = new THREE.SphereGeometry(0.022, 12, 12);
+      const color = new THREE.Color(tel.color);
+      const mat = new THREE.MeshPhongMaterial({
+        color,
+        emissive: color,
+        emissiveIntensity: 0.6,
+      });
+      if (!tel.visible) { mat.opacity = 0.3; mat.transparent = true; }
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.copy(pos);
+      markerGroup.add(mesh);
+
+      // CSS2D Label
+      const labelDiv = document.createElement('div');
+      labelDiv.className = 'tel-label';
+      labelDiv.textContent = tel.name;
+      labelDiv.style.backgroundColor = tel.color;
+      if (!tel.visible) labelDiv.style.opacity = '0.3';
+      const label = new CSS2DObject(labelDiv);
+      label.position.set(0, 0.04, 0);
+      mesh.add(label);
+    }
+
+    // Add baselines (great-circle arcs)
+    const visibleTels = telescopes.filter(t => t.visible !== false);
+    for (let i = 0; i < visibleTels.length; i++) {
+      for (let j = i + 1; j < visibleTels.length; j++) {
+        const t1 = visibleTels[i], t2 = visibleTels[j];
+        const p1 = latLonToThreeJS(t1.lat, t1.lon);
+        const p2 = latLonToThreeJS(t2.lat, t2.lon);
+        const STEPS = 50;
+        const points = [];
+        for (let s = 0; s <= STEPS; s++) {
+          const t = s / STEPS;
+          const v = new THREE.Vector3().lerpVectors(p1, p2, t).normalize().multiplyScalar(1.015);
+          points.push(v);
+        }
+        const geo = new THREE.BufferGeometry().setFromPoints(points);
+        const blendColor = new THREE.Color(lerpColor(t1.color, t2.color, 0.5));
+        const mat = new THREE.LineBasicMaterial({ color: blendColor, opacity: 0.5, transparent: true });
+        baselineGroup.add(new THREE.Line(geo, mat));
+      }
+    }
+  }, [telescopes]);
+
+  return html`<div
+    ref=${containerRef}
+    className="globe-container"
+    aria-label="3D Earth globe — click to place radio telescopes"
+  ></div>`;
+}
+
+function UVMap({ uvPoints, N }) {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#070718';
+    ctx.fillRect(0, 0, N, N);
+
+    // Grid circles
+    ctx.strokeStyle = 'rgba(30,30,80,0.6)';
+    ctx.lineWidth = 0.5;
+    for (const r of [N/4, N/2]) {
+      ctx.beginPath();
+      ctx.arc(N/2, N/2, r, 0, 2*Math.PI);
+      ctx.stroke();
+    }
+
+    // Axes
+    ctx.strokeStyle = 'rgba(40,40,100,0.8)';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(N/2, 0); ctx.lineTo(N/2, N); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, N/2); ctx.lineTo(N, N/2); ctx.stroke();
+
+    // Group points by color for batch drawing
+    if (uvPoints.length === 0) return;
+    const byColor = {};
+    for (const p of uvPoints) {
+      if (!byColor[p.color]) byColor[p.color] = [];
+      byColor[p.color].push(p);
+    }
+    for (const [color, pts] of Object.entries(byColor)) {
+      ctx.fillStyle = color;
+      for (const p of pts) {
+        const x = Math.round(p.u);
+        const y = Math.round(p.v);
+        if (x >= 0 && x < N && y >= 0 && y < N) {
+          ctx.fillRect(x, y, 1, 1);
+        }
+      }
+    }
+  }, [uvPoints, N]);
+
+  return html`<canvas
+    ref=${canvasRef}
+    width=${N}
+    height=${N}
+    className="uv-canvas"
+    aria-label="UV plane coverage map"
+  ></canvas>`;
+}
+
+// Render a Float64Array as a hot-colormap canvas
+function renderImageData(data, N, ctx) {
+  if (!data) return;
+  let minV = Infinity, maxV = -Infinity;
+  for (let i = 0; i < N*N; i++) {
+    if (data[i] < minV) minV = data[i];
+    if (data[i] > maxV) maxV = data[i];
+  }
+  const range = maxV - minV || 1;
+  const imgData = ctx.createImageData(N, N);
+  const d = imgData.data;
+  for (let i = 0; i < N*N; i++) {
+    const t = (data[i] - minV) / range;
+    // Hot colormap: black → dark red → orange → yellow → white
+    let r, g, b;
+    if (t < 0.33) {
+      r = Math.round(t / 0.33 * 200);
+      g = 0; b = 0;
+    } else if (t < 0.66) {
+      const tt = (t - 0.33) / 0.33;
+      r = Math.round(200 + tt * 55);
+      g = Math.round(tt * 140);
+      b = 0;
+    } else {
+      const tt = (t - 0.66) / 0.34;
+      r = 255;
+      g = Math.round(140 + tt * 115);
+      b = Math.round(tt * 255);
+    }
+    d[i*4]   = r;
+    d[i*4+1] = g;
+    d[i*4+2] = b;
+    d[i*4+3] = 255;
+  }
+  ctx.putImageData(imgData, 0, 0);
+}
+
+function ImageCanvas({ data, N, label, infoKey, onOpenInfo }) {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!data) {
+      ctx.fillStyle = '#0a0a20';
+      ctx.fillRect(0, 0, N, N);
+      ctx.fillStyle = 'rgba(136,136,176,0.3)';
+      ctx.font = '11px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Awaiting data…', N/2, N/2);
+      return;
+    }
+    renderImageData(data, N, ctx);
+  }, [data, N]);
+
+  return html`<div className="image-panel">
+    <div className="image-panel-header">
+      <p className="image-label">${label}</p>
+      ${infoKey ? html`<${InfoTooltip} infoKey=${infoKey} onOpen=${onOpenInfo} />` : null}
+    </div>
+    <canvas ref=${canvasRef} width=${N} height=${N} aria-label=${label}></canvas>
+  </div>`;
+}
+
+function OriginalImagePanel({ canvas, label, infoKey, onOpenInfo }) {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    while (container.firstChild) container.removeChild(container.firstChild);
+    if (canvas) {
+      canvas.style.width = '100%';
+      canvas.style.height = 'auto';
+      canvas.style.display = 'block';
+      canvas.style.border = '1px solid var(--border)';
+      canvas.style.borderRadius = '4px';
+      container.appendChild(canvas);
+    }
+  }, [canvas]);
+
+  return html`<div className="image-panel">
+    <div className="image-panel-header">
+      <p className="image-label">${label}</p>
+      ${infoKey ? html`<${InfoTooltip} infoKey=${infoKey} onOpen=${onOpenInfo} />` : null}
+    </div>
+    <div ref=${containerRef} aria-label=${label} style=${{ minHeight: '40px' }}></div>
+  </div>`;
+}
+
+function TelescopeList({ telescopes, onRemove, onToggleVisibility }) {
+  const visible = telescopes.filter(t => t.visible !== false).length;
+  const baselines = telescopes.length * (telescopes.length - 1) / 2;
+
+  if (telescopes.length === 0) {
+    return html`<div>
+      <p className="tel-empty">Click the globe to place radio telescopes</p>
+    </div>`;
+  }
+
+  return html`<div>
+    <div className="tel-list">
+      ${telescopes.map(tel => html`
+        <div className="tel-item" key=${tel.id}>
+          <span className="tel-dot" style=${{ backgroundColor: tel.color }}></span>
+          <span className="tel-name" style=${{ opacity: tel.visible === false ? 0.4 : 1 }}>${tel.name}</span>
+          <span className="tel-coords">${tel.lat.toFixed(1)}°, ${tel.lon.toFixed(1)}°</span>
+          <div className="tel-actions">
+            <button
+              className=${'tel-btn' + (tel.visible === false ? ' dim' : '')}
+              onClick=${() => onToggleVisibility(tel.id)}
+              title=${tel.visible === false ? 'Show telescope' : 'Hide telescope'}
+              aria-label=${(tel.visible === false ? 'Show ' : 'Hide ') + tel.name}
+            >${tel.visible === false ? '○' : '👁'}</button>
+            <button
+              className="tel-btn danger"
+              onClick=${() => onRemove(tel.id)}
+              title="Remove telescope"
+              aria-label=${'Remove ' + tel.name}
+            >×</button>
+          </div>
+        </div>
+      `)}
+    </div>
+    <p className="caption">${visible} active · ${baselines} baseline${baselines !== 1 ? 's' : ''}</p>
+  </div>`;
+}
+
+function ImageGallery({ selected, onSelect, onUpload }) {
+  const fileRef = useRef(null);
+  const presets = [
+    { name: 'blackhole', label: 'Black Hole',    icon: '⬤' },
+    { name: 'ring',      label: 'Ring Nebula',   icon: '○' },
+    { name: 'binary',    label: 'Binary Stars',  icon: '⁚' },
+    { name: 'galaxy',    label: 'Galaxy Core',   icon: '✦' },
+    { name: 'jet',       label: 'Radio Jet',     icon: '→' },
+    { name: 'point',     label: 'Point Source',  icon: '·' },
+  ];
+
+  const handleFileChange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) onUpload(file);
+    e.target.value = '';
+  };
+
+  return html`<div>
+    <div className="gallery-grid">
+      ${presets.map(p => html`
+        <button
+          key=${p.name}
+          className=${'gallery-btn' + (selected === p.name ? ' selected' : '')}
+          onClick=${() => onSelect(p.name)}
+          aria-label=${'Load ' + p.label + ' preset'}
+          aria-pressed=${selected === p.name}
+        >
+          <span className="icon">${p.icon}</span>
+          <span className="glabel">${p.label}</span>
+        </button>
+      `)}
+    </div>
+    <div
+      className="upload-zone"
+      onClick=${() => fileRef.current && fileRef.current.click()}
+      role="button"
+      tabIndex="0"
+      aria-label="Upload your own image"
+      onKeyDown=${(e) => e.key === 'Enter' && fileRef.current && fileRef.current.click()}
+    >
+      ↑ Upload your own image
+    </div>
+    <input
+      ref=${fileRef}
+      type="file"
+      accept="image/*"
+      style=${{ display: 'none' }}
+      onChange=${handleFileChange}
+    />
+  </div>`;
+}
+
+function ControlsPanel({ controls, onChange, onOpenInfo }) {
+  const sliders = [
+    { key: 'declination', label: 'Declination',  min: -90,  max: 90,  step: 1,   unit: '°',   infoKey: 'declination' },
+    { key: 'duration',    label: 'Duration',      min: 1,    max: 24,  step: 0.5, unit: 'h',   infoKey: 'duration'    },
+    { key: 'frequency',   label: 'Frequency',     min: 1,    max: 500, step: 1,   unit: ' GHz',infoKey: 'frequency'   },
+    { key: 'noise',       label: 'Noise',         min: 0,    max: 1,   step: 0.01,unit: '',     infoKey: 'noise'       },
+    { key: 'dishDiameter',label: 'Dish Diameter', min: 10,   max: 100, step: 5,   unit: ' m',  infoKey: 'dish'        },
+  ];
+
+  const methods = [
+    { key: 'dirty',  label: 'Dirty Only' },
+    { key: 'wiener', label: 'Wiener'     },
+    { key: 'clean',  label: 'CLEAN'      },
+  ];
+
+  return html`<div>
+    <div className="control-label" style=${{ marginBottom: '6px' }}>
+      Method <${InfoTooltip} infoKey="method" onOpen=${onOpenInfo} />
+    </div>
+    <div className="method-row">
+      ${methods.map(m => html`
+        <button
+          key=${m.key}
+          className=${'method-btn' + (controls.method === m.key ? ' selected' : '')}
+          onClick=${() => onChange('method', m.key)}
+          aria-pressed=${controls.method === m.key}
+        >${m.label}</button>
+      `)}
+    </div>
+    ${sliders.map(s => html`
+      <div className="control-row" key=${s.key}>
+        <div className="control-label">
+          ${s.label}
+          <${InfoTooltip} infoKey=${s.infoKey} onOpen=${onOpenInfo} />
+          <span className="val">${controls[s.key]}${s.unit}</span>
+        </div>
+        <input
+          type="range"
+          min=${s.min}
+          max=${s.max}
+          step=${s.step}
+          value=${controls[s.key]}
+          onInput=${(e) => onChange(s.key, parseFloat(e.target.value))}
+          aria-label=${s.label}
+        />
+      </div>
+    `)}
+  </div>`;
+}
+
+// ─────────────────────────────────────────────
+// APP ROOT
+// ─────────────────────────────────────────────
+function App() {
+  const [telescopes, setTelescopes] = useState([]);
+  const [showCountryLabels, setShowCountryLabels] = useState(true);
+  const [selectedPreset, setSelectedPreset] = useState('blackhole');
+  const [grayscale, setGrayscale] = useState(null);
+  const [originalCanvas, setOriginalCanvas] = useState(null);
+  const [uvPoints, setUvPoints] = useState([]);
+  const [uvFill, setUvFill] = useState(0);
+  const [dirty, setDirty] = useState(null);
+  const [restored, setRestored] = useState(null);
+  const [controls, setControls] = useState({
+    declination: 30, duration: 12, frequency: 230,
+    noise: 0, dishDiameter: 25, method: 'wiener'
+  });
+  const [infoKey, setInfoKey] = useState(null);
+  const [status, setStatus] = useState({ msg: 'Select an image and place telescopes to begin', type: '' });
+  const [isComputing, setIsComputing] = useState(false);
+
+  const workerRef = useRef(null);
+  const reqIdRef = useRef(0);
+  const computeTimerRef = useRef(null);
+  const telIdRef = useRef(0);
+
+  // Init worker once
+  useEffect(() => {
+    const blob = new Blob([WORKER_SRC], { type: 'text/javascript' });
+    const url = URL.createObjectURL(blob);
+    const worker = new Worker(url);
+    worker.onmessage = (e) => {
+      if (e.data.type === 'result') {
+        setDirty(e.data.dirty);
+        setRestored(e.data.restored);
+        setIsComputing(false);
+        setStatus({ msg: `Reconstruction complete — ${e.data.uvCount ?? ''} UV samples`, type: 'success' });
+      } else if (e.data.type === 'error') {
+        setIsComputing(false);
+        setStatus({ msg: 'Error: ' + e.data.message, type: 'error' });
+      }
+    };
+    workerRef.current = worker;
+    return () => { worker.terminate(); URL.revokeObjectURL(url); };
+  }, []);
+
+  // Auto-load blackhole preset on mount
+  useEffect(() => {
+    const { previewCanvas, grayscale: gs } = generatePreset('blackhole');
+    setGrayscale(gs);
+    setOriginalCanvas(previewCanvas);
+    setSelectedPreset('blackhole');
+  }, []);
+
+  // Load EHT presets on mount (after short delay)
+  useEffect(() => {
+    const timer = setTimeout(() => { loadEHTPresets(); }, 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  function loadEHTPresets() {
+    telIdRef.current = 0;
+    const newTels = EHT_PRESETS.map((p, i) => ({
+      id: telIdRef.current++,
+      name: p.name,
+      lat: p.lat,
+      lon: p.lon,
+      color: TELESCOPE_COLORS[i % TELESCOPE_COLORS.length],
+      visible: true,
+    }));
+    setTelescopes(newTels);
+  }
+
+  const handleTelescopeAdd = useCallback((lat, lon) => {
+    setTelescopes(prev => {
+      if (prev.length >= 12) return prev;
+      const id = telIdRef.current++;
+      // Find the lowest display number 1–12 not already in use,
+      // so names always stay in range T1–T12 regardless of add/remove history.
+      const usedNums = new Set(
+        prev.map(t => parseInt(t.name.slice(1))).filter(n => !isNaN(n))
+      );
+      let displayNum = 1;
+      while (usedNums.has(displayNum) && displayNum <= 12) displayNum++;
+      return [...prev, {
+        id, name: 'T' + displayNum, lat, lon,
+        color: TELESCOPE_COLORS[id % TELESCOPE_COLORS.length],
+        visible: true,
+      }];
+    });
+  }, []);
+
+  const handleTelescopeRemove = useCallback((id) => {
+    setTelescopes(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  const handleToggleVisibility = useCallback((id) => {
+    setTelescopes(prev => prev.map(t => t.id === id ? { ...t, visible: !t.visible } : t));
+  }, []);
+
+  // Recompute UV points whenever telescopes or relevant controls change
+  useEffect(() => {
+    const uvPts = computeUVPoints(telescopes, { ...controls, N: IMAGE_SIZE });
+    setUvPoints(uvPts);
+    setUvFill(computeUVFill(uvPts, IMAGE_SIZE));
+  }, [telescopes, controls.declination, controls.duration, controls.frequency]);
+
+  // Debounced reconstruction
+  useEffect(() => {
+    clearTimeout(computeTimerRef.current);
+    if (!grayscale || uvPoints.length === 0) {
+      setDirty(null);
+      setRestored(null);
+      if (telescopes.length < 2) {
+        setStatus({ msg: 'Place at least 2 telescopes to reconstruct', type: '' });
+      } else {
+        setStatus({ msg: 'Load an image to begin', type: '' });
+      }
+      return;
+    }
+    computeTimerRef.current = setTimeout(() => {
+      setIsComputing(true);
+      setStatus({ msg: 'Computing reconstruction…', type: 'loading' });
+      const id = ++reqIdRef.current;
+      const gs = grayscale.slice();
+      const uv = uvPoints.map(p => ({ u: p.u, v: p.v }));
+      workerRef.current.postMessage(
+        { type: 'reconstruct', id, grayscale: gs, uvPoints: uv, params: {
+            N: IMAGE_SIZE,
+            noise: controls.noise,
+            method: controls.method,
+            dishDiameter: controls.dishDiameter,
+            frequency: controls.frequency,
+          }
+        },
+        [gs.buffer]
+      );
+    }, 100);
+    return () => clearTimeout(computeTimerRef.current);
+  }, [uvPoints, grayscale, controls.noise, controls.method, controls.dishDiameter, controls.frequency]);
+
+  const handlePresetSelect = useCallback((name) => {
+    const { previewCanvas, grayscale: gs } = generatePreset(name);
+    setGrayscale(gs);
+    setOriginalCanvas(previewCanvas);
+    setSelectedPreset(name);
+  }, []);
+
+  const handleFileUpload = useCallback((file) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = IMAGE_SIZE; canvas.height = IMAGE_SIZE;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, IMAGE_SIZE, IMAGE_SIZE);
+      const imageData = ctx.getImageData(0, 0, IMAGE_SIZE, IMAGE_SIZE);
+      const gs = new Float64Array(IMAGE_SIZE * IMAGE_SIZE);
+      for (let i = 0; i < IMAGE_SIZE * IMAGE_SIZE; i++) {
+        gs[i] = 0.299 * imageData.data[i*4] + 0.587 * imageData.data[i*4+1] + 0.114 * imageData.data[i*4+2];
+      }
+      setGrayscale(gs);
+      setOriginalCanvas(canvas);
+      setSelectedPreset(null);
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  }, []);
+
+  function handleReset() {
+    setTelescopes([]);
+    telIdRef.current = 0;
+    const { previewCanvas, grayscale: gs } = generatePreset('blackhole');
+    setGrayscale(gs);
+    setOriginalCanvas(previewCanvas);
+    setSelectedPreset('blackhole');
+    setControls({ declination: 30, duration: 12, frequency: 230, noise: 0, dishDiameter: 25, method: 'wiener' });
+    setStatus({ msg: 'Reset. Place telescopes to begin.', type: '' });
+    setDirty(null);
+    setRestored(null);
+  }
+
+  const angularRes = useMemo(() => {
+    if (telescopes.length < 2) return null;
+    let maxKm = 0;
+    for (let i = 0; i < telescopes.length; i++) {
+      for (let j = i+1; j < telescopes.length; j++) {
+        const b = computeBaseline(telescopes[i], telescopes[j]);
+        const km = Math.sqrt(b.bx*b.bx + b.by*b.by + b.bz*b.bz);
+        if (km > maxKm) maxKm = km;
+      }
+    }
+    if (maxKm === 0) return null;
+    const lambdaM = 299792458 / (controls.frequency * 1e9);
+    const thetaRad = lambdaM / (maxKm * 1e3);
+    const thetaMuas = thetaRad * 206265e6;
+    return thetaMuas < 1000
+      ? thetaMuas.toFixed(0) + ' μas'
+      : (thetaMuas/1000).toFixed(2) + ' mas';
+  }, [telescopes, controls.frequency]);
+
+  const restoredLabel = controls.method === 'clean' ? 'CLEAN' : controls.method === 'wiener' ? 'Wiener' : 'Restored';
+
+  return html`
+    <div className="app">
+      <header className="header">
+        <div className="header-inner">
+          <h1>VLBI Interferometry Simulator</h1>
+          <p>Click the globe to place radio telescopes · Earth rotation synthesizes a virtual aperture the size of Earth</p>
+        </div>
+        <div className="header-stats">
+          ${telescopes.length >= 2 ? html`
+            <span className="stat"><span className="stat-val">${telescopes.length}</span>telescopes</span>
+            <span className="stat"><span className="stat-val">${telescopes.length*(telescopes.length-1)/2}</span>baselines</span>
+            <span className="stat"><span className="stat-val">${uvFill.toFixed(1)}%</span>UV fill</span>
+            ${angularRes ? html`<span className="stat"><span className="stat-val">${angularRes}</span>resolution</span>` : null}
+          ` : null}
+        </div>
+      </header>
+
+      <div className="layout">
+        <aside className="sidebar" aria-label="Controls and image selection">
+          <section className="sidebar-section">
+            <h2>Source Image <${InfoTooltip} infoKey="ground" onOpen=${setInfoKey} /></h2>
+            <${ImageGallery} selected=${selectedPreset} onSelect=${handlePresetSelect} onUpload=${handleFileUpload} />
+          </section>
+
+          <section className="sidebar-section">
+            <h2>Telescope Array <${InfoTooltip} infoKey="globe" onOpen=${setInfoKey} /></h2>
+            <${TelescopeList}
+              telescopes=${telescopes}
+              onRemove=${handleTelescopeRemove}
+              onToggleVisibility=${handleToggleVisibility}
+            />
+            <div className="telescope-actions">
+              <button className="btn btn-primary" onClick=${loadEHTPresets}>Load EHT Array</button>
+              <button className="btn btn-ghost" onClick=${() => { setTelescopes([]); telIdRef.current = 0; }}>Clear All</button>
+            </div>
+            <div style=${{ marginTop: '6px' }}>
+              <button
+                className="btn btn-ghost"
+                style=${{ width: '100%', justifyContent: 'center' }}
+                onClick=${() => setShowCountryLabels(v => !v)}
+              >
+                ${showCountryLabels ? 'Hide Country Names' : 'Show Country Names'}
+              </button>
+            </div>
+          </section>
+
+          <section className="sidebar-section">
+            <h2>Observation Parameters</h2>
+            <${ControlsPanel}
+              controls=${controls}
+              onChange=${(k, v) => setControls(p => ({ ...p, [k]: v }))}
+              onOpenInfo=${setInfoKey}
+            />
+          </section>
+
+          <button className="btn btn-reset" onClick=${handleReset}>↺ Reset All</button>
+        </aside>
+
+        <main className="globe-wrapper" aria-label="Main visualization — 3D interactive globe">
+          <${Globe} telescopes=${telescopes} onTelescopeAdd=${handleTelescopeAdd} showCountryLabels=${showCountryLabels} />
+          <div className=${'status-bar ' + status.type}>
+            ${isComputing ? html`<span className="spinner"></span>` : null}
+            <span>${status.msg}</span>
+          </div>
+        </main>
+
+        <aside className="right-panel" aria-label="Analysis outputs">
+          <section className="panel-section">
+            <h2>UV Coverage <${InfoTooltip} infoKey="uvmap" onOpen=${setInfoKey} /></h2>
+            <${UVMap} uvPoints=${uvPoints} N=${IMAGE_SIZE} />
+            <p className="caption">Fill: ${uvFill.toFixed(2)}% of UV-plane sampled · ${uvPoints.length} samples</p>
+          </section>
+
+          <section className="panel-section">
+            <h2>Image Reconstruction</h2>
+            <div className="images-row">
+              <${OriginalImagePanel}
+                canvas=${originalCanvas}
+                label="Ground Truth"
+                infoKey="ground"
+                onOpenInfo=${setInfoKey}
+              />
+              <${ImageCanvas}
+                data=${dirty}
+                N=${IMAGE_SIZE}
+                label="Dirty Image"
+                infoKey="dirty"
+                onOpenInfo=${setInfoKey}
+              />
+              <${ImageCanvas}
+                data=${restored}
+                N=${IMAGE_SIZE}
+                label=${restoredLabel}
+                infoKey="restored"
+                onOpenInfo=${setInfoKey}
+              />
+            </div>
+          </section>
+        </aside>
+      </div>
+
+      <${InfoModal} infoKey=${infoKey} onClose=${() => setInfoKey(null)} />
+    </div>
+  `;
+}
+
+// Mount
+const root = createRoot(document.getElementById('root'));
+root.render(html`<${App} />`);
+</script>
+</body>
+</html>
