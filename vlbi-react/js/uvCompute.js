@@ -1,0 +1,76 @@
+// UV-plane coverage computation: ECEF coordinates, baseline → UV, conjugate symmetry.
+import { EARTH_RADIUS_KM } from './constants.js';
+
+export function latLonToECEF(lat, lon) {
+  const phi = lat * Math.PI / 180;
+  const lam = lon * Math.PI / 180;
+  return {
+    x: EARTH_RADIUS_KM * Math.cos(phi) * Math.cos(lam),
+    y: EARTH_RADIUS_KM * Math.cos(phi) * Math.sin(lam),
+    z: EARTH_RADIUS_KM * Math.sin(phi),
+  };
+}
+
+export function computeBaseline(t1, t2) {
+  const p1 = latLonToECEF(t1.lat, t1.lon);
+  const p2 = latLonToECEF(t2.lat, t2.lon);
+  return { bx: p2.x - p1.x, by: p2.y - p1.y, bz: p2.z - p1.z };
+}
+
+export function baselineToUV(b, H, decDeg) {
+  const d = decDeg * Math.PI / 180;
+  const u =  Math.sin(H) * b.bx + Math.cos(H) * b.by;
+  const v = -Math.sin(d) * Math.cos(H) * b.bx + Math.sin(d) * Math.sin(H) * b.by + Math.cos(d) * b.bz;
+  return { u, v };
+}
+
+export function lerpColor(h1, h2, t) {
+  const parse = h => [
+    parseInt(h.slice(1,3),16),
+    parseInt(h.slice(3,5),16),
+    parseInt(h.slice(5,7),16),
+  ];
+  const c1 = parse(h1), c2 = parse(h2);
+  const r = Math.round(c1[0] + (c2[0]-c1[0])*t);
+  const g = Math.round(c1[1] + (c2[1]-c1[1])*t);
+  const b = Math.round(c1[2] + (c2[2]-c1[2])*t);
+  return '#' + [r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+
+export function computeUVPoints(telescopes, { declination, duration, frequency, N }) {
+  const visible = telescopes.filter(t => t.visible !== false);
+  if (visible.length < 2) return [];
+  const STEPS = 200;
+  const halfDur = (duration * Math.PI / 24);
+  const freqRatio = frequency / 230;
+  const scale = (N / 2) / (2 * EARTH_RADIUS_KM) * freqRatio;
+  const pts = [];
+  for (let i = 0; i < visible.length; i++) {
+    for (let j = i+1; j < visible.length; j++) {
+      const t1 = visible[i], t2 = visible[j];
+      const b = computeBaseline(t1, t2);
+      const color = lerpColor(t1.color, t2.color, 0.5);
+      const pairId = `${t1.id}-${t2.id}`;
+      for (let s = 0; s <= STEPS; s++) {
+        const H = -halfDur + (s / STEPS) * 2 * halfDur;
+        const uv = baselineToUV(b, H, declination);
+        const pu = uv.u * scale;
+        const pv = uv.v * scale;
+        pts.push({ u:  pu + N/2, v:  pv + N/2, color, pairId });
+        pts.push({ u: -pu + N/2, v: -pv + N/2, color, pairId });
+      }
+    }
+  }
+  return pts;
+}
+
+export function computeUVFill(uvPoints, N) {
+  if (uvPoints.length === 0) return 0;
+  const seen = new Set();
+  for (const p of uvPoints) {
+    const iu = ((Math.round(p.u)) % N + N) % N;
+    const iv = ((Math.round(p.v)) % N + N) % N;
+    seen.add(iv * N + iu);
+  }
+  return (seen.size / (N * N)) * 100;
+}

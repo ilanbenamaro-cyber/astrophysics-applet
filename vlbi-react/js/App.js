@@ -1,0 +1,297 @@
+// App root — manages all state, wires worker, renders layout.
+import { html, useState, useEffect, useCallback, useRef, useMemo } from './core.js';
+import { IMAGE_SIZE, TELESCOPE_COLORS, EHT_PRESETS } from './constants.js';
+import { computeUVPoints, computeUVFill, computeBaseline } from './uvCompute.js';
+import { generatePreset } from './presets.js';
+import { Globe } from './Globe.js';
+import { InfoTooltip } from './InfoTooltip.js';
+import { InfoModal } from './InfoModal.js';
+import { UVMap } from './UVMap.js';
+import { ImageCanvas, OriginalImagePanel } from './ImageCanvas.js';
+import { StatusBar } from './StatusBar.js';
+import { AppSidebar } from './AppSidebar.js';
+
+export function App() {
+  const [telescopes, setTelescopes] = useState([]);
+  const [showCountryLabels, setShowCountryLabels] = useState(true);
+  const [selectedPreset, setSelectedPreset] = useState('blackhole');
+  const [grayscale, setGrayscale] = useState(null);
+  const [originalCanvas, setOriginalCanvas] = useState(null);
+  const [uvPoints, setUvPoints] = useState([]);
+  const [uvFill, setUvFill] = useState(0);
+  const [dirty, setDirty] = useState(null);
+  const [restored, setRestored] = useState(null);
+  const [controls, setControls] = useState({
+    declination: 30, duration: 12, frequency: 230,
+    noise: 0, dishDiameter: 25, method: 'clean'
+  });
+  const [infoKey, setInfoKey] = useState(null);
+  const [status, setStatus] = useState({ msg: 'Select an image and place telescopes to begin', type: '' });
+  const [isComputing, setIsComputing] = useState(false);
+
+  const workerRef = useRef(null);
+  const reqIdRef = useRef(0);
+  const computeTimerRef = useRef(null);
+  const telIdRef = useRef(0);
+
+  // Init worker once
+  useEffect(() => {
+    const worker = new Worker(new URL('./worker.js', import.meta.url));
+    worker.onmessage = (e) => {
+      if (e.data.type === 'result') {
+        setDirty(e.data.dirty);
+        setRestored(e.data.restored);
+        setIsComputing(false);
+        setStatus({ msg: `Reconstruction complete — ${e.data.uvCount ?? ''} UV samples`, type: 'success' });
+      } else if (e.data.type === 'error') {
+        setIsComputing(false);
+        setStatus({ msg: 'Error: ' + e.data.message, type: 'error' });
+      }
+    };
+    worker.onerror = (err) => {
+      setIsComputing(false);
+      setStatus({ msg: 'Worker error: ' + (err.message || 'failed to start'), type: 'error' });
+    };
+    workerRef.current = worker;
+    return () => { worker.terminate(); };
+  }, []);
+
+  // Auto-load blackhole preset on mount
+  useEffect(() => {
+    const { previewCanvas, grayscale: gs } = generatePreset('blackhole');
+    setGrayscale(gs);
+    setOriginalCanvas(previewCanvas);
+    setSelectedPreset('blackhole');
+  }, []);
+
+  // Load EHT presets on mount (after short delay)
+  useEffect(() => {
+    const timer = setTimeout(() => { loadEHTPresets(); }, 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  function loadEHTPresets() {
+    telIdRef.current = 0;
+    const newTels = EHT_PRESETS.map((p, i) => ({
+      id: telIdRef.current++,
+      name: p.name,
+      lat: p.lat,
+      lon: p.lon,
+      color: TELESCOPE_COLORS[i % TELESCOPE_COLORS.length],
+      visible: true,
+    }));
+    setTelescopes(newTels);
+  }
+
+  const handleTelescopeAdd = useCallback((lat, lon) => {
+    setTelescopes(prev => {
+      if (prev.length >= 50) return prev;
+      const id = telIdRef.current++;
+      const usedNums = new Set(
+        prev.map(t => parseInt(t.name.slice(1))).filter(n => !isNaN(n))
+      );
+      let displayNum = 1;
+      while (usedNums.has(displayNum) && displayNum <= 50) displayNum++;
+      return [...prev, {
+        id, name: 'T' + displayNum, lat, lon,
+        color: TELESCOPE_COLORS[id % TELESCOPE_COLORS.length],
+        visible: true,
+      }];
+    });
+  }, []);
+
+  const handleTelescopeRemove = useCallback((id) => {
+    setTelescopes(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  const handleToggleVisibility = useCallback((id) => {
+    setTelescopes(prev => prev.map(t => t.id === id ? { ...t, visible: !t.visible } : t));
+  }, []);
+
+  // Recompute UV points whenever telescopes or relevant controls change
+  useEffect(() => {
+    const uvPts = computeUVPoints(telescopes, { ...controls, N: IMAGE_SIZE });
+    setUvPoints(uvPts);
+    setUvFill(computeUVFill(uvPts, IMAGE_SIZE));
+  }, [telescopes, controls.declination, controls.duration, controls.frequency]);
+
+  // Debounced reconstruction
+  useEffect(() => {
+    clearTimeout(computeTimerRef.current);
+    if (!grayscale || uvPoints.length === 0) {
+      setDirty(null);
+      setRestored(null);
+      if (telescopes.length < 2) {
+        setStatus({ msg: 'Place at least 2 telescopes to reconstruct', type: '' });
+      } else {
+        setStatus({ msg: 'Load an image to begin', type: '' });
+      }
+      return;
+    }
+    computeTimerRef.current = setTimeout(() => {
+      setIsComputing(true);
+      setStatus({ msg: 'Computing reconstruction…', type: 'loading' });
+      const id = ++reqIdRef.current;
+      const gs = grayscale.slice();
+      const uv = uvPoints.map(p => ({ u: p.u, v: p.v }));
+      workerRef.current.postMessage(
+        { type: 'reconstruct', id, grayscale: gs, uvPoints: uv, params: {
+            N: IMAGE_SIZE,
+            noise: controls.noise,
+            method: controls.method,
+            dishDiameter: controls.dishDiameter,
+            frequency: controls.frequency,
+          }
+        },
+        [gs.buffer]
+      );
+    }, 100);
+    return () => clearTimeout(computeTimerRef.current);
+  }, [uvPoints, grayscale, controls.noise, controls.method, controls.dishDiameter, controls.frequency]);
+
+  const handlePresetSelect = useCallback((name) => {
+    const { previewCanvas, grayscale: gs } = generatePreset(name);
+    setGrayscale(gs);
+    setOriginalCanvas(previewCanvas);
+    setSelectedPreset(name);
+  }, []);
+
+  const handleFileUpload = useCallback((file) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = IMAGE_SIZE; canvas.height = IMAGE_SIZE;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, IMAGE_SIZE, IMAGE_SIZE);
+      const imageData = ctx.getImageData(0, 0, IMAGE_SIZE, IMAGE_SIZE);
+      const gs = new Float64Array(IMAGE_SIZE * IMAGE_SIZE);
+      for (let i = 0; i < IMAGE_SIZE * IMAGE_SIZE; i++) {
+        gs[i] = 0.299 * imageData.data[i*4] + 0.587 * imageData.data[i*4+1] + 0.114 * imageData.data[i*4+2];
+      }
+      setGrayscale(gs);
+      setOriginalCanvas(canvas);
+      setSelectedPreset(null);
+      URL.revokeObjectURL(url);
+    };
+    img.onerror = () => URL.revokeObjectURL(url);
+    img.src = url;
+  }, []);
+
+  function handleReset() {
+    setTelescopes([]);
+    telIdRef.current = 0;
+    const { previewCanvas, grayscale: gs } = generatePreset('blackhole');
+    setGrayscale(gs);
+    setOriginalCanvas(previewCanvas);
+    setSelectedPreset('blackhole');
+    setControls({ declination: 30, duration: 12, frequency: 230, noise: 0, dishDiameter: 25, method: 'clean' });
+    setStatus({ msg: 'Reset. Place telescopes to begin.', type: '' });
+    setDirty(null);
+    setRestored(null);
+  }
+
+  const angularRes = useMemo(() => {
+    if (telescopes.length < 2) return null;
+    let maxKm = 0;
+    for (let i = 0; i < telescopes.length; i++) {
+      for (let j = i+1; j < telescopes.length; j++) {
+        const b = computeBaseline(telescopes[i], telescopes[j]);
+        const km = Math.sqrt(b.bx*b.bx + b.by*b.by + b.bz*b.bz);
+        if (km > maxKm) maxKm = km;
+      }
+    }
+    if (maxKm === 0) return null;
+    const lambdaM = 299792458 / (controls.frequency * 1e9);
+    const thetaRad = lambdaM / (maxKm * 1e3);
+    const thetaMuas = thetaRad * 206265e6;
+    return thetaMuas < 1000
+      ? thetaMuas.toFixed(0) + ' μas'
+      : (thetaMuas/1000).toFixed(2) + ' mas';
+  }, [telescopes, controls.frequency]);
+
+  const restoredLabel = controls.method === 'clean' ? 'CLEAN'
+    : controls.method === 'mem' ? 'Max Entropy'
+    : 'Restored';
+
+  return html`
+    <div className="app">
+      <header className="header">
+        <div className="header-inner">
+          <h1>VLBI Interferometry Simulator</h1>
+          <p>Click the globe to place radio telescopes · Earth rotation synthesizes a virtual aperture the size of Earth</p>
+          <p className="header-credit">Created by Ilan Benjamin Amaro</p>
+          <p className="header-ai-note">Built with AI assistance</p>
+        </div>
+        <div className="header-stats">
+          ${telescopes.length >= 2 ? html`
+            <span className="stat"><span className="stat-val">${telescopes.length}</span>telescopes</span>
+            <span className="stat"><span className="stat-val">${telescopes.length*(telescopes.length-1)/2}</span>baselines</span>
+            <span className="stat"><span className="stat-val">${uvFill.toFixed(1)}%</span>UV fill</span>
+            ${angularRes ? html`<span className="stat"><span className="stat-val">${angularRes}</span>resolution</span>` : null}
+          ` : null}
+        </div>
+      </header>
+
+      <div className="layout">
+        <${AppSidebar}
+          selectedPreset=${selectedPreset}
+          onPresetSelect=${handlePresetSelect}
+          onFileUpload=${handleFileUpload}
+          telescopes=${telescopes}
+          onTelescopeRemove=${handleTelescopeRemove}
+          onToggleVisibility=${handleToggleVisibility}
+          onLoadEHT=${loadEHTPresets}
+          onClearAll=${() => { setTelescopes([]); telIdRef.current = 0; }}
+          showCountryLabels=${showCountryLabels}
+          onToggleCountryLabels=${() => setShowCountryLabels(v => !v)}
+          controls=${controls}
+          onControlChange=${(k, v) => setControls(p => ({ ...p, [k]: v }))}
+          onOpenInfo=${setInfoKey}
+          onReset=${handleReset}
+        />
+
+        <main className="globe-wrapper" aria-label="Main visualization — 3D interactive globe">
+          <${Globe} telescopes=${telescopes} onTelescopeAdd=${handleTelescopeAdd} showCountryLabels=${showCountryLabels} />
+          <${StatusBar} status=${status} isComputing=${isComputing} />
+        </main>
+
+        <aside className="right-panel" aria-label="Analysis outputs">
+          <section className="panel-section">
+            <h2>UV Coverage <${InfoTooltip} infoKey="uvmap" onOpen=${setInfoKey} /></h2>
+            <${UVMap} uvPoints=${uvPoints} N=${IMAGE_SIZE} />
+            <p className="caption">Fill: ${uvFill.toFixed(2)}% of UV-plane sampled · ${uvPoints.length} samples</p>
+          </section>
+
+          <section className="panel-section">
+            <h2>Image Reconstruction</h2>
+            <div className="images-row">
+              <${OriginalImagePanel}
+                canvas=${originalCanvas}
+                label="Ground Truth"
+                infoKey="ground"
+                onOpenInfo=${setInfoKey}
+              />
+              <${ImageCanvas}
+                data=${dirty}
+                N=${IMAGE_SIZE}
+                label="Dirty Image"
+                infoKey="dirty"
+                onOpenInfo=${setInfoKey}
+              />
+              <${ImageCanvas}
+                data=${restored}
+                N=${IMAGE_SIZE}
+                label=${restoredLabel}
+                infoKey="restored"
+                onOpenInfo=${setInfoKey}
+              />
+            </div>
+          </section>
+        </aside>
+      </div>
+
+      <${InfoModal} infoKey=${infoKey} onClose=${() => setInfoKey(null)} />
+    </div>
+  `;
+}
