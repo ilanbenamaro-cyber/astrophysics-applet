@@ -5,7 +5,7 @@
   --bg-1: #0a0a1e;
   --bg-2: #0f0f2e;
   --bg-3: #161634;
-  --border: #1e1e50;
+  --border: #2d2200;
   --accent-teal: #C4A555;
   --accent-amber: #9E7E38;
   --accent-blue: #C4A555;
@@ -541,7 +541,7 @@ input[type="range"]::-moz-range-thumb {
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg-1); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #2e2e70; }
+::-webkit-scrollbar-thumb:hover { background: #4a3810; }
 
 /* ── Responsive ── */
 @media (max-width: 1100px) {

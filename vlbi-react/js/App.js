@@ -221,7 +221,7 @@ export function App() {
     <div className="app">
       <header className="header">
         <div className="header-inner">
-          <h1>VLBI Interferometry Simulator</h1>
+          <h1>VLBI Interferometry Simulator by Ilan Benjamin Amaro</h1>
           <p>Click the globe to place radio telescopes · Earth rotation synthesizes a virtual aperture the size of Earth</p>
           <p className="header-credit">Created by Ilan Benjamin Amaro</p>
           <p className="header-ai-note">Built with AI assistance</p>
