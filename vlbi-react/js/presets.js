@@ -1,6 +1,29 @@
 // Procedural synthetic source image generators for the image gallery.
 import { IMAGE_SIZE } from './constants.js';
 
+// Load an image from a URL and convert to {previewCanvas, grayscale} — same
+// format as generatePreset(), but async because image loading is async.
+export function loadImagePresetAsync(url) {
+  return new Promise((resolve, reject) => {
+    const N = IMAGE_SIZE;
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = N; canvas.height = N;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, N, N);
+      const imageData = ctx.getImageData(0, 0, N, N);
+      const gs = new Float64Array(N * N);
+      for (let i = 0; i < N * N; i++) {
+        gs[i] = 0.299 * imageData.data[i*4] + 0.587 * imageData.data[i*4+1] + 0.114 * imageData.data[i*4+2];
+      }
+      resolve({ previewCanvas: canvas, grayscale: gs });
+    };
+    img.onerror = () => reject(new Error('Failed to load image: ' + url));
+    img.src = url;
+  });
+}
+
 export function generatePreset(name) {
   const N = IMAGE_SIZE;
   const canvas = (typeof OffscreenCanvas !== 'undefined')

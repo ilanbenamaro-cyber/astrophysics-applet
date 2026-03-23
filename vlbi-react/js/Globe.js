@@ -55,7 +55,7 @@ export function Globe({ telescopes, onTelescopeAdd, showCountryLabels }) {
 
     // Scene
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#060614');
+    scene.background = new THREE.Color('#000000');
     sceneRef.current = scene;
 
     // Stars

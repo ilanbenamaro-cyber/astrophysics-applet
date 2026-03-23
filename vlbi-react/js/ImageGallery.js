@@ -3,12 +3,8 @@ import { html, useRef } from './core.js';
 export function ImageGallery({ selected, onSelect, onUpload }) {
   const fileRef = useRef(null);
   const presets = [
-    { name: 'blackhole', label: 'Black Hole',    icon: '⬤' },
-    { name: 'ring',      label: 'Ring Nebula',   icon: '○' },
-    { name: 'binary',    label: 'Binary Stars',  icon: '⁚' },
-    { name: 'galaxy',    label: 'Galaxy Core',   icon: '✦' },
-    { name: 'jet',       label: 'Radio Jet',     icon: '→' },
-    { name: 'point',     label: 'Point Source',  icon: '·' },
+    { name: 'blackhole', label: 'Black Hole', icon: '⬤' },
+    { name: 'wfu-seal',  label: 'WFU Seal',   icon: '⚡' },
   ];
 
   const handleFileChange = (e) => {

@@ -1,7 +1,7 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 :root {
-  --bg-0: #060614;
+  --bg-0: #000000;
   --bg-1: #0a0a1e;
   --bg-2: #0f0f2e;
   --bg-3: #161634;
@@ -123,7 +123,7 @@ html, body {
 .globe-wrapper {
   position: relative;
   overflow: hidden;
-  background: #060614;
+  background: #000000;
 }
 .globe-container {
   width: 100%;
@@ -217,7 +217,7 @@ html, body {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(6,6,20,0.85);
+  background: rgba(0,0,0,0.85);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -331,7 +331,7 @@ html, body {
 /* ── Image Gallery ── */
 .gallery-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 6px;
   margin-bottom: 8px;
 }
@@ -450,7 +450,7 @@ input[type="range"]::-moz-range-thumb {
 }
 .btn-primary {
   background: var(--accent-teal);
-  color: #060614;
+  color: #000000;
 }
 .btn-primary:hover { filter: brightness(1.1); }
 .btn-ghost {
@@ -475,7 +475,7 @@ input[type="range"]::-moz-range-thumb {
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(6,6,20,0.85);
+  background: rgba(0,0,0,0.85);
   border-top: 1px solid var(--border);
   padding: 6px 16px;
   font-size: 11px;
@@ -508,7 +508,7 @@ input[type="range"]::-moz-range-thumb {
   font-weight: 600;
   padding: 2px 5px;
   border-radius: 3px;
-  color: #060614;
+  color: #000000;
   pointer-events: none;
   white-space: nowrap;
   transform: translateY(-16px);

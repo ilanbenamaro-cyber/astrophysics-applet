@@ -2,7 +2,7 @@
 import { html, useState, useEffect, useCallback, useRef, useMemo } from './core.js';
 import { IMAGE_SIZE, TELESCOPE_COLORS, EHT_PRESETS } from './constants.js';
 import { computeUVPoints, computeUVFill, computeBaseline } from './uvCompute.js';
-import { generatePreset } from './presets.js';
+import { generatePreset, loadImagePresetAsync } from './presets.js';
 import { Globe } from './Globe.js';
 import { InfoTooltip } from './InfoTooltip.js';
 import { InfoModal } from './InfoModal.js';
@@ -153,10 +153,20 @@ export function App() {
   }, [uvPoints, grayscale, controls.noise, controls.method, controls.dishDiameter, controls.frequency]);
 
   const handlePresetSelect = useCallback((name) => {
-    const { previewCanvas, grayscale: gs } = generatePreset(name);
-    setGrayscale(gs);
-    setOriginalCanvas(previewCanvas);
-    setSelectedPreset(name);
+    if (name === 'wfu-seal') {
+      loadImagePresetAsync('../assets/wfu-seal.png').then(({ previewCanvas, grayscale: gs }) => {
+        setGrayscale(gs);
+        setOriginalCanvas(previewCanvas);
+        setSelectedPreset(name);
+      }).catch(() => {
+        setStatus({ msg: 'Failed to load WFU Seal image', type: 'error' });
+      });
+    } else {
+      const { previewCanvas, grayscale: gs } = generatePreset(name);
+      setGrayscale(gs);
+      setOriginalCanvas(previewCanvas);
+      setSelectedPreset(name);
+    }
   }, []);
 
   const handleFileUpload = useCallback((file) => {
@@ -223,7 +233,6 @@ export function App() {
         <div className="header-inner">
           <h1>VLBI Interferometry Simulator by Ilan Benjamin Amaro</h1>
           <p>Click the globe to place radio telescopes · Earth rotation synthesizes a virtual aperture the size of Earth</p>
-          <p className="header-credit">Created by Ilan Benjamin Amaro</p>
           <p className="header-ai-note">Built with AI assistance</p>
         </div>
         <div className="header-stats">
