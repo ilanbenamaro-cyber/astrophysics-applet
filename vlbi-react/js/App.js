@@ -87,10 +87,13 @@ export function App() {
     setTelescopes(prev => {
       if (prev.length >= 50) return prev;
       const id = telIdRef.current++;
+      // Non-T telescopes (EHT presets like ALMA, APEX) occupy the first N slots,
+      // so T-numbering must start above them to avoid T1 appearing alongside ALMA.
+      const nonTCount = prev.filter(t => isNaN(parseInt(t.name.slice(1)))).length;
       const usedNums = new Set(
         prev.map(t => parseInt(t.name.slice(1))).filter(n => !isNaN(n))
       );
-      let displayNum = 1;
+      let displayNum = nonTCount + 1;
       while (usedNums.has(displayNum) && displayNum <= 50) displayNum++;
       return [...prev, {
         id, name: 'T' + displayNum, lat, lon,
