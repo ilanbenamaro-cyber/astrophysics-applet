@@ -2,7 +2,7 @@
 import { html, useState, useEffect, useCallback, useRef, useMemo } from './core.js';
 import { IMAGE_SIZE, TELESCOPE_COLORS, EHT_PRESETS } from './constants.js';
 import { computeUVPoints, computeUVFill, computeBaseline } from './uvCompute.js';
-import { generatePreset, loadImagePresetAsync } from './presets.js';
+import { loadImagePresetAsync } from './presets.js';
 import { Globe } from './Globe.js';
 import { InfoTooltip } from './InfoTooltip.js';
 import { InfoModal } from './InfoModal.js';
@@ -58,10 +58,11 @@ export function App() {
 
   // Auto-load blackhole preset on mount
   useEffect(() => {
-    const { previewCanvas, grayscale: gs } = generatePreset('blackhole');
-    setGrayscale(gs);
-    setOriginalCanvas(previewCanvas);
-    setSelectedPreset('blackhole');
+    loadImagePresetAsync('../assets/black-hole.png').then(({ previewCanvas, grayscale: gs }) => {
+      setGrayscale(gs);
+      setOriginalCanvas(previewCanvas);
+      setSelectedPreset('blackhole');
+    });
   }, []);
 
   // Load EHT presets on mount (after short delay)
@@ -152,14 +153,17 @@ export function App() {
     return () => clearTimeout(computeTimerRef.current);
   }, [uvPoints, grayscale, controls.noise, controls.method, controls.dishDiameter, controls.frequency]);
 
+  const IMAGE_PRESETS = { 'blackhole': '../assets/black-hole.png', 'wfu-seal': '../assets/wfu-seal.png' };
+
   const handlePresetSelect = useCallback((name) => {
-    if (name === 'wfu-seal') {
-      loadImagePresetAsync('../assets/wfu-seal.png').then(({ previewCanvas, grayscale: gs }) => {
+    const url = IMAGE_PRESETS[name];
+    if (url) {
+      loadImagePresetAsync(url).then(({ previewCanvas, grayscale: gs }) => {
         setGrayscale(gs);
         setOriginalCanvas(previewCanvas);
         setSelectedPreset(name);
       }).catch(() => {
-        setStatus({ msg: 'Failed to load WFU Seal image', type: 'error' });
+        setStatus({ msg: 'Failed to load image: ' + name, type: 'error' });
       });
     } else {
       const { previewCanvas, grayscale: gs } = generatePreset(name);
@@ -194,10 +198,11 @@ export function App() {
   function handleReset() {
     setTelescopes([]);
     telIdRef.current = 0;
-    const { previewCanvas, grayscale: gs } = generatePreset('blackhole');
-    setGrayscale(gs);
-    setOriginalCanvas(previewCanvas);
-    setSelectedPreset('blackhole');
+    loadImagePresetAsync('../assets/black-hole.png').then(({ previewCanvas, grayscale: gs }) => {
+      setGrayscale(gs);
+      setOriginalCanvas(previewCanvas);
+      setSelectedPreset('blackhole');
+    });
     setControls({ declination: 30, duration: 12, frequency: 230, noise: 0, dishDiameter: 25, method: 'clean' });
     setStatus({ msg: 'Reset. Place telescopes to begin.', type: '' });
     setDirty(null);
