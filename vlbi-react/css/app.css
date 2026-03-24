@@ -2,9 +2,9 @@
 
 :root {
   --bg-0: #000000;
-  --bg-1: #0a0a1e;
-  --bg-2: #0f0f2e;
-  --bg-3: #161634;
+  --bg-1: #0a0a0a;
+  --bg-2: #111111;
+  --bg-3: #1a1a1a;
   --border: #2d2200;
   --accent-teal: #C4A555;
   --accent-amber: #9E7E38;
@@ -352,6 +352,7 @@ html, body {
 .gallery-btn.selected { border-color: var(--accent-teal); background: var(--bg-3); }
 .gallery-btn .icon { font-size: 16px; line-height: 1; }
 .gallery-btn .glabel { font-size: 9px; color: var(--text-secondary); text-align: center; }
+.gallery-btn .glabel-bold { font-size: 11px; font-weight: 600; color: var(--text-primary); text-align: center; }
 .upload-zone {
   border: 1px dashed var(--border);
   border-radius: 6px;

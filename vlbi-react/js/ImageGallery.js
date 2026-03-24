@@ -4,7 +4,7 @@ export function ImageGallery({ selected, onSelect, onUpload }) {
   const fileRef = useRef(null);
   const presets = [
     { name: 'blackhole', label: 'Black Hole', icon: '⬤' },
-    { name: 'wfu-seal',  label: 'WFU Seal',   icon: '⚡' },
+    { name: 'wfu-seal',  label: 'WFU Seal',   icon: null },
   ];
 
   const handleFileChange = (e) => {
@@ -23,8 +23,8 @@ export function ImageGallery({ selected, onSelect, onUpload }) {
           aria-label=${'Load ' + p.label + ' preset'}
           aria-pressed=${selected === p.name}
         >
-          <span className="icon">${p.icon}</span>
-          <span className="glabel">${p.label}</span>
+          ${p.icon ? html`<span className="icon">${p.icon}</span>` : null}
+          <span className=${p.icon ? 'glabel' : 'glabel-bold'}>${p.label}</span>
         </button>
       `)}
     </div>
