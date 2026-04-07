@@ -1,59 +1,59 @@
-# Bug Fix Task 01 — Diagnosis
+# Task 01 — Diagnosis
+# Bug: Telescopes placeable in ocean
 
 ## Root Cause
 
-**File:** `vlbi-react/js/App.js`, `handleTelescopeAdd` callback (line ~90)
+`_onClick` in `mapController.js` (lines 176–184):
 
-```javascript
-const usedNums = new Set(
-  prev.map(t => parseInt(t.name.slice(1))).filter(n => !isNaN(n))
-);
-let displayNum = 1;
-while (usedNums.has(displayNum) && displayNum <= 50) displayNum++;
+```js
+function _onClick(e) {
+    const { x, y } = _canvasCoords(e);
+    const hit = _hitTest(x, y);
+    if (hit !== null) {
+        removeTelescope(hit);
+    } else {
+        const { lat, lon } = _unproject(x, y);
+        addTelescope(lat, lon, 'Custom');   // ← no land/water check
+    }
+}
 ```
 
-The logic parses each telescope name by slicing the first character and calling
-`parseInt`. This works for T-numbered telescopes:
-- `"T3".slice(1)` → `"3"` → `parseInt("3")` → `3` ✓
+Any non-telescope-hit click unconditionally calls `addTelescope`. There is no guard
+that checks whether the clicked coordinate falls on land or water.
 
-But EHT preset telescopes have proper names:
-- `"ALMA".slice(1)` → `"LMA"` → `parseInt("LMA")` → `NaN` → filtered out
-- `"APEX".slice(1)` → `"PEX"` → `NaN` → filtered out
-- Same for: SPT, JCMT, SMT, IRAM, LMT, NOEMA
+## Why No Check Exists
 
-So when all 8 EHT presets are loaded, `usedNums` is an **empty Set**.
-`displayNum` starts at 1, finds no collision, returns T1. Bug confirmed.
+The map is Canvas 2D. There is no DOM land/water layer to query. The Blue Marble
+earth image is already loaded for rendering, but pixel sampling was never implemented.
+`_unproject` converts canvas pixels to lat/lon with no terrain knowledge.
 
-## Why `displayNum = 1` Is Wrong Here
+## Fix Strategy
 
-The intent was "lowest unused T-number". But "unused" was only checked against
-existing T-numbered telescopes, ignoring that EHT-named telescopes also occupy
-slots on the map. With 8 EHT telescopes present, T1–T8 are semantically "taken"
-even though they don't appear in `usedNums`.
+**Pixel-sampling from an off-screen canvas** — zero new dependencies:
 
-## Fix
+1. Load `earthImg` with `crossOrigin = 'anonymous'` (unpkg.com sends CORS headers)
+2. On image load, draw it to a private 720×360 off-screen canvas (`_landCanvas`)
+3. `_isLand(lat, lon)`: map lat/lon → pixel in `_landCanvas`, sample RGB,
+   classify as water if `b > r + 40 && b > 100` (Blue Marble ocean heuristic)
+4. In `_onClick`: if `!_isLand(lat, lon)`, reject and call optional `onReject()` callback
+5. `initGlobe` gains an optional 3rd arg `onReject` so app.js can show a status message
+6. If image unavailable (load failed / CORS blocked): `_isLand` returns `true` — graceful degradation
 
-Add a floor: `displayNum` must start at `(count of non-T telescopes) + 1`.
-Non-T telescopes are those whose names don't parse to a number — i.e., EHT presets.
+## Water Heuristic Validation
 
-```javascript
-const nonTCount = prev.filter(t => isNaN(parseInt(t.name.slice(1)))).length;
-const usedNums = new Set(
-  prev.map(t => parseInt(t.name.slice(1))).filter(n => !isNaN(n))
-);
-let displayNum = nonTCount + 1;
-while (usedNums.has(displayNum) && displayNum <= 50) displayNum++;
-```
+Blue Marble RGB samples:
+| Surface        | R   | G   | B   | b > r+40? | b > 100? | Result |
+|----------------|-----|-----|-----|-----------|----------|--------|
+| Deep ocean     |  30 |  60 | 140 | ✓         | ✓        | water  |
+| Shallow ocean  |  50 | 100 | 160 | ✓         | ✓        | water  |
+| Rainforest     |  50 | 100 |  40 | ✗         | —        | land ✓ |
+| Sahara         | 200 | 180 | 130 | ✗         | —        | land ✓ |
+| Antarctica     | 220 | 220 | 230 | ✗(230>260)| —        | land ✓ |
+| Greenland      | 210 | 220 | 235 | ✗(235>250)| —        | land ✓ |
 
-**Verification of fix:**
-- 8 EHT + no T-telescopes: `nonTCount=8`, `usedNums={}`, `displayNum=9` → **T9** ✓
-- 8 EHT + T9, T10: `nonTCount=8`, start at 9 (used), 10 (used), → **T11** ✓
-- 8 EHT + T10 (gap at 9): `nonTCount=8`, start at 9 (free) → **T9** (gap-fill) ✓
-- 0 EHT + T1, T2, T3: `nonTCount=0`, start at 1 (used)…→ **T4** ✓
-- 0 EHT + T1, T3 (gap): `nonTCount=0`, start at 1 (used), 2 (free) → **T2** ✓
+CONFIDENCE: HIGH — root cause is unambiguous; fix isolated to mapController.js + 3 lines in app.js.
 
-## Confidence
+## Files To Change
 
-HIGH — root cause confirmed by direct code inspection. Single-line logic change.
-No other callers of the display-number logic; `loadEHTPresets` assigns names from
-`EHT_PRESETS` directly and is not affected.
+- `js/mapController.js` — add `_landCanvas`, `_buildLandCanvas`, `_isLand`; update `initGlobe` and `_onClick`
+- `js/app.js` — pass `onReject` callback to `initGlobe`

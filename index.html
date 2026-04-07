@@ -4,24 +4,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>VLBI Simulator — Radio Telescope Interferometry</title>
-    <meta name="description" content="Interactive simulator of Very Long Baseline Interferometry (VLBI) image reconstruction. Place radio telescopes on a 3D globe, explore UV-plane coverage, and see how the Event Horizon Telescope reconstructs images of black holes." />
-
-    <!-- App styles -->
+    <meta name="description" content="Interactive simulator of Very Long Baseline Interferometry (VLBI) image reconstruction. Place radio telescopes on a world map, explore UV-plane coverage, and see how the Event Horizon Telescope reconstructs images of black holes." />
     <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 
 <header>
-    <h1>Radio Telescope Interferometry Simulator</h1>
-    <p>
-        Place telescopes on the globe, explore UV-plane coverage, and watch sparse Fourier
-        sampling reconstruct your image — simulating how the Event Horizon Telescope images a black hole.
-    </p>
+    <div class="header-inner">
+        <div>
+            <h1>Radio Telescope Interferometry Simulator</h1>
+            <p>Place telescopes on the world map, explore UV-plane coverage, and watch sparse Fourier sampling reconstruct your image — simulating how the Event Horizon Telescope images a black hole.</p>
+        </div>
+    </div>
 </header>
 
 <main>
 
-    <!-- Controls ─────────────────────────────────────────────── -->
+    <!-- Controls bar -->
     <section class="controls">
 
         <div class="control-group">
@@ -41,7 +40,7 @@
 
         <div class="control-group">
             <label for="declination">
-                Source declination: <span id="declination-val">45°</span>
+                Declination: <span id="declination-val">45°</span>
                 <button class="info-btn" data-info-key="declination" aria-label="About declination">?</button>
             </label>
             <input type="range" id="declination" min="-90" max="90" value="45" step="1" />
@@ -49,7 +48,7 @@
 
         <div class="control-group">
             <label for="ha-range">
-                Hour angle range: <span id="ha-range-val">±90°</span>
+                Hour angle: <span id="ha-range-val">±90°</span>
                 <button class="info-btn" data-info-key="ha-range" aria-label="About hour angle range">?</button>
             </label>
             <input type="range" id="ha-range" min="10" max="360" value="180" step="10" />
@@ -57,26 +56,27 @@
 
         <div class="control-group buttons">
             <button id="load-presets">Load EHT Presets</button>
-            <button id="clear-telescopes">Clear Telescopes</button>
+            <button id="clear-telescopes">Clear</button>
             <button id="save-uv">Save UV</button>
-            <button id="save-reconstruction">Save Reconstruction</button>
+            <button id="save-reconstruction">Save Image</button>
+            <label class="clean-toggle">
+                <input type="checkbox" id="use-clean"> CLEAN
+            </label>
         </div>
 
-        <p id="status" class="status">
-            Upload an image and place telescopes (or load EHT presets) to begin.
-        </p>
+        <p id="status" class="status"></p>
 
     </section>
 
-    <!-- Three panels ─────────────────────────────────────────── -->
+    <!-- Three panels -->
     <div class="panels">
 
-        <!-- Panel 1: Telescope globe -->
-        <section class="panel">
+        <!-- Panel 1: Telescope map -->
+        <section class="panel panel--map">
             <h2>
                 Telescope Array
                 <span class="panel-h2-right">
-                    <span class="hint">Click globe to add · click telescope to remove</span>
+                    <span class="hint">Click map to add &middot; click dot to remove</span>
                     <button class="info-btn" data-info-key="telescope-array" aria-label="About telescope arrays">?</button>
                 </span>
             </h2>
@@ -85,14 +85,14 @@
                 <summary>Baseline lengths</summary>
                 <table id="baseline-table">
                     <thead>
-                        <tr><th>Telescope A</th><th>Telescope B</th><th>Length (km)</th></tr>
+                        <tr><th>Telescope A</th><th>Telescope B</th><th>Length</th></tr>
                     </thead>
                     <tbody></tbody>
                 </table>
             </details>
         </section>
 
-        <!-- Panel 2: UV-plane coverage -->
+        <!-- Panel 2: UV-plane -->
         <section class="panel">
             <h2>
                 UV-Plane Coverage
@@ -104,17 +104,14 @@
             <canvas id="uv-canvas" width="256" height="256"></canvas>
             <div class="dirty-beam-row">
                 <div class="dirty-beam-col">
-                    <p class="sub-label">Point Spread Function (Dirty Beam)</p>
+                    <p class="sub-label">Point Spread Function</p>
                     <canvas id="dirty-beam-canvas" width="128" height="128"></canvas>
                 </div>
             </div>
-            <p class="caption">
-                Each colored arc is one baseline pair tracked through Earth rotation.
-                More coverage and wider spread → sharper reconstruction.
-            </p>
+            <p class="caption">Each arc is one baseline tracked through Earth rotation. Wider spread &rarr; sharper reconstruction.</p>
         </section>
 
-        <!-- Panel 3: Image comparison -->
+        <!-- Panel 3: Reconstruction -->
         <section class="panel">
             <h2>
                 Image Reconstruction
@@ -122,11 +119,11 @@
             </h2>
             <div class="image-row">
                 <div class="image-col">
-                    <p>Original</p>
+                    <p class="image-label">Original</p>
                     <canvas id="original-canvas" width="256" height="256"></canvas>
                 </div>
                 <div class="image-col">
-                    <p>Reconstructed</p>
+                    <p class="image-label" id="recon-label">Dirty Image</p>
                     <canvas id="reconstructed-canvas" width="256" height="256"></canvas>
                 </div>
             </div>
@@ -135,16 +132,16 @@
     </div>
 </main>
 
-<!-- Libraries (CDN) — Globe.gl must load before mapController.js -->
-<script src="https://unpkg.com/globe.gl/dist/globe.gl.min.js"></script>
+<!-- math.js for FFT (no Globe.gl — map uses Canvas 2D API) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.0/math.min.js"></script>
 
-<!-- App modules (order matters: dependencies before dependents) -->
+<!-- App modules -->
 <script src="js/fft2d.js"></script>
 <script src="js/interferometry.js"></script>
 <script src="js/imageProcessor.js"></script>
 <script src="js/sampleImages.js"></script>
-<script src="js/mapController.js"></script>
+<script src="js/landMask.js"></script>
+<script src="js/mapController.js?v=3"></script>
 <script src="js/infoModal.js"></script>
 <script src="js/app.js"></script>
 

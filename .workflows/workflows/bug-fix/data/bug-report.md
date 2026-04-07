@@ -1,37 +1,15 @@
-# Bug Report Template
-# Fill this in before running the bug-fix workflow.
-# ─────────────────────────────────────────────────────────────────────────────
-
 ## What Is Broken
-
-[Describe the incorrect behavior in one or two sentences.]
+Users can place telescopes in the ocean. Telescopes should only be placeable on land. The map click handler adds a telescope at any clicked coordinate regardless of whether it is land or water.
 
 ## Expected Behavior
-
-[What should happen instead.]
+Clicking on ocean/water should do nothing or show a brief message. Only land coordinates should accept telescope placement.
 
 ## How To Reproduce
-
-[Step-by-step reproduction. If you can't reproduce it, note that.]
-1.
-2.
-3.
-
-## Error Message / Stack Trace
-
-[Paste the exact error here. Do not summarize it.]
-
-```
-[error here]
-```
+1. Click anywhere on the ocean on the globe
+2. A telescope is placed in the water
 
 ## Environment
-
-- Occurred in: [development | staging | production]
-- First noticed: [date or "always"]
-- Frequency: [always | sometimes | once]
+Development. Browser app, globe rendered with Globe.gl or similar.
 
 ## What I've Already Tried
-
-[Anything you've already checked or attempted, so Claude doesn't repeat it.]
--
+Nothing yet.

@@ -1,20 +1,21 @@
 /**
  * app.js
- * Main coordinator: connects the globe, interferometry math, and image display.
- * Depends on: mapController.js, interferometry.js, imageProcessor.js, sampleImages.js,
- *             infoModal.js, fft2d.js.
+ * Main coordinator: connects the world map, interferometry math, and image display.
+ * Depends on: mapController.js, interferometry.js, imageProcessor.js,
+ *             sampleImages.js, infoModal.js, fft2d.js.
  */
 
-const EHT_WAVELENGTH_MM = 1.3;   // EHT observing wavelength used for angular resolution
+const EHT_WAVELENGTH_MM = 1.3;
 
 let currentImageData    = null;
 let currentGrayscale    = null;
 let reconstructionTimer = null;
 
+// ── Reconstruction pipeline ───────────────────────────────────────────────────
+
 /**
- * Debounced entry point for reconstruction — cancels any pending run before scheduling
- * a new one. Prevents batched telescope updates (e.g. loadPresets) from queuing multiple
- * simultaneous FFT jobs.
+ * Debounced entry point — prevents batched updates (e.g. loadPresets) from
+ * queuing multiple simultaneous FFT jobs.
  */
 function runReconstruction() {
     clearTimeout(reconstructionTimer);
@@ -29,7 +30,7 @@ function _reconstruct() {
         return;
     }
     if (tels.length < 2) {
-        updateStatus('Place at least 2 telescopes on the globe to begin reconstruction.');
+        updateStatus('Place at least 2 telescopes on the map to begin reconstruction.');
         clearReconstructed();
         updateBaselineTable(tels);
         return;
@@ -43,38 +44,48 @@ function _reconstruct() {
     drawUVPlane(uvPoints, N, document.getElementById('uv-canvas'));
 
     const fill = computeUVFill(uvPoints, N);
-    document.getElementById('uv-count').textContent = `${uvPoints.length} samples · ${fill}% fill`;
+    document.getElementById('uv-count').textContent =
+        `${uvPoints.length} samples · ${fill}% fill`;
 
     updateBaselineTable(tels);
-    updateStatus('Reconstructing…');
+    updateStatus('Reconstructing…', 'loading');
 
-    // Defer FFT work by one frame so "Reconstructing…" renders first
+    const useCLEAN = document.getElementById('use-clean').checked;
+
+    // Defer FFT by one frame so the status text paints first
     setTimeout(() => {
         try {
-            const pixels = reconstructImage(currentGrayscale, uvPoints);
-            grayscaleToCanvas(pixels, document.getElementById('reconstructed-canvas'));
-
-            const beam = computeDirtyBeam(uvPoints, N);
+            const dirtyPixels = reconstructImage(currentGrayscale, uvPoints);
+            const beam        = computeDirtyBeam(uvPoints, N);
             grayscaleToCanvas(beam, document.getElementById('dirty-beam-canvas'));
 
-            const resolutionStr = _angularResolution(tels);
+            let finalPixels;
+            if (useCLEAN) {
+                updateStatus('Running CLEAN…', 'loading');
+                finalPixels = cleanDeconvolve(dirtyPixels, beam, {
+                    gain: 0.1, maxIter: 1000, threshold: 0.05,
+                });
+                document.getElementById('recon-label').textContent = 'CLEAN Output';
+            } else {
+                finalPixels = dirtyPixels;
+                document.getElementById('recon-label').textContent = 'Dirty Image';
+            }
+            grayscaleToCanvas(finalPixels, document.getElementById('reconstructed-canvas'));
+
+            const resStr = _angularResolution(tels);
             updateStatus(
-                `Done — ${tels.length} telescopes, ${uvPoints.length} UV samples, ` +
-                `UV fill ${fill}%, decl ${decl}°, HA ±${(haRange / 2).toFixed(0)}°` +
-                (resolutionStr ? ` · ${resolutionStr}` : '')
+                `Done — ${tels.length} telescopes · ${uvPoints.length} UV samples · ` +
+                `${fill}% fill · δ ${decl}° · HA ±${(haRange / 2).toFixed(0)}°` +
+                (resStr ? ` · ${resStr}` : ''),
+                'success'
             );
         } catch (err) {
-            updateStatus(`Reconstruction failed: ${err.message}`);
+            updateStatus(`Reconstruction failed: ${err.message}`, 'error');
         }
     }, 10);
 }
 
-/**
- * Compute the angular resolution estimate from the longest baseline.
- * Uses θ ≈ λ/B at the EHT wavelength. Returns a display string or ''.
- * @param {Array<{lat: number, lon: number}>} tels
- * @returns {string}
- */
+/** Angular resolution estimate from the longest baseline (θ ≈ λ/B). */
 function _angularResolution(tels) {
     if (tels.length < 2) return '';
     let maxKm = 0;
@@ -86,18 +97,24 @@ function _angularResolution(tels) {
         }
     }
     if (maxKm === 0) return '';
-    // θ_µas = (λ_m / B_m) × 206265 × 1e6
-    // λ = EHT_WAVELENGTH_MM × 1e-3 m, B_m = maxKm × 1e3 m
-    const thetaMicroarcsec = (EHT_WAVELENGTH_MM * 1e-3 / (maxKm * 1e3)) * 206265 * 1e6;
-    return `θ ≈ ${thetaMicroarcsec.toFixed(0)} µas @ ${EHT_WAVELENGTH_MM} mm`;
+    const thetaMuas = (EHT_WAVELENGTH_MM * 1e-3 / (maxKm * 1e3)) * 206265 * 1e6;
+    return `θ ≈ ${thetaMuas.toFixed(0)} µas`;
 }
 
-/** Set the status bar text. */
-function updateStatus(msg) {
-    document.getElementById('status').textContent = msg;
+// ── UI helpers ────────────────────────────────────────────────────────────────
+
+/**
+ * Set the status bar text.
+ * @param {string} msg
+ * @param {'loading'|'success'|'error'|''} [type]
+ */
+function updateStatus(msg, type = '') {
+    const el = document.getElementById('status');
+    el.textContent = msg;
+    el.className   = 'status' + (type ? ` status--${type}` : '');
 }
 
-/** Clear the reconstructed and dirty beam canvases when there are too few telescopes. */
+/** Clear the three output canvases (too few telescopes). */
 function clearReconstructed() {
     for (const id of ['reconstructed-canvas', 'dirty-beam-canvas', 'uv-canvas']) {
         const canvas = document.getElementById(id);
@@ -109,8 +126,7 @@ function clearReconstructed() {
 }
 
 /**
- * Rebuild the baseline length table from the current telescope list.
- * Populates #baseline-table tbody; hides the <details> when empty.
+ * Rebuild the baseline length table.
  * @param {Array<{lat, lon, name, color}>} tels
  */
 function updateBaselineTable(tels) {
@@ -128,9 +144,9 @@ function updateBaselineTable(tels) {
         for (let j = i + 1; j < tels.length; j++) {
             const { bx, by, bz } = computeBaseline(tels[i], tels[j]);
             const km = Math.round(Math.sqrt(bx * bx + by * by + bz * bz));
-            const blendColor = _lerpColor(tels[i].color || '#888', tels[j].color || '#888', 0.5);
+            const blend = _lerpColor(tels[i].color || '#888', tels[j].color || '#888', 0.5);
             const tr = document.createElement('tr');
-            tr.style.borderLeft = `3px solid ${blendColor}`;
+            tr.style.borderLeft = `3px solid ${blend}`;
             tr.innerHTML = `
                 <td><span class="tel-dot" style="background:${tels[i].color}"></span>${tels[i].name}</td>
                 <td><span class="tel-dot" style="background:${tels[j].color}"></span>${tels[j].name}</td>
@@ -141,7 +157,6 @@ function updateBaselineTable(tels) {
     }
 }
 
-/** Export a canvas as a PNG download. */
 function _exportCanvas(canvasId, filename) {
     const canvas = document.getElementById(canvasId);
     const link   = document.createElement('a');
@@ -156,7 +171,6 @@ document.getElementById('image-upload').addEventListener('change', async (e) => 
     const file = e.target.files[0];
     if (!file) return;
     updateStatus('Loading image…');
-    // Deactivate sample buttons
     document.querySelectorAll('.sample-btn').forEach(b => b.classList.remove('active'));
     try {
         currentImageData = await loadImageData(file);
@@ -164,14 +178,14 @@ document.getElementById('image-upload').addEventListener('change', async (e) => 
         imageDataToCanvas(currentImageData, document.getElementById('original-canvas'));
         runReconstruction();
     } catch (err) {
-        updateStatus(`Could not load image: ${err.message}`);
+        updateStatus(`Could not load image: ${err.message}`, 'error');
     }
 });
 
 document.querySelectorAll('.sample-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
         const name = btn.dataset.sample;
-        updateStatus(`Loading sample: ${name}…`);
+        updateStatus(`Loading ${name}…`);
         document.querySelectorAll('.sample-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         try {
@@ -180,7 +194,7 @@ document.querySelectorAll('.sample-btn').forEach(btn => {
             imageDataToCanvas(currentImageData, document.getElementById('original-canvas'));
             runReconstruction();
         } catch (err) {
-            updateStatus(`Could not load sample: ${err.message}`);
+            updateStatus(`Could not load sample: ${err.message}`, 'error');
         }
     });
 });
@@ -197,9 +211,7 @@ document.getElementById('ha-range').addEventListener('input', () => {
     runReconstruction();
 });
 
-document.getElementById('load-presets').addEventListener('click', () => {
-    loadPresets();
-});
+document.getElementById('load-presets').addEventListener('click', loadPresets);
 
 document.getElementById('clear-telescopes').addEventListener('click', () => {
     clearTelescopes();
@@ -214,10 +226,31 @@ document.getElementById('save-reconstruction').addEventListener('click', () => {
     _exportCanvas('reconstructed-canvas', 'reconstruction.png');
 });
 
+document.getElementById('use-clean').addEventListener('change', runReconstruction);
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 
+/**
+ * Auto-load the Ring sample + EHT presets on first open so the app shows a
+ * live reconstruction immediately.
+ */
+async function _autoLoad() {
+    try {
+        currentImageData = await loadSampleImage('ring');
+        currentGrayscale = imageDataToGrayscale(currentImageData);
+        imageDataToCanvas(currentImageData, document.getElementById('original-canvas'));
+        document.querySelector('.sample-btn[data-sample="ring"]').classList.add('active');
+        loadPresets(); // triggers runReconstruction via onChangeCallback
+    } catch (_) {
+        // User can load manually
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-    initGlobe('map', () => runReconstruction());
     initInfoButtons();
-    updateStatus('Upload an image (or choose a sample) and place telescopes to begin.');
+    initGlobe('map', () => runReconstruction(), () => {
+        updateStatus('Telescopes can only be placed on land.');
+    });
+    updateStatus('Loading EHT presets…');
+    _autoLoad();
 });
