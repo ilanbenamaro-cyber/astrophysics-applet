@@ -47,8 +47,66 @@ RESOLVED: YES — commit bb679d0
 
 ---
 
+### unpkg.com CDN does not send CORS headers on redirects
+DATE_DISCOVERED: 2026-04-06
+AREA: mapController.js — any image loaded from unpkg.com
+SEVERITY: HIGH
+
+WHAT HAPPENED: Set `crossOrigin = 'anonymous'` on an Image element loading
+`https://unpkg.com/globe.gl/example/img/earth-blue-marble.jpg`. The CDN
+redirects to a versioned URL (`@2.45.3/...`) which returns 404, and the
+redirect itself carries no `Access-Control-Allow-Origin` header. The image
+fails to load entirely (not just `getImageData` — the whole image is blocked),
+breaking the map display.
+
+ROOT CAUSE: `crossOrigin = 'anonymous'` causes the browser to enforce CORS on
+the image request. If the server (or any redirect in the chain) doesn't send
+`Access-Control-Allow-Origin`, the load fails completely. Without the attribute,
+the image loads fine but the canvas becomes "tainted" (getImageData blocked).
+
+HOW TO AVOID: Never use `crossOrigin = 'anonymous'` on images from unpkg.com.
+For any feature requiring pixel data from an external image, use a precomputed
+offline data source instead (e.g., a bundled lookup table generated at build time).
+
+DETECTION: Console error: "has been blocked by CORS policy: No
+'Access-Control-Allow-Origin' header is present on the requested resource."
+Map falls back to grid — earth image missing.
+
+RESOLVED: YES — replaced pixel sampling with precomputed landMask.js lookup table
+(commit e396074).
+
+---
+
+### Fixes repeatedly applied to root app instead of vlbi-react
+DATE_DISCOVERED: 2026-04-07
+AREA: All vlbi-react features and fixes — Globe.js, worker.js, App.js, css/app.css
+SEVERITY: HIGH
+
+WHAT HAPPENED: Two consecutive bug fixes (ocean placement, CLEAN deconvolution)
+were implemented in root `js/`, `css/`, `index.html` files. The live deployed
+version is `vlbi-react/` — the root files are an older standalone version that
+is not deployed.
+
+ROOT CAUSE: The root app and vlbi-react share the same repo. Root files look like
+the "main" app at a glance (index.html in root). Developer muscle memory edits
+root files. The deployed URL is vlbi-react/index.html, not the root index.html.
+
+HOW TO AVOID: Before editing any JS/CSS/HTML, confirm which version is live by
+checking CLAUDE.md — it explicitly states "The current live version of the app
+is in vlbi-react/". Never edit root js/, css/, index.html for features targeting
+the live app.
+
+DETECTION: Check git status — if only root files are modified (js/app.js,
+css/style.css, index.html) for a user-facing bug fix, the fix is in the wrong place.
+
+RESOLVED: YES (both fixes ported to vlbi-react in this session)
+
+---
+
 ## Pattern: Things To Always Check
 
 <!-- Short reminders derived from gotchas above -->
 <!-- Format: □ [check] — [why] -->
 □ After any change to telescope naming logic — verify EHT preset + manual click produces T(n+1) not T1
+□ Never use crossOrigin='anonymous' on unpkg.com images — CDN redirects block load entirely; use bundled data instead
+□ All live-app changes go to vlbi-react/ — never root js/, css/, index.html (see gotcha above)

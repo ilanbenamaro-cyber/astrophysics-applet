@@ -26,6 +26,7 @@ FLAG THRESHOLD: <7.0 triggers mandatory workflow review
 
 | Date | Score | Bug Summary | Root Cause Confirmed? | Regression Test Added? | What Failed | Improvements Made |
 |------|-------|-------------|----------------------|----------------------|-------------|-------------------|
+| 2026-04-07 | 9/10 | Ocean telescope placement in vlbi-react | YES | YES (Playwright land/ocean check) | — | Added gotcha: fixes applied to root instead of vlbi-react |
 
 ---
 
