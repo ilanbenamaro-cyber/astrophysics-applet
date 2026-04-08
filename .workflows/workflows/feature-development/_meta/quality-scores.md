@@ -33,6 +33,7 @@ FLAG THRESHOLD: <7.0 triggers mandatory workflow improvement
 | 2026-03-23 | 9/10 | Black globe bg, remove dup credit, WFU Seal preset | All acceptance criteria met; async image loader reused file-upload pattern; WFU Seal renders through full FFT pipeline; no blue remaining | No automated tests (1pt deducted) | — |
 | 2026-03-24 | 9/10 | Black panels, WFU Seal text-only button | Minimal change (2 files, 7 insertions); CSS vars cleanly cover all panel backgrounds; glabel-bold pattern reusable for future text-only buttons | No automated tests (1pt deducted) | — |
 | 2026-03-24 | 9/10 | Real black hole image preset, axes stripped | Python crop precise (1543×1543 perfect square); IMAGE_PRESETS map cleaner than nested if-else; generatePreset import removed | No automated tests (1pt deducted) | — |
+| 2026-04-08 | 9/10 | WCAG 2.1 AA accessibility panel + tooltip fix | All acceptance criteria met; CSS custom properties cleanly layered; A11yPanel fully presentational; localStorage + OS preference init; Globe autoRotate reactive; Playwright-verified end-to-end | No automated tests (1pt deducted) | Noted: custom toggle inputs are visually hidden — Playwright must click label, not input |
 
 ---
 
