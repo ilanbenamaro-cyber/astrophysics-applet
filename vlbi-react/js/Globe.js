@@ -5,7 +5,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { borderLineMat, loadEarthTextures, loadCountryBoundaries, syncTelescopeMarkers } from './globeHelpers.js';
 
-export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMotion }) {
+export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMotion, tourActive }) {
   const containerRef = useRef(null);
   const rendererRef = useRef(null);
   const labelRendererRef = useRef(null);
@@ -23,6 +23,10 @@ export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMo
 
   useEffect(() => { onAddRef.current = onTelescopeAdd; }, [onTelescopeAdd]);
   useEffect(() => { showCountryLabelsRef.current = showCountryLabels; }, [showCountryLabels]);
+  useEffect(() => {
+    if (!labelRendererRef.current) return;
+    labelRendererRef.current.domElement.style.display = tourActive ? 'none' : '';
+  }, [tourActive]);
   useEffect(() => { if (controlsRef.current) { controlsRef.current.autoRotate = !reducedMotion; } }, [reducedMotion]);
 
   // Effect 1: Initialize Three.js scene ONCE

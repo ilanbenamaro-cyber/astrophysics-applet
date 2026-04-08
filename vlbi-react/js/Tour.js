@@ -163,20 +163,14 @@ export function Tour({ actIndex, onActChange, onClose, onTourAction, reducedMoti
     });
   }, [actIndex, onTourAction]);
 
-  // Spotlight: elevate the target DOM element above the overlay
+  // Spotlight: add glow class to target DOM element
   useLayoutEffect(() => {
     const spotId = ACTS[actIndex].spotlightId;
     if (!spotId) return;
     const el = document.getElementById(spotId);
     if (!el) return;
-    const prevPosition = el.style.position;
-    const prevZIndex = el.style.zIndex;
-    el.style.position = 'relative';
-    el.style.zIndex = '101';
-    return () => {
-      el.style.position = prevPosition;
-      el.style.zIndex = prevZIndex;
-    };
+    el.classList.add('tour-spotlight-active');
+    return () => el.classList.remove('tour-spotlight-active');
   }, [actIndex]);
 
   const handleNext = useCallback(() => {

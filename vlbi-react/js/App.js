@@ -282,12 +282,18 @@ export function App() {
 
   return html`
     <div className="app">
-      <header className="header">
+      <header className="header" style=${{ position: 'relative' }}>
         <div className="header-inner">
           <h1>VLBI Interferometry Simulator by Ilan Benjamin Amaro</h1>
           <p>Click the globe to place radio telescopes · Earth rotation synthesizes a virtual aperture the size of Earth</p>
           <p className="header-ai-note">Built with AI assistance</p>
         </div>
+        <button
+          className="tour-launch-btn"
+          style=${{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}
+          onClick=${() => { setTourActive(true); setTourActIndex(0); }}
+          aria-label="Start guided physics tour"
+        >◉ Tour</button>
         <div className="header-stats">
           ${telescopes.length >= 2 ? html`
             <span className="stat"><span className="stat-val">${telescopes.length}</span>telescopes</span>
@@ -295,12 +301,6 @@ export function App() {
             <span className="stat"><span className="stat-val">${uvFill.toFixed(1)}%</span>UV fill</span>
             ${angularRes ? html`<span className="stat"><span className="stat-val">${angularRes}</span>resolution</span>` : null}
           ` : null}
-          <button
-            className="btn btn-ghost"
-            onClick=${() => { setTourActive(true); setTourActIndex(0); }}
-            aria-label="Start guided physics tour"
-            style=${{ whiteSpace: 'nowrap' }}
-          >◉ Tour</button>
           <${A11yPanel}
             settings=${a11y}
             isOpen=${a11yOpen}
@@ -331,7 +331,7 @@ export function App() {
         />
 
         <main id="tour-globe" className="globe-wrapper" aria-label="Main visualization — 3D interactive globe">
-          <${Globe} telescopes=${telescopes} onTelescopeAdd=${handleTelescopeAdd} showCountryLabels=${showCountryLabels} reducedMotion=${a11y.reducedMotion} />
+          <${Globe} telescopes=${telescopes} onTelescopeAdd=${handleTelescopeAdd} showCountryLabels=${showCountryLabels} reducedMotion=${a11y.reducedMotion} tourActive=${tourActive} />
           <${StatusBar} status=${status} isComputing=${isComputing} />
         </main>
 

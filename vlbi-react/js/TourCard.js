@@ -56,66 +56,70 @@ export function TourCard({ act, actIndex, totalActs, onNext, onBack, onSkip, red
       aria-modal="true"
       aria-label=${'Tour act ' + (actIndex + 1) + ': ' + act.title}
     >
-      <div className="tour-progress" role="tablist" aria-label="Tour progress">
-        ${dots}
+      <div className="tour-card-left">
+        <div className="tour-progress" role="tablist" aria-label="Tour progress">
+          ${dots}
+        </div>
+
+        <h2 className="tour-title">${act.title}</h2>
+
+        <p className="tour-text">${act.text}</p>
+
+        ${act.userHint ? html`
+          <p className="tour-hint">💡 ${act.userHint}</p>
+        ` : null}
+
+        ${act.mathLatex ? html`
+          <div className="tour-math-section">
+            <button
+              className=${'tour-math-toggle' + (mathOpen ? ' open' : '')}
+              onClick=${() => setMathOpen(v => !v)}
+              aria-expanded=${mathOpen}
+              aria-controls="tour-math-display"
+            >
+              <span className="tour-math-arrow">▼</span>
+              ${mathOpen ? 'Hide the math' : 'Show the math'}
+            </button>
+            ${mathOpen ? html`
+              <div
+                id="tour-math-display"
+                className="tour-math-display"
+                dangerouslySetInnerHTML=${{ __html: katexHtml }}
+              ></div>
+            ` : null}
+          </div>
+        ` : null}
+
+        ${act.terms.length > 0 ? html`
+          <div className="tour-terms-grid" aria-label="Term definitions">
+            ${termItems}
+          </div>
+        ` : null}
+
+        <div className="tour-nav">
+          <button
+            className="tour-btn tour-btn--back"
+            onClick=${onBack}
+            disabled=${isFirst}
+            aria-label="Previous act"
+          >← Back</button>
+
+          <button
+            className="tour-btn tour-btn--skip"
+            onClick=${onSkip}
+            aria-label="Exit tour"
+          >✕ Skip tour</button>
+
+          <button
+            className="tour-btn tour-btn--next"
+            onClick=${onNext}
+            aria-label=${isLast ? 'Finish tour' : 'Next act'}
+          >${isLast ? 'Finish ✓' : 'Next →'}</button>
+        </div>
       </div>
 
-      <h2 className="tour-title">${act.title}</h2>
-
-      <${TourDiagram} diagramAct=${act.diagramAct} reducedMotion=${reducedMotion} />
-
-      <p className="tour-text">${act.text}</p>
-
-      ${act.userHint ? html`
-        <p className="tour-hint">💡 ${act.userHint}</p>
-      ` : null}
-
-      ${act.mathLatex ? html`
-        <div className="tour-math-section">
-          <button
-            className=${'tour-math-toggle' + (mathOpen ? ' open' : '')}
-            onClick=${() => setMathOpen(v => !v)}
-            aria-expanded=${mathOpen}
-            aria-controls="tour-math-display"
-          >
-            <span className="tour-math-arrow">▼</span>
-            ${mathOpen ? 'Hide the math' : 'Show the math'}
-          </button>
-          ${mathOpen ? html`
-            <div
-              id="tour-math-display"
-              className="tour-math-display"
-              dangerouslySetInnerHTML=${{ __html: katexHtml }}
-            ></div>
-          ` : null}
-        </div>
-      ` : null}
-
-      ${act.terms.length > 0 ? html`
-        <div className="tour-terms-grid" aria-label="Term definitions">
-          ${termItems}
-        </div>
-      ` : null}
-
-      <div className="tour-nav">
-        <button
-          className="tour-btn tour-btn--back"
-          onClick=${onBack}
-          disabled=${isFirst}
-          aria-label="Previous act"
-        >← Back</button>
-
-        <button
-          className="tour-btn tour-btn--skip"
-          onClick=${onSkip}
-          aria-label="Exit tour"
-        >✕ Skip tour</button>
-
-        <button
-          className="tour-btn tour-btn--next"
-          onClick=${onNext}
-          aria-label=${isLast ? 'Finish tour' : 'Next act'}
-        >${isLast ? 'Finish ✓' : 'Next →'}</button>
+      <div className="tour-card-right">
+        <${TourDiagram} diagramAct=${act.diagramAct} reducedMotion=${reducedMotion} />
       </div>
     </div>
   `;
