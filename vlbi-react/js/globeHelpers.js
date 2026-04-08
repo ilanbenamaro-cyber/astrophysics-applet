@@ -11,6 +11,51 @@ import { lerpColor } from './uvCompute.js';
 // Module-level ref so the Globe resize handler can update LineMaterial resolution
 export let borderLineMat = null;
 
+// Land polygon cache — populated by loadCountryBoundaries; null until loaded.
+let _landPolygons = null;
+
+function _pointInRing(lon, lat, ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0], yi = ring[i][1];
+    const xj = ring[j][0], yj = ring[j][1];
+    if ((yi > lat) !== (yj > lat) && lon < (xj - xi) * (lat - yi) / (yj - yi) + xi) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
+function _pointInPolygon(lon, lat, rings) {
+  // First ring is outer boundary; subsequent rings are holes.
+  if (!_pointInRing(lon, lat, rings[0])) return false;
+  for (let i = 1; i < rings.length; i++) {
+    if (_pointInRing(lon, lat, rings[i])) return false;
+  }
+  return true;
+}
+
+/**
+ * Return true if (lat, lon) is on land according to world-atlas country polygons.
+ * Returns true (allow all) while TopoJSON data is still loading.
+ * @param {number} lat  degrees (−90 to 90)
+ * @param {number} lon  degrees (−180 to 180)
+ * @returns {boolean}
+ */
+export function isOnLand(lat, lon) {
+  if (!_landPolygons) return true; // TopoJSON not yet loaded — allow click
+  for (const { type, coordinates } of _landPolygons) {
+    if (type === 'Polygon') {
+      if (_pointInPolygon(lon, lat, coordinates)) return true;
+    } else if (type === 'MultiPolygon') {
+      for (const poly of coordinates) {
+        if (_pointInPolygon(lon, lat, poly)) return true;
+      }
+    }
+  }
+  return false;
+}
+
 export const OCEAN_LABELS = [
   { name: 'Pacific Ocean',     lat:   0, lon: -160 },
   { name: 'Atlantic Ocean',    lat:   0, lon:  -30 },
@@ -125,8 +170,9 @@ export async function loadCountryBoundaries(scene, labelGroup, isCancelled) {
     });
     scene.add(new LineSegments2(geo, borderLineMat));
 
-    // Country labels from TopoJSON features
+    // Cache country geometries for land detection (isOnLand)
     const countryFeatures = topojson.feature(topo, topo.objects.countries);
+    _landPolygons = countryFeatures.features.map(f => f.geometry);
     for (const feature of countryFeatures.features) {
       if (isCancelled()) return;
       const name = ISO_COUNTRY_NAMES[+feature.id];

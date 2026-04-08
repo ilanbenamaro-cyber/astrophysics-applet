@@ -3,8 +3,7 @@ import { html, useRef, useEffect } from './core.js';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
-import { borderLineMat, loadEarthTextures, loadCountryBoundaries, syncTelescopeMarkers } from './globeHelpers.js';
-import { isOnLand } from './landMask.js';
+import { borderLineMat, isOnLand, loadEarthTextures, loadCountryBoundaries, syncTelescopeMarkers } from './globeHelpers.js';
 
 export function Globe({ telescopes, onTelescopeAdd, showCountryLabels }) {
   const containerRef = useRef(null);
