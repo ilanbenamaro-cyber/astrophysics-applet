@@ -1,4 +1,4 @@
-// TourDiagram — per-act hand-drawn canvas diagrams using Rough.js.
+// TourDiagram — per-act clean vector canvas diagrams.
 // Each act gets a 400×340 canvas. Animations use timestamp-based requestAnimationFrame.
 import { html, useRef, useEffect } from './core.js';
 
@@ -49,20 +49,79 @@ function sineWave(ctx, startX, endX, baseY, amplitude, phase, { color = '#C4A555
   ctx.restore();
 }
 
+// ── Helper: filled circle ──────────────────────────────────────────────────
+function filledCircle(ctx, x, y, r, fill, stroke = null) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.5; ctx.stroke(); }
+  ctx.restore();
+}
+
+// ── Helper: stroke-only circle ────────────────────────────────────────────
+function strokeCircle(ctx, x, y, r, color, lw = 1.5, dash = []) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lw;
+  if (dash.length) ctx.setLineDash(dash);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// ── Helper: stroke rectangle ──────────────────────────────────────────────
+function drawRect(ctx, x, y, w, h, stroke, lw = 2) {
+  ctx.save();
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = lw;
+  ctx.strokeRect(x, y, w, h);
+  ctx.restore();
+}
+
+// ── Helper: filled+stroked ellipse ────────────────────────────────────────
+function filledEllipse(ctx, cx, cy, rx, ry, fill, stroke = null, lw = 1.5) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.stroke(); }
+  ctx.restore();
+}
+
+// ── Helper: parabolic dish via bezier ────────────────────────────────────
+function parabolicDish(ctx, cx, bottom, width, height, { color = '#C4A555', lw = 2.5 } = {}) {
+  ctx.save();
+  const left = cx - width / 2;
+  const right = cx + width / 2;
+  const top = bottom - height;
+  ctx.beginPath();
+  ctx.moveTo(left, bottom);
+  ctx.bezierCurveTo(left, top + height * 0.15, right, top + height * 0.15, right, bottom);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lw;
+  ctx.stroke();
+  ctx.restore();
+}
+
 // ── Act 1: Single-dish resolution ─────────────────────────────────────────
-function drawDish(rc, ctx) {
+function drawDish(ctx) {
   const W = 400, H = 340;
-  // Dish arc — large parabola at bottom
-  rc.arc(W / 2, H - 42, 120, 85, Math.PI * 0.1, Math.PI * 0.9, false, {
-    stroke: '#C4A555', strokeWidth: 2.5, roughness: 0.5,
-  });
+  // Main dish
+  parabolicDish(ctx, W / 2, H - 42, 120, 85);
   // Focal point
   const cx = W / 2, cy = H - 132;
-  rc.circle(cx, cy, 12, { fill: '#C4A555', fillStyle: 'solid', stroke: '#C4A555', roughness: 0.5 });
-  // Resolution lines
-  rc.line(cx, cy, cx - 69, 24, { stroke: '#8888b0', strokeWidth: 1.5, roughness: 0.5, strokeLineDash: [5, 4] });
-  rc.line(cx, cy, cx + 69, 24, { stroke: '#8888b0', strokeWidth: 1.5, roughness: 0.5, strokeLineDash: [5, 4] });
-  // Arc showing angle
+  filledCircle(ctx, cx, cy, 6, '#C4A555', '#C4A555');
+  // Resolution diverging dashed lines
+  ctx.save();
+  ctx.strokeStyle = '#8888b0';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([5, 4]);
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx - 69, 24); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + 69, 24); ctx.stroke();
+  ctx.restore();
+  // Arc showing angle θ
   ctx.save();
   ctx.strokeStyle = '#9E7E38';
   ctx.lineWidth = 2;
@@ -71,24 +130,44 @@ function drawDish(rc, ctx) {
   ctx.stroke();
   ctx.restore();
   label(ctx, 'θ', cx + 52, cy - 28, { color: '#C4A555', size: 18 });
-  label(ctx, 'D', cx, H - 8, { color: '#8888b0', size: 14 });
+  // D double-headed arrow
+  ctx.save();
+  ctx.strokeStyle = '#8888b0';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(W / 2 - 60, H - 16); ctx.lineTo(W / 2 + 60, H - 16); ctx.stroke();
+  ctx.restore();
+  arrow(ctx, W / 2 - 60, H - 16, W / 2 - 58, H - 16, { color: '#8888b0', width: 1.5 });
+  arrow(ctx, W / 2 + 60, H - 16, W / 2 + 58, H - 16, { color: '#8888b0', width: 1.5 });
+  label(ctx, 'D', W / 2, H - 4, { color: '#8888b0', size: 13 });
+  // Equation
   label(ctx, 'θ ≈ λ/D', cx, 32, { color: '#e8e8f0', size: 15 });
+  // Second smaller dish (larger D → smaller θ)
+  parabolicDish(ctx, W * 0.82, H - 28, 60, 40, { color: '#9E7E38', lw: 2 });
+  filledCircle(ctx, W * 0.82, H - 28 - 30, 4, '#9E7E38', '#9E7E38');
+  ctx.save();
+  ctx.strokeStyle = '#9E7E3880';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  const scx = W * 0.82, scy = H - 58;
+  ctx.beginPath(); ctx.moveTo(scx, scy); ctx.lineTo(scx - 20, 40); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(scx, scy); ctx.lineTo(scx + 20, 40); ctx.stroke();
+  ctx.restore();
+  label(ctx, 'larger D → smaller θ', W * 0.72, 22, { color: '#9E7E38', size: 11, align: 'center' });
 }
 
 // ── Act 2: Two dishes + baseline + animated sine waves ────────────────────
-function drawBaseline(rc, ctx, canvas, rafRef, reducedMotion) {
+function drawBaseline(ctx, canvas, rafRef, reducedMotion) {
   const W = 400, H = 340;
-  // Static: two dish arcs at bottom
-  rc.arc(75, H - 38, 75, 51, Math.PI * 0.1, Math.PI * 0.9, false, {
-    stroke: '#C4A555', strokeWidth: 2.5, roughness: 0.5,
-  });
-  rc.arc(325, H - 38, 75, 51, Math.PI * 0.1, Math.PI * 0.9, false, {
-    stroke: '#C4A555', strokeWidth: 2.5, roughness: 0.5,
-  });
+  // Two dishes
+  parabolicDish(ctx, 75, H - 38, 75, 51);
+  parabolicDish(ctx, 325, H - 38, 75, 51);
   // Baseline dashes
-  rc.line(75, H - 90, 325, H - 90, {
-    stroke: '#8888b0', strokeWidth: 2, roughness: 0.5, strokeLineDash: [7, 5],
-  });
+  ctx.save();
+  ctx.strokeStyle = '#8888b0';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([7, 5]);
+  ctx.beginPath(); ctx.moveTo(75, H - 90); ctx.lineTo(325, H - 90); ctx.stroke();
+  ctx.restore();
   label(ctx, 'B', 200, H - 72, { color: '#8888b0', size: 14 });
   label(ctx, 'ALMA', 75, H - 14, { color: '#9E7E38', size: 12 });
   label(ctx, 'IRAM', 325, H - 14, { color: '#9E7E38', size: 12 });
@@ -103,7 +182,6 @@ function drawBaseline(rc, ctx, canvas, rafRef, reducedMotion) {
   }
 
   function frame(ts) {
-    // phase advances at ~0.0027 rad/ms (same perceptual speed as original)
     const phase = ts * 0.0027;
     ctx.clearRect(0, 0, W, 190);
     sineWave(ctx, 20, 178, 115, 28, phase, { color: '#C4A555' });
@@ -117,13 +195,11 @@ function drawBaseline(rc, ctx, canvas, rafRef, reducedMotion) {
 }
 
 // ── Act 3: Fourier connection ──────────────────────────────────────────────
-function drawFourier(rc, ctx) {
+function drawFourier(ctx) {
   const W = 400, H = 340;
   // Left panel: sky
-  rc.rectangle(12, 30, 148, 255, { stroke: '#2d2200', strokeWidth: 2, roughness: 0.8 });
-  rc.ellipse(86, 157, 62, 76, {
-    fill: 'rgba(196,165,85,0.25)', fillStyle: 'solid', stroke: '#C4A555', strokeWidth: 2, roughness: 1.2,
-  });
+  drawRect(ctx, 12, 30, 148, 255, '#333');
+  filledEllipse(ctx, 86, 157, 31, 38, 'rgba(196,165,85,0.25)', '#C4A555', 2);
   label(ctx, 'I(x,y)', 86, 294, { color: '#8888b0', size: 12 });
   label(ctx, 'Sky', 86, 18, { color: '#9E7E38', size: 13 });
 
@@ -132,10 +208,10 @@ function drawFourier(rc, ctx) {
   label(ctx, 'ℱ', 195, 140, { color: '#C4A555', size: 17 });
 
   // Right panel: UV plane
-  rc.rectangle(228, 30, 160, 255, { stroke: '#2d2200', strokeWidth: 2, roughness: 0.8 });
+  drawRect(ctx, 228, 30, 160, 255, '#333');
   // Axes
   ctx.save();
-  ctx.strokeStyle = '#2d2200';
+  ctx.strokeStyle = '#333';
   ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.moveTo(308, 32); ctx.lineTo(308, 284); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(230, 157); ctx.lineTo(386, 157); ctx.stroke();
@@ -146,7 +222,7 @@ function drawFourier(rc, ctx) {
     [330, 127], [308, 110], [308, 204], [260, 157], [356, 157],
   ];
   pts.forEach(([x, y]) => {
-    rc.circle(x, y, 8, { fill: '#C4A555', fillStyle: 'solid', stroke: '#9E7E38', strokeWidth: 1, roughness: 0.5 });
+    filledCircle(ctx, x, y, 4, '#C4A555', '#9E7E38');
   });
   label(ctx, 'V(u,v)', 308, 294, { color: '#8888b0', size: 12 });
   label(ctx, 'UV Plane', 308, 18, { color: '#9E7E38', size: 13 });
@@ -155,12 +231,13 @@ function drawFourier(rc, ctx) {
 }
 
 // ── Act 4: Earth rotation synthesis ───────────────────────────────────────
-function drawEarthRotation(rc, ctx, canvas, rafRef, reducedMotion) {
+function drawEarthRotation(ctx, canvas, rafRef, reducedMotion) {
   const W = 400, H = 340;
   const cx = W / 2, cy = H / 2;
 
   if (reducedMotion) {
-    rc.circle(cx, cy, 56, { fill: '#0a1628', fillStyle: 'solid', stroke: '#C4A555', strokeWidth: 2.5, roughness: 0.8 });
+    filledCircle(ctx, cx, cy, 28, '#0a1628', null);
+    strokeCircle(ctx, cx, cy, 28, '#C4A555', 2.5);
     label(ctx, '🌍', cx, cy, { color: '#fff', size: 28 });
     ctx.save();
     ctx.strokeStyle = '#9E7E38';
@@ -176,15 +253,11 @@ function drawEarthRotation(rc, ctx, canvas, rafRef, reducedMotion) {
   }
 
   function frame(ts) {
-    // angle cycles once every ~5.6s (0.00018 rad/ms × 5556ms = 1 revolution)
     const angle = (ts * 0.00018) % 1;
     ctx.clearRect(0, 0, W, H);
-    // Earth
-    rc.circle(cx, cy, 56, { fill: '#0a1628', fillStyle: 'solid', stroke: '#C4A555', strokeWidth: 2.5, roughness: 0.8 });
-    // Continent hint
-    rc.ellipse(cx - 8, cy - 5, 18, 28, {
-      fill: 'rgba(34,100,60,0.6)', fillStyle: 'solid', stroke: 'rgba(34,100,60,0.8)', strokeWidth: 1, roughness: 1.5,
-    });
+    filledCircle(ctx, cx, cy, 28, '#0a1628', null);
+    strokeCircle(ctx, cx, cy, 28, '#C4A555', 2.5);
+    filledEllipse(ctx, cx - 8, cy - 5, 9, 14, 'rgba(34,100,60,0.6)', 'rgba(34,100,60,0.8)', 1);
     // Growing UV arc
     ctx.save();
     ctx.strokeStyle = '#C4A555';
@@ -208,7 +281,7 @@ function drawEarthRotation(rc, ctx, canvas, rafRef, reducedMotion) {
     const dotAngle = -Math.PI / 2 + angle * Math.PI * 2;
     const dx = cx + 93 * Math.cos(dotAngle);
     const dy = cy + 93 * Math.sin(dotAngle);
-    rc.circle(dx, dy, 9, { fill: '#fff', fillStyle: 'solid', stroke: '#C4A555', strokeWidth: 1.5, roughness: 0.5 });
+    filledCircle(ctx, dx, dy, 4.5, '#fff', '#C4A555');
     label(ctx, 'Earth rotation →', cx, H - 10, { color: '#8888b0', size: 12 });
     rafRef.current = requestAnimationFrame(frame);
   }
@@ -216,14 +289,14 @@ function drawEarthRotation(rc, ctx, canvas, rafRef, reducedMotion) {
 }
 
 // ── Act 5: Dirty image (convolution diagram) ──────────────────────────────
-function drawDirtyBeam(rc, ctx) {
+function drawDirtyBeam(ctx) {
   const W = 400, H = 340;
   const panels = [17, 147, 277];
   const pw = 100, ph = 190, py = 50;
   const pcy = py + ph / 2; // 145
 
   panels.forEach(px => {
-    rc.rectangle(px, py, pw, ph, { stroke: '#2d2200', strokeWidth: 2, roughness: 0.8 });
+    drawRect(ctx, px, py, pw, ph, '#333');
   });
 
   const c1x = panels[0] + pw / 2; // 67
@@ -231,16 +304,14 @@ function drawDirtyBeam(rc, ctx) {
   const c3x = panels[2] + pw / 2; // 327
 
   // Panel 1: true sky source
-  rc.ellipse(c1x, pcy, 40, 52, {
-    fill: 'rgba(196,165,85,0.5)', fillStyle: 'solid', stroke: '#C4A555', strokeWidth: 2, roughness: 1.2,
-  });
+  filledEllipse(ctx, c1x, pcy, 20, 26, 'rgba(196,165,85,0.5)', '#C4A555', 2);
   label(ctx, 'I_true', c1x, py + ph + 16, { color: '#8888b0', size: 12 });
 
   // Convolution symbol
   label(ctx, '⊛', 132, pcy, { color: '#C4A555', size: 26 });
 
   // Panel 2: dirty beam (PSF) with sidelobes
-  rc.circle(c2x, pcy, 14, { fill: 'rgba(196,165,85,0.9)', fillStyle: 'solid', stroke: '#C4A555', strokeWidth: 1.5, roughness: 0.5 });
+  filledCircle(ctx, c2x, pcy, 7, 'rgba(196,165,85,0.9)', '#C4A555');
   for (let r of [28, 46, 66]) {
     ctx.save();
     ctx.strokeStyle = `rgba(196,165,85,${0.35 - r * 0.003})`;
@@ -256,9 +327,7 @@ function drawDirtyBeam(rc, ctx) {
   label(ctx, '=', 262, pcy, { color: '#C4A555', size: 26 });
 
   // Panel 3: dirty image (blurred + rings)
-  rc.ellipse(c3x, pcy, 52, 68, {
-    fill: 'rgba(196,165,85,0.2)', fillStyle: 'solid', stroke: '#C4A555', strokeWidth: 1.5, roughness: 2,
-  });
+  filledEllipse(ctx, c3x, pcy, 26, 34, 'rgba(196,165,85,0.2)', '#C4A555', 1.5);
   for (let r of [34, 52]) {
     ctx.save();
     ctx.strokeStyle = `rgba(196,165,85,${0.22 - r * 0.002})`;
@@ -275,11 +344,15 @@ function drawDirtyBeam(rc, ctx) {
 }
 
 // ── Act 6: Max Entropy curve ───────────────────────────────────────────────
-function drawMEM(rc, ctx) {
+function drawMEM(ctx) {
   const W = 400, H = 340;
   // Axes
-  rc.line(37, 297, 362, 297, { stroke: '#2d2200', strokeWidth: 2, roughness: 0.5 });
-  rc.line(37, 42, 37, 297, { stroke: '#2d2200', strokeWidth: 2, roughness: 0.5 });
+  ctx.save();
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(37, 297); ctx.lineTo(362, 297); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(37, 42); ctx.lineTo(37, 297); ctx.stroke();
+  ctx.restore();
   label(ctx, 'I (image)', 356, 316, { color: '#8888b0', size: 12, align: 'right' });
   label(ctx, 'S(I)', 28, 44, { color: '#8888b0', size: 12, align: 'right' });
 
@@ -306,17 +379,22 @@ function drawMEM(rc, ctx) {
   ctx.lineTo(peakX, 297);
   ctx.stroke();
   ctx.restore();
-  rc.circle(peakX, peakY, 12, { fill: '#C4A555', fillStyle: 'solid', stroke: '#C4A555', roughness: 0.5 });
+  filledCircle(ctx, peakX, peakY, 6, '#C4A555', '#C4A555');
   label(ctx, 'max S(I)', peakX, 56, { color: '#C4A555', size: 12 });
 
   // χ² constraint annotation
-  rc.line(280, 178, 348, 178, { stroke: '#9E7E38', strokeWidth: 1.5, roughness: 0.5, strokeLineDash: [4, 3] });
+  ctx.save();
+  ctx.strokeStyle = '#9E7E38';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 3]);
+  ctx.beginPath(); ctx.moveTo(280, 178); ctx.lineTo(348, 178); ctx.stroke();
+  ctx.restore();
   label(ctx, 'χ²≤1', 356, 178, { color: '#9E7E38', size: 12, align: 'left' });
   label(ctx, 'Max Entropy: smoothest consistent image', W / 2, H - 10, { color: '#8888b0', size: 11 });
 }
 
 // ── Act 7: CLEAN loop animation ────────────────────────────────────────────
-function drawCLEAN(rc, ctx, canvas, rafRef, reducedMotion) {
+function drawCLEAN(ctx, canvas, rafRef, reducedMotion) {
   const W = 400, H = 340;
   const cx = W / 2, cy = H / 2;
 
@@ -324,9 +402,7 @@ function drawCLEAN(rc, ctx, canvas, rafRef, reducedMotion) {
     ctx.clearRect(0, 0, W, H);
     if (stage === 0) {
       label(ctx, 'Residual Image', W / 2, 20, { color: '#9E7E38', size: 14 });
-      rc.ellipse(cx, cy, 87, 108, {
-        fill: 'rgba(196,165,85,0.12)', fillStyle: 'solid', stroke: '#2d2200', strokeWidth: 1.5, roughness: 1.5,
-      });
+      filledEllipse(ctx, cx, cy, 43.5, 54, 'rgba(196,165,85,0.12)', '#333', 1.5);
       for (let r of [63, 90]) {
         ctx.save();
         ctx.strokeStyle = 'rgba(196,165,85,0.15)';
@@ -336,24 +412,20 @@ function drawCLEAN(rc, ctx, canvas, rafRef, reducedMotion) {
         ctx.stroke();
         ctx.restore();
       }
-      rc.circle(cx, cy, 18, { fill: '#C4A555', fillStyle: 'solid', stroke: '#C4A555', strokeWidth: 1, roughness: 0.5 });
-      rc.circle(cx, cy, 33, { stroke: '#ff6b6b', strokeWidth: 2.5, roughness: 1.2 });
+      filledCircle(ctx, cx, cy, 9, '#C4A555', '#C4A555');
+      strokeCircle(ctx, cx, cy, 16.5, '#ff6b6b', 2.5);
       label(ctx, 'find peak →', cx + 28, cy - 18, { color: '#ff6b6b', size: 13, align: 'left' });
     } else if (stage === 1) {
       label(ctx, 'Subtract γ · B', W / 2, 20, { color: '#9E7E38', size: 14 });
-      rc.ellipse(cx, cy, 87, 108, {
-        fill: 'rgba(196,165,85,0.12)', fillStyle: 'solid', stroke: '#2d2200', strokeWidth: 1.5, roughness: 1.5,
-      });
-      rc.circle(cx, cy, 42, { stroke: '#9E7E38', strokeWidth: 2, roughness: 0.8, strokeLineDash: [4, 3] });
+      filledEllipse(ctx, cx, cy, 43.5, 54, 'rgba(196,165,85,0.12)', '#333', 1.5);
+      strokeCircle(ctx, cx, cy, 21, '#9E7E38', 2, [4, 3]);
       arrow(ctx, cx, cy - 53, cx, cy - 84, { color: '#9E7E38', width: 2.5 });
       label(ctx, '-γ·B centered here', cx, cy - 96, { color: '#9E7E38', size: 13 });
-      rc.circle(cx, cy, 11, { fill: '#C4A555', fillStyle: 'solid', stroke: '#C4A555', roughness: 0.5 });
+      filledCircle(ctx, cx, cy, 5.5, '#C4A555', '#C4A555');
     } else {
       label(ctx, 'Smaller Residual', W / 2, 20, { color: '#9E7E38', size: 14 });
-      rc.ellipse(cx, cy, 55, 68, {
-        fill: 'rgba(196,165,85,0.1)', fillStyle: 'solid', stroke: '#2d2200', strokeWidth: 1.5, roughness: 1.5,
-      });
-      rc.circle(cx, cy, 11, { fill: '#9E7E38', fillStyle: 'solid', stroke: '#9E7E38', roughness: 0.5 });
+      filledEllipse(ctx, cx, cy, 27.5, 34, 'rgba(196,165,85,0.1)', '#333', 1.5);
+      filledCircle(ctx, cx, cy, 5.5, '#9E7E38', '#9E7E38');
       ctx.save();
       ctx.strokeStyle = '#C4A555';
       ctx.lineWidth = 2;
@@ -374,8 +446,8 @@ function drawCLEAN(rc, ctx, canvas, rafRef, reducedMotion) {
   }
 
   function frame(ts) {
-    // stage switches every 1 second
-    const stage = Math.floor(ts / 1000) % 3;
+    // stage switches every 1.5 seconds
+    const stage = Math.floor(ts / 1500) % 3;
     drawStage(stage);
     rafRef.current = requestAnimationFrame(frame);
   }
@@ -383,14 +455,14 @@ function drawCLEAN(rc, ctx, canvas, rafRef, reducedMotion) {
 }
 
 // ── Act 8: EHT summary (three panels) ─────────────────────────────────────
-function drawSummary(rc, ctx, canvas, rafRef, reducedMotion) {
+function drawSummary(ctx, canvas, rafRef, reducedMotion) {
   const W = 400, H = 340;
   const py = 40, ph = 190, pw = 95;
   const px1 = 12, px2 = 122, px3 = 232;
   const pcy = py + ph / 2; // 135
 
   [px1, px2, px3].forEach(px => {
-    rc.rectangle(px, py, pw, ph, { stroke: '#2d2200', strokeWidth: 2, roughness: 0.8 });
+    drawRect(ctx, px, py, pw, ph, '#333');
   });
 
   const c1x = px1 + pw / 2; // 59
@@ -418,12 +490,10 @@ function drawSummary(rc, ctx, canvas, rafRef, reducedMotion) {
   label(ctx, 'UV', c1x, py + ph + 14, { color: '#8888b0', size: 12 });
 
   // Arrow 1→2
-  arrow(ctx, px1 + pw + 5, pcy, px2 - 5, pcy, { color: '#2d2200', width: 2 });
+  arrow(ctx, px1 + pw + 5, pcy, px2 - 5, pcy, { color: '#555', width: 2 });
 
   // Panel 2: dirty image (ring artifact)
-  rc.ellipse(c2x, pcy, 30, 26, {
-    fill: 'rgba(196,165,85,0.15)', fillStyle: 'solid', stroke: '#C4A555', strokeWidth: 1.5, roughness: 1.2,
-  });
+  filledEllipse(ctx, c2x, pcy, 15, 13, 'rgba(196,165,85,0.15)', '#C4A555', 1.5);
   for (let r of [20, 32, 44]) {
     ctx.save();
     ctx.strokeStyle = `rgba(196,165,85,${0.28 - r * 0.004})`;
@@ -436,11 +506,11 @@ function drawSummary(rc, ctx, canvas, rafRef, reducedMotion) {
   label(ctx, 'Dirty', c2x, py + ph + 14, { color: '#8888b0', size: 12 });
 
   // Arrow 2→3
-  arrow(ctx, px2 + pw + 5, pcy, px3 - 5, pcy, { color: '#2d2200', width: 2 });
+  arrow(ctx, px2 + pw + 5, pcy, px3 - 5, pcy, { color: '#555', width: 2 });
 
   // Panel 3: CLEAN result (animated pulse or static)
   if (reducedMotion) {
-    rc.circle(c3x, pcy, 10, { fill: '#C4A555', fillStyle: 'solid', stroke: '#C4A555', strokeWidth: 1, roughness: 0.5 });
+    filledCircle(ctx, c3x, pcy, 5, '#C4A555', '#C4A555');
     label(ctx, 'CLEAN', c3x, py + ph + 14, { color: '#8888b0', size: 12 });
     label(ctx, '8 telescopes · 20 μas', W / 2, H - 10, { color: '#9E7E38', size: 11 });
     return;
@@ -450,14 +520,13 @@ function drawSummary(rc, ctx, canvas, rafRef, reducedMotion) {
   label(ctx, '8 telescopes · 20 μas', W / 2, H - 10, { color: '#9E7E38', size: 11 });
 
   function frame(ts) {
-    // pulse = oscillation based on timestamp
     const pulse = ts * 0.0036;
     ctx.clearRect(px3, py, pw, ph);
-    rc.rectangle(px3, py, pw, ph, { stroke: '#2d2200', strokeWidth: 2, roughness: 0.8 });
+    drawRect(ctx, px3, py, pw, ph, '#333');
     ctx.save();
     ctx.shadowColor = '#C4A555';
     ctx.shadowBlur = 8 + 10 * Math.sin(pulse);
-    rc.circle(c3x, pcy, 10, { fill: '#C4A555', fillStyle: 'solid', stroke: '#C4A555', strokeWidth: 1, roughness: 0.5 });
+    filledCircle(ctx, c3x, pcy, 5, '#C4A555', '#C4A555');
     ctx.restore();
     ctx.save();
     ctx.strokeStyle = `rgba(196,165,85,${0.18 + 0.12 * Math.sin(pulse)})`;
@@ -487,21 +556,18 @@ export function TourDiagram({ diagramAct, reducedMotion }) {
       rafRef.current = null;
     }
 
-    if (!window.rough) return; // guard if CDN not loaded yet
-
-    const rc = window.rough.canvas(canvas);
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     switch (diagramAct) {
-      case 1: drawDish(rc, ctx); break;
-      case 2: drawBaseline(rc, ctx, canvas, rafRef, reducedMotion); break;
-      case 3: drawFourier(rc, ctx); break;
-      case 4: drawEarthRotation(rc, ctx, canvas, rafRef, reducedMotion); break;
-      case 5: drawDirtyBeam(rc, ctx); break;
-      case 6: drawMEM(rc, ctx); break;
-      case 7: drawCLEAN(rc, ctx, canvas, rafRef, reducedMotion); break;
-      case 8: drawSummary(rc, ctx, canvas, rafRef, reducedMotion); break;
+      case 1: drawDish(ctx); break;
+      case 2: drawBaseline(ctx, canvas, rafRef, reducedMotion); break;
+      case 3: drawFourier(ctx); break;
+      case 4: drawEarthRotation(ctx, canvas, rafRef, reducedMotion); break;
+      case 5: drawDirtyBeam(ctx); break;
+      case 6: drawMEM(ctx); break;
+      case 7: drawCLEAN(ctx, canvas, rafRef, reducedMotion); break;
+      case 8: drawSummary(ctx, canvas, rafRef, reducedMotion); break;
       default: break;
     }
 

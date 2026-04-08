@@ -3,13 +3,7 @@ import { html, useState, useEffect } from './core.js';
 import { TourDiagram } from './TourDiagram.js';
 
 export function TourCard({ act, actIndex, totalActs, onNext, onBack, onSkip, reducedMotion }) {
-  const [mathOpen, setMathOpen] = useState(false);
   const [katexHtml, setKatexHtml] = useState('');
-
-  // Reset math collapse state when act changes (card is keyed by actIndex so this is redundant but safe)
-  useEffect(() => {
-    setMathOpen(false);
-  }, [actIndex]);
 
   // Render KaTeX
   useEffect(() => {
@@ -71,22 +65,11 @@ export function TourCard({ act, actIndex, totalActs, onNext, onBack, onSkip, red
 
         ${act.mathLatex ? html`
           <div className="tour-math-section">
-            <button
-              className=${'tour-math-toggle' + (mathOpen ? ' open' : '')}
-              onClick=${() => setMathOpen(v => !v)}
-              aria-expanded=${mathOpen}
-              aria-controls="tour-math-display"
-            >
-              <span className="tour-math-arrow">▼</span>
-              ${mathOpen ? 'Hide the math' : 'Show the math'}
-            </button>
-            ${mathOpen ? html`
-              <div
-                id="tour-math-display"
-                className="tour-math-display"
-                dangerouslySetInnerHTML=${{ __html: katexHtml }}
-              ></div>
-            ` : null}
+            <div
+              id="tour-math-display"
+              className="tour-math-display"
+              dangerouslySetInnerHTML=${{ __html: katexHtml }}
+            ></div>
           </div>
         ` : null}
 
