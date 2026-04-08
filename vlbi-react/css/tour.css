@@ -17,31 +17,38 @@
 /* ── Spotlight glow — class added to target element ─────────────────────── */
 
 .tour-spotlight-active {
-  position: relative;
-  z-index: 101;
+  position: relative !important;
+  z-index: 101 !important;
   box-shadow:
-    0 0 0 3px #C4A555,
-    0 0 0 6px rgba(196, 165, 85, 0.4),
-    0 0 40px rgba(196, 165, 85, 0.5),
-    0 0 80px rgba(196, 165, 85, 0.25);
-  border-radius: 8px;
-  animation: tourSpotlightPulse 2s ease-in-out infinite;
+    0 0 0 4px #C4A555,
+    0 0 0 8px rgba(196, 165, 85, 0.6),
+    0 0 30px rgba(196, 165, 85, 0.8),
+    0 0 60px rgba(196, 165, 85, 0.5),
+    0 0 100px rgba(196, 165, 85, 0.3) !important;
+  border-radius: 8px !important;
+  outline: 2px solid rgba(196, 165, 85, 0.8) !important;
+  outline-offset: 4px !important;
+  animation: tourSpotlightPulse 1.5s ease-in-out infinite !important;
 }
 
 @keyframes tourSpotlightPulse {
   0%, 100% {
     box-shadow:
-      0 0 0 3px #C4A555,
-      0 0 0 6px rgba(196, 165, 85, 0.4),
-      0 0 40px rgba(196, 165, 85, 0.5),
-      0 0 80px rgba(196, 165, 85, 0.25);
+      0 0 0 4px #C4A555,
+      0 0 0 8px rgba(196, 165, 85, 0.6),
+      0 0 30px rgba(196, 165, 85, 0.8),
+      0 0 60px rgba(196, 165, 85, 0.5),
+      0 0 100px rgba(196, 165, 85, 0.3);
+    outline-color: rgba(196, 165, 85, 0.8);
   }
   50% {
     box-shadow:
-      0 0 0 3px #C4A555,
-      0 0 0 8px rgba(196, 165, 85, 0.55),
-      0 0 60px rgba(196, 165, 85, 0.7),
-      0 0 110px rgba(196, 165, 85, 0.35);
+      0 0 0 4px #FFD700,
+      0 0 0 10px rgba(255, 215, 0, 0.7),
+      0 0 50px rgba(255, 215, 0, 0.9),
+      0 0 90px rgba(196, 165, 85, 0.7),
+      0 0 140px rgba(196, 165, 85, 0.4);
+    outline-color: rgba(255, 215, 0, 0.9);
   }
 }
 
