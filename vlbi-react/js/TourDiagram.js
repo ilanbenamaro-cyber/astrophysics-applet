@@ -121,15 +121,19 @@ function drawDish(ctx) {
   ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx - 69, 24); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + 69, 24); ctx.stroke();
   ctx.restore();
-  // Arc showing angle θ — sweeps between the two diverging dashed lines
+  // Arc showing angle θ — computed from the exact line endpoint coordinates
+  const leftAngle  = Math.atan2(24 - cy, (cx - 69) - cx); // angle to left line tip
+  const rightAngle = Math.atan2(24 - cy, (cx + 69) - cx); // angle to right line tip
+  const midAngle   = (leftAngle + rightAngle) / 2;         // -π/2, straight up
   ctx.save();
   ctx.strokeStyle = '#9E7E38';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.arc(cx, cy, 44, -1.93, -1.21);
+  ctx.arc(cx, cy, 44, leftAngle, rightAngle);
   ctx.stroke();
   ctx.restore();
-  label(ctx, 'θ', cx + 18, cy - 52, { color: '#C4A555', size: 18 });
+  // Label at midpoint angle, 55px from focal point — sits between the lines
+  label(ctx, 'θ', cx + 55 * Math.cos(midAngle), cy + 55 * Math.sin(midAngle), { color: '#C4A555', size: 18 });
   // D double-headed arrow
   ctx.save();
   ctx.strokeStyle = '#8888b0';
@@ -159,7 +163,7 @@ function drawDish(ctx) {
 function drawBaseline(ctx, canvas, rafRef, reducedMotion) {
   const W = 400, H = 340;
 
-  function drawStatic() {
+  if (reducedMotion) {
     parabolicDish(ctx, 75, H - 38, 75, 51);
     parabolicDish(ctx, 325, H - 38, 75, 51);
     ctx.save();
@@ -171,10 +175,6 @@ function drawBaseline(ctx, canvas, rafRef, reducedMotion) {
     label(ctx, 'B', 200, H - 72, { color: '#8888b0', size: 14 });
     label(ctx, 'ALMA', 75, H - 14, { color: '#9E7E38', size: 12 });
     label(ctx, 'IRAM', 325, H - 14, { color: '#9E7E38', size: 12 });
-  }
-
-  if (reducedMotion) {
-    drawStatic();
     sineWave(ctx, 20, 178, 115, 28, 0, { color: '#C4A555' });
     sineWave(ctx, 222, 380, 115, 28, 0.8, { color: '#9E7E38' });
     label(ctx, 'E₁', 14, 115, { color: '#C4A555', size: 13, align: 'left' });
@@ -186,7 +186,17 @@ function drawBaseline(ctx, canvas, rafRef, reducedMotion) {
   function frame(ts) {
     const phase = ts * 0.0027;
     ctx.clearRect(0, 0, W, H);
-    drawStatic();
+    parabolicDish(ctx, 75, H - 38, 75, 51);
+    parabolicDish(ctx, 325, H - 38, 75, 51);
+    ctx.save();
+    ctx.strokeStyle = '#8888b0';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([7, 5]);
+    ctx.beginPath(); ctx.moveTo(75, H - 90); ctx.lineTo(325, H - 90); ctx.stroke();
+    ctx.restore();
+    label(ctx, 'B', 200, H - 72, { color: '#8888b0', size: 14 });
+    label(ctx, 'ALMA', 75, H - 14, { color: '#9E7E38', size: 12 });
+    label(ctx, 'IRAM', 325, H - 14, { color: '#9E7E38', size: 12 });
     sineWave(ctx, 20, 178, 115, 28, phase, { color: '#C4A555' });
     sineWave(ctx, 222, 380, 115, 28, phase - 0.9, { color: '#9E7E38' });
     label(ctx, 'E₁', 14, 115, { color: '#C4A555', size: 13, align: 'left' });
