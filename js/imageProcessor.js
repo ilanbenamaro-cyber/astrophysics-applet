@@ -203,10 +203,10 @@ function computeUVFill(uvPoints, N) {
 }
 
 /**
- * Full reconstruction pipeline: grayscale pixels → FFT → mask → IFFT → pixels.
+ * Full reconstruction pipeline: grayscale pixels → FFT → mask → IFFT → dirty image.
  * @param {number[][]} grayscale - N×N input
  * @param {Array<{u: number, v: number}>} uvPoints
- * @returns {number[][]} reconstructed grayscale pixels
+ * @returns {number[][]} dirty image (grayscale pixels)
  */
 function reconstructImage(grayscale, uvPoints) {
     const N       = grayscale.length;
@@ -214,4 +214,111 @@ function reconstructImage(grayscale, uvPoints) {
     const mask     = buildUVMask(uvPoints, N);
     const masked   = applyUVMask(spectrum, mask);
     return ifft2d(masked);
+}
+
+/**
+ * CLEAN deconvolution: iteratively subtract the PSF from the dirty image to
+ * recover a sharper, less artifact-laden reconstruction.
+ *
+ * Algorithm (Högbom CLEAN):
+ *   1. Copy dirty image to residual; init clean-component map to zero.
+ *   2. Repeat up to maxIter times:
+ *        a. Find the peak residual pixel (r, c).
+ *        b. Stop if |peak| < threshold × initialPeak.
+ *        c. Subtract gain × peak × beam (shifted to align with (r,c)) from residual.
+ *        d. Accumulate gain × peak / beamPeak into components[r][c].
+ *   3. Estimate restore-beam width from the dirty beam FWHM.
+ *   4. Convolve clean components with a Gaussian restore beam via FFT.
+ *   5. Return restored + residual.
+ *
+ * @param {number[][]} dirtyImage - N×N real array (output of reconstructImage)
+ * @param {number[][]} dirtyBeam  - N×N real array (output of computeDirtyBeam); peak at [0][0]
+ * @param {object}     [opts]
+ * @param {number}     [opts.gain=0.1]      - Loop gain: fraction of peak subtracted per iteration
+ * @param {number}     [opts.maxIter=1000]  - Maximum CLEAN iterations
+ * @param {number}     [opts.threshold=0.05] - Stop when peak < threshold × initialPeak
+ * @returns {number[][]} CLEAN-restored image (N×N real)
+ */
+function cleanDeconvolve(dirtyImage, dirtyBeam, opts) {
+    const gain      = (opts && opts.gain      != null) ? opts.gain      : 0.1;
+    const maxIter   = (opts && opts.maxIter   != null) ? opts.maxIter   : 1000;
+    const threshold = (opts && opts.threshold != null) ? opts.threshold : 0.05;
+
+    const N = dirtyImage.length;
+
+    // --- Working copies ---
+    const residual   = dirtyImage.map(row => row.slice());
+    const components = Array.from({ length: N }, () => new Array(N).fill(0));
+
+    // --- Beam peak (should be at [0][0] by IFFT convention) ---
+    let beamPeak = 0;
+    for (let i = 0; i < N; i++)
+        for (let j = 0; j < N; j++)
+            if (Math.abs(dirtyBeam[i][j]) > beamPeak) beamPeak = Math.abs(dirtyBeam[i][j]);
+    if (beamPeak === 0) return dirtyImage.map(row => row.slice());
+
+    // --- Initial peak for threshold ---
+    let initPeak = 0;
+    for (let i = 0; i < N; i++)
+        for (let j = 0; j < N; j++)
+            if (Math.abs(residual[i][j]) > initPeak) initPeak = Math.abs(residual[i][j]);
+    const stopLevel = threshold * initPeak;
+
+    // --- CLEAN loop ---
+    for (let iter = 0; iter < maxIter; iter++) {
+        // Find peak residual
+        let peakVal = 0, peakR = 0, peakC = 0;
+        for (let i = 0; i < N; i++) {
+            for (let j = 0; j < N; j++) {
+                if (Math.abs(residual[i][j]) > Math.abs(peakVal)) {
+                    peakVal = residual[i][j];
+                    peakR   = i;
+                    peakC   = j;
+                }
+            }
+        }
+        if (Math.abs(peakVal) < stopLevel) break;
+
+        // Subtract scaled, shifted dirty beam from residuals
+        const delta = gain * peakVal / beamPeak;
+        for (let i = 0; i < N; i++) {
+            const bi = ((i - peakR) % N + N) % N;
+            for (let j = 0; j < N; j++) {
+                const bj = ((j - peakC) % N + N) % N;
+                residual[i][j] -= delta * dirtyBeam[bi][bj];
+            }
+        }
+        components[peakR][peakC] += delta;
+    }
+
+    // --- Estimate restore-beam width from dirty-beam FWHM ---
+    // Walk along row 0 from the peak at j=0 until the value drops below half-maximum.
+    const halfMax = dirtyBeam[0][0] / 2;
+    let halfWidth = 2; // minimum 2px half-width
+    for (let j = 1; j < N / 2; j++) {
+        if (dirtyBeam[0][j] <= halfMax) { halfWidth = j; break; }
+    }
+    // sigma for Gaussian restore beam (slightly generous for a clean visual appearance)
+    const sigma = Math.max(1.5, halfWidth / 2.355);
+
+    // --- Gaussian restore beam centered at [0][0] (IFFT/periodic convention) ---
+    const gaussian = Array.from({ length: N }, (_, i) => {
+        const di = Math.min(i, N - i); // shortest periodic distance
+        return Array.from({ length: N }, (_, j) => {
+            const dj = Math.min(j, N - j);
+            return Math.exp(-(di * di + dj * dj) / (2 * sigma * sigma));
+        });
+    });
+
+    // --- Convolve components with Gaussian via FFT ---
+    // Convolution theorem: ifft2d(fft2d(f) .* fft2d(g)) = f ⊛ g (math.js 1/N² normalization is exact)
+    const compFFT  = fft2d(components);
+    const gaussFFT = fft2d(gaussian);
+    const product  = compFFT.map((row, i) =>
+        row.map((val, j) => math.multiply(val, gaussFFT[i][j]))
+    );
+    const restored = ifft2d(product);
+
+    // --- Add residuals ---
+    return restored.map((row, i) => row.map((val, j) => val + residual[i][j]));
 }
