@@ -228,9 +228,7 @@ export function App() {
       : (thetaMuas/1000).toFixed(2) + ' mas';
   }, [telescopes, controls.frequency]);
 
-  const restoredLabel = controls.method === 'clean' ? 'CLEAN'
-    : controls.method === 'mem' ? 'Max Entropy'
-    : 'Restored';
+  const restoredLabel = controls.method === 'clean' ? 'CLEAN' : 'Dirty Image';
 
   return html`
     <div className="app">

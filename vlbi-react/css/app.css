@@ -365,6 +365,26 @@ html, body {
 }
 .upload-zone:hover { border-color: var(--accent-teal); background: var(--bg-2); color: var(--text-primary); }
 
+/* ── CLEAN toggle ── */
+.clean-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--accent-teal);
+  user-select: none;
+  white-space: nowrap;
+  padding: 4px 0;
+}
+.clean-toggle input[type="checkbox"] {
+  accent-color: var(--accent-teal);
+  cursor: pointer;
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
 /* ── Controls Panel ── */
 .control-row {
   margin-bottom: 10px;
