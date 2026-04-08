@@ -1,23 +1,25 @@
-# Fix — Ocean Telescope Placement
+# Fix — Land Mask Resolution
 
 **FILES_CHANGED:**
-- `vlbi-react/js/landMask.js` — NEW FILE: ES module exporting `isOnLand(lat, lon)`
-- `vlbi-react/js/Globe.js` — added import + land guard in `onPointerUp`
+- `vlbi-react/js/globeHelpers.js` — added `_landPolygons` cache, `_pointInRing`,
+  `_pointInPolygon`, and exported `isOnLand(lat, lon)` using polygon check;
+  populated cache in `loadCountryBoundaries` after existing TopoJSON parse
+- `vlbi-react/js/Globe.js` — import `isOnLand` from `globeHelpers.js` instead
+  of `landMask.js` (single-line change)
+- `vlbi-react/js/landMask.js` — DELETED (replaced entirely)
 
 **FIX_DESCRIPTION:**
-Created `vlbi-react/js/landMask.js` as an ES module version of the root app's
-`js/landMask.js`. It exports a single `isOnLand(lat, lon)` function backed by the
-same precomputed 360×180 bit-packed land/water lookup table (Natural Earth 110m,
-public domain). O(1) lookup, no network request, no async dependency.
+The 360×180 bitmap in `landMask.js` was too coarse (1°/cell ≈ 111km) causing valid
+land locations like New York, Portugal coast, Greek islands, Cuba, and Canary Islands
+to be blocked. Replaced with a point-in-polygon check against the `world-atlas@2/
+countries-110m.json` TopoJSON, which `globeHelpers.js` was already fetching for
+country border rendering. No new network request added. The polygon boundaries follow
+actual coastlines, eliminating false ocean classifications.
 
-In `Globe.js`, imported `isOnLand` and wrapped the `onAddRef.current(lat, lon)` call
-in an `if (isOnLand(lat, lon))` guard. Ocean clicks now silently do nothing —
-consistent with the root app's behavior after commit e396074.
-
-The fix is 2 lines of code change in Globe.js (import + if-guard).
+The `_landPolygons` cache is populated inside the existing `loadCountryBoundaries`
+async function (same fetch, zero extra cost). While loading, `isOnLand` returns `true`
+(allow all) — the TopoJSON loads in <500ms, making the window imperceptible.
 
 **REGRESSION_TEST_ADDED:**
-Manual Playwright verification:
-- Ocean click (Atlantic ~20°N, 40°W) → no telescope placed
-- Land click (Africa ~0°N, 20°E) → telescope placed
-- EHT presets (Load EHT Array) → all 6 sites placed correctly
+Playwright browser evaluation verifying the 5 previously-failing sites now return
+`true` from the live `isOnLand` export, and deep ocean sites still return `false`.

@@ -1,52 +1,44 @@
-# Diagnosis — Ocean Telescope Placement
+# Diagnosis — Land Mask Too Coarse
 
 **BUG_SUMMARY:**
-Telescopes can be placed in the ocean because `vlbi-react/js/Globe.js` click handler
-calls `onAddRef.current(lat, lon)` for any raycaster hit on the Earth sphere mesh,
-with no land/ocean guard. The same bug was fixed in the root app (commit e396074)
-but the fix was applied to root files only — not to the vlbi-react live version.
+`vlbi-react/js/landMask.js` uses a 360×180 (1° per cell) precomputed bitmap. Each cell
+is ~111km × 111km at the equator. Coastal areas, islands, and peninsulas narrower than
+~55km fall into cells the bitmap classifies as ocean, blocking valid telescope placement.
 
 **REPRODUCTION: CONFIRMED**
-Verified by reading `Globe.js` lines 199–205: raycasts against `earthMesh`
-(a perfect sphere), converts hit point to lat/lon, immediately calls `onAddRef.current`.
-No land check present. Any click on the globe surface — land or ocean — triggers placement.
+Tested 15 known coordinates against the bitmap. 5 land sites incorrectly return false:
+- New York (40.7°N, 74.0°W)     → false  [should be true]
+- Portugal coast (38.7°N, 9.1°W) → false  [should be true]
+- Canary Islands (28.3°N, 16.5°W)→ false  [should be true]
+- Greek islands (37.4°N, 25.3°E) → false  [should be true]
+- Caribbean Cuba (22.0°N, 80.0°W)→ false  [should be true]
 
 **ROOT_CAUSE: CONFIRMED**
-`onPointerUp` in `Globe.js` performs raycasting against the Earth sphere (lines 190–206).
-The sphere geometry is uniform — there is no surface attribute distinguishing land from
-ocean. The handler has no guard and calls `onAddRef.current(lat, lon)` unconditionally
-on every surface hit.
+`landMask.js` line 22-25 — the lookup function maps lat/lon to a 1°×1° grid cell and
+returns the precomputed bit. At 1° resolution, any land feature narrower than ~1 degree
+(~111km) can be lost or misrepresented. New York City — one of the most famous cities
+on Earth — returns ocean. The data is structurally too coarse to be reliable.
 
-**ROOT_CAUSE_FILE:** `vlbi-react/js/Globe.js` lines 199–205
-
-```js
-const hits = raycaster.intersectObject(earthMesh);
-if (hits.length > 0) {
-  const pt = hits[0].point;
-  const lat = Math.asin(pt.y) * 180 / Math.PI;
-  const lon = Math.atan2(pt.z, pt.x) * 180 / Math.PI;
-  onAddRef.current(lat, lon);   // ← called even for ocean clicks
-}
-```
+**ROOT_CAUSE_FILE:** `vlbi-react/js/landMask.js` lines 22–25
 
 **HYPOTHESES_RULED_OUT:**
-- H1: App uses topojson country features for point-in-polygon check — RULED OUT.
-  `loadCountryBoundaries` in `globeHelpers.js` only uses the topojson data for
-  rendering border lines and labels; it never exports a land-test function.
-- H2: Specular map / texture sampling used to detect water — RULED OUT.
-  Textures are loaded asynchronously and `getImageData` is blocked by CORS
-  (known from commit e396074 investigation). Not in the codebase.
-- H3: App delegates land check to `handleTelescopeAdd` in `App.js` — RULED OUT.
-  `handleTelescopeAdd` adds any telescope without coordinate validation.
+- H1: The lookup algorithm is wrong (wrong index math) — RULED OUT. The row/col math
+  is correct; New York and Portugal are simply in cells the bitmap marks as ocean.
+- H2: The base64 data was corrupted — RULED OUT. Ocean sites correctly return false;
+  large land masses (Japan, UK, Indonesia) return true. The data itself is just too low-res.
+- H3: A 2-3° buffer zone would fix it — RULED OUT as an approach. A buffer large enough
+  to fix coastal areas would allow ocean placement within ~300km of any coast.
 
 **FIX_APPROACH:**
-Port the precomputed 360×180 land/water bit array from `js/landMask.js` to a new
-ES-module file `vlbi-react/js/landMask.js` that exports `isOnLand(lat, lon)`.
-Import it in `Globe.js` and guard `onAddRef.current(lat, lon)` with the check.
-Same data, same O(1) lookup, zero async dependencies.
+Replace the bitmap with a point-in-polygon check against the `world-atlas@2/countries-110m.json`
+TopoJSON already loaded by `globeHelpers.js`. Add `_landPolygons` module-level cache to
+`globeHelpers.js`, populate it inside `loadCountryBoundaries` after parsing features, and
+export `isOnLand(lat, lon)` using the ray-casting algorithm. Update `Globe.js` to import
+from `globeHelpers.js` instead of `landMask.js`. Delete `landMask.js`.
+
+Fallback while TopoJSON loads: return `true` (allow all clicks) — the async load
+completes in <500ms, and the false-positive window is imperceptible to users.
 
 **REGRESSION_TEST:**
-Manual browser verification via Playwright:
-1. Click mid-Atlantic (lat~20, lon~-40) → no marker placed
-2. Click over continental Africa (lat~0, lon~20) → marker placed
-3. Load EHT presets — all 6 sites still placed correctly (all are on land)
+Playwright browser evaluation: verify same 5 previously-failing sites now return `true`,
+verify deep ocean sites still return `false`, verify all EHT presets remain land-classified.

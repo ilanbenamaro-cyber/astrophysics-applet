@@ -103,6 +103,32 @@ RESOLVED: YES (both fixes ported to vlbi-react in this session)
 
 ---
 
+### world-atlas countries-110m.json omits small islands
+DATE_DISCOVERED: 2026-04-07
+AREA: vlbi-react/js/globeHelpers.js — isOnLand polygon check
+SEVERITY: LOW
+
+WHAT HAPPENED: Point-in-polygon check against countries-110m.json correctly fixed
+most bitmap false negatives, but 3 test sites remained ocean: Canary Islands, Greek
+island chains (Cyclades, Rhodes), and NYC at the exact coastal coordinate -74.0°.
+Investigation confirmed these are absent from the 110m dataset, not algorithm bugs.
+
+ROOT CAUSE: The Natural Earth 1:110M dataset omits island territories too small to
+render at that scale. It also has coastal polygon imprecision at ~0.1° granularity.
+Chicago, Dallas, Philadelphia, Athens mainland, and all 6 EHT sites pass correctly.
+
+HOW TO AVOID: If island/coastal accuracy matters, switch the fetch URL to
+`countries-50m.json` (~280kb vs ~120kb) in loadCountryBoundaries. No algorithm
+change needed — just the URL.
+
+DETECTION: If a telescope site on a small island (Hawaii, Canary Islands, Azores)
+cannot be placed manually, check if it appears in the 110m dataset. EHT presets
+bypass this check (they're added directly, not via click).
+
+RESOLVED: PARTIAL — 110m polygon is much better than 1° bitmap; island gaps remain.
+
+---
+
 ## Pattern: Things To Always Check
 
 <!-- Short reminders derived from gotchas above -->
