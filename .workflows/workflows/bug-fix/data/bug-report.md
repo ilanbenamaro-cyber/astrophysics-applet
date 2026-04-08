@@ -1,45 +1,39 @@
 ## What Is Broken
-The land mask check in vlbi-react/js/landMask.js is too aggressive — it is blocking
-telescope placement in valid land areas across the globe, making placement glitchy
-and unreliable. The 360×180 1-degree resolution bitmap is too coarse for accurate
-land detection, incorrectly classifying many coastal and inland land pixels as ocean.
+Three issues need fixing in vlbi-react:
 
-## Expected Behavior
-Telescopes should place smoothly on any land area worldwide. Only deep ocean clicks
-should be blocked. Edge cases like islands, coastal areas, and peninsulas should all
-work correctly.
+1. TELESCOPE PLACEMENT STILL GLITCHY ON LAND
+   Valid land areas are still being blocked. The TopoJSON polygon check is
+   still too restrictive. Need a more permissive approach — only block clicks
+   that are clearly deep ocean (far from any coastline). Coastal areas, islands,
+   and all continental land must work reliably.
 
-## How To Reproduce
-1. Load the app at http://localhost:8765/vlbi-react/index.html
-2. Try clicking various land areas — many valid land clicks are blocked
-3. Glitchy behavior especially noticeable on smaller landmasses and coastlines
+2. DEEP OCEAN PLACEMENT STILL POSSIBLE
+   Some ocean clicks are still getting through the land check.
+   The polygon check has gaps — needs to be more reliable for obvious ocean areas
+   like middle of Pacific, Atlantic, Indian Ocean.
 
-## Root Cause Hypothesis
-The precomputed 1-degree land mask bitmap has insufficient resolution. A 1-degree
-cell is approximately 111km — too coarse to correctly classify coastal regions,
-islands, and peninsulas. The better approach is one of:
+3. MAX ENTROPY METHOD WAS REMOVED
+   The recent ControlsPanel.js change replaced the 3 method buttons
+   (Dirty Only / Max Entropy / CLEAN) with a single CLEAN checkbox.
+   This removed the Max Entropy reconstruction option entirely.
+   Max Entropy must be restored.
 
-OPTION A — Higher resolution land polygon check using a GeoJSON dataset
-  Use a TopoJSON/GeoJSON world countries file (already common in web mapping)
-  Check if a point falls inside any country polygon using ray casting
-  Accurate to ~1km, works for all islands and coastlines
+   The correct UI should be:
+   Keep the CLEAN checkbox (on/off toggle for CLEAN deconvolution)
+   - ADD BACK a separate toggle or button for Max Entropy
+   - When CLEAN is off: show dirty image OR max entropy image depending on selection
+   - When CLEAN is on: apply CLEAN deconvolution to whichever base image is selected
 
-OPTION B — Relaxed threshold with buffer zone
-  Keep the bitmap but treat any pixel within 2-3 degrees of a land pixel as land
-  Fast, simple, eliminates coastal false negatives
-  Still blocks clicks in the middle of the Pacific/Atlantic/Indian oceans
+## Root Cause Hypotheses
 
-OPTION C — Remove land restriction entirely, use visual feedback instead
-  Allow placement anywhere but show a warning icon on telescopes placed in ocean
-  Let scientists decide — some telescopes are on islands or ships
+Issue 1 & 2: The TopoJSON 110m resolution still misses small islands and has
+gaps at coastlines. Better approach: use a distance-based buffer. Any click
+within 3 degrees of a known land polygon vertex passes. Only clicks more than
+3 degrees from any land are blocked. This makes coastal and island placement
+forgiving while still blocking the middle of the Pacific.
 
-## Recommended Fix
-Option A — GeoJSON polygon check. It is the most accurate and future-proof.
-The file can be loaded from a CDN (unpkg or jsdelivr), small ~120kb file.
-Use the point-in-polygon algorithm against world country boundaries.
-
-## What I've Already Tried
-The 360×180 bitmap approach — too coarse, causes glitchy behavior on land.
+Issue 3: ControlsPanel.js removed the methods array and method buttons entirely.
+They need to be restored alongside the CLEAN checkbox.
 
 ## Environment
-vlbi-react version at http://localhost:8765/vlbi-react/index.html
+vlbi-react at http://localhost:8765/vlbi-react/index.html
