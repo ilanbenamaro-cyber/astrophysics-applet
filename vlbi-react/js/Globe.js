@@ -3,7 +3,7 @@ import { html, useRef, useEffect } from './core.js';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
-import { borderLineMat, isOnLand, loadEarthTextures, loadCountryBoundaries, syncTelescopeMarkers } from './globeHelpers.js';
+import { borderLineMat, loadEarthTextures, loadCountryBoundaries, syncTelescopeMarkers } from './globeHelpers.js';
 
 export function Globe({ telescopes, onTelescopeAdd, showCountryLabels }) {
   const containerRef = useRef(null);
@@ -201,9 +201,7 @@ export function Globe({ telescopes, onTelescopeAdd, showCountryLabels }) {
         const pt = hits[0].point;
         const lat = Math.asin(pt.y) * 180 / Math.PI;
         const lon = Math.atan2(pt.z, pt.x) * 180 / Math.PI;
-        if (isOnLand(lat, lon)) {
-          onAddRef.current(lat, lon);
-        }
+        onAddRef.current(lat, lon);
       }
     };
     renderer.domElement.addEventListener('pointerdown', onPointerDown);

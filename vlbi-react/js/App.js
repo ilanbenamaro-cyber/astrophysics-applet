@@ -23,7 +23,7 @@ export function App() {
   const [restored, setRestored] = useState(null);
   const [controls, setControls] = useState({
     declination: 30, duration: 12, frequency: 230,
-    noise: 0, dishDiameter: 25, useClean: true, useMem: false,
+    noise: 0, dishDiameter: 25, method: 'clean',
   });
   const [infoKey, setInfoKey] = useState(null);
   const [status, setStatus] = useState({ msg: 'Select an image and place telescopes to begin', type: '' });
@@ -138,13 +138,11 @@ export function App() {
       const id = ++reqIdRef.current;
       const gs = grayscale.slice();
       const uv = uvPoints.map(p => ({ u: p.u, v: p.v }));
-      // Derive effective method: CLEAN takes precedence over MEM over dirty.
-      const method = controls.useClean ? 'clean' : controls.useMem ? 'mem' : 'dirty';
       workerRef.current.postMessage(
         { type: 'reconstruct', id, grayscale: gs, uvPoints: uv, params: {
             N: IMAGE_SIZE,
             noise: controls.noise,
-            method,
+            method: controls.method,
             dishDiameter: controls.dishDiameter,
             frequency: controls.frequency,
           }
@@ -153,7 +151,7 @@ export function App() {
       );
     }, 100);
     return () => clearTimeout(computeTimerRef.current);
-  }, [uvPoints, grayscale, controls.noise, controls.useClean, controls.useMem, controls.dishDiameter, controls.frequency]);
+  }, [uvPoints, grayscale, controls.noise, controls.method, controls.dishDiameter, controls.frequency]);
 
   const IMAGE_PRESETS = { 'blackhole': '../assets/black-hole.png', 'wfu-seal': '../assets/wfu-seal.png' };
 
@@ -205,7 +203,7 @@ export function App() {
       setOriginalCanvas(previewCanvas);
       setSelectedPreset('blackhole');
     });
-    setControls({ declination: 30, duration: 12, frequency: 230, noise: 0, dishDiameter: 25, useClean: true, useMem: false });
+    setControls({ declination: 30, duration: 12, frequency: 230, noise: 0, dishDiameter: 25, method: 'clean' });
     setStatus({ msg: 'Reset. Place telescopes to begin.', type: '' });
     setDirty(null);
     setRestored(null);
@@ -230,7 +228,9 @@ export function App() {
       : (thetaMuas/1000).toFixed(2) + ' mas';
   }, [telescopes, controls.frequency]);
 
-  const restoredLabel = controls.useClean ? 'CLEAN' : controls.useMem ? 'Max Entropy' : 'Dirty Image';
+  const restoredLabel = controls.method === 'clean' ? 'CLEAN'
+    : controls.method === 'mem' ? 'Max Entropy'
+    : 'Restored';
 
   return html`
     <div className="app">

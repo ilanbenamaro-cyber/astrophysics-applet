@@ -10,28 +10,25 @@ export function ControlsPanel({ controls, onChange, onOpenInfo }) {
     { key: 'dishDiameter',label: 'Dish Diameter', min: 10,   max: 100, step: 5,   unit: ' m',  infoKey: 'dish'        },
   ];
 
+  const methods = [
+    { key: 'dirty', label: 'Dirty Only'  },
+    { key: 'mem',   label: 'Max Entropy' },
+    { key: 'clean', label: 'CLEAN'       },
+  ];
+
   return html`<div>
-    <div className="control-row">
-      <label className="clean-toggle">
-        <input
-          type="checkbox"
-          checked=${controls.useClean}
-          onInput=${(e) => onChange('useClean', e.target.checked)}
-          aria-label="Apply CLEAN deconvolution"
-        />
-        CLEAN deconvolution <${InfoTooltip} infoKey="method" onOpen=${onOpenInfo} />
-      </label>
+    <div className="control-label" style=${{ marginBottom: '6px' }}>
+      Method <${InfoTooltip} infoKey="method" onOpen=${onOpenInfo} />
     </div>
-    <div className="control-row">
-      <label className="clean-toggle">
-        <input
-          type="checkbox"
-          checked=${controls.useMem}
-          onInput=${(e) => onChange('useMem', e.target.checked)}
-          aria-label="Use Max Entropy reconstruction"
-        />
-        Max Entropy <${InfoTooltip} infoKey="method" onOpen=${onOpenInfo} />
-      </label>
+    <div className="method-row">
+      ${methods.map(m => html`
+        <button
+          key=${m.key}
+          className=${'method-btn' + (controls.method === m.key ? ' selected' : '')}
+          onClick=${() => onChange('method', m.key)}
+          aria-pressed=${controls.method === m.key}
+        >${m.label}</button>
+      `)}
     </div>
     ${sliders.map(s => html`
       <div className="control-row" key=${s.key}>
