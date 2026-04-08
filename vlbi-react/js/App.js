@@ -10,6 +10,7 @@ import { UVMap } from './UVMap.js';
 import { ImageCanvas, OriginalImagePanel } from './ImageCanvas.js';
 import { StatusBar } from './StatusBar.js';
 import { AppSidebar } from './AppSidebar.js';
+import { A11yPanel } from './A11yPanel.js';
 
 export function App() {
   const [telescopes, setTelescopes] = useState([]);
@@ -26,6 +27,18 @@ export function App() {
     noise: 0, dishDiameter: 25, method: 'clean',
   });
   const [infoKey, setInfoKey] = useState(null);
+
+  // Accessibility settings — persisted in localStorage, applied via data attributes on <html>
+  const [a11y, setA11y] = useState(() => {
+    const saved = JSON.parse(localStorage.getItem('vlbi-a11y') || 'null') || {};
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    return {
+      highContrast:  saved.highContrast  ?? false,
+      fontSize:      saved.fontSize      ?? 'small',
+      reducedMotion: saved.reducedMotion ?? prefersReducedMotion,
+    };
+  });
+  const [a11yOpen, setA11yOpen] = useState(false);
   const [status, setStatus] = useState({ msg: 'Select an image and place telescopes to begin', type: '' });
   const [isComputing, setIsComputing] = useState(false);
 
@@ -55,6 +68,15 @@ export function App() {
     workerRef.current = worker;
     return () => { worker.terminate(); };
   }, []);
+
+  // Apply a11y data attributes to <html> and persist to localStorage
+  useEffect(() => {
+    const root = document.documentElement;
+    a11y.highContrast  ? root.setAttribute('data-high-contrast', '') : root.removeAttribute('data-high-contrast');
+    a11y.reducedMotion ? root.setAttribute('data-reduced-motion', '') : root.removeAttribute('data-reduced-motion');
+    root.dataset.fontSize = a11y.fontSize;
+    localStorage.setItem('vlbi-a11y', JSON.stringify(a11y));
+  }, [a11y]);
 
   // Auto-load blackhole preset on mount
   useEffect(() => {
@@ -247,6 +269,14 @@ export function App() {
             <span className="stat"><span className="stat-val">${uvFill.toFixed(1)}%</span>UV fill</span>
             ${angularRes ? html`<span className="stat"><span className="stat-val">${angularRes}</span>resolution</span>` : null}
           ` : null}
+          <${A11yPanel}
+            settings=${a11y}
+            isOpen=${a11yOpen}
+            onToggle=${() => setA11yOpen(v => !v)}
+            onToggleHighContrast=${() => setA11y(s => ({ ...s, highContrast: !s.highContrast }))}
+            onSetFontSize=${(size) => setA11y(s => ({ ...s, fontSize: size }))}
+            onToggleReducedMotion=${() => setA11y(s => ({ ...s, reducedMotion: !s.reducedMotion }))}
+          />
         </div>
       </header>
 
@@ -269,7 +299,7 @@ export function App() {
         />
 
         <main className="globe-wrapper" aria-label="Main visualization — 3D interactive globe">
-          <${Globe} telescopes=${telescopes} onTelescopeAdd=${handleTelescopeAdd} showCountryLabels=${showCountryLabels} />
+          <${Globe} telescopes=${telescopes} onTelescopeAdd=${handleTelescopeAdd} showCountryLabels=${showCountryLabels} reducedMotion=${a11y.reducedMotion} />
           <${StatusBar} status=${status} isComputing=${isComputing} />
         </main>
 

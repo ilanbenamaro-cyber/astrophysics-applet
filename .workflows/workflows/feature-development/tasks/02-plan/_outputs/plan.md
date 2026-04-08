@@ -1,124 +1,83 @@
 ## IMPLEMENTATION PLAN
 
 ### Order of Operations
-
-1. Create `js/fft2d.js` — foundational math, no dependencies on other app files
-2. Create `js/interferometry.js` — pure functions, no DOM dependencies
-3. Create `js/imageProcessor.js` — depends on fft2d.js (calls fft2d, ifft2d, drawUVPlane)
-4. Create `js/mapController.js` — depends on Leaflet only
-5. Create `js/app.js` — depends on all of the above
-6. Create `css/style.css`
-7. Create `index.html` — loads all scripts, defines DOM structure
+1. Fix tooltip string in constants.js (trivial, isolated)
+2. Add CSS font-size custom properties and replace key px values in app.css
+3. Add high-contrast, reduced-motion, and a11y panel CSS rules in app.css
+4. Create A11yPanel.js component
+5. Modify App.js: a11y state + effects + render A11yPanel + pass reducedMotion to Globe
+6. Modify Globe.js: accept reducedMotion prop, second useEffect for autoRotate
 
 ### File Changes
 
-**CREATE: js/fft2d.js**
-- `fft2d(real: number[][]) → Complex[][]` — row FFT then column FFT using math.js
-- `ifft2d(complex: Complex[][]) → number[][]` — column IFFT then row IFFT; extract `.re`
-- `fftShift(arr: any[][]) → any[][]` — moves zero-freq to center (for display)
-- All inputs are N×N plain Arrays. N must be power-of-2.
-- Use `Array.from(math.fft(...))` to guarantee plain Array return type.
+**MODIFY: vlbi-react/js/constants.js**
+- Line 25: INFO.restored.body — replace "Wiener filter" with "Max Entropy"
 
-**CREATE: js/interferometry.js**
-- `EARTH_RADIUS_KM = 6371` constant
-- `latLonToECEF(lat, lon) → {x, y, z}` — geographic → ECEF km
-- `computeBaseline(tel1, tel2) → {bx, by, bz}` — ECEF difference in km
-- `baselineToUV(baseline, hourAngle, declinationDeg) → {u, v}` — standard radio astronomy
-  formula: u = sin(H)*Bx + cos(H)*By; v = -sin(δ)cos(H)*Bx + sin(δ)sin(H)*By + cos(δ)*Bz
-- `computeUVCoverage(telescopes, decl, haRangeDeg, steps, N) → {u,v}[]`
-  Iterates all baseline pairs × all hour angle steps. Adds both (u,v) and (-u,-v) for
-  conjugate symmetry. Normalizes to pixel units: scale = (N/2) / (2 * R_earth).
-  Filters out-of-bounds points.
+**MODIFY: vlbi-react/css/app.css — Part A: font-size CSS variables**
+Add to :root:
+  --fs-2xs: 9px; --fs-xs: 10px; --fs-sm: 11px; --fs-base: 12px;
+  --fs-md: 13px; --fs-lg: 14px; --fs-xl: 16px;
+Override for medium (+2px):
+  [data-font-size="medium"] { --fs-2xs:11px; --fs-xs:12px; --fs-sm:13px; --fs-base:14px; --fs-md:15px; --fs-lg:16px; --fs-xl:18px; }
+Override for large (+4px):
+  [data-font-size="large"] { --fs-2xs:13px; --fs-xs:14px; --fs-sm:15px; --fs-base:16px; --fs-md:17px; --fs-lg:18px; --fs-xl:20px; }
+Replace key font-size px values with var() throughout CSS (~15 declarations targeting
+sidebar h2, header, stats, labels, modal, buttons, gallery text).
 
-**CREATE: js/imageProcessor.js**
-- `IMAGE_SIZE = 256` global constant (power of 2)
-- `loadImageData(file) → Promise<ImageData>` — creates offscreen canvas, draws image at
-  IMAGE_SIZE×IMAGE_SIZE, returns ImageData
-- `imageDataToGrayscale(imageData) → number[][]` — luminance = 0.299R + 0.587G + 0.114B
-- `imageDataToCanvas(imageData, canvas)` — puts RGBA data onto a canvas element
-- `grayscaleToCanvas(pixels, canvas)` — auto-normalizes to [0,255], draws grayscale
-- `buildUVMask(uvPoints, N) → boolean[][]` — converts centered (u,v) to array indices
-  via `((v + N) % N + N) % N` (handles negative values correctly)
-- `applyUVMask(fftData, mask) → Complex[][]` — zeros unsampled frequencies
-- `drawUVPlane(uvPoints, N, canvas)` — dark background, axis lines, 1×1px dots per sample
-- `reconstructImage(grayscale, uvPoints) → number[][]` — full pipeline: fft2d → buildUVMask
-  → applyUVMask → ifft2d
+**MODIFY: vlbi-react/css/app.css — Part B: high-contrast**
+[data-high-contrast] overrides: --border:#555; --text-secondary:#cccccc; --accent-teal:#ffd700;
+--accent-amber:#ffa500; --accent-blue:#ffd700. All exceed 4.5:1 ratio on #000000.
 
-**CREATE: js/mapController.js**
-- `PRESET_TELESCOPES` array: 6 EHT-equivalent locations (ALMA, IRAM, SMA, SPT, JCMT, LMT)
-- `map`, `telescopes`, `nextId`, `onChangeCallback` — module-level globals
-- `initMap(divId, onChange)` — creates Leaflet map, binds click handler to `addTelescope`
-- `addTelescope(lat, lon, name)` — creates draggable marker, popup with Remove button
-  calling `removeTelescope(id)`. Triggers `onChangeCallback`.
-- `removeTelescope(id)` — MUST be a function declaration (not const) for Leaflet popup
-  inline onclick access via window scope
-- `loadPresets()` — clears then adds all PRESET_TELESCOPES
-- `clearTelescopes()` — removes all markers
-- `getTelescopes() → {lat, lon, name}[]`
+**MODIFY: vlbi-react/css/app.css — Part C: reduced motion**
+[data-reduced-motion] rule: animation-duration:0.01ms, transition-duration:0.01ms on all children.
 
-**CREATE: js/app.js**
-- `currentImageData`, `currentGrayscale` — module-level state
-- `runReconstruction()` — guard: needs ≥2 telescopes AND loaded image. Reads declination
-  and HA range from sliders. Calls computeUVCoverage → drawUVPlane → setTimeout(reconstruct, 10).
-  setTimeout prevents UI freeze during status update.
-- `updateStatus(msg)` — sets `#status` text
-- Event listeners (bound after DOM ready):
-  - `#image-upload change` → loadImageData → imageDataToCanvas → runReconstruction
-  - `#declination input` → update label + runReconstruction
-  - `#ha-range input` → update label + runReconstruction
-  - `#load-presets click` → loadPresets()
-  - `#clear-telescopes click` → clearTelescopes()
-- `DOMContentLoaded` → initMap('map', () => runReconstruction())
+**MODIFY: vlbi-react/css/app.css — Part D: A11y panel styles**
+.a11y-wrap (relative container in header), .a11y-btn, .a11y-panel (absolute dropdown,
+top: 100%, right: 0, z-index:200), .a11y-section, .a11y-row, .a11y-size-btns,
+.a11y-size-btn (.selected state), toggle row styles.
 
-**CREATE: css/style.css**
-- CSS custom properties for dark theme (--bg, --surface, --border, --text, --accent)
-- Three-column grid for panels, collapses to 2-col at 1100px, 1-col at 700px
-- Map div: height 320px
-- Canvases: max-width 100%, aspect-ratio 1
+**CREATE: vlbi-react/js/A11yPanel.js**
+Props: { settings, onToggleHighContrast, onSetFontSize, onToggleReducedMotion, isOpen, onToggle }
+- Toggle button "A11y" with aria-expanded, aria-controls
+- Panel: role="region", aria-label="Accessibility settings"
+  - Three rows: High Contrast (checkbox), Font Size (S/M/L buttons), Reduced Motion (checkbox)
+  - "Settings auto-saved" note
+- useEffect on mount/unmount: close on Escape key + click-outside (pointerdown on document)
 
-**CREATE: index.html**
-- Loads via CDN: Leaflet CSS+JS (1.9.4), math.js (12.4.0 min)
-- Loads in order: fft2d.js, interferometry.js, imageProcessor.js, mapController.js, app.js
-- DOM: `<header>`, `<section.controls>` (file input + 2 sliders + 2 buttons + status),
-  `<div.panels>` containing 3 `<section.panel>` (map | UV-plane | image comparison)
-- Image comparison panel: two canvas columns (original + reconstructed)
+**MODIFY: vlbi-react/js/App.js**
+- Import A11yPanel
+- Add a11y state initialized from localStorage + prefers-reduced-motion:
+  useState(() => { ... JSON.parse(localStorage.getItem('vlbi-a11y')) ... })
+- Add a11yOpen state (boolean)
+- useEffect([a11y]): apply data attributes to document.documentElement + localStorage.setItem
+- Pass reducedMotion={a11y.reducedMotion} to <Globe>
+- Render <A11yPanel> inside .header div, after .header-stats
+
+**MODIFY: vlbi-react/js/Globe.js**
+- Destructure reducedMotion from props
+- Add useEffect([reducedMotion]): if (controlsRef.current) controlsRef.current.autoRotate = !reducedMotion
 
 ### Test Plan
-
-No automated test runner in this project (pure static JS, no build toolchain).
-Verification is manual via browser:
-
-- Upload a recognizable image (e.g., a letter "A") → original renders in canvas
-- With 0-1 telescopes → status warns, reconstructed canvas stays black
-- Load EHT presets (6 telescopes) → UV-plane fills with arcs → reconstructed image
-  shows a blurry but recognizable version of the original
-- Drag a telescope marker → reconstruction updates automatically
-- Adjust declination slider → UV arcs change shape → reconstruction updates
-- Adjust HA range slider → more/fewer UV samples → reconstruction quality changes
-- Clear telescopes → UV-plane clears, reconstruction goes black
+- Tooltip: page.evaluate(() => !document.body.innerHTML.includes('Wiener filter')) → true
+- Panel: click A11y btn → panel visible, aria-expanded=true
+- High contrast: toggle HC → documentElement.hasAttribute('data-high-contrast') === true
+- Font size: set Large → documentElement.dataset.fontSize === 'large'
+- Reduced motion: toggle → documentElement.hasAttribute('data-reduced-motion') === true
+- Persistence: set HC on, reload → still has data-high-contrast attribute
+- No JS errors throughout
 
 ### Falsification Results
-
 ADDRESSED:
-- FFT non-power-of-2 failure → IMAGE_SIZE=256 fixed; all images resized on load
-- UI thread blocking during FFT → `setTimeout(reconstruct, 10)` allows status render
-- Leaflet popup `removeTelescope` not accessible → use function declaration, not const/let
-- Negative UV indices in mask → `((v + N) % N + N) % N` handles all negative values
-- Reconstructed image has imaginary residuals → extract `.re` from ifft2d output
-- math.js fft return type variance → wrap all returns in `Array.from()`
-- No telescopes / 1 telescope guard → check `tels.length < 2` before running
+- Globe controlsRef null before init effect: null-check in second useEffect
+- localStorage parse failure: || 'null' fallback + || {} default
+- Panel click-outside: pointerdown listener on document, close if not inside .a11y-panel
+- font-size="small" attribute not needed: CSS vars at :root stay default when no attribute
 
-ACCEPTED RISKS (documented):
-- FFT blocks main thread for ~100-300ms on slow devices. For an educational tool this is
-  acceptable; a Web Worker refactor is a v2 consideration.
-- UV normalization assumes max baseline = Earth diameter. Telescopes very close together
-  produce low-frequency-only sampling; reconstruction will look very blurry. This is
-  physically correct and educationally valuable.
-- Leaflet tiles require internet. Noted in README/header; app is still functional
-  without tiles (map shows blank background, telescope placement still works).
+ACCEPTED RISKS:
+- Font size vars cover ~15 declarations; any missed declarations stay at original px (visual
+  inconsistency at edges, not a functional failure)
+- Globe texture/Three.js colors unchanged in high contrast (acceptable — canvas visualization)
 
 ASSUMPTIONS MADE:
-- No build toolchain, no linting, no test runner — verification is manual in-browser
-- Plain scripts (not ES modules) — simplest approach for a single-file educational app
-- IMAGE_SIZE=256 is sufficient resolution for the educational demonstration
-- Wavelength normalized out — UV coordinates in units of baseline/Earth-radius, not wavelengths
+- Globe autoRotate=true is the correct default on initialization
+- a11y state is initialized once from localStorage/OS on mount; not live-synced across tabs
