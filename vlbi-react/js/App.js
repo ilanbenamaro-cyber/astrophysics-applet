@@ -11,6 +11,7 @@ import { ImageCanvas, OriginalImagePanel } from './ImageCanvas.js';
 import { StatusBar } from './StatusBar.js';
 import { AppSidebar } from './AppSidebar.js';
 import { A11yPanel } from './A11yPanel.js';
+import { Tour } from './Tour.js';
 
 export function App() {
   const [telescopes, setTelescopes] = useState([]);
@@ -39,6 +40,8 @@ export function App() {
     };
   });
   const [a11yOpen, setA11yOpen] = useState(false);
+  const [tourActive, setTourActive] = useState(false);
+  const [tourActIndex, setTourActIndex] = useState(0);
   const [status, setStatus] = useState({ msg: 'Select an image and place telescopes to begin', type: '' });
   const [isComputing, setIsComputing] = useState(false);
 
@@ -217,6 +220,29 @@ export function App() {
     img.src = url;
   }, []);
 
+  const handleTourAction = useCallback((action) => {
+    switch (action.type) {
+      case 'resetForTour':
+        setTelescopes([]);
+        telIdRef.current = 0;
+        break;
+      case 'addTelescope':
+        handleTelescopeAdd(action.lat, action.lon);
+        break;
+      case 'loadEHT':
+        loadEHTPresets();
+        break;
+      case 'setMethod':
+        setControls(p => ({ ...p, method: action.method }));
+        break;
+      case 'setPreset':
+        handlePresetSelect(action.preset);
+        break;
+      default:
+        break;
+    }
+  }, [handleTelescopeAdd, handlePresetSelect]);
+
   function handleReset() {
     setTelescopes([]);
     telIdRef.current = 0;
@@ -269,6 +295,12 @@ export function App() {
             <span className="stat"><span className="stat-val">${uvFill.toFixed(1)}%</span>UV fill</span>
             ${angularRes ? html`<span className="stat"><span className="stat-val">${angularRes}</span>resolution</span>` : null}
           ` : null}
+          <button
+            className="btn btn-ghost"
+            onClick=${() => { setTourActive(true); setTourActIndex(0); }}
+            aria-label="Start guided physics tour"
+            style=${{ whiteSpace: 'nowrap' }}
+          >◉ Tour</button>
           <${A11yPanel}
             settings=${a11y}
             isOpen=${a11yOpen}
@@ -298,19 +330,19 @@ export function App() {
           onReset=${handleReset}
         />
 
-        <main className="globe-wrapper" aria-label="Main visualization — 3D interactive globe">
+        <main id="tour-globe" className="globe-wrapper" aria-label="Main visualization — 3D interactive globe">
           <${Globe} telescopes=${telescopes} onTelescopeAdd=${handleTelescopeAdd} showCountryLabels=${showCountryLabels} reducedMotion=${a11y.reducedMotion} />
           <${StatusBar} status=${status} isComputing=${isComputing} />
         </main>
 
         <aside className="right-panel" aria-label="Analysis outputs">
-          <section className="panel-section">
+          <section id="tour-uv" className="panel-section">
             <h2>UV Coverage <${InfoTooltip} infoKey="uvmap" onOpen=${setInfoKey} /></h2>
             <${UVMap} uvPoints=${uvPoints} N=${IMAGE_SIZE} />
             <p className="caption">Fill: ${uvFill.toFixed(2)}% of UV-plane sampled · ${uvPoints.length} samples</p>
           </section>
 
-          <section className="panel-section">
+          <section id="tour-images" className="panel-section">
             <h2>Image Reconstruction</h2>
             <div className="images-row">
               <${OriginalImagePanel}
@@ -339,6 +371,15 @@ export function App() {
       </div>
 
       <${InfoModal} infoKey=${infoKey} onClose=${() => setInfoKey(null)} />
+      ${tourActive && html`
+        <${Tour}
+          actIndex=${tourActIndex}
+          onActChange=${setTourActIndex}
+          onClose=${() => { setTourActive(false); setTourActIndex(0); }}
+          onTourAction=${handleTourAction}
+          reducedMotion=${a11y.reducedMotion}
+        />
+      `}
     </div>
   `;
 }

@@ -40,7 +40,7 @@ export function AppSidebar({
         </div>
       </section>
 
-      <section className="sidebar-section">
+      <section id="tour-controls" className="sidebar-section">
         <h2>Observation Parameters</h2>
         <${ControlsPanel}
           controls=${controls}
