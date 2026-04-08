@@ -15,11 +15,22 @@ export function ControlsPanel({ controls, onChange, onOpenInfo }) {
       <label className="clean-toggle">
         <input
           type="checkbox"
-          checked=${controls.method === 'clean'}
-          onInput=${(e) => onChange('method', e.target.checked ? 'clean' : 'dirty')}
+          checked=${controls.useClean}
+          onInput=${(e) => onChange('useClean', e.target.checked)}
           aria-label="Apply CLEAN deconvolution"
         />
         CLEAN deconvolution <${InfoTooltip} infoKey="method" onOpen=${onOpenInfo} />
+      </label>
+    </div>
+    <div className="control-row">
+      <label className="clean-toggle">
+        <input
+          type="checkbox"
+          checked=${controls.useMem}
+          onInput=${(e) => onChange('useMem', e.target.checked)}
+          aria-label="Use Max Entropy reconstruction"
+        />
+        Max Entropy <${InfoTooltip} infoKey="method" onOpen=${onOpenInfo} />
       </label>
     </div>
     ${sliders.map(s => html`

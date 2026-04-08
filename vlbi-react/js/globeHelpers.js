@@ -13,6 +13,10 @@ export let borderLineMat = null;
 
 // Land polygon cache — populated by loadCountryBoundaries; null until loaded.
 let _landPolygons = null;
+// Flat array of all polygon vertices for proximity buffer check.
+let _landVertices = null;
+// Degrees of buffer around polygon vertices — allows coastal/island placement.
+const LAND_BUFFER_DEG = 3;
 
 function _pointInRing(lon, lat, ring) {
   let inside = false;
@@ -43,7 +47,11 @@ function _pointInPolygon(lon, lat, rings) {
  * @returns {boolean}
  */
 export function isOnLand(lat, lon) {
-  if (!_landPolygons) return true; // TopoJSON not yet loaded — allow click
+  // Block all clicks during the brief async loading window (< 500ms).
+  // Better to miss a rare early click than to allow ocean placement.
+  if (!_landPolygons) return false;
+
+  // 1. Point-in-polygon — reliable for continental interiors.
   for (const { type, coordinates } of _landPolygons) {
     if (type === 'Polygon') {
       if (_pointInPolygon(lon, lat, coordinates)) return true;
@@ -53,6 +61,19 @@ export function isOnLand(lat, lon) {
       }
     }
   }
+
+  // 2. Vertex proximity buffer — catches coastal edges and small islands absent
+  //    from the 110m dataset. Any click within LAND_BUFFER_DEG of a polygon
+  //    vertex is treated as land. Deep ocean remains blocked.
+  if (_landVertices) {
+    const bufSq = LAND_BUFFER_DEG * LAND_BUFFER_DEG;
+    for (const v of _landVertices) {
+      const dLon = lon - v[0];
+      const dLat = lat - v[1];
+      if (dLon * dLon + dLat * dLat <= bufSq) return true;
+    }
+  }
+
   return false;
 }
 
@@ -173,6 +194,21 @@ export async function loadCountryBoundaries(scene, labelGroup, isCancelled) {
     // Cache country geometries for land detection (isOnLand)
     const countryFeatures = topojson.feature(topo, topo.objects.countries);
     _landPolygons = countryFeatures.features.map(f => f.geometry);
+
+    // Build flat vertex list for proximity buffer check.
+    // Each entry is [lon, lat] — kept as array for tight memory layout.
+    const verts = [];
+    for (const geom of _landPolygons) {
+      const polygons = geom.type === 'Polygon'
+        ? [geom.coordinates]
+        : geom.coordinates; // MultiPolygon
+      for (const polygon of polygons) {
+        for (const ring of polygon) {
+          for (const pt of ring) verts.push(pt);
+        }
+      }
+    }
+    _landVertices = verts;
     for (const feature of countryFeatures.features) {
       if (isCancelled()) return;
       const name = ISO_COUNTRY_NAMES[+feature.id];
@@ -209,7 +245,10 @@ export async function loadCountryBoundaries(scene, labelGroup, isCancelled) {
       labelGroup.add(obj);
     }
   } catch (_) {
-    // Degrade gracefully — no borders or labels rendered
+    // Degrade gracefully — no borders or labels rendered.
+    // Set to empty arrays so the null-check in isOnLand resolves;
+    // all clicks will be blocked after a failed load (cannot know what is land).
+    if (!_landPolygons) { _landPolygons = []; _landVertices = []; }
   }
 }
 
