@@ -244,8 +244,8 @@ function reconstruct(grayscale, uvPoints, params) {
     restoredImg = E;
 
   } else if (method === 'clean') {
-    // Högbom CLEAN
-    const ITERATIONS = 150;
+    // Högbom CLEAN — 1000 iterations, FWHM-based restore beam, FFT convolution
+    const ITERATIONS = 1000;
     const GAIN = 0.1;
 
     // PSF: IFFT of mask (ones where sampled)
@@ -266,12 +266,12 @@ function reconstruct(grayscale, uvPoints, params) {
     const model = new Float64Array(N*N);
 
     // Find peak amplitude for threshold
-    let peakAbs = 0;
+    let initPeak = 0;
     for (let i = 0; i < N*N; i++) {
       const a = Math.abs(residual[i]);
-      if (a > peakAbs) peakAbs = a;
+      if (a > initPeak) initPeak = a;
     }
-    const threshold = 0.02 * peakAbs;
+    const stopLevel = 0.05 * initPeak;
 
     for (let iter = 0; iter < ITERATIONS; iter++) {
       // Find peak in residual
@@ -280,7 +280,7 @@ function reconstruct(grayscale, uvPoints, params) {
         const a = Math.abs(residual[i]);
         if (a > peakVal) { peakVal = a; peakIdx = i; }
       }
-      if (peakVal < threshold) break;
+      if (peakVal < stopLevel) break;
 
       const pr = Math.floor(peakIdx / N);
       const pc = peakIdx % N;
@@ -297,10 +297,43 @@ function reconstruct(grayscale, uvPoints, params) {
       }
     }
 
-    // Convolve model with clean beam (Gaussian sigma=2.5)
-    const cleanBeam = gaussConvolve(model, N, 2.5);
+    // Estimate restore-beam sigma from dirty-beam FWHM
+    // PSF peak is at index 0 by IFFT convention; walk row 0 until below half-maximum.
+    const halfMaxVal = psf[0] / 2;
+    let halfWidth = 2;
+    for (let j = 1; j < N / 2; j++) {
+      if (psf[j] <= halfMaxVal) { halfWidth = j; break; }
+    }
+    const sigma = Math.max(1.5, halfWidth / 2.355);
+
+    // Build Gaussian restore beam centered at [0][0] (periodic/IFFT convention)
+    const gaussC = new Float64Array(2*N*N);
+    for (let i = 0; i < N; i++) {
+      const di = Math.min(i, N - i);
+      for (let j = 0; j < N; j++) {
+        const dj = Math.min(j, N - j);
+        gaussC[2*(i*N+j)] = Math.exp(-(di*di + dj*dj) / (2 * sigma * sigma));
+      }
+    }
+    fft2d(gaussC, N, false);
+
+    // Build model complex array and forward FFT
+    const modelC = new Float64Array(2*N*N);
+    for (let i = 0; i < N*N; i++) modelC[2*i] = model[i];
+    fft2d(modelC, N, false);
+
+    // Multiply (convolution theorem)
+    for (let i = 0; i < N*N; i++) {
+      const re = modelC[2*i] * gaussC[2*i]   - modelC[2*i+1] * gaussC[2*i+1];
+      const im = modelC[2*i] * gaussC[2*i+1] + modelC[2*i+1] * gaussC[2*i];
+      modelC[2*i]   = re;
+      modelC[2*i+1] = im;
+    }
+    fft2d(modelC, N, true);
+
+    // Extract real part and add residuals
     restoredImg = new Float64Array(N*N);
-    for (let i = 0; i < N*N; i++) restoredImg[i] = cleanBeam[i] + residual[i];
+    for (let i = 0; i < N*N; i++) restoredImg[i] = modelC[2*i] + residual[i];
 
   } else {
     // 'dirty' only

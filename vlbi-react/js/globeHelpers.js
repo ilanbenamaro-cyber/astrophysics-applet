@@ -11,6 +11,7 @@ import { lerpColor } from './uvCompute.js';
 // Module-level ref so the Globe resize handler can update LineMaterial resolution
 export let borderLineMat = null;
 
+
 export const OCEAN_LABELS = [
   { name: 'Pacific Ocean',     lat:   0, lon: -160 },
   { name: 'Atlantic Ocean',    lat:   0, lon:  -30 },
@@ -125,7 +126,6 @@ export async function loadCountryBoundaries(scene, labelGroup, isCancelled) {
     });
     scene.add(new LineSegments2(geo, borderLineMat));
 
-    // Country labels from TopoJSON features
     const countryFeatures = topojson.feature(topo, topo.objects.countries);
     for (const feature of countryFeatures.features) {
       if (isCancelled()) return;

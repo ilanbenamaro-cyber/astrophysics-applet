@@ -26,6 +26,9 @@ FLAG THRESHOLD: <7.0 triggers mandatory workflow review
 
 | Date | Score | Bug Summary | Root Cause Confirmed? | Regression Test Added? | What Failed | Improvements Made |
 |------|-------|-------------|----------------------|----------------------|-------------|-------------------|
+| 2026-04-07 | 9/10 | Ocean telescope placement in vlbi-react | YES | YES (Playwright land/ocean check) | — | Added gotcha: fixes applied to root instead of vlbi-react |
+| 2026-04-07 | 9/10 | Land mask too coarse (1° bitmap) | YES (hard data: 5/15 sites wrong) | YES (Playwright polygon check) | 3 island data gaps in 110m dataset | Added gotcha: 110m world-atlas limits |
+| 2026-04-07 | 10/10 | Coastal land blocked + ocean during load + MEM removed | YES (all 3 confirmed before code touch) | YES (Playwright: 14 land/ocean assertions + UI checkbox check) | — | Existing gotcha covers 110m; vertex buffer is the documented fix |
 
 ---
 
