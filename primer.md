@@ -1,29 +1,17 @@
 # Session Primer
 
-## Last Session: 2026-04-08
+## PROJECT: VLBI Astrophysics Applet — pure-JS interferometry simulator + React 3D companion
 
-### What Was Completed
-**Feature: Physics Guided Tour** (commit `67cdc1a`)
+## LAST_COMPLETED
+Physics guided tour (8 acts, KaTeX, Rough.js, spotlight, auto-actions), WCAG 2.1 AA panel, ocean fix, CLEAN algorithm improvements — all merged to main (e62a524)
 
-Added a full 8-act physics guided tour to `vlbi-react/`:
+## EXACT_NEXT_STEP
+None queued. Push to GitHub Pages to deploy: `git push origin main`
 
-**New files:**
-- `vlbi-react/css/tour.css` — spotlight overlay, card, progress dots, terms grid, KaTeX overrides
-- `vlbi-react/js/Tour.js` — 8-act orchestrator, auto-actions, spotlight z-index elevation
-- `vlbi-react/js/TourCard.js` — bottom-anchored card UI with KaTeX collapsible math + terms grid
-- `vlbi-react/js/TourDiagram.js` — Rough.js hand-drawn canvas diagrams with RAF animations
+## OPEN_BLOCKERS
+None
 
-**Modified files:**
-- `vlbi-react/index.html` — KaTeX 0.16.10 + Rough.js 4.6.6 CDN defer scripts
-- `vlbi-react/js/App.js` — tour state, `handleTourAction`, Tour component, IDs, Start Tour button
-- `vlbi-react/js/AppSidebar.js` — `id="tour-controls"` on observation parameters section
-
-**Known gotcha from this session:** `core.js` does not export `useLayoutEffect` — Tour.js imports it directly from `'react'`.
-
-### Current Branch
-`main` — all work committed and ready to push.
-
-### Suggested Next
-- Push to GitHub Pages (`git push origin main`) to deploy the tour live
-- Test on mobile viewport (the card is responsive but interaction patterns differ)
-- Consider adding a `prefers-reduced-motion` guard for TourDiagram RAF animations (currently only static fallback for canvas draw functions; the guard exists but verify it propagates correctly end-to-end)
+## KEY_DECISIONS_THIS_SESSION
+- Tour.js imports `useLayoutEffect` directly from `'react'` — core.js does not re-export it; do not change core.js for this (would affect all components)
+- Spotlight uses z-index elevation (target gets z-index:101, overlay at z-index:100) rather than CSS clip/hole — confirmed this works with backdrop-filter
+- KaTeX and Rough.js loaded as classic `defer` scripts (not importmap) — they execute before ES modules per spec, so `window.katex`/`window.rough` are always available on first render
