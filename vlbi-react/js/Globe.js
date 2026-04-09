@@ -205,7 +205,7 @@ export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMo
       if (hits.length > 0) {
         const pt = hits[0].point;
         const lat = Math.asin(pt.y) * 180 / Math.PI;
-        const lon = Math.atan2(pt.z, pt.x) * 180 / Math.PI;
+        const lon = Math.atan2(-pt.z, pt.x) * 180 / Math.PI;
         onAddRef.current(lat, lon);
       }
     };

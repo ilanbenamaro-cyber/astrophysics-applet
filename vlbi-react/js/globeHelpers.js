@@ -182,7 +182,7 @@ export function syncTelescopeMarkers(markerGroup, baselineGroup, telescopes) {
     return new THREE.Vector3(
       R * Math.cos(phi) * Math.cos(lam),
       R * Math.sin(phi),
-      R * Math.cos(phi) * Math.sin(lam),
+      -R * Math.cos(phi) * Math.sin(lam),
     );
   };
 
