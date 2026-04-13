@@ -169,8 +169,6 @@ html, body {
   background: var(--bg-1);
   border-left: 1px solid var(--border);
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
 }
 .panel-section {
   padding: 12px 16px;
@@ -296,6 +294,24 @@ html, body {
   transition: background 150ms ease, color 150ms ease;
 }
 .modal-close:hover { background: var(--bg-2); color: var(--text-primary); }
+.modal-section-title {
+  margin: 16px 0 4px;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--accent-amber);
+}
+.modal-code {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  overflow-x: auto;
+  white-space: pre;
+  margin: 6px 0 10px;
+}
 
 /* ── Telescope List ── */
 .tel-list {
@@ -741,4 +757,139 @@ input[type="range"]::-moz-range-thumb {
   .app { height: auto; min-height: 100vh; }
   .sidebar, .right-panel { max-height: none; overflow-y: visible; }
   .globe-wrapper { min-height: 400px; }
+}
+
+/* ── Contour Map Panel ── */
+.contour-map-panel {
+  margin-top: 12px;
+  background: var(--bg-2);
+  border-radius: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  padding: 0;
+}
+.contour-map-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+}
+.contour-map-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-xs {
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg-1);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.btn-xs.btn-active {
+  background: var(--accent-amber);
+  color: #000;
+  border-color: var(--accent-amber);
+  font-weight: 600;
+}
+.contour-map-stats {
+  padding: 4px 12px;
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  font-family: monospace;
+  border-bottom: 1px solid var(--border);
+}
+.contour-map-canvas {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+.contour-map-canvas-wrap {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
+}
+.contour-tick-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.9);
+  text-shadow: 0 0 4px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.7);
+}
+.ctick { position: absolute; }
+.ctick-top-left  { top: 2%; left: 25%; transform: translateX(-50%); }
+.ctick-top-right { top: 2%; left: 75%; transform: translateX(-50%); }
+.ctick-mid-left  { top: 50%; left: 2%; transform: translateY(-50%); }
+.ctick-mid-right { top: 50%; right: 2%; transform: translateY(-50%); }
+.contour-cb-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 8px;
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  font-family: monospace;
+}
+.contour-cb-title {
+  text-align: center;
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  opacity: 0.75;
+  padding: 0;
+  letter-spacing: 0.03em;
+  font-style: italic;
+}
+.contour-axis-x {
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  padding: 2px 0 6px;
+  letter-spacing: 0.02em;
+}
+.contour-axis-y {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  padding: 0 4px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.contour-cb-levels {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 8px 6px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+.contour-cb-level { opacity: 0.4; }
+.contour-cb-level.active {
+  color: var(--text-primary);
+  opacity: 1;
+  font-weight: 600;
+}
+.contour-beam-label {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--text-primary);
+}
+.contour-map-header span {
+  font-size: 0.9rem;
+  font-weight: 700;
 }

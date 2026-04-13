@@ -6,8 +6,11 @@ import { loadImagePresetAsync } from './presets.js';
 import { Globe } from './Globe.js';
 import { InfoTooltip } from './InfoTooltip.js';
 import { InfoModal } from './InfoModal.js';
+import { PhysicsNotesModal } from './PhysicsNotesModal.js';
+import { CitationModal } from './CitationModal.js';
 import { UVMap } from './UVMap.js';
 import { ImageCanvas, OriginalImagePanel } from './ImageCanvas.js';
+import { ContourMap } from './ContourMap.js';
 import { StatusBar } from './StatusBar.js';
 import { AppSidebar } from './AppSidebar.js';
 import { A11yPanel } from './A11yPanel.js';
@@ -28,7 +31,8 @@ export function App() {
     noise: 0, dishDiameter: 25, method: 'clean',
   });
   const [infoKey, setInfoKey] = useState(null);
-
+  const [physicsNotesOpen, setPhysicsNotesOpen] = useState(false);
+  const [citationOpen, setCitationOpen] = useState(false);
   // Accessibility settings — persisted in localStorage, applied via data attributes on <html>
   const [a11y, setA11y] = useState(() => {
     const saved = JSON.parse(localStorage.getItem('vlbi-a11y') || 'null') || {};
@@ -295,6 +299,16 @@ export function App() {
           aria-label="Start guided physics tour"
         >◉ Tour</button>
         <div className="header-stats">
+          <button
+            className="btn btn-ghost"
+            onClick=${() => setPhysicsNotesOpen(true)}
+            aria-label="View implementation notes and references"
+          >📋 Physics Notes</button>
+          <button
+            className="btn btn-ghost"
+            onClick=${() => setCitationOpen(true)}
+            aria-label="Generate citation for this simulation"
+          >📄 Cite</button>
           ${telescopes.length >= 2 ? html`
             <span className="stat"><span className="stat-val">${telescopes.length}</span>telescopes</span>
             <span className="stat"><span className="stat-val">${telescopes.length*(telescopes.length-1)/2}</span>baselines</span>
@@ -366,11 +380,21 @@ export function App() {
                 onOpenInfo=${setInfoKey}
               />
             </div>
+            <${ContourMap}
+              dirtyData=${dirty}
+              restoredData=${restored}
+              N=${IMAGE_SIZE}
+              angularResolution=${angularRes}
+              controls=${controls}
+              onOpenInfo=${setInfoKey}
+            />
           </section>
         </aside>
       </div>
 
       <${InfoModal} infoKey=${infoKey} onClose=${() => setInfoKey(null)} />
+      <${PhysicsNotesModal} open=${physicsNotesOpen} onClose=${() => setPhysicsNotesOpen(false)} />
+      <${CitationModal} open=${citationOpen} onClose=${() => setCitationOpen(false)} telescopes=${telescopes} controls=${controls} />
       ${tourActive && html`
         <${Tour}
           actIndex=${tourActIndex}
