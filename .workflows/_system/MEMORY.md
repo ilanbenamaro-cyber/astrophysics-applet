@@ -120,5 +120,41 @@ IMPLICATION: If ContourMap is refactored, preserve this default. Don't change to
 
 ---
 
+### /journal, /handoff, /sync slash commands exist
+DATE: 2026-04-15
+CATEGORY: workflow
+APPLIES_TO: all sessions
+
+LEARNING: Three session-management commands are installed in `~/.claude/commands/`:
+- `/journal` — loads today's Obsidian daily note and checks SESSION-CONTINUITY.md blockers
+- `/handoff` — writes structured handoff doc to `.workflows/_shared/handoff-[timestamp].md`
+- `/sync` — reads git diff, updates knowledge files as warranted, commits them
+EVIDENCE: Created 2026-04-15 session.
+IMPLICATION: Use `/journal` at session start, `/sync` at session end, `/handoff` when passing work to another instance. All 9 slash commands documented in Obsidian vault at Claude-Stack/Commands.md.
+
+---
+
+### Multi-instance coordination structure exists
+DATE: 2026-04-15
+CATEGORY: workflow
+APPLIES_TO: complex multi-step features
+
+LEARNING: `.workflows/_instance-1/`, `_instance-2/`, `_instance-3/` each have `role.md`, `inbox.md`, `outbox.md`. Shared state in `.workflows/_shared/state.json`, `queue.md`, `completed.md`. Instance roles: 1=Explorer/Haiku (research only), 2=Implementer/Sonnet (writes code), 3=Reviewer/Opus (validates).
+EVIDENCE: Created commit 784e35a. Documented in CLAUDE.md Section 15 and Obsidian Workflows.md.
+IMPLICATION: For complex features, route through Explorer → human review → Implementer → human review → Reviewer. Human must approve handoffs between instances — never skip.
+
+---
+
+### Obsidian vault structure for Claude Stack
+DATE: 2026-04-15
+CATEGORY: workflow
+APPLIES_TO: session tooling
+
+LEARNING: Obsidian vault at `~/Library/Mobile Documents/iCloud~md~obsidian/Documents/claude-stack/`. Key files in `Claude-Stack/`: `Commands.md` (all 9 slash commands), `Workflows.md` (patterns + multi-instance), `Skills.md`, `Agents.md`, `MCP-Servers.md`, `System-Overview.md`. Daily notes at `Daily/YYYY-MM-DD.md`.
+EVIDENCE: Vault explored 2026-04-15. Commands.md created this session.
+IMPLICATION: `/journal` depends on Daily/YYYY-MM-DD.md existing. Create it in Obsidian before running `/journal`, or tell Claude the session goal directly.
+
+---
+
 ## Last Updated
-2026-04-12 — Initial population (10 entries covering Phase 1 learnings)
+2026-04-15 — Added 3 entries: new slash commands, multi-instance structure, Obsidian vault layout

@@ -72,17 +72,30 @@ Full VLBI simulation pipeline:
 1. **Schedule/attend meeting with Prof. Cárdenas-Avendaño** on angular size implementation
 2. **Phase 2 feature list is TBD** from that meeting — do not spec or build Phase 2 in advance
 3. If user asks for small improvements to Phase 1 features (UI polish, copy tweaks, bug fixes) — those are safe to implement without waiting for the meeting
-4. **Knowledge base is current as of 2026-04-12** — codebase.md, decisions.md, gotchas.md all cover vlbi-react accurately
+4. **Knowledge base is current as of 2026-04-15** — all files reconstructed 2026-04-12, synced 2026-04-15
 
 ---
 
-## LAST SIGNIFICANT COMMIT
+## SESSION TOOLING (added 2026-04-15)
+
+- `/journal` — load today's Obsidian daily note and check blockers
+- `/handoff` — write structured handoff to `.workflows/_shared/handoff-[timestamp].md`
+- `/sync` — update knowledge files from git diff, commit changes
+- All 9 slash commands documented in Obsidian: `Claude-Stack/Commands.md`
+- Multi-instance structure live: `.workflows/_instance-1/2/3/` + `.workflows/_shared/`
+- CLAUDE.md Section 15 documents multi-instance coordination rules
+
+---
+
+## LAST SIGNIFICANT COMMITS
 
 ```
+784e35a  chore: add multi-instance coordination structure
+38653a7  system: reconstruct knowledge base to reflect April 2026 state
 bc212cb  feat(vlbi-react): Phase 1 complete — contour map, physics notes, citation modal
 ```
 
-Files modified in Phase 1:
+Files modified in Phase 1 (bc212cb):
 - `vlbi-react/js/ContourMap.js` (new) — professional contour map
 - `vlbi-react/js/PhysicsNotesModal.js` (new) — physics notes
 - `vlbi-react/js/CitationModal.js` (new) — citation generator
@@ -115,4 +128,4 @@ constants.js ─ IMAGE_SIZE, EARTH_RADIUS_KM, TELESCOPE_COLORS, EHT_PRESETS, INF
 
 ## LAST UPDATED
 
-2026-04-12 — Initial creation post-Phase-1
+2026-04-15 — Added session tooling section (new slash commands, multi-instance structure); updated last commit and knowledge base date
