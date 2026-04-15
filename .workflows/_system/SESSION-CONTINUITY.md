@@ -4,6 +4,10 @@
 # Zero-context resume document. If you are starting a new session with no prior
 # context, read this file first. It tells you exactly where work left off and
 # what to do next. Updated after each phase completes.
+#
+# PROJECT SCOPE: Research-grade demonstration tool for EHT scientific audience.
+# Target: Harvard EHT talk, fall 2026. Audience: EHT scientists and radio astronomers.
+# Physical accuracy is non-negotiable. All physics decisions require Alejandro sign-off.
 
 ---
 
@@ -39,13 +43,18 @@ Push to `main` → live within ~60 seconds.
 
 ---
 
-## OPEN BLOCKER
+## OPEN BLOCKERS
 
-**Angular size** — source always fills the entire FOV regardless of any source size parameter. This is physically incorrect. A radio source at a given angular size should subtend a specific angle in the image.
+**1. Angular size** — source always fills the entire FOV regardless of any source size parameter. This is physically incorrect. A radio source at a given angular size should subtend a specific angle in the image.
 
 - This blocks Phase 2 features: source size slider, multi-component sources, physically-scaled reconstruction, μas-accurate displays.
 - Do not implement Phase 2 until this is resolved.
 - Resolution requires a meeting with Prof. Cárdenas-Avendaño.
+
+**2. IMAGE_SIZE = N is unresolved** — N=256 is likely insufficient for physically correct angular size rendering at M87* scale (42 μas source, ~20 μas/px at current scale). Need to benchmark N=512 and N=1024 in the Web Worker before committing to a value. Higher N means longer CLEAN/MEM runtimes — must measure before deciding.
+
+- Do not hard-code N=256 as permanent once angular size work begins.
+- Benchmark task: time CLEAN at N=512 and N=1024 in worker, report ms per iteration.
 
 ---
 
@@ -69,10 +78,12 @@ Full VLBI simulation pipeline:
 
 ## WHAT TO DO NEXT
 
-1. **Schedule/attend meeting with Prof. Cárdenas-Avendaño** on angular size implementation
-2. **Phase 2 feature list is TBD** from that meeting — do not spec or build Phase 2 in advance
-3. If user asks for small improvements to Phase 1 features (UI polish, copy tweaks, bug fixes) — those are safe to implement without waiting for the meeting
-4. **Knowledge base is current as of 2026-04-15** — all files reconstructed 2026-04-12, synced 2026-04-15
+1. **Get Alejandro's answers to three blocking physics questions before any Phase 2 implementation** (see MEMORY.md entry "Project scope elevated to Harvard EHT talk standard")
+2. **Schedule/attend meeting with Prof. Cárdenas-Avendaño** — angular size, N benchmark, FOV approach
+3. **Benchmark N=512 and N=1024** in Web Worker — measure CLEAN ms/iteration before committing to IMAGE_SIZE
+4. **Phase 2 feature list is TBD** from that meeting — do not spec or build Phase 2 in advance
+5. If user asks for small improvements to Phase 1 features (UI polish, copy tweaks, bug fixes) — those are safe to implement without waiting for the meeting
+6. **Knowledge base is current as of 2026-04-15** — all files reconstructed 2026-04-12, synced 2026-04-15
 
 ---
 
@@ -129,3 +140,4 @@ constants.js ─ IMAGE_SIZE, EARTH_RADIUS_KM, TELESCOPE_COLORS, EHT_PRESETS, INF
 ## LAST UPDATED
 
 2026-04-15 — Added session tooling section (new slash commands, multi-instance structure); updated last commit and knowledge base date
+2026-04-15 — Elevated project scope to Harvard EHT talk / research-grade standard; added N benchmark blocker; updated WHAT TO DO NEXT

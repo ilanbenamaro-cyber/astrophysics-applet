@@ -156,5 +156,16 @@ IMPLICATION: `/journal` depends on Daily/YYYY-MM-DD.md existing. Create it in Ob
 
 ---
 
+### Project scope elevated to Harvard EHT talk standard
+DATE: 2026-04-15
+CATEGORY: workflow
+APPLIES_TO: entire project
+
+LEARNING: Project scope elevated to research-grade demonstration tool for Harvard EHT fall 2026 talk. Audience is EHT scientists and radio astronomers. Physical accuracy is now non-negotiable. Option 2 FOV simplification is off the table. All physics decisions require Alejandro sign-off before implementation.
+EVIDENCE: Explicit scope change from "educational applet" to research-grade tool targeting EHT scientific audience.
+IMPLICATION: Every feature must be evaluated against "would an EHT scientist find this physically correct?" Standard has changed from pedagogical to scientifically defensible. This means: (1) angular size must be physically correct at M87* scale, not approximated; (2) N=256 may be insufficient — benchmark N=512/1024 before deciding; (3) no Phase 2 feature ships without Alejandro sign-off.
+
+---
+
 ## Last Updated
-2026-04-15 — Added 3 entries: new slash commands, multi-instance structure, Obsidian vault layout
+2026-04-15 — Added 4 entries: new slash commands, multi-instance structure, Obsidian vault layout, Harvard EHT scope elevation
