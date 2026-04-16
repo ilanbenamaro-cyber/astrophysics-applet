@@ -90,7 +90,7 @@ Full VLBI simulation pipeline:
 ## SESSION TOOLING (added 2026-04-15)
 
 - `/journal` — load today's Obsidian daily note and check blockers
-- `/handoff` — write structured handoff to `.workflows/_shared/handoff-[timestamp].md`
+- `/handoff` — run at session end. Writes structured handoff doc AND rewrites primer.md. This is the only place primer.md gets updated — do not skip it.
 - `/sync` — update knowledge files from git diff, commit changes
 - All 9 slash commands documented in Obsidian: `Claude-Stack/Commands.md`
 - Multi-instance structure live: `.workflows/_instance-1/2/3/` + `.workflows/_shared/`

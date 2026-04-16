@@ -167,5 +167,20 @@ IMPLICATION: Every feature must be evaluated against "would an EHT scientist fin
 
 ---
 
+### Stop hook fixed — primer.md rewrite moved to /handoff
+DATE: 2026-04-16
+CATEGORY: workflow
+APPLIES_TO: ~/.claude/settings.json, ~/.claude/commands/handoff.md
+
+LEARNING: Stop hook previously spawned a full Claude API call (claude -p) on every
+agent turn to rewrite primer.md — causing 4-10 minute delays after every response.
+Removed the API call from Stop hook entirely. Stop hook now only runs git diff
+check (~50ms). primer.md rewrite moved into /handoff as its final step.
+IMPLICATION: Run /handoff at every session end — it now owns primer.md updates.
+Never add claude -p calls back to the Stop hook.
+
+---
+
 ## Last Updated
+2026-04-16 — Added Stop hook fix entry: primer.md rewrite moved to /handoff, claude -p removed from Stop hook
 2026-04-15 — Added 4 entries: new slash commands, multi-instance structure, Obsidian vault layout, Harvard EHT scope elevation
