@@ -198,6 +198,25 @@ RESOLVED: YES — part of original design.
 
 ---
 
+### Marching squares generates boundary-terminating segments that draw edge lines
+DATE_DISCOVERED: 2026-04-16
+AREA: vlbi-react/js/ContourMap.js — contour segment drawing loop
+SEVERITY: MEDIUM
+
+WHAT HAPPENED: Contour arcs that reached the image boundary produced a visible connecting line drawn across the canvas edge (most visible at the bottom). The marching squares algorithm generates legitimate segments for boundary cells, but drawing them with moveTo/lineTo connects endpoints along the canvas perimeter.
+
+ROOT CAUSE: Marching squares terminates arcs at the grid boundary by emitting segments whose endpoints land on row=0, row=N-1, col=0, or col=N-1. When scaled to canvas coordinates and drawn, these endpoint-to-endpoint paths trace the canvas edge.
+
+HOW TO AVOID: In the segment drawing loop, discard any segment where either endpoint has scaled canvas coordinate `< 1` or `> DST - 1` (epsilon=1px). Do NOT change the marching squares algorithm itself — the fix is in the rendering layer only.
+
+FIX: `const onBoundary = (x, y) => x < 1 || x > DST - 1 || y < 1 || y > DST - 1; if (onBoundary(x0,y0) || onBoundary(x1,y1)) continue;`
+
+DETECTION: Visible straight line(s) along canvas edges that don't correspond to real source structure.
+
+RESOLVED: YES — commit 335497a
+
+---
+
 ## Pattern: Things To Always Check
 
 □ After any change to telescope naming logic — verify EHT preset + manual click produces T(n+1) not T1
@@ -207,3 +226,4 @@ RESOLVED: YES — part of original design.
 □ No ctx.fillText in ContourMap — use HTML overlay pattern (established 2026-04-12)
 □ New EHT coordinates: verify longitude sign (East-positive standard) against published UV coverage
 □ groupSegments tolerance stays at 0.1 — only change with new measurement data
+□ Contour boundary segments: any segment with endpoint at canvas edge must be discarded (epsilon=1px) — do not fix in marching squares, fix in drawing loop

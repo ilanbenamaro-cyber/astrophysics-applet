@@ -51,10 +51,7 @@ Push to `main` → live within ~60 seconds.
 - Do not implement Phase 2 until this is resolved.
 - Resolution requires a meeting with Prof. Cárdenas-Avendaño.
 
-**2. IMAGE_SIZE = N is unresolved** — N=256 is likely insufficient for physically correct angular size rendering at M87* scale (42 μas source, ~20 μas/px at current scale). Need to benchmark N=512 and N=1024 in the Web Worker before committing to a value. Higher N means longer CLEAN/MEM runtimes — must measure before deciding.
-
-- Do not hard-code N=256 as permanent once angular size work begins.
-- Benchmark task: time CLEAN at N=512 and N=1024 in worker, report ms per iteration.
+**2. IMAGE_SIZE = N** — RESOLVED for N=512. N=512 benchmarked at 414–690ms CLEAN (acceptable for demo). IMAGE_SIZE is now permanently 512 in constants.js. N=1024 question deferred to Alejandro meeting — only needed if beam must reach 8+ pixels at M87* physical scale.
 
 ---
 
@@ -101,18 +98,20 @@ Full VLBI simulation pipeline:
 ## LAST SIGNIFICANT COMMITS
 
 ```
-784e35a  chore: add multi-instance coordination structure
-38653a7  system: reconstruct knowledge base to reflect April 2026 state
+f92e721  chore: add .gitignore — exclude playwright artifacts and screenshots
+335497a  feat(vlbi-react): N=512, FOV-derived UV scale, M87* physical defaults, contour boundary fix
+394fbb2  system: document Stop hook fix and /handoff primer.md ownership
+2da414a  docs: elevate project scope to Harvard EHT talk standard
 bc212cb  feat(vlbi-react): Phase 1 complete — contour map, physics notes, citation modal
 ```
 
-Files modified in Phase 1 (bc212cb):
-- `vlbi-react/js/ContourMap.js` (new) — professional contour map
-- `vlbi-react/js/PhysicsNotesModal.js` (new) — physics notes
-- `vlbi-react/js/CitationModal.js` (new) — citation generator
-- `vlbi-react/js/App.js` — added ContourMap, modal wiring, image presets
-- `vlbi-react/js/constants.js` — added INFO.contours, INFO.contourmap
-- `vlbi-react/css/app.css` — ContourMap styles, modal styles
+Files modified in 2026-04-16 session (335497a):
+- `vlbi-react/js/constants.js` — IMAGE_SIZE confirmed 512 (was already set)
+- `vlbi-react/js/worker.js` — removed console.time/timeEnd benchmark instrumentation
+- `vlbi-react/js/App.js` — sourceFraction default: 0.25 → 0.50 (both useState and handleReset)
+- `vlbi-react/js/ContourMap.js` — boundary clip check on segment drawing loop (onBoundary epsilon=1px)
+- `.workflows/_knowledge/decisions.md` — IMAGE_SIZE→512 decision added, 256 entry SUPERSEDED
+- `.gitignore` — created (excludes .playwright-mcp/, test-results/, *.png)
 
 ---
 
@@ -139,5 +138,6 @@ constants.js ─ IMAGE_SIZE, EARTH_RADIUS_KM, TELESCOPE_COLORS, EHT_PRESETS, INF
 
 ## LAST UPDATED
 
+2026-04-16 — N=512 benchmark resolved; IMAGE_SIZE permanently 512; sourceFraction default 0.50; contour boundary fix; last commits updated
 2026-04-15 — Added session tooling section (new slash commands, multi-instance structure); updated last commit and knowledge base date
 2026-04-15 — Elevated project scope to Harvard EHT talk / research-grade standard; added N benchmark blocker; updated WHAT TO DO NEXT

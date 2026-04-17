@@ -95,7 +95,7 @@ App.js
 ### Support modules
 ```
 core.js          — htm/preact re-exports (html, useState, useEffect, useRef, useMemo, useCallback)
-constants.js     — IMAGE_SIZE=256, EARTH_RADIUS_KM=6371, TELESCOPE_COLORS[8], EHT_PRESETS[8],
+constants.js     — IMAGE_SIZE=512, EARTH_RADIUS_KM=6371, TELESCOPE_COLORS[8], EHT_PRESETS[8],
                    INFO (tooltip text keyed by panel name), ISO_COUNTRY_NAMES (numeric→display)
 uvCompute.js     — latLonToECEF, computeBaseline, baselineToUV (TMS eq 4.1),
                    computeUVPoints, computeUVFill, lerpColor
@@ -113,7 +113,7 @@ worker.js        — self-contained Web Worker (no imports — cannot use import
   grayscale: Float64Array,       // N×N flattened pixel values [0,1]
   uvPoints: [{u: number, v: number}],   // UV sample coordinates (already offset by N/2)
   params: {
-    N: number,           // IMAGE_SIZE (256)
+    N: number,           // IMAGE_SIZE (512)
     noise: number,       // noise amplitude [0,1]
     method: string,      // 'none' | 'clean' | 'mem'
     dishDiameter: number, // meters
@@ -161,9 +161,10 @@ Applied as Gaussian envelope to dirty image before mask
 - Prior = mean(|dirty|) (flat, uniform prior)
 
 **ContourMap rendering** (`vlbi-react/js/ContourMap.js`):
-- Viridis colormap on canvas (bilinearUpscale from N=256 to canvas DST=512)
+- Viridis colormap on canvas (bilinearUpscale from N×N source to canvas DST=512; at N=512 this is identity)
 - Contours via marching squares (`marchingSquares`)
 - Island filter: `groupSegments(segs, tol=0.1)` → discard groups where `groupBBoxMaxDim < 15`
+- Boundary clip: segments where either endpoint has scaled canvas coord < 1 or > DST-1 are discarded (prevents edge-connecting artifacts from boundary marching-squares cells)
 - Adaptive DR thresholds: DR<80 → 50% only; DR 80-200 → 50%+10%; DR>200 → all three levels
 - Canvas draws: viridis pixels, contour line segments, beam ellipse shape, axis tick marks, colorbar gradient, colorbar intermediate ticks, contour level tick marks above bar
 - HTML overlays (not canvas text): tick axis labels (`.ctick`), colorbar values (`.contour-cb-labels`), contour level badges (`.contour-cb-levels`), beam label (`.contour-beam-label`)
@@ -180,7 +181,7 @@ Passed as prop to ContourMap for μas axis labels.
 - `telescopes` — array of `{ id, name, lat, lon, color }`
 - `dirtyData`, `restoredData` — Float64Array results from worker
 - `uvPoints` — current UV sample coordinates
-- `controls` — all slider/toggle values (noise, frequency, duration, declination, method, dishDiameter, showContours)
+- `controls` — all slider/toggle values (noise, frequency, duration, declination, method, dishDiameter, fovMuas, sourceFraction [default 0.50])
 - `selectedImage` — current source image key
 - `physicsNotesOpen`, `citationOpen` — modal state
 - `recoId` — monotonic ref for stale result detection
@@ -205,4 +206,5 @@ GitHub Pages from `main` branch root. Push to `main` = live within ~60 seconds.
 
 ## Last Updated
 
+2026-04-16 — IMAGE_SIZE updated to 512; ContourMap boundary clip noted; sourceFraction default updated to 0.50; worker protocol N updated.
 2026-04-12 — Full reconstruction to cover vlbi-react as live active codebase (post Phase-1 commit bc212cb).

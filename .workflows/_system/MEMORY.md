@@ -181,6 +181,29 @@ Never add claude -p calls back to the Stop hook.
 
 ---
 
+### N=512 benchmark complete — 414ms CLEAN is acceptable
+DATE: 2026-04-16
+CATEGORY: pattern
+APPLIES_TO: vlbi-react/js/worker.js, vlbi-react/js/constants.js
+
+LEARNING: N=512 CLEAN reconstruction benchmarked at 414ms (first run), 420-690ms under repeated rapid changes. This is acceptable for an EHT demo audience. N=512 is now permanent (IMAGE_SIZE in constants.js). N=1024 benchmark is only needed if beam needs to reach 8+ pixels at M87* physical scale — not currently required.
+EVIDENCE: console.timeEnd instrumentation added then removed after benchmark (commit 335497a). Benchmark runs logged in Playwright console during session.
+IMPLICATION: The N benchmark blocker in SESSION-CONTINUITY.md is resolved for N=512. N=1024 question is deferred to Alejandro meeting. Remove benchmark timing from worker.js going forward — it served its purpose.
+
+---
+
+### Contour boundary artifacts: fix in drawing layer, not marching squares
+DATE: 2026-04-16
+CATEGORY: pattern
+APPLIES_TO: vlbi-react/js/ContourMap.js — segment drawing loop
+
+LEARNING: Marching squares emits valid segments terminating at grid boundary cells. Drawing these produces visible lines along canvas edges. The fix is a 1px epsilon boundary discard in the drawing loop — never touch the marching squares algorithm itself.
+EVIDENCE: Visible bottom-edge line in ContourMap; fixed by `onBoundary` check (commit 335497a).
+IMPLICATION: If contour edge artifacts recur after any ContourMap refactor, check that the `onBoundary` guard survived. It belongs directly inside the segment drawing loop, applied before every moveTo/lineTo call.
+
+---
+
 ## Last Updated
+2026-04-16 — Added N=512 benchmark result and contour boundary artifact pattern
 2026-04-16 — Added Stop hook fix entry: primer.md rewrite moved to /handoff, claude -p removed from Stop hook
 2026-04-15 — Added 4 entries: new slash commands, multi-instance structure, Obsidian vault layout, Harvard EHT scope elevation
