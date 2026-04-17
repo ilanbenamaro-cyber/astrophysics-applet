@@ -1,5 +1,5 @@
 // App-wide constants shared across components and worker.
-export const IMAGE_SIZE = 256;
+export const IMAGE_SIZE = 512;
 export const EARTH_RADIUS_KM = 6371;
 
 export const TELESCOPE_COLORS = [
@@ -32,6 +32,8 @@ export const INFO = {
   dish:        { title: 'Dish Diameter',            body: 'Larger dishes collect more signal (better sensitivity). The angular field of view of each telescope is roughly λ/D radians. This does not change the UV coverage but affects sensitivity and how much sky is imaged at once.' },
   contours:    { title: 'Contour Overlays',         body: 'Logarithmic contour lines drawn over the reconstructed image at three brightness levels: 50% of peak (solid white), 10% of peak (semi-transparent white), and 1% of peak (dashed white). This is the standard display format in radio astronomy publications. Contours reveal the dynamic range of the reconstruction — how much faint structure exists around the bright central source.' },
   contourmap:  { title: 'Contour Map',              body: 'A professional radio astronomy contour map showing the brightness distribution. The viridis colormap (blue→green→yellow) is perceptually uniform and colorblind-safe — the standard in modern astronomy publications. White contour lines are drawn at 50%, 10%, and 2% of the peak brightness, filtered to only show where signal exceeds 2× the noise floor (estimated from border pixels). The beam ellipse in the lower-right shows the angular resolution of the array. Toggle between the CLEAN/Max Entropy reconstruction and the dirty image to see how deconvolution removes sidelobe artifacts. Angular axis labels show the true physical scale of the image in microarcseconds (μas).' },
+  fov:         { title: 'Image Field of View',       body: 'The total angular size of the image in microarcseconds. Sets the physical pixel scale: pixel scale = FOV / 256 uas/pixel. The 2019 EHT M87* images used a 256 uas FOV at 2 uas/pixel on a 128x128 grid. At the default 538 uas FOV, pixel scale is 2.1 uas/pixel — matched to show M87* (42 uas shadow) at 20 pixels. EHT baselines sample the inner portion of the UV grid at this scale, which is physically correct: the array resolves structure at 23 uas, well within the image pixel scale.' },
+  sourceSize:  { title: 'Source Angular Size',       body: 'The angular diameter of the source in microarcseconds. The source image is scaled to occupy this fraction of the FOV and zero-padded with empty sky. At the default FOV of 538 uas, the default source size of 25% = 134 uas is approximately 3x the real M87* shadow (42 uas) for pedagogical clarity. Reduce source size toward 42 uas to simulate physically realistic M87* imaging conditions — reconstruction becomes genuinely harder as UV coverage gaps matter more for compact sources.' },
 };
 
 // ISO 3166-1 numeric → display name for dynamic country label generation

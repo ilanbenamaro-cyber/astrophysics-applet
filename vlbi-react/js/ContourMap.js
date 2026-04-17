@@ -159,7 +159,7 @@ const CONTOUR_LEVELS = [
 ];
 
 // ── ContourMap ────────────────────────────────────────────────────────────────
-export function ContourMap({ dirtyData, restoredData, N, angularResolution, controls, onOpenInfo }) {
+export function ContourMap({ dirtyData, restoredData, N, angularResolution, fovMuas, controls, onOpenInfo }) {
   const [displayMode, setDisplayMode]   = useState('dirty');
   const [stats, setStats]               = useState(null);
   const [activeLevels, setActiveLevels] = useState([]);
@@ -272,11 +272,15 @@ export function ContourMap({ dirtyData, restoredData, N, angularResolution, cont
         ctx.lineWidth   = level.lw;
         ctx.setLineDash(level.dash);
         ctx.beginPath();
+        const onBoundary = (x, y) => x < 1 || x > DST - 1 || y < 1 || y > DST - 1;
         for (const group of groups) {
           if (groupBBoxMaxDim(group) < MIN_MAX_DIM) continue;
           for (const seg of group) {
-            ctx.moveTo(seg.x0 * 2, seg.y0 * 2);
-            ctx.lineTo(seg.x1 * 2, seg.y1 * 2);
+            const x0 = seg.x0 * 2, y0 = seg.y0 * 2;
+            const x1 = seg.x1 * 2, y1 = seg.y1 * 2;
+            if (onBoundary(x0, y0) || onBoundary(x1, y1)) continue;
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x1, y1);
           }
         }
         ctx.stroke();
@@ -436,7 +440,7 @@ export function ContourMap({ dirtyData, restoredData, N, angularResolution, cont
       </div>
       <div className="contour-map-stats">${statsText}</div>
       <div className="contour-map-canvas-wrap">
-        <div className="contour-axis-y">Dec offset (μas)</div>
+        <div className="contour-axis-y">Dec offset (<span style=${{ textTransform: 'none' }}>uas</span>)</div>
         <div style=${{ position: 'relative', flex: 1 }}>
           <canvas
             ref=${canvasRef}
@@ -447,10 +451,10 @@ export function ContourMap({ dirtyData, restoredData, N, angularResolution, cont
             aria-label="Professional contour map of radio interferometry reconstruction"
           ></canvas>
           <div className="contour-tick-overlay" aria-hidden="true">
-            <span className="ctick ctick-top-left">+${stats?.val1 ?? ''} μas</span>
-            <span className="ctick ctick-top-right">−${stats?.val1 ?? ''} μas</span>
-            <span className="ctick ctick-mid-left">+${stats?.val1 ?? ''} μas</span>
-            <span className="ctick ctick-mid-right">−${stats?.val1 ?? ''} μas</span>
+            <span className="ctick ctick-top-left">+${(fovMuas / 2).toFixed(1)} <span style=${{ textTransform: 'none' }}>uas</span></span>
+            <span className="ctick ctick-top-right">−${(fovMuas / 2).toFixed(1)} <span style=${{ textTransform: 'none' }}>uas</span></span>
+            <span className="ctick ctick-mid-left">+${(fovMuas / 2).toFixed(1)} <span style=${{ textTransform: 'none' }}>uas</span></span>
+            <span className="ctick ctick-mid-right">−${(fovMuas / 2).toFixed(1)} <span style=${{ textTransform: 'none' }}>uas</span></span>
           </div>
         </div>
       </div>
@@ -462,7 +466,7 @@ export function ContourMap({ dirtyData, restoredData, N, angularResolution, cont
         <span>${stats?.cbMax ?? ''}</span>
       </div>
       <div className="contour-cb-title">Brightness (normalized)</div>
-      <div className="contour-axis-x">RA offset (μas)</div>
+      <div className="contour-axis-x">RA offset (<span style=${{ textTransform: 'none' }}>uas</span>)</div>
       <div className="contour-cb-levels">
         ${CONTOUR_LEVELS.map(l => html`
           <span key=${l.pct} className=${'contour-cb-level' + (activeLevelPcts?.includes(l.pct) ? ' active' : '')}>

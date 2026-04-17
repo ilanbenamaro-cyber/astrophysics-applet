@@ -453,6 +453,7 @@ html, body {
   margin-left: auto;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
+  text-transform: none;
 }
 input[type="range"] {
   -webkit-appearance: none;

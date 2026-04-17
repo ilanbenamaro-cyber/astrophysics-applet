@@ -29,6 +29,7 @@ export function App() {
   const [controls, setControls] = useState({
     declination: 30, duration: 12, frequency: 230,
     noise: 0, dishDiameter: 25, method: 'clean',
+    fovMuas: 538, sourceFraction: 0.50,
   });
   const [infoKey, setInfoKey] = useState(null);
   const [physicsNotesOpen, setPhysicsNotesOpen] = useState(false);
@@ -146,12 +147,33 @@ export function App() {
     const uvPts = computeUVPoints(telescopes, { ...controls, N: IMAGE_SIZE });
     setUvPoints(uvPts);
     setUvFill(computeUVFill(uvPts, IMAGE_SIZE));
-  }, [telescopes, controls.declination, controls.duration, controls.frequency]);
+  }, [telescopes, controls.declination, controls.duration, controls.frequency, controls.fovMuas]);
+
+  // Scale the source to occupy sourceFraction of the image, zero-pad the rest.
+  // originalCanvas is always shown unscaled — only the worker input is affected.
+  const scaledGrayscale = useMemo(() => {
+    if (!grayscale) return null;
+    const N = IMAGE_SIZE;
+    const sourcePx = Math.max(1, Math.round(controls.sourceFraction * N));
+    if (sourcePx === N) return grayscale; // no scaling needed
+    const output = new Float64Array(N * N); // zeros = empty sky
+    const outX0 = Math.floor((N - sourcePx) / 2);
+    const outY0 = Math.floor((N - sourcePx) / 2);
+    for (let oy = 0; oy < sourcePx; oy++) {
+      for (let ox = 0; ox < sourcePx; ox++) {
+        // Nearest-neighbor downsample: map each output pixel to source pixel
+        const sx = Math.min(Math.floor(ox * N / sourcePx), N - 1);
+        const sy = Math.min(Math.floor(oy * N / sourcePx), N - 1);
+        output[(outY0 + oy) * N + (outX0 + ox)] = grayscale[sy * N + sx];
+      }
+    }
+    return output;
+  }, [grayscale, controls.sourceFraction]);
 
   // Debounced reconstruction
   useEffect(() => {
     clearTimeout(computeTimerRef.current);
-    if (!grayscale || uvPoints.length === 0) {
+    if (!scaledGrayscale || uvPoints.length === 0) {
       setDirty(null);
       setRestored(null);
       if (telescopes.length < 2) {
@@ -165,7 +187,7 @@ export function App() {
       setIsComputing(true);
       setStatus({ msg: 'Computing reconstruction…', type: 'loading' });
       const id = ++reqIdRef.current;
-      const gs = grayscale.slice();
+      const gs = scaledGrayscale.slice();
       const uv = uvPoints.map(p => ({ u: p.u, v: p.v }));
       workerRef.current.postMessage(
         { type: 'reconstruct', id, grayscale: gs, uvPoints: uv, params: {
@@ -180,7 +202,7 @@ export function App() {
       );
     }, 100);
     return () => clearTimeout(computeTimerRef.current);
-  }, [uvPoints, grayscale, controls.noise, controls.method, controls.dishDiameter, controls.frequency]);
+  }, [uvPoints, scaledGrayscale, controls.noise, controls.method, controls.dishDiameter, controls.frequency]);
 
   const IMAGE_PRESETS = { 'blackhole': '../assets/black-hole.png', 'wfu-seal': '../assets/wfu-seal.png' };
 
@@ -255,7 +277,7 @@ export function App() {
       setOriginalCanvas(previewCanvas);
       setSelectedPreset('blackhole');
     });
-    setControls({ declination: 30, duration: 12, frequency: 230, noise: 0, dishDiameter: 25, method: 'clean' });
+    setControls({ declination: 30, duration: 12, frequency: 230, noise: 0, dishDiameter: 25, method: 'clean', fovMuas: 538, sourceFraction: 0.50 });
     setStatus({ msg: 'Reset. Place telescopes to begin.', type: '' });
     setDirty(null);
     setRestored(null);
@@ -353,7 +375,7 @@ export function App() {
           <section id="tour-uv" className="panel-section">
             <h2>UV Coverage <${InfoTooltip} infoKey="uvmap" onOpen=${setInfoKey} /></h2>
             <${UVMap} uvPoints=${uvPoints} N=${IMAGE_SIZE} />
-            <p className="caption">Fill: ${uvFill.toFixed(2)}% of UV-plane sampled · ${uvPoints.length} samples</p>
+            <p className="caption">Fill: ${uvFill.toFixed(2)}% of spatial frequencies sampled · ${uvPoints.length} samples</p>
           </section>
 
           <section id="tour-images" className="panel-section">
@@ -385,6 +407,7 @@ export function App() {
               restoredData=${restored}
               N=${IMAGE_SIZE}
               angularResolution=${angularRes}
+              fovMuas=${controls.fovMuas}
               controls=${controls}
               onOpenInfo=${setInfoKey}
             />

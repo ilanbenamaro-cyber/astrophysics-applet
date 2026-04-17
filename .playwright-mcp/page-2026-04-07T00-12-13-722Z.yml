@@ -1,0 +1,62 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - heading "Radio Telescope Interferometry Simulator" [level=1] [ref=e5]
+      - paragraph [ref=e6]: Place telescopes on the world map, explore UV-plane coverage, and watch sparse Fourier sampling reconstruct your image — simulating how the Event Horizon Telescope images a black hole.
+  - main [ref=e7]:
+    - generic [ref=e8]:
+      - generic [ref=e9]:
+        - generic [ref=e10]: Image to reconstruct
+        - button "Image to reconstruct" [ref=e11] [cursor=pointer]
+      - generic [ref=e12]:
+        - generic [ref=e13]: Sample image
+        - generic [ref=e14]:
+          - button "Ring" [ref=e15] [cursor=pointer]
+          - button "Double" [ref=e16] [cursor=pointer]
+          - button "Gaussian" [ref=e17] [cursor=pointer]
+          - button "Jet" [ref=e18] [cursor=pointer]
+      - generic [ref=e19]:
+        - generic [ref=e20]:
+          - text: "Declination:"
+          - generic [ref=e21]: 45°
+          - button "About declination" [ref=e22] [cursor=pointer]: "?"
+        - 'slider "Declination: 45° About declination" [ref=e23] [cursor=pointer]': "45"
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - text: "Hour angle:"
+          - generic [ref=e26]: ±90°
+          - button "About hour angle range" [ref=e27] [cursor=pointer]: "?"
+        - 'slider "Hour angle: ±90° About hour angle range" [ref=e28] [cursor=pointer]': "180"
+      - generic [ref=e29]:
+        - button "Load EHT Presets" [ref=e30] [cursor=pointer]
+        - button "Clear" [ref=e31] [cursor=pointer]
+        - button "Save UV" [ref=e32] [cursor=pointer]
+        - button "Save Image" [ref=e33] [cursor=pointer]
+        - generic [ref=e34] [cursor=pointer]:
+          - checkbox "CLEAN" [ref=e35]
+          - text: CLEAN
+      - paragraph [ref=e36]: Done — 6 telescopes · 6030 UV samples · 9.4% fill · δ 45° · HA ±90° · θ ≈ 24 µas
+    - generic [ref=e37]:
+      - generic [ref=e38]:
+        - heading "Telescope Array Click map to add · click dot to remove About telescope arrays" [level=2] [ref=e39]:
+          - text: Telescope Array
+          - generic [ref=e40]:
+            - generic [ref=e41]: Click map to add · click dot to remove
+            - button "About telescope arrays" [ref=e42] [cursor=pointer]: "?"
+        - group [ref=e45]:
+          - generic "Baseline lengths" [ref=e46] [cursor=pointer]
+      - generic [ref=e47]:
+        - heading "UV-Plane Coverage 6030 samples · 9.4% fill About the UV-plane" [level=2] [ref=e48]:
+          - text: UV-Plane Coverage
+          - generic [ref=e49]:
+            - generic [ref=e50]: 6030 samples · 9.4% fill
+            - button "About the UV-plane" [ref=e51] [cursor=pointer]: "?"
+        - paragraph [ref=e55]: Point Spread Function
+        - paragraph [ref=e57]: Each arc is one baseline tracked through Earth rotation. Wider spread → sharper reconstruction.
+      - generic [ref=e58]:
+        - heading "Image Reconstruction About image reconstruction" [level=2] [ref=e59]:
+          - text: Image Reconstruction
+          - button "About image reconstruction" [ref=e60] [cursor=pointer]: "?"
+        - generic [ref=e61]:
+          - paragraph [ref=e63]: Original
+          - paragraph [ref=e66]: Dirty Image

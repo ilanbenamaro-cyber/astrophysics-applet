@@ -1,0 +1,2 @@
+[    2408ms] [ERROR] Access to image at 'https://unpkg.com/globe.gl@2.45.3/example/img/earth-blue-marble.jpg' (redirected from 'https://unpkg.com/globe.gl/example/img/earth-blue-marble.jpg') from origin 'http://localhost:8765' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:8765/?v=3:0
+[    2408ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://unpkg.com/globe.gl@2.45.3/example/img/earth-blue-marble.jpg:0

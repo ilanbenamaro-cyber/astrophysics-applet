@@ -37,13 +37,15 @@ export function lerpColor(h1, h2, t) {
   return '#' + [r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
 }
 
-export function computeUVPoints(telescopes, { declination, duration, frequency, N }) {
+export function computeUVPoints(telescopes, { declination, duration, frequency, N, fovMuas }) {
   const visible = telescopes.filter(t => t.visible !== false);
   if (visible.length < 2) return [];
   const STEPS = 200;
   const halfDur = (duration * Math.PI / 24);
-  const freqRatio = frequency / 230;
-  const scale = (N / 2) / (2 * EARTH_RADIUS_KM) * freqRatio;
+  const c_ms = 299792458;
+  const lambda_m = c_ms / (frequency * 1e9);
+  const fovRad = fovMuas * (Math.PI / (180 * 3.6e9));
+  const scale = (1e3 / lambda_m) * fovRad;
   const pts = [];
   for (let i = 0; i < visible.length; i++) {
     for (let j = i+1; j < visible.length; j++) {

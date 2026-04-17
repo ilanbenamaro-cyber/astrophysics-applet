@@ -1,0 +1,7 @@
+[     369ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8765/favicon.ico:0
+[     379ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://cdn.jsdelivr.net/npm/three@0.163.0/examples/textures/planets/earth_specular_2048.jpg:0
+[     458ms] [ERROR] Access to image at 'https://unpkg.com/three-globe@2.41.12/example/img/earth-clouds.png' from origin 'http://localhost:8765' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:8765/vlbi-react/index.html:0
+[     458ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://unpkg.com/three-globe@2.41.12/example/img/earth-clouds.png:0
+[  679271ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://cdn.jsdelivr.net/npm/three@0.163.0/examples/textures/planets/earth_specular_2048.jpg:0
+[  679311ms] [ERROR] Access to image at 'https://unpkg.com/three-globe@2.41.12/example/img/earth-clouds.png' from origin 'http://localhost:8765' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:8765/vlbi-react/index.html:0
+[  679311ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://unpkg.com/three-globe@2.41.12/example/img/earth-clouds.png:0

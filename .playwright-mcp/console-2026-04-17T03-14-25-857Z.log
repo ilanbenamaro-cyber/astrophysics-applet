@@ -1,0 +1,52 @@
+[    1214ms] [ERROR] Access to image at 'https://unpkg.com/three-globe@2.41.12/example/img/earth-clouds.png' from origin 'http://localhost:8080' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:8080/vlbi-react/:0
+[    1214ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://unpkg.com/three-globe@2.41.12/example/img/earth-clouds.png:0
+[    1214ms] [LOG] [Globe] diffuse loaded: https://unpkg.com/three-globe@2.41.12/example/img/earth-blue-marble.jpg @ http://localhost:8080/vlbi-react/js/globeHelpers.js:51
+[    1363ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8080/favicon.ico:0
+[    1627ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://cdn.jsdelivr.net/npm/three@0.163.0/examples/textures/planets/earth_specular_2048.jpg:0
+[    1907ms] [TIMEEND] reconstruct-N512: 414.47802734375 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[   20397ms] [TIMEEND] reconstruct-N512: 726.93798828125 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[   22194ms] [TIMEEND] reconstruct-N512: 690.739990234375 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[   28639ms] [TIMEEND] reconstruct-N512: 1480.85302734375 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[   30926ms] [TIMEEND] reconstruct-N512: 622.1650390625 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[   32438ms] [TIMEEND] reconstruct-N512: 622.300048828125 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[   34603ms] [TIMEEND] reconstruct-N512: 468.974853515625 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[   41633ms] [TIMEEND] reconstruct-N512: 424.221923828125 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[  322525ms] [LOG] [Globe] diffuse loaded: https://unpkg.com/three-globe@2.41.12/example/img/earth-blue-marble.jpg @ http://localhost:8080/vlbi-react/js/globeHelpers.js:51
+[  322525ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8080/favicon.ico:0
+[  322623ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://cdn.jsdelivr.net/npm/three@0.163.0/examples/textures/planets/earth_specular_2048.jpg:0
+[  322662ms] [ERROR] Access to image at 'https://unpkg.com/three-globe@2.41.12/example/img/earth-clouds.png' from origin 'http://localhost:8080' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:8080/vlbi-react/:0
+[  322662ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://unpkg.com/three-globe@2.41.12/example/img/earth-clouds.png:0
+[  323541ms] [TIMEEND] reconstruct-N512: 425.4609375 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[  343346ms] [TIMEEND] reconstruct-N512: 715.452880859375 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[  352482ms] [TIMEEND] reconstruct-N512: 435.991943359375 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[  358389ms] [TIMEEND] reconstruct-N512: 999.926025390625 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[  444518ms] [LOG] [Globe] diffuse loaded: https://unpkg.com/three-globe@2.41.12/example/img/earth-blue-marble.jpg @ http://localhost:8080/vlbi-react/js/globeHelpers.js:51
+[  444520ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8080/favicon.ico:0
+[  444630ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://cdn.jsdelivr.net/npm/three@0.163.0/examples/textures/planets/earth_specular_2048.jpg:0
+[  444656ms] [ERROR] Access to image at 'https://unpkg.com/three-globe@2.41.12/example/img/earth-clouds.png' from origin 'http://localhost:8080' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:8080/vlbi-react/:0
+[  444656ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://unpkg.com/three-globe@2.41.12/example/img/earth-clouds.png:0
+[  445865ms] [TIMEEND] reconstruct-N512: 730.385986328125 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[  451173ms] [TIMEEND] reconstruct-N512: 627.610107421875 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[  455925ms] [TIMEEND] reconstruct-N512: 728.81298828125 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[  466320ms] [TIMEEND] reconstruct-N512: 1505.587890625 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[  600172ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8080/favicon.ico:0
+[  600179ms] [LOG] [Globe] diffuse loaded: https://unpkg.com/three-globe@2.41.12/example/img/earth-blue-marble.jpg @ http://localhost:8080/vlbi-react/js/globeHelpers.js:51
+[  600277ms] [ERROR] Access to image at 'https://unpkg.com/three-globe@2.41.12/example/img/earth-clouds.png' from origin 'http://localhost:8080' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:8080/vlbi-react/:0
+[  600277ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://unpkg.com/three-globe@2.41.12/example/img/earth-clouds.png:0
+[  600278ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://cdn.jsdelivr.net/npm/three@0.163.0/examples/textures/planets/earth_specular_2048.jpg:0
+[  601516ms] [TIMEEND] reconstruct-N512: 723.629150390625 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[  605289ms] [TIMEEND] reconstruct-N512: 724.900146484375 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[  607783ms] [TIMEEND] reconstruct-N512: 737.955078125 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[  618827ms] [TIMEEND] reconstruct-N512: 1493.5341796875 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[  620160ms] [TIMEEND] reconstruct-N512: 617.407958984375 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[  622899ms] [TIMEEND] reconstruct-N512: 622.234130859375 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[  623785ms] [TIMEEND] reconstruct-N512: 629.97607421875 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[  625603ms] [TIMEEND] reconstruct-N512: 622.673828125 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[  629378ms] [TIMEEND] reconstruct-N512: 610.4248046875 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[  632113ms] [TIMEEND] reconstruct-N512: 623.884033203125 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[  636127ms] [TIMEEND] reconstruct-N512: 620.3701171875 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[  637765ms] [TIMEEND] reconstruct-N512: 619.68603515625 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[  638568ms] [TIMEEND] reconstruct-N512: 612.427978515625 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[  642397ms] [TIMEEND] reconstruct-N512: 617.125 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[  645283ms] [TIMEEND] reconstruct-N512: 629.842041015625 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[  648982ms] [TIMEEND] reconstruct-N512: 622.821044921875 ms @ http://localhost:8080/vlbi-react/js/worker.js:351

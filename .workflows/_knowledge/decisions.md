@@ -39,7 +39,7 @@ TRIGGERS_REVIEW_IF: FFT performance becomes a bottleneck; or Web Worker refactor
 DATE: 2026-03-16
 LAST_VERIFIED: 2026-03-16
 EXPIRES: NEVER
-STATUS: ACTIVE
+STATUS: SUPERSEDED — see "IMAGE_SIZE increased to 512" below
 
 DECISION: All uploaded images are resized to 256×256 on load. Hardcoded in both root `imageProcessor.js` and `vlbi-react/js/constants.js`.
 RATIONALE: FFT requires power-of-2 input. Fixing size at load time avoids runtime validation and keeps mask/FFT array dimensions constant. 256 is large enough for educational demonstration while keeping FFT time under ~300ms.
@@ -224,6 +224,19 @@ STATUS: ACTIVE — BLOCKING
 DECISION: No Phase 2 features to be implemented until angular size is resolved with Prof. Cárdenas-Avendaño.
 RATIONALE: Current implementation always fills the full FOV with the source, regardless of source size parameter. This is not physically correct — a source at a given declination and distance should subtend a specific angle. Phase 2 features (source size slider, multi-source, etc.) built on top of incorrect FOV behavior will need to be rewritten.
 TRIGGERS_REVIEW_IF: Meeting with Prof. occurs and angular size implementation is agreed upon.
+
+---
+
+### IMAGE_SIZE increased to 512
+DATE: 2026-04-16
+LAST_VERIFIED: 2026-04-16
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: IMAGE_SIZE changed from 256 to 512 in `vlbi-react/js/constants.js`.
+RATIONALE: At N=256 with FOV=538 μas, the synthesized beam is 2.3 pixels — insufficient for CLEAN to restore ring structure meaningfully. At N=512 the beam becomes 4.6 pixels, M87* source becomes 40 pixels, and reconstruction quality improves substantially. Worker benchmark: N=512 CLEAN runs in 414ms — acceptable for a Harvard EHT demo audience.
+CONSEQUENCES: Memory per reconstruction doubles (Float64Array goes from 512KB to 2MB). Worker transfer time increases proportionally but remains imperceptible.
+TRIGGERS_REVIEW_IF: N=1024 is needed for beam to reach 8+ pixels at M87* physical scale.
 
 ---
 

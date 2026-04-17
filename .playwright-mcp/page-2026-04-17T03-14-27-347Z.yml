@@ -1,0 +1,205 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - heading "VLBI Interferometry Simulator by Ilan Benjamin Amaro (Wake Forest University)" [level=1] [ref=e6]
+      - paragraph [ref=e7]: Built with AI assistance and guidance by Prof. Alejandro Cárdenas-Avendaño
+      - paragraph [ref=e8]: Click the globe to place radio telescopes · Earth rotation synthesizes a virtual aperture the size of Earth
+    - button "Start guided physics tour" [ref=e9] [cursor=pointer]: ◉ Tour
+    - generic [ref=e10]:
+      - button "View implementation notes and references" [ref=e11] [cursor=pointer]: 📋 Physics Notes
+      - button "Generate citation for this simulation" [ref=e12] [cursor=pointer]: 📄 Cite
+      - generic [ref=e13]:
+        - generic [ref=e14]: "8"
+        - text: telescopes
+      - generic [ref=e15]:
+        - generic [ref=e16]: "28"
+        - text: baselines
+      - generic [ref=e17]:
+        - generic [ref=e18]: 0.4%
+        - text: UV fill
+      - generic [ref=e19]:
+        - generic [ref=e20]: 23 μas
+        - text: resolution
+      - button "Accessibility settings" [ref=e22] [cursor=pointer]: ♿ A11y
+  - generic [ref=e23]:
+    - complementary "Controls and image selection" [ref=e24]:
+      - generic [ref=e25]:
+        - heading "Source Image Learn about ground" [level=2] [ref=e26]:
+          - text: Source Image
+          - button "Learn about ground" [ref=e27] [cursor=pointer]: ⓘ
+        - generic [ref=e28]:
+          - generic [ref=e29]:
+            - button "Load Black Hole preset" [pressed] [ref=e30] [cursor=pointer]:
+              - generic [ref=e31]: ⬤
+              - generic [ref=e32]: Black Hole
+            - button "Load WFU Seal preset" [ref=e33] [cursor=pointer]:
+              - generic [ref=e34]: WFU Seal
+          - button "Upload your own image" [ref=e35] [cursor=pointer]: ↑ Upload your own image
+          - paragraph [ref=e36]: Images are processed locally and never stored or transmitted
+      - generic [ref=e37]:
+        - heading "Telescope Array Learn about globe" [level=2] [ref=e38]:
+          - text: Telescope Array
+          - button "Learn about globe" [ref=e39] [cursor=pointer]: ⓘ
+        - generic [ref=e40]:
+          - generic [ref=e41]:
+            - generic [ref=e42]:
+              - generic [ref=e44]: ALMA
+              - generic [ref=e45]: "-23.0°, -67.8°"
+              - generic [ref=e46]:
+                - button "Hide ALMA" [ref=e47] [cursor=pointer]: 👁
+                - button "Remove ALMA" [ref=e48] [cursor=pointer]: ×
+            - generic [ref=e49]:
+              - generic [ref=e51]: APEX
+              - generic [ref=e52]: "-23.0°, -67.8°"
+              - generic [ref=e53]:
+                - button "Hide APEX" [ref=e54] [cursor=pointer]: 👁
+                - button "Remove APEX" [ref=e55] [cursor=pointer]: ×
+            - generic [ref=e56]:
+              - generic [ref=e58]: SPT
+              - generic [ref=e59]: "-90.0°, -44.6°"
+              - generic [ref=e60]:
+                - button "Hide SPT" [ref=e61] [cursor=pointer]: 👁
+                - button "Remove SPT" [ref=e62] [cursor=pointer]: ×
+            - generic [ref=e63]:
+              - generic [ref=e65]: JCMT
+              - generic [ref=e66]: 19.8°, -155.5°
+              - generic [ref=e67]:
+                - button "Hide JCMT" [ref=e68] [cursor=pointer]: 👁
+                - button "Remove JCMT" [ref=e69] [cursor=pointer]: ×
+            - generic [ref=e70]:
+              - generic [ref=e72]: SMT
+              - generic [ref=e73]: 32.7°, -109.9°
+              - generic [ref=e74]:
+                - button "Hide SMT" [ref=e75] [cursor=pointer]: 👁
+                - button "Remove SMT" [ref=e76] [cursor=pointer]: ×
+            - generic [ref=e77]:
+              - generic [ref=e79]: IRAM
+              - generic [ref=e80]: 37.1°, -3.4°
+              - generic [ref=e81]:
+                - button "Hide IRAM" [ref=e82] [cursor=pointer]: 👁
+                - button "Remove IRAM" [ref=e83] [cursor=pointer]: ×
+            - generic [ref=e84]:
+              - generic [ref=e86]: LMT
+              - generic [ref=e87]: 19.0°, -97.3°
+              - generic [ref=e88]:
+                - button "Hide LMT" [ref=e89] [cursor=pointer]: 👁
+                - button "Remove LMT" [ref=e90] [cursor=pointer]: ×
+            - generic [ref=e91]:
+              - generic [ref=e93]: NOEMA
+              - generic [ref=e94]: 44.6°, 5.9°
+              - generic [ref=e95]:
+                - button "Hide NOEMA" [ref=e96] [cursor=pointer]: 👁
+                - button "Remove NOEMA" [ref=e97] [cursor=pointer]: ×
+          - paragraph [ref=e98]: 8 active · 28 baselines
+        - generic [ref=e99]:
+          - button "Load EHT Array" [ref=e100] [cursor=pointer]
+          - button "Clear All" [ref=e101] [cursor=pointer]
+        - button "Hide Country Names" [ref=e103] [cursor=pointer]
+      - generic [ref=e104]:
+        - heading "Observation Parameters" [level=2] [ref=e105]
+        - generic [ref=e106]:
+          - generic [ref=e107]:
+            - text: Method
+            - button "Learn about method" [ref=e108] [cursor=pointer]: ⓘ
+          - generic [ref=e109]:
+            - button "Dirty Only" [ref=e110] [cursor=pointer]
+            - button "Max Entropy" [ref=e111] [cursor=pointer]
+            - button "CLEAN" [pressed] [ref=e112] [cursor=pointer]
+          - generic [ref=e114]:
+            - text: IMAGE FOV
+            - button "Learn about fov" [ref=e115] [cursor=pointer]: ⓘ
+            - generic [ref=e116]:
+              - textbox "Image field of view in microarcseconds" [ref=e117]: "538"
+              - generic [ref=e118]: μas
+          - generic [ref=e119]:
+            - generic [ref=e120]:
+              - text: SOURCE SIZE
+              - button "Learn about sourceSize" [ref=e121] [cursor=pointer]: ⓘ
+              - generic [ref=e122]: 135 μas
+            - slider "Source angular size" [ref=e123] [cursor=pointer]: "0.25"
+          - generic [ref=e124]:
+            - generic [ref=e125]:
+              - text: Declination
+              - button "Learn about declination" [ref=e126] [cursor=pointer]: ⓘ
+              - generic [ref=e127]: 30°
+            - slider "Declination" [ref=e128] [cursor=pointer]: "30"
+          - generic [ref=e129]:
+            - generic [ref=e130]:
+              - text: Duration
+              - button "Learn about duration" [ref=e131] [cursor=pointer]: ⓘ
+              - generic [ref=e132]: 12h
+            - slider "Duration" [ref=e133] [cursor=pointer]: "12"
+          - generic [ref=e134]:
+            - generic [ref=e135]:
+              - text: Frequency
+              - button "Learn about frequency" [ref=e136] [cursor=pointer]: ⓘ
+              - generic [ref=e137]: 230 GHz
+            - slider "Frequency" [ref=e138] [cursor=pointer]: "230"
+          - generic [ref=e139]:
+            - generic [ref=e140]:
+              - text: Noise
+              - button "Learn about noise" [ref=e141] [cursor=pointer]: ⓘ
+              - generic [ref=e142]: "0"
+            - slider "Noise" [ref=e143] [cursor=pointer]: "0"
+          - generic [ref=e144]:
+            - generic [ref=e145]:
+              - text: Dish Diameter
+              - button "Learn about dish" [ref=e146] [cursor=pointer]: ⓘ
+              - generic [ref=e147]: 25 m
+            - slider "Dish Diameter" [ref=e148] [cursor=pointer]: "25"
+      - button "↺ Reset All" [ref=e149] [cursor=pointer]
+    - main "Main visualization — 3D interactive globe" [ref=e150]:
+      - generic "3D Earth globe — click to place radio telescopes" [ref=e151]
+      - generic [ref=e154]: Place at least 2 telescopes to reconstruct
+    - complementary "Analysis outputs" [ref=e155]:
+      - generic [ref=e156]:
+        - heading "UV Coverage Learn about uvmap" [level=2] [ref=e157]:
+          - text: UV Coverage
+          - button "Learn about uvmap" [ref=e158] [cursor=pointer]: ⓘ
+        - generic "UV plane coverage map" [ref=e159]
+        - paragraph [ref=e160]: "Fill: 0.36% of spatial frequencies sampled · 11256 samples"
+      - generic [ref=e161]:
+        - heading "Image Reconstruction" [level=2] [ref=e162]
+        - generic [ref=e163]:
+          - generic [ref=e164]:
+            - generic [ref=e165]:
+              - paragraph [ref=e166]: Ground Truth
+              - button "Learn about ground" [ref=e167] [cursor=pointer]: ⓘ
+            - generic "Ground Truth" [ref=e168]
+          - generic [ref=e170]:
+            - generic [ref=e171]:
+              - paragraph [ref=e172]: Dirty Image
+              - button "Learn about dirty" [ref=e173] [cursor=pointer]: ⓘ
+            - generic "Dirty Image" [ref=e174]
+          - generic [ref=e175]:
+            - generic [ref=e176]:
+              - paragraph [ref=e177]: CLEAN
+              - button "Learn about restored" [ref=e178] [cursor=pointer]: ⓘ
+            - generic "CLEAN" [ref=e179]
+        - generic [ref=e180]:
+          - generic [ref=e181]:
+            - generic [ref=e182]: Contour Map
+            - generic [ref=e183]:
+              - button "CLEAN" [ref=e184] [cursor=pointer]
+              - button "Dirty" [ref=e185] [cursor=pointer]
+              - button "Learn about contourmap" [ref=e186] [cursor=pointer]: ⓘ
+          - generic [ref=e187]: —
+          - generic [ref=e188]:
+            - generic [ref=e189]:
+              - text: Dec offset (
+              - generic [ref=e190]: uas
+              - text: )
+            - generic [ref=e191]:
+              - generic "Professional contour map of radio interferometry reconstruction" [ref=e192]
+              - generic:
+                - generic: +269.0 uas
+                - generic: −269.0 uas
+                - generic: +269.0 uas
+                - generic: −269.0 uas
+          - generic [ref=e194]: Brightness (normalized)
+          - generic [ref=e195]: RA offset (uas)
+          - generic [ref=e196]:
+            - generic [ref=e197]: 50%
+            - generic [ref=e198]: 10%
+            - generic [ref=e199]: 2%
+            - generic [ref=e200]: ⬤ beam
