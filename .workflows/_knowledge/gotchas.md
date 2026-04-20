@@ -217,6 +217,23 @@ RESOLVED: YES — commit 335497a
 
 ---
 
+### UV pixel coordinates become sub-pixel at small FOV — never use for display
+DATE_DISCOVERED: 2026-04-20
+AREA: vlbi-react/js/UVMap.js, vlbi-react/js/uvCompute.js
+SEVERITY: HIGH
+
+WHAT HAPPENED: After changing fovMuas default from 538 to 80 μas (M87* physical scale), UV arcs disappeared entirely from the UV coverage canvas. Points were rendered but all landed at the canvas center pixel (256, 256).
+
+ROOT CAUSE: `computeUVPoints` pixel coords: `pu = uv.u * scale` where `scale = (1e3/lambda_m) * fovRad`. At fovMuas=80, fovRad ≈ 3.88e-10 rad, so scale ≈ 0.03 pixels/km. For a 10,000 km baseline, pu ≈ 0.3px — sub-pixel. All UV samples round to N/2 = 256.
+
+HOW TO AVOID: Never use `computeUVPoints` pixel coordinates for display. Use `computeUVPointsGl` which returns Gλ coordinates independent of FOV and grid size. UVMap.js now receives `uvPointsGl` (Gλ, centered at 0,0) and auto-scales to max UV extent.
+
+DETECTION: UV coverage canvas is blank (dark) or all arcs appear as a single point at the center despite telescopes being placed.
+
+RESOLVED: YES — commit 8c6ba01. `computeUVPointsGl` added to uvCompute.js; App.js passes `uvPointsGl` to UVMap; UVMap rewrote to use direct Gλ coords.
+
+---
+
 ## Pattern: Things To Always Check
 
 □ After any change to telescope naming logic — verify EHT preset + manual click produces T(n+1) not T1

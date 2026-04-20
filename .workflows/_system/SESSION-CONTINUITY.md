@@ -80,7 +80,7 @@ Full VLBI simulation pipeline:
 3. **Benchmark N=512 and N=1024** in Web Worker — measure CLEAN ms/iteration before committing to IMAGE_SIZE
 4. **Phase 2 feature list is TBD** from that meeting — do not spec or build Phase 2 in advance
 5. If user asks for small improvements to Phase 1 features (UI polish, copy tweaks, bug fixes) — those are safe to implement without waiting for the meeting
-6. **Knowledge base is current as of 2026-04-15** — all files reconstructed 2026-04-12, synced 2026-04-15
+6. **Knowledge base is current as of 2026-04-20** — all files reconstructed 2026-04-12, synced 2026-04-20
 
 ---
 
@@ -98,12 +98,18 @@ Full VLBI simulation pipeline:
 ## LAST SIGNIFICANT COMMITS
 
 ```
+8c6ba01  feat(vlbi-react): M87* physical defaults, UV Gλ auto-scale, independent UV display pipeline
 f92e721  chore: add .gitignore — exclude playwright artifacts and screenshots
 335497a  feat(vlbi-react): N=512, FOV-derived UV scale, M87* physical defaults, contour boundary fix
 394fbb2  system: document Stop hook fix and /handoff primer.md ownership
-2da414a  docs: elevate project scope to Harvard EHT talk standard
 bc212cb  feat(vlbi-react): Phase 1 complete — contour map, physics notes, citation modal
 ```
+
+Files modified in 2026-04-20 session (8c6ba01):
+- `vlbi-react/js/App.js` — fovMuas default: 538→80; added `uvPointsGl` state; imports `computeUVPointsGl`; useEffect computes uvPointsGl; UVMap now receives uvPointsGl (not uvPoints)
+- `vlbi-react/js/UVMap.js` — full rewrite: receives Gλ coords (centered at 0,0); auto-scales canvas to max UV × 1.2; axis labels in Gλ; no FOV/frequency props
+- `vlbi-react/js/uvCompute.js` — added `computeUVPointsGl` (Gλ display pipeline); removed temporary diagnostic console.log
+- `vlbi-react/js/constants.js` — INFO.uvmap body updated to describe Gλ auto-scaling
 
 Files modified in 2026-04-16 session (335497a):
 - `vlbi-react/js/constants.js` — IMAGE_SIZE confirmed 512 (was already set)
@@ -130,7 +136,7 @@ App.js ─── root state, worker lifecycle, layout
 └── A11yPanel.js ──────── screen-reader descriptions
 
 worker.js ─ self-contained (no imports). Handles 'reconstruct' messages.
-uvCompute.js ─ UV math (baselineToUV, computeUVPoints, computeUVFill)
+uvCompute.js ─ UV math (baselineToUV, computeUVPoints [pixel/reconstruction], computeUVPointsGl [Gλ/display], computeUVFill)
 constants.js ─ IMAGE_SIZE, EARTH_RADIUS_KM, TELESCOPE_COLORS, EHT_PRESETS, INFO, ISO_COUNTRY_NAMES
 ```
 
@@ -138,6 +144,7 @@ constants.js ─ IMAGE_SIZE, EARTH_RADIUS_KM, TELESCOPE_COLORS, EHT_PRESETS, INF
 
 ## LAST UPDATED
 
+2026-04-20 — fovMuas default 538→80 (M87* physical scale); UV display now uses independent Gλ pipeline (computeUVPointsGl); UVMap auto-scales to UV extent in Gλ; last commits updated
 2026-04-16 — N=512 benchmark resolved; IMAGE_SIZE permanently 512; sourceFraction default 0.50; contour boundary fix; last commits updated
 2026-04-15 — Added session tooling section (new slash commands, multi-instance structure); updated last commit and knowledge base date
 2026-04-15 — Elevated project scope to Harvard EHT talk / research-grade standard; added N benchmark blocker; updated WHAT TO DO NEXT

@@ -98,7 +98,9 @@ core.js          — htm/preact re-exports (html, useState, useEffect, useRef, u
 constants.js     — IMAGE_SIZE=512, EARTH_RADIUS_KM=6371, TELESCOPE_COLORS[8], EHT_PRESETS[8],
                    INFO (tooltip text keyed by panel name), ISO_COUNTRY_NAMES (numeric→display)
 uvCompute.js     — latLonToECEF, computeBaseline, baselineToUV (TMS eq 4.1),
-                   computeUVPoints, computeUVFill, lerpColor
+                   computeUVPoints (pixel coords, FOV-scaled — reconstruction input),
+                   computeUVPointsGl (Gλ coords, FOV-independent — display only),
+                   computeUVFill, lerpColor
 globeHelpers.js  — Three.js mesh helpers for globe, atmosphere, markers
 presets.js       — IMAGE_PRESETS: { 'blackhole': '../assets/black-hole.png', 'wfu-seal': '../assets/wfu-seal.png' }
 worker.js        — self-contained Web Worker (no imports — cannot use import maps)
@@ -135,12 +137,22 @@ worker.js        — self-contained Web Worker (no imports — cannot use import
 
 ### Key computations
 
-**UV coordinate scaling** (in `uvCompute.js` → `computeUVPoints`):
+**UV coordinate scaling — reconstruction** (in `uvCompute.js` → `computeUVPoints`):
 ```
-freqRatio = frequency / 230
-scale = (N/2) / (2 × EARTH_RADIUS_KM) × freqRatio
+lambda_m = c / (frequency * 1e9)
+fovRad = fovMuas * (π / (180 * 3.6e9))
+scale = (1e3 / lambda_m) * fovRad    ← pixels per km of baseline
 uvPoints pushed as: (pu + N/2, pv + N/2) AND (-pu + N/2, -pv + N/2)  ← conjugate symmetry
 ```
+Used by: reconstruction worker (passes pixel-coord UV points to worker.js)
+
+**UV coordinate scaling — display** (in `uvCompute.js` → `computeUVPointsGl`):
+```
+lambda_m = c / (frequency * 1e9)
+kmToGl = 1e3 / lambda_m / 1e9       ← km → gigawavelengths
+uvPoints pushed as: (uGl, vGl) AND (-uGl, -vGl)  — centered at (0,0)
+```
+Used by: UVMap.js display only — independent of FOV and image grid size. UVMap auto-scales canvas to max UV extent × 1.2, labels axes in Gλ.
 
 **Primary beam taper** (in `worker.js` → `reconstruct`):
 ```
@@ -180,8 +192,9 @@ Passed as prop to ContourMap for μas axis labels.
 ### State managed in App.js
 - `telescopes` — array of `{ id, name, lat, lon, color }`
 - `dirtyData`, `restoredData` — Float64Array results from worker
-- `uvPoints` — current UV sample coordinates
-- `controls` — all slider/toggle values (noise, frequency, duration, declination, method, dishDiameter, fovMuas, sourceFraction [default 0.50])
+- `uvPoints` — current UV sample coordinates (pixel space, FOV-scaled — passed to worker)
+- `uvPointsGl` — current UV sample coordinates in Gλ (display only — passed to UVMap)
+- `controls` — all slider/toggle values (noise, frequency, duration, declination, method, dishDiameter, fovMuas [default 80], sourceFraction [default 0.50])
 - `selectedImage` — current source image key
 - `physicsNotesOpen`, `citationOpen` — modal state
 - `recoId` — monotonic ref for stale result detection
@@ -206,5 +219,6 @@ GitHub Pages from `main` branch root. Push to `main` = live within ~60 seconds.
 
 ## Last Updated
 
+2026-04-20 — uvCompute.js: added computeUVPointsGl (Gλ display pipeline); UVMap: rewrote to use Gλ coords with auto-scale; App.js: uvPointsGl state added, fovMuas default 538→80; UV display and reconstruction pipelines are now fully independent.
 2026-04-16 — IMAGE_SIZE updated to 512; ContourMap boundary clip noted; sourceFraction default updated to 0.50; worker protocol N updated.
 2026-04-12 — Full reconstruction to cover vlbi-react as live active codebase (post Phase-1 commit bc212cb).

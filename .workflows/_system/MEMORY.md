@@ -203,7 +203,19 @@ IMPLICATION: If contour edge artifacts recur after any ContourMap refactor, chec
 
 ---
 
+### UV display requires FOV-independent Gλ pipeline
+DATE: 2026-04-20
+CATEGORY: pattern
+APPLIES_TO: vlbi-react/js/uvCompute.js, vlbi-react/js/UVMap.js, vlbi-react/js/App.js
+
+LEARNING: `computeUVPoints` pixel coordinates become sub-pixel (~0.001px) at small FOV (80 μas M87* scale), causing all UV samples to cluster invisibly at canvas center. UV display must use `computeUVPointsGl` which returns Gλ coordinates independent of FOV. These two pipelines must remain separate — reconstruction uses pixel coords, display uses Gλ.
+EVIDENCE: Bug where UV canvas went blank when fovMuas changed 538→80. Fixed by adding `computeUVPointsGl` (commit 8c6ba01).
+IMPLICATION: Never pass `uvPoints` (pixel space) to UVMap. Always pass `uvPointsGl` (Gλ). If UVMap is ever refactored, verify it receives the Gλ array, not the pixel array.
+
+---
+
 ## Last Updated
+2026-04-20 — Added UV display pipeline independence pattern
 2026-04-16 — Added N=512 benchmark result and contour boundary artifact pattern
 2026-04-16 — Added Stop hook fix entry: primer.md rewrite moved to /handoff, claude -p removed from Stop hook
 2026-04-15 — Added 4 entries: new slash commands, multi-instance structure, Obsidian vault layout, Harvard EHT scope elevation

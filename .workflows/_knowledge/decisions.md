@@ -240,6 +240,19 @@ TRIGGERS_REVIEW_IF: N=1024 is needed for beam to reach 8+ pixels at M87* physica
 
 ---
 
+### UV display uses independent Gλ pipeline (separate from reconstruction UV)
+DATE: 2026-04-20
+LAST_VERIFIED: 2026-04-20
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: `computeUVPointsGl` in uvCompute.js produces UV coordinates in gigawavelengths (Gλ) centered at (0,0), independent of FOV and image grid size. UVMap.js receives these Gλ points and auto-scales the canvas to the max UV extent × 1.2, labeling axes in Gλ. The reconstruction pipeline continues to use `computeUVPoints` which returns pixel-space coordinates (offset by N/2) scaled to the image FOV.
+RATIONALE: At small FOV (e.g. 80 μas for M87*), `computeUVPoints` pixel coordinates are sub-pixel (~0.001px). Using them for canvas display produces all points clustering at canvas center — completely invisible. FOV-independent Gλ coordinates scale correctly at any FOV.
+ALTERNATIVES_REJECTED: Adjusting `computeUVPoints` to produce display-friendly coordinates — would contaminate reconstruction inputs; separate scaling factor in UVMap — still mixes pixel-space and physical-space causing the same clustering bug.
+TRIGGERS_REVIEW_IF: UV display needs to show axis labels in a different unit (Mλ, kλ) — trivial scale change in computeUVPointsGl.
+
+---
+
 ## Contradiction Scanner
 
 Claude runs this check when adding a new decision:
