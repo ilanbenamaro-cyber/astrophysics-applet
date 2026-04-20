@@ -50,3 +50,10 @@
 [  642397ms] [TIMEEND] reconstruct-N512: 617.125 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
 [  645283ms] [TIMEEND] reconstruct-N512: 629.842041015625 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
 [  648982ms] [TIMEEND] reconstruct-N512: 622.821044921875 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[ 4279871ms] [TIMEEND] reconstruct-N512: 704.262939453125 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[ 4283415ms] [TIMEEND] reconstruct-N512: 160.194091796875 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[ 4291036ms] [TIMEEND] reconstruct-N512: 1442.51611328125 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[ 4293149ms] [TIMEEND] reconstruct-N512: 35.616943359375 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[ 4296938ms] [TIMEEND] reconstruct-N512: 2397.141845703125 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[ 4297638ms] [TIMEEND] reconstruct-N512: 698.3759765625 ms @ http://localhost:8080/vlbi-react/js/worker.js:351
+[ 4306072ms] [TIMEEND] reconstruct-N512: 730.3388671875 ms @ http://localhost:8080/vlbi-react/js/worker.js:351

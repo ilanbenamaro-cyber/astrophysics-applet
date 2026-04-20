@@ -1,7 +1,7 @@
 // App root — manages all state, wires worker, renders layout.
 import { html, useState, useEffect, useCallback, useRef, useMemo } from './core.js';
 import { IMAGE_SIZE, TELESCOPE_COLORS, EHT_PRESETS } from './constants.js';
-import { computeUVPoints, computeUVFill, computeBaseline } from './uvCompute.js';
+import { computeUVPoints, computeUVPointsGl, computeUVFill, computeBaseline } from './uvCompute.js';
 import { loadImagePresetAsync } from './presets.js';
 import { Globe } from './Globe.js';
 import { InfoTooltip } from './InfoTooltip.js';
@@ -23,13 +23,14 @@ export function App() {
   const [grayscale, setGrayscale] = useState(null);
   const [originalCanvas, setOriginalCanvas] = useState(null);
   const [uvPoints, setUvPoints] = useState([]);
+  const [uvPointsGl, setUvPointsGl] = useState([]);
   const [uvFill, setUvFill] = useState(0);
   const [dirty, setDirty] = useState(null);
   const [restored, setRestored] = useState(null);
   const [controls, setControls] = useState({
     declination: 30, duration: 12, frequency: 230,
     noise: 0, dishDiameter: 25, method: 'clean',
-    fovMuas: 538, sourceFraction: 0.50,
+    fovMuas: 80, sourceFraction: 0.50,
   });
   const [infoKey, setInfoKey] = useState(null);
   const [physicsNotesOpen, setPhysicsNotesOpen] = useState(false);
@@ -147,6 +148,7 @@ export function App() {
     const uvPts = computeUVPoints(telescopes, { ...controls, N: IMAGE_SIZE });
     setUvPoints(uvPts);
     setUvFill(computeUVFill(uvPts, IMAGE_SIZE));
+    setUvPointsGl(computeUVPointsGl(telescopes, { declination: controls.declination, duration: controls.duration, frequency: controls.frequency }));
   }, [telescopes, controls.declination, controls.duration, controls.frequency, controls.fovMuas]);
 
   // Scale the source to occupy sourceFraction of the image, zero-pad the rest.
@@ -277,7 +279,7 @@ export function App() {
       setOriginalCanvas(previewCanvas);
       setSelectedPreset('blackhole');
     });
-    setControls({ declination: 30, duration: 12, frequency: 230, noise: 0, dishDiameter: 25, method: 'clean', fovMuas: 538, sourceFraction: 0.50 });
+    setControls({ declination: 30, duration: 12, frequency: 230, noise: 0, dishDiameter: 25, method: 'clean', fovMuas: 80, sourceFraction: 0.50 });
     setStatus({ msg: 'Reset. Place telescopes to begin.', type: '' });
     setDirty(null);
     setRestored(null);
@@ -374,7 +376,7 @@ export function App() {
         <aside className="right-panel" aria-label="Analysis outputs">
           <section id="tour-uv" className="panel-section">
             <h2>UV Coverage <${InfoTooltip} infoKey="uvmap" onOpen=${setInfoKey} /></h2>
-            <${UVMap} uvPoints=${uvPoints} N=${IMAGE_SIZE} />
+            <${UVMap} uvPoints=${uvPointsGl} N=${IMAGE_SIZE} />
             <p className="caption">Fill: ${uvFill.toFixed(2)}% of spatial frequencies sampled · ${uvPoints.length} samples</p>
           </section>
 

@@ -66,6 +66,34 @@ export function computeUVPoints(telescopes, { declination, duration, frequency, 
   return pts;
 }
 
+export function computeUVPointsGl(telescopes, { declination, duration, frequency }) {
+  const visible = telescopes.filter(t => t.visible !== false);
+  if (visible.length < 2) return [];
+  const STEPS = 200;
+  const halfDur = (duration * Math.PI / 24);
+  const c_ms = 299792458;
+  const lambda_m = c_ms / (frequency * 1e9);
+  const kmToGl = 1e3 / lambda_m / 1e9;
+  const pts = [];
+  for (let i = 0; i < visible.length; i++) {
+    for (let j = i+1; j < visible.length; j++) {
+      const t1 = visible[i], t2 = visible[j];
+      const b = computeBaseline(t1, t2);
+      const color = lerpColor(t1.color, t2.color, 0.5);
+      const pairId = `${t1.id}-${t2.id}`;
+      for (let s = 0; s <= STEPS; s++) {
+        const H = -halfDur + (s / STEPS) * 2 * halfDur;
+        const uv = baselineToUV(b, H, declination);
+        const uGl = uv.u * kmToGl;
+        const vGl = uv.v * kmToGl;
+        pts.push({ u:  uGl, v:  vGl, color, pairId });
+        pts.push({ u: -uGl, v: -vGl, color, pairId });
+      }
+    }
+  }
+  return pts;
+}
+
 export function computeUVFill(uvPoints, N) {
   if (uvPoints.length === 0) return 0;
   const seen = new Set();
