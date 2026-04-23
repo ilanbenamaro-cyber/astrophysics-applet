@@ -290,12 +290,6 @@ export function ContourMap({ dirtyData, restoredData, N, angularResolution, fovM
     }
 
     // ── Axis tick marks (labels rendered in HTML overlay) ──
-    // Pixel scale from UV normalization: λ / (2 × Earth_diameter_m)
-    const EARTH_DIAM_M   = 6371 * 2 * 1000;
-    const lambda_m       = 299792458 / (controls.frequency * 1e9);
-    const pixelScale_rad = lambda_m / (2 * EARTH_DIAM_M);
-    const pixelScale_uas = pixelScale_rad * (180 / Math.PI) * 3600 * 1e6;
-    const val1           = (N / 4 * pixelScale_uas).toFixed(1);  // offset at ±N/4 source px
 
     const center = DST / 2;   // 256
     const TICK   = 8;
@@ -380,7 +374,6 @@ export function ContourMap({ dirtyData, restoredData, N, angularResolution, fovM
 
     setStats({
       minV, maxV, sigma: safeSigma, dynamicRange,
-      val1,
       cbMin:  fmtVal(minV),
       cbMax:  fmtVal(maxV),
       cbQ1:   fmtVal(minV + dataRange * 0.25),
@@ -436,8 +429,8 @@ export function ContourMap({ dirtyData, restoredData, N, angularResolution, fovM
           <div className="contour-tick-overlay" aria-hidden="true">
             <span className="ctick ctick-top-left">+${(fovMuas / 2).toFixed(1)} <span style=${{ textTransform: 'none' }}>uas</span></span>
             <span className="ctick ctick-top-right">−${(fovMuas / 2).toFixed(1)} <span style=${{ textTransform: 'none' }}>uas</span></span>
-            <span className="ctick ctick-mid-left">+${(fovMuas / 2).toFixed(1)} <span style=${{ textTransform: 'none' }}>uas</span></span>
-            <span className="ctick ctick-mid-right">−${(fovMuas / 2).toFixed(1)} <span style=${{ textTransform: 'none' }}>uas</span></span>
+            <span className="ctick ctick-mid-left">+${(fovMuas / 4).toFixed(1)} <span style=${{ textTransform: 'none' }}>uas</span></span>
+            <span className="ctick ctick-mid-right">−${(fovMuas / 4).toFixed(1)} <span style=${{ textTransform: 'none' }}>uas</span></span>
           </div>
         </div>
       </div>

@@ -1,7 +1,8 @@
 // App root — manages all state, wires worker, renders layout.
 import { html, useState, useEffect, useCallback, useRef, useMemo } from './core.js';
 import { IMAGE_SIZE, TELESCOPE_COLORS, EHT_PRESETS, ARRAY_PRESETS, STATION_SEFD, BHEX_PRESET } from './constants.js';
-import { computeUVPoints, computeUVPointsGl, computeUVFill, computeBaseline } from './uvCompute.js';
+import { computeUVPoints, computeUVPointsGl, computeUVFill, computeBaseline,
+         latLonToECEF, computeSatelliteECEF } from './uvCompute.js';
 import { loadImagePresetAsync } from './presets.js';
 import { Globe } from './Globe.js';
 import { InfoTooltip } from './InfoTooltip.js';
@@ -333,6 +334,34 @@ export function App() {
       : (thetaMuas/1000).toFixed(2) + ' mas';
   }, [telescopes, controls.frequency]);
 
+  const baselineStats = useMemo(() => {
+    const groundTels = telescopes.filter(t => t.type !== 'space');
+    const spaceTels  = telescopes.filter(t => t.type === 'space');
+    if (groundTels.length < 2) return null;
+    let maxKm = 0, minKm = Infinity;
+    for (let i = 0; i < groundTels.length; i++) {
+      for (let j = i+1; j < groundTels.length; j++) {
+        const pA = latLonToECEF(groundTels[i].lat, groundTels[i].lon);
+        const pB = latLonToECEF(groundTels[j].lat, groundTels[j].lon);
+        const d = Math.sqrt((pA.x-pB.x)**2 + (pA.y-pB.y)**2 + (pA.z-pB.z)**2);
+        if (d > maxKm) maxKm = d;
+        if (d > 0.1 && d < minKm) minKm = d;
+      }
+    }
+    for (const sat of spaceTels) {
+      const satPos = computeSatelliteECEF(sat, 0);
+      for (const g of groundTels) {
+        const gPos = latLonToECEF(g.lat, g.lon);
+        const d = Math.sqrt((satPos.x-gPos.x)**2 + (satPos.y-gPos.y)**2 + (satPos.z-gPos.z)**2);
+        if (d > maxKm) maxKm = d;
+      }
+    }
+    const lambdaM = 299792458 / (controls.frequency * 1e9);
+    const maxGl = maxKm * 1e3 / lambdaM / 1e9;
+    const minGl = minKm < Infinity ? minKm * 1e3 / lambdaM / 1e9 : 0;
+    return { maxKm, maxGl, minGl };
+  }, [telescopes, controls.frequency]);
+
   const restoredLabel = controls.method === 'clean' ? 'CLEAN'
     : controls.method === 'mem' ? 'Max Entropy'
     : 'Restored';
@@ -404,7 +433,7 @@ export function App() {
 
         <main id="tour-globe" className="globe-wrapper" aria-label="Main visualization — 3D interactive globe">
           <${Globe} telescopes=${telescopes} onTelescopeAdd=${handleTelescopeAdd} showCountryLabels=${showCountryLabels} reducedMotion=${a11y.reducedMotion} tourActive=${tourActive} />
-          <${StatusBar} status=${status} isComputing=${isComputing} />
+          <${StatusBar} status=${status} isComputing=${isComputing} baselineStats=${baselineStats} />
         </main>
 
         <aside className="right-panel" aria-label="Analysis outputs">
@@ -455,8 +484,8 @@ export function App() {
       </div>
 
       <${InfoModal} infoKey=${infoKey} onClose=${() => setInfoKey(null)} />
-      <${PhysicsNotesModal} open=${physicsNotesOpen} onClose=${() => setPhysicsNotesOpen(false)} />
-      <${CitationModal} open=${citationOpen} onClose=${() => setCitationOpen(false)} telescopes=${telescopes} controls=${controls} />
+      <${PhysicsNotesModal} open=${physicsNotesOpen} onClose=${() => setPhysicsNotesOpen(false)} fovMuas=${controls.fovMuas} />
+      <${CitationModal} open=${citationOpen} onClose=${() => setCitationOpen(false)} telescopes=${telescopes} controls=${controls} selectedArrayPreset=${selectedArrayPreset} bhexAdded=${telescopes.some(t => t.name === 'BHEX')} />
       ${tourActive && html`
         <${Tour}
           actIndex=${tourActIndex}

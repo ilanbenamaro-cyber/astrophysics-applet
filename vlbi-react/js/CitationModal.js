@@ -1,7 +1,7 @@
 // Citation modal — generates BibTeX and APA citations from current simulation state.
 import { html, useState, useEffect } from './core.js';
 
-export function CitationModal({ open, onClose, telescopes, controls }) {
+export function CitationModal({ open, onClose, telescopes, controls, selectedArrayPreset, bhexAdded }) {
   const [bibtexCopied, setBibtexCopied] = useState(false);
   const [apaCopied, setApaCopied] = useState(false);
 
@@ -24,6 +24,11 @@ export function CitationModal({ open, onClose, telescopes, controls }) {
     : controls.method === 'mem' ? 'Max Entropy'
     : 'Dirty';
 
+  const arrayNote = selectedArrayPreset ? ` Array: ${selectedArrayPreset}.` : '';
+  const bhexNote = bhexAdded ? ' Includes BHEX space telescope (Johnson et al. 2024, arXiv:2406.12917).' : '';
+  const ngEHTNote = selectedArrayPreset === 'ngEHT Phase 1'
+    ? ' ngEHT reference: Doeleman et al. (2023), arXiv:2306.08787.' : '';
+
   const bibtex =
 `@misc{vlbi_simulator_${year},
   author    = {Amaro, Ilan Benjamin},
@@ -31,7 +36,7 @@ export function CitationModal({ open, onClose, telescopes, controls }) {
   year      = {${year}},
   url       = {https://ilanbenamaro-cyber.github.io/astrophysics-applet/vlbi-react/},
   note      = {Simulation parameters: ${n} telescope${n !== 1 ? 's' : ''}, ${freq} GHz,
-               ${dec}° declination, ${dur}h duration, ${method} reconstruction.
+               ${dec}° declination, ${dur}h duration, ${method} reconstruction.${arrayNote}${bhexNote}${ngEHTNote}
                Guidance: Prof. Alejandro Cárdenas-Avendaño (Wake Forest University).}
 }`;
 

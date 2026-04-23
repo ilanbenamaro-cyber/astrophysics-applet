@@ -1,7 +1,7 @@
 // Physics Notes modal — implementation methodology and references.
 import { html, useEffect } from './core.js';
 
-export function PhysicsNotesModal({ open, onClose }) {
+export function PhysicsNotesModal({ open, onClose, fovMuas = 80 }) {
   useEffect(() => {
     if (!open) return;
     const handler = (e) => { if (e.key === 'Escape') onClose(); };
@@ -32,19 +32,28 @@ v = (−Bx·sin(δ)·cos(H) + By·sin(δ)·sin(H) + Bz·cos(δ)) / λ</pre>
         <p className="modal-body">
           Telescope positions are converted to Earth-Centered Earth-Fixed (ECEF) coordinates
           assuming a spherical Earth (R = 6,371 km). Baseline vectors are computed as ECEF
-          differences. UV normalization: maximum baseline = Earth diameter → N/2 pixels
-          (Nyquist bound). Conjugate symmetry enforced: both (u, v) and (−u, −v) are included
-          for each sample.
+          differences. UV coordinates are expressed in wavelengths (λ). The image FOV is
+          set to ${fovMuas} μas, giving a pixel scale of λ / (FOV in radians).
+          Conjugate symmetry enforced: both (u, v) and (−u, −v) are included for each sample.
         </p>
 
         <h4 className="modal-section-title">Image Reconstruction</h4>
         <p className="modal-body">
           <strong>Dirty image:</strong> inverse 2D FFT of the masked visibility function.<br/>
           <strong>CLEAN deconvolution:</strong> Högbom (1974) algorithm, 1000 iterations,
-          loop gain γ = 0.1, threshold 5% of initial peak. Restore beam: Gaussian fitted
-          to dirty beam FWHM.<br/>
+          loop gain γ = 0.1, stopping threshold 3 × image RMS noise (estimated from outer
+          10% border). Restore beam: elliptical Gaussian fitted to dirty beam FWHM in both
+          U and V axes.<br/>
           <strong>Max Entropy:</strong> entropy maximization subject to χ² ≤ 1 data-fidelity
           constraint (gradient-descent, 120 iterations).
+        </p>
+
+        <h4 className="modal-section-title">Thermal Noise</h4>
+        <p className="modal-body">
+          Each baseline has noise ∝ sqrt(SEFD_i × SEFD_j), where SEFD is the System Equivalent
+          Flux Density in Jansky. ALMA (94 Jy) produces ~0.15× the noise of SMT (17,100 Jy)
+          on shared baselines, reflecting its much larger effective collecting area as a phased
+          array. SEFD values sourced from published EHT array performance specifications.
         </p>
 
         <h4 className="modal-section-title">EHT Station Coordinates</h4>
@@ -52,6 +61,14 @@ v = (−Bx·sin(δ)·cos(H) + By·sin(δ)·sin(H) + Bz·cos(δ)) / λ</pre>
           Station coordinates sourced from published EHT array configurations.
           Validated against Event Horizon Telescope Collaboration (2019),
           <em> ApJL</em> 875, L1.
+        </p>
+
+        <h4 className="modal-section-title">BHEX Space Telescope</h4>
+        <p className="modal-body">
+          BHEX (Black Hole Explorer) is a proposed NASA space VLBI mission at 26,562 km altitude,
+          near-polar orbit, 12-hour period. Space baselines extend to ~27,000 km (~20 Gλ at
+          230 GHz) — 3× the maximum EHT ground baseline — enabling ~6 μas resolution to probe
+          the M87* photon ring. Reference: Johnson et al. (2024), arXiv:2406.12917.
         </p>
 
         <h4 className="modal-section-title">Acknowledgements</h4>
