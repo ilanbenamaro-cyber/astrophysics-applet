@@ -1,6 +1,6 @@
 // App root — manages all state, wires worker, renders layout.
 import { html, useState, useEffect, useCallback, useRef, useMemo } from './core.js';
-import { IMAGE_SIZE, TELESCOPE_COLORS, EHT_PRESETS } from './constants.js';
+import { IMAGE_SIZE, TELESCOPE_COLORS, EHT_PRESETS, ARRAY_PRESETS, STATION_SEFD } from './constants.js';
 import { computeUVPoints, computeUVPointsGl, computeUVFill, computeBaseline } from './uvCompute.js';
 import { loadImagePresetAsync } from './presets.js';
 import { Globe } from './Globe.js';
@@ -20,6 +20,7 @@ export function App() {
   const [telescopes, setTelescopes] = useState([]);
   const [showCountryLabels, setShowCountryLabels] = useState(true);
   const [selectedPreset, setSelectedPreset] = useState('blackhole');
+  const [selectedArrayPreset, setSelectedArrayPreset] = useState('EHT 2017');
   const [grayscale, setGrayscale] = useState(null);
   const [originalCanvas, setOriginalCanvas] = useState(null);
   const [uvPoints, setUvPoints] = useState([]);
@@ -102,18 +103,22 @@ export function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  function loadEHTPresets() {
+  function loadEHTPresets(presetName = 'EHT 2017') {
     telIdRef.current = 0;
-    const newTels = EHT_PRESETS.map((p, i) => ({
+    const stations = ARRAY_PRESETS[presetName] || ARRAY_PRESETS['EHT 2017'];
+    setTelescopes(stations.map((s, idx) => ({
       id: telIdRef.current++,
-      name: p.name,
-      lat: p.lat,
-      lon: p.lon,
-      color: TELESCOPE_COLORS[i % TELESCOPE_COLORS.length],
+      name: s.name,
+      lat: s.lat,
+      lon: s.lon,
+      color: TELESCOPE_COLORS[idx % TELESCOPE_COLORS.length],
       visible: true,
-    }));
-    setTelescopes(newTels);
+    })));
   }
+
+  const handleLoadArrayPreset = useCallback(() => {
+    loadEHTPresets(selectedArrayPreset);
+  }, [selectedArrayPreset]);
 
   const handleTelescopeAdd = useCallback((lat, lon) => {
     setTelescopes(prev => {
@@ -274,6 +279,7 @@ export function App() {
   function handleReset() {
     setTelescopes([]);
     telIdRef.current = 0;
+    setSelectedArrayPreset('EHT 2017');
     loadImagePresetAsync('../assets/black-hole.png').then(({ previewCanvas, grayscale: gs }) => {
       setGrayscale(gs);
       setOriginalCanvas(previewCanvas);
@@ -359,6 +365,9 @@ export function App() {
           onTelescopeRemove=${handleTelescopeRemove}
           onToggleVisibility=${handleToggleVisibility}
           onLoadEHT=${loadEHTPresets}
+          selectedArrayPreset=${selectedArrayPreset}
+          onArrayPresetChange=${setSelectedArrayPreset}
+          onLoadArray=${handleLoadArrayPreset}
           onClearAll=${() => { setTelescopes([]); telIdRef.current = 0; }}
           showCountryLabels=${showCountryLabels}
           onToggleCountryLabels=${() => setShowCountryLabels(v => !v)}

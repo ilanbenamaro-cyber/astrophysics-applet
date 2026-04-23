@@ -541,6 +541,58 @@ input[type="range"]::-moz-range-thumb {
 }
 .btn-reset:hover { border-color: var(--danger); background: rgba(255,107,107,0.08); }
 
+/* ── Preset Selector ── */
+.preset-selector-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.preset-select {
+  flex: 1;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 5px 7px;
+  border-radius: 4px;
+  font-size: var(--fs-xs);
+  font-family: var(--font);
+  cursor: pointer;
+  min-width: 0;
+}
+
+.preset-select:focus {
+  outline: 1px solid var(--accent-teal);
+}
+
+.preset-note {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+/* ── BHEX Button ── */
+.bhex-button {
+  border: 1px solid #FFD700;
+  color: #FFD700;
+  background: transparent;
+  margin-top: 4px;
+  width: 100%;
+  justify-content: center;
+}
+
+.bhex-button:hover:not(:disabled) {
+  background: rgba(255, 215, 0, 0.08);
+}
+
+.bhex-button:disabled,
+.bhex-button.bhex-added {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ── Status Bar ── */
 .status-bar {
   position: absolute;

@@ -4,7 +4,9 @@ export const EARTH_RADIUS_KM = 6371;
 
 export const TELESCOPE_COLORS = [
   '#ff6b6b','#4ecdc4','#feca57','#48dbfb',
-  '#ff9f43','#a29bfe','#55efc4','#fd79a8'
+  '#ff9f43','#a29bfe','#55efc4','#fd79a8',
+  '#e17055','#74b9ff','#00cec9','#6c5ce7',
+  '#fdcb6e','#00b894','#d63031','#e84393','#0984e3',
 ];
 
 export const EHT_PRESETS = [
@@ -17,6 +19,60 @@ export const EHT_PRESETS = [
   { name:'LMT',   lat: 18.985, lon: -97.315},
   { name:'NOEMA', lat: 44.634, lon:  5.909 },
 ];
+
+export const ARRAY_PRESETS = {
+  'EHT 2017': [
+    { name: 'ALMA',  lat: -23.0229, lon:  -67.7552 },
+    { name: 'APEX',  lat: -23.0057, lon:  -67.7592 },
+    { name: 'SMA',   lat:  19.8232, lon: -155.4780 },
+    { name: 'LMT',   lat:  18.9858, lon:  -97.3147 },
+    { name: 'IRAM',  lat:  37.0662, lon:   -3.3924 },
+    { name: 'SMT',   lat:  32.7016, lon: -109.8719 },
+    { name: 'SPT',   lat: -89.9944, lon:  -44.6502 },
+    { name: 'JCMT',  lat:  19.8228, lon: -155.4772 },
+  ],
+  'EHT 2022': [
+    { name: 'ALMA',  lat: -23.0229, lon:  -67.7552 },
+    { name: 'APEX',  lat: -23.0057, lon:  -67.7592 },
+    { name: 'SMA',   lat:  19.8232, lon: -155.4780 },
+    { name: 'LMT',   lat:  18.9858, lon:  -97.3147 },
+    { name: 'IRAM',  lat:  37.0662, lon:   -3.3924 },
+    { name: 'SMT',   lat:  32.7016, lon: -109.8719 },
+    { name: 'SPT',   lat: -89.9944, lon:  -44.6502 },
+    { name: 'JCMT',  lat:  19.8228, lon: -155.4772 },
+    { name: 'GLT',   lat:  76.5351, lon:  -68.7031 },
+    { name: 'NOEMA', lat:  44.6338, lon:    5.9079 },
+    { name: 'KP12m', lat:  31.9563, lon: -111.6149 },
+  ],
+  'ngEHT Phase 1': [
+    { name: 'ALMA',  lat: -23.0229, lon:  -67.7552 },
+    { name: 'APEX',  lat: -23.0057, lon:  -67.7592 },
+    { name: 'SMA',   lat:  19.8232, lon: -155.4780 },
+    { name: 'LMT',   lat:  18.9858, lon:  -97.3147 },
+    { name: 'IRAM',  lat:  37.0662, lon:   -3.3924 },
+    { name: 'SMT',   lat:  32.7016, lon: -109.8719 },
+    { name: 'SPT',   lat: -89.9944, lon:  -44.6502 },
+    { name: 'JCMT',  lat:  19.8228, lon: -155.4772 },
+    { name: 'GLT',   lat:  76.5351, lon:  -68.7031 },
+    { name: 'NOEMA', lat:  44.6338, lon:    5.9079 },
+    { name: 'KP12m', lat:  31.9563, lon: -111.6149 },
+    { name: 'BAJA',  lat:  31.0443, lon: -115.4567 },
+    { name: 'OVRO',  lat:  37.2314, lon: -118.2822 },
+    { name: 'HAY',   lat:  42.6233, lon:  -71.4882 },
+    { name: 'GAM',   lat: -23.3472, lon:   16.2317 },
+    { name: 'CNI',   lat:  28.7624, lon:  -17.8920 },
+    { name: 'SGO',   lat: -33.4005, lon:  -70.6692 },
+  ],
+};
+
+export const STATION_SEFD = {
+  'ALMA':  94,    'APEX':  4700,  'JCMT':  4500,  'SMA':   6200,
+  'LMT':   1000,  'IRAM':  1900,  'SMT':   17100, 'SPT':   19300,
+  'GLT':   12000, 'NOEMA': 700,   'KP12m': 13000,
+  // ngEHT/BHEX: estimated 10,000 Jy pending validation
+  'BAJA':  10000, 'OVRO':  10000, 'HAY':   10000,
+  'GAM':   10000, 'CNI':   10000, 'SGO':   10000, 'BHEX':  10000,
+};
 
 export const INFO = {
   globe:       { title: 'Radio Telescope Globe',    body: 'Click anywhere on Earth to place a radio telescope. Every pair of telescopes forms a "baseline" — like a giant antenna spanning the distance between them. More telescopes = more baselines = sharper images.' },

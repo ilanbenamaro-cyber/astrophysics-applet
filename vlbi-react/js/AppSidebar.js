@@ -8,7 +8,8 @@ import { ControlsPanel } from './ControlsPanel.js';
 export function AppSidebar({
   selectedPreset, onPresetSelect, onFileUpload,
   telescopes, onTelescopeRemove, onToggleVisibility,
-  onLoadEHT, onClearAll, showCountryLabels, onToggleCountryLabels,
+  onLoadEHT, selectedArrayPreset, onArrayPresetChange, onLoadArray,
+  onClearAll, showCountryLabels, onToggleCountryLabels,
   controls, onControlChange, onOpenInfo, onReset,
 }) {
   return html`
@@ -25,8 +26,20 @@ export function AppSidebar({
           onRemove=${onTelescopeRemove}
           onToggleVisibility=${onToggleVisibility}
         />
+        <div className="preset-selector-row">
+          <select
+            className="preset-select"
+            value=${selectedArrayPreset}
+            onChange=${e => onArrayPresetChange(e.target.value)}
+          >
+            <option value="EHT 2017">EHT 2017 (8 stations)</option>
+            <option value="EHT 2022">EHT 2022 (11 stations)</option>
+            <option value="ngEHT Phase 1">ngEHT Phase 1 (17 stations)</option>
+          </select>
+          <button className="btn btn-primary" onClick=${onLoadArray}>Load Array</button>
+        </div>
+        ${selectedArrayPreset === 'ngEHT Phase 1' ? html`<span className="preset-note">† Reference array — coordinates approximate</span>` : null}
         <div className="telescope-actions">
-          <button className="btn btn-primary" onClick=${onLoadEHT}>Load EHT Array</button>
           <button className="btn btn-ghost" onClick=${onClearAll}>Clear All</button>
         </div>
         <div style=${{ marginTop: '6px' }}>
