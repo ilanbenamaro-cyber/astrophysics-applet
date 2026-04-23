@@ -83,31 +83,59 @@ function buildMask(uvPoints, N) {
   return mask;
 }
 
-function addNoise(data, mask, N, amplitude) {
-  if (amplitude <= 0) return;
-  // Compute RMS of sampled visibilities
-  let sumSq = 0, cnt = 0;
-  for (let i = 0; i < N*N; i++) {
-    if (mask[i]) {
-      const re = data[2*i], im = data[2*i+1];
-      sumSq += re*re + im*im;
-      cnt++;
+function addPerBaselineNoise(vis, uvPoints, stationPairs, sefdMap, noiseScale, N) {
+  if (noiseScale <= 0 || uvPoints.length === 0) return;
+  const half = N / 2;
+
+  // RMS of sampled visibilities — keeps slider behavior calibrated to signal level
+  let sumSq = 0;
+  for (const pt of uvPoints) {
+    const iu = ((Math.round(pt.u - half)) % N + N) % N;
+    const iv = ((Math.round(pt.v - half)) % N + N) % N;
+    const idx = iv * N + iu;
+    const re = vis[2*idx], im = vis[2*idx+1];
+    sumSq += re*re + im*im;
+  }
+  const visRms = uvPoints.length > 0 ? Math.sqrt(sumSq / uvPoints.length) : 1;
+
+  // SEFD geometric mean — normalises so average baseline noise = visRms * noiseScale
+  let logSum = 0;
+  for (const pair of stationPairs) {
+    logSum += Math.log(Math.sqrt((sefdMap[pair.a] || 10000) * (sefdMap[pair.b] || 10000)) || 1);
+  }
+  const sefdGeomMean = Math.exp(logSum / (stationPairs.length || 1));
+
+  // Per-baseline noise: ALMA baselines quiet (~0.15×), SMT/SPT loud (~2.1×)
+  for (let k = 0; k < uvPoints.length; k++) {
+    const pt = uvPoints[k];
+    const pair = stationPairs[k] || { a: '', b: '' };
+    const sefdPair = Math.sqrt((sefdMap[pair.a] || 10000) * (sefdMap[pair.b] || 10000));
+    const sigma = noiseScale * visRms * (sefdPair / sefdGeomMean);
+    const iu = ((Math.round(pt.u - half)) % N + N) % N;
+    const iv = ((Math.round(pt.v - half)) % N + N) % N;
+    const idx = iv * N + iu;
+    let u1, u2;
+    do { u1 = Math.random(); } while (u1 === 0);
+    u2 = Math.random();
+    const z0 = Math.sqrt(-2*Math.log(u1)) * Math.cos(2*Math.PI*u2);
+    const z1 = Math.sqrt(-2*Math.log(u1)) * Math.sin(2*Math.PI*u2);
+    vis[2*idx]   += z0 * sigma;
+    vis[2*idx+1] += z1 * sigma;
+  }
+}
+
+function estimateNoiseRms(arr, N) {
+  const margin = Math.floor(N * 0.10);
+  let sum = 0, count = 0;
+  for (let i = 0; i < N; i++) {
+    for (let j = 0; j < N; j++) {
+      if (i < margin || i >= N - margin || j < margin || j >= N - margin) {
+        sum += arr[i*N+j] * arr[i*N+j];
+        count++;
+      }
     }
   }
-  const rms = cnt > 0 ? Math.sqrt(sumSq / cnt) : 1;
-  const sigma = amplitude * rms;
-  // Box-Muller Gaussian noise on sampled visibilities
-  for (let i = 0; i < N*N; i++) {
-    if (mask[i]) {
-      let u1, u2;
-      do { u1 = Math.random(); } while (u1 === 0);
-      u2 = Math.random();
-      const z0 = Math.sqrt(-2*Math.log(u1)) * Math.cos(2*Math.PI*u2);
-      const z1 = Math.sqrt(-2*Math.log(u1)) * Math.sin(2*Math.PI*u2);
-      data[2*i]   += z0 * sigma;
-      data[2*i+1] += z1 * sigma;
-    }
-  }
+  return count > 0 ? Math.sqrt(sum / count) : 0;
 }
 
 function gaussConvolve(img, N, sigma) {
@@ -151,12 +179,16 @@ function gaussConvolve(img, N, sigma) {
 
 
 function reconstruct(grayscale, uvPoints, params) {
-  const { N, noise, method, dishDiameter = 25, frequency = 230 } = params;
+  const { N, noise, method, dishDiameter = 25, frequency = 230,
+          fovRad = 80 * Math.PI / (180 * 3.6e9),
+          stationPairs = [], sefdMap = {} } = params;
 
   // 1. Build complex array from grayscale, applying primary-beam Gaussian taper.
-  //    FWHM ∝ λ/D: larger dish or higher frequency → narrower beam → tighter taper.
-  //    sigma_px = N/2 * (25/dishDiameter) * (230/frequency) * 1.5 (calibrated constant)
-  const sigmaPx = (N / 2) * (25 / dishDiameter) * (230 / frequency) * 1.5;
+  //    Physical primary beam: FWHM = 1.02 × λ / D (Airy disk approximation).
+  const lambda_m = 3e8 / (frequency * 1e9);
+  const fwhm_rad = 1.02 * lambda_m / dishDiameter;
+  const fwhm_px = (fwhm_rad / fovRad) * N;
+  const sigmaPx = fwhm_px / 2.355;
   const twoSig2 = 2 * sigmaPx * sigmaPx;
   const vis = new Float64Array(2*N*N);
   const cx = N / 2, cy = N / 2;
@@ -175,8 +207,8 @@ function reconstruct(grayscale, uvPoints, params) {
   // 3. Build mask and apply (zero unsampled frequencies)
   const mask = buildMask(uvPoints, N);
 
-  // 4. Add noise before masking application (noise on sampled vis)
-  addNoise(vis, mask, N, noise);
+  // 4. Add per-baseline SEFD thermal noise before mask application
+  addPerBaselineNoise(vis, uvPoints, stationPairs, sefdMap, noise, N);
 
   // Apply mask
   const masked = new Float64Array(2*N*N);
@@ -265,13 +297,10 @@ function reconstruct(grayscale, uvPoints, params) {
     const residual = dirtyImg.slice();
     const model = new Float64Array(N*N);
 
-    // Find peak amplitude for threshold
-    let initPeak = 0;
-    for (let i = 0; i < N*N; i++) {
-      const a = Math.abs(residual[i]);
-      if (a > initPeak) initPeak = a;
-    }
-    const stopLevel = 0.05 * initPeak;
+    // Noise-floor stopping criterion: stop when peak residual < 3 × image noise RMS
+    // (estimated from the outer 10% border of the dirty image)
+    const noiseRms = estimateNoiseRms(dirtyImg, N);
+    const stopLevel = 3 * noiseRms;
 
     for (let iter = 0; iter < ITERATIONS; iter++) {
       // Find peak in residual

@@ -24,6 +24,7 @@ export function App() {
   const [grayscale, setGrayscale] = useState(null);
   const [originalCanvas, setOriginalCanvas] = useState(null);
   const [uvPoints, setUvPoints] = useState([]);
+  const [stationPairs, setStationPairs] = useState([]);
   const [uvPointsGl, setUvPointsGl] = useState([]);
   const [uvFill, setUvFill] = useState(0);
   const [dirty, setDirty] = useState(null);
@@ -150,8 +151,9 @@ export function App() {
 
   // Recompute UV points whenever telescopes or relevant controls change
   useEffect(() => {
-    const uvPts = computeUVPoints(telescopes, { ...controls, N: IMAGE_SIZE });
+    const { uvPoints: uvPts, stationPairs: pairs } = computeUVPoints(telescopes, { ...controls, N: IMAGE_SIZE });
     setUvPoints(uvPts);
+    setStationPairs(pairs);
     setUvFill(computeUVFill(uvPts, IMAGE_SIZE));
     setUvPointsGl(computeUVPointsGl(telescopes, { declination: controls.declination, duration: controls.duration, frequency: controls.frequency }));
   }, [telescopes, controls.declination, controls.duration, controls.frequency, controls.fovMuas]);
@@ -196,6 +198,9 @@ export function App() {
       const id = ++reqIdRef.current;
       const gs = scaledGrayscale.slice();
       const uv = uvPoints.map(p => ({ u: p.u, v: p.v }));
+      const sp = stationPairs;
+      const sefdMap = {};
+      telescopes.forEach(t => { sefdMap[t.name] = STATION_SEFD[t.name] ?? 10000; });
       workerRef.current.postMessage(
         { type: 'reconstruct', id, grayscale: gs, uvPoints: uv, params: {
             N: IMAGE_SIZE,
@@ -203,13 +208,16 @@ export function App() {
             method: controls.method,
             dishDiameter: controls.dishDiameter,
             frequency: controls.frequency,
+            fovRad: controls.fovMuas * (Math.PI / (180 * 3.6e9)),
+            stationPairs: sp,
+            sefdMap,
           }
         },
         [gs.buffer]
       );
     }, 100);
     return () => clearTimeout(computeTimerRef.current);
-  }, [uvPoints, scaledGrayscale, controls.noise, controls.method, controls.dishDiameter, controls.frequency]);
+  }, [uvPoints, stationPairs, scaledGrayscale, controls.noise, controls.method, controls.dishDiameter, controls.frequency, telescopes]);
 
   const IMAGE_PRESETS = { 'blackhole': '../assets/black-hole.png', 'wfu-seal': '../assets/wfu-seal.png' };
 

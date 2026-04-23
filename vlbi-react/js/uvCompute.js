@@ -38,15 +38,16 @@ export function lerpColor(h1, h2, t) {
 }
 
 export function computeUVPoints(telescopes, { declination, duration, frequency, N, fovMuas }) {
-  const visible = telescopes.filter(t => t.visible !== false);
-  if (visible.length < 2) return [];
+  const visible = telescopes.filter(t => t.visible !== false && t.type !== 'space');
+  if (visible.length < 2) return { uvPoints: [], stationPairs: [] };
   const STEPS = 200;
   const halfDur = (duration * Math.PI / 24);
   const c_ms = 299792458;
   const lambda_m = c_ms / (frequency * 1e9);
   const fovRad = fovMuas * (Math.PI / (180 * 3.6e9));
   const scale = (1e3 / lambda_m) * fovRad;
-  const pts = [];
+  const uvPoints = [];
+  const stationPairs = [];
   for (let i = 0; i < visible.length; i++) {
     for (let j = i+1; j < visible.length; j++) {
       const t1 = visible[i], t2 = visible[j];
@@ -58,12 +59,14 @@ export function computeUVPoints(telescopes, { declination, duration, frequency, 
         const uv = baselineToUV(b, H, declination);
         const pu = uv.u * scale;
         const pv = uv.v * scale;
-        pts.push({ u:  pu + N/2, v:  pv + N/2, color, pairId });
-        pts.push({ u: -pu + N/2, v: -pv + N/2, color, pairId });
+        uvPoints.push({ u:  pu + N/2, v:  pv + N/2, color, pairId });
+        stationPairs.push({ a: t1.name, b: t2.name });
+        uvPoints.push({ u: -pu + N/2, v: -pv + N/2, color, pairId });
+        stationPairs.push({ a: t1.name, b: t2.name });
       }
     }
   }
-  return pts;
+  return { uvPoints, stationPairs };
 }
 
 export function computeUVPointsGl(telescopes, { declination, duration, frequency }) {
