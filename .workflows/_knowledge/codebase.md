@@ -99,14 +99,16 @@ constants.js     — IMAGE_SIZE=512, EARTH_RADIUS_KM=6371, TELESCOPE_COLORS[17],
                    ARRAY_PRESETS {'EHT 2017':8, 'EHT 2022':11, 'ngEHT Phase 1':17},
                    STATION_SEFD (per-station Jy at 230 GHz: ALMA=94, NOEMA=700, …, SMT=17100, SPT=19300),
                    BHEX_PRESET (type:'space', alt 26562 km, inc 86°, RAAN 277.7°, period 12h),
+                   SKY_TARGETS {M87*: dec 12.391°, Sgr A*: dec -29.008°, 3C 279: dec -5.789°, Cen A: dec -43.019°, Custom: dec null},
                    INFO (tooltip text keyed by panel name), ISO_COUNTRY_NAMES (numeric→display)
 uvCompute.js     — latLonToECEF, computeBaseline, computeSatelliteECEF (Keplerian orbit → ECEF),
                    baselineToUV (TMS eq 4.1),
+                   MIN_ELEVATION_RAD = 10° (elevation cutoff constant),
+                   computeElevation(lat_deg, ha_rad, dec_rad) → elevation angle,
                    computeUVPoints (pixel coords, FOV-scaled — reconstruction input)
-                     → returns { uvPoints, stationPairs } (stationPairs parallel array for SEFD lookup)
-                     → handles both ground-ground and ground-space baselines
+                     → returns { uvPoints, stationPairs }; applies 10° elevation cutoff per telescope per HA step
                    computeUVPointsGl (Gλ coords, FOV-independent — display only)
-                     → also handles ground-space baselines with Keplerian position per HA step
+                     → same elevation cutoff logic as computeUVPoints
                    computeUVFill, lerpColor
 globeHelpers.js  — Three.js mesh helpers for globe, atmosphere, markers;
                    syncTelescopeMarkers (skips space telescopes; ground baselines only),
@@ -139,9 +141,11 @@ worker.js        — self-contained Web Worker (no imports — cannot use import
 **OUT (to App.js):**
 ```js
 // Success:
-{ type: 'result', id: number, dirty: Float64Array, restored: Float64Array, uvCount: number }
+{ type: 'result', id: number, dirty: Float64Array, restored: Float64Array, uvCount: number,
+  beamSigmaU: number, beamSigmaV: number, beamPA: number }
 // Transferable buffers — dirty.buffer and restored.buffer are transferred (zero-copy)
-// App.js MUST NOT read these arrays after they are passed to worker
+// beamSigmaU/V: elliptical restore beam sigma (pixels) from dual-axis PSF scan (S4)
+// For MEM/dirty: theoretical beam computed from 1.02*lambda/dish/fovRad (fallback)
 
 // Error:
 { type: 'error', id: number, message: string }
@@ -179,8 +183,12 @@ Applied as Gaussian envelope to dirty image (multiplication in image space befor
 - 1000 iterations max, loop gain = 0.1
 - Stop at 3×noiseRms (estimated from outer 10% border pixels of dirty image)
 - PSF peak at index 0 (not N/2 — worker FFT convention)
-- Restore beam sigma = `max(1.5, halfWidth / 2.355)` where halfWidth estimated from dirty beam
-- Final: FFT-convolve model with restore beam, add residual
+- Restore beam: **elliptical Gaussian** measured from dirty beam PSF via dual-axis half-max scan
+  - U-axis: scan `psf[j]` for j=1..N/2 → `sigmaU = max(1.5, halfWidthU / 2.355)`
+  - V-axis: scan `psf[j*N]` for j=1..N/2 → `sigmaV = max(1.5, halfWidthV / 2.355)`
+  - Memory layout: row index `i` = v-direction, column index `j` = u-direction
+- Final: FFT-convolve model with elliptical Gaussian kernel, add residual
+- Returns beamSigmaU, beamSigmaV, beamPA (always 0 — axis-aligned)
 
 **MEM** (Max Entropy in `worker.js`):
 - 120 gradient-descent iterations
@@ -210,11 +218,12 @@ Passed as prop to ContourMap for μas axis labels.
 - `uvPoints` — current UV sample coordinates (pixel space, FOV-scaled — passed to worker)
 - `stationPairs` — `[{a, b}]` parallel to uvPoints — station name pairs for per-baseline SEFD noise
 - `uvPointsGl` — current UV sample coordinates in Gλ (display only — passed to UVMap)
-- `controls` — all slider/toggle values (noise, frequency, duration, declination, method, dishDiameter, fovMuas [default 80], sourceFraction [default 0.50])
+- `controls` — all slider/toggle values (noise, frequency, duration, declination [default 12.391 = M87*], method, dishDiameter, fovMuas [default 80], sourceFraction [default 0.50])
 - `selectedPreset` — current image preset key (blackhole/wfu-seal)
 - `selectedArrayPreset` — current array preset name ('EHT 2017' | 'EHT 2022' | 'ngEHT Phase 1')
+- `selectedTarget` — sky target name ('M87*' | 'Sgr A*' | '3C 279' | 'Cen A' | 'Custom'); selecting a named target auto-sets `controls.declination`
+- `beamDims` — `{ sigmaU, sigmaV, pa }` from latest worker result; passed to ContourMap for ellipse rendering
 - `physicsNotesOpen`, `citationOpen` — modal state
-- `recoId` — monotonic ref for stale result detection
 - `bhexAdded` — computed (not state): `telescopes.some(t => t.name === 'BHEX')`
 
 ### IMAGE_PRESETS (asset paths relative to vlbi-react/)
@@ -236,6 +245,12 @@ GitHub Pages from `main` branch root. Push to `main` = live within ~60 seconds.
 ---
 
 ## Last Updated
+
+2026-04-23 — Four-session physics+display upgrade complete (S4/S5/S6/S7):
+  S4: worker.js: elliptical CLEAN restore beam (dual-axis PSF scan → sigmaU/sigmaV); ContourMap: beam ellipse uses measured sigmaU/sigmaV props; App.js: beamDims state
+  S5: uvCompute.js: MIN_ELEVATION_RAD=10°, computeElevation(); 10° elevation cutoff applied in both computeUVPoints AND computeUVPointsGl — SPT excluded at M87* (dec=+12°), GLT excluded at Sgr A* (dec=-29°)
+  S6: ContourMap inner ticks fixed (fovMuas/4 not fovMuas/2); dead EARTH_DIAM_M/pixelScale_uas code removed; StatusBar baseline stats (km + Gλ); PhysicsNotesModal: SEFD + BHEX sections; CitationModal: conditional BHEX (arXiv:2406.12917) + ngEHT (arXiv:2306.08787) references; ctx.fillText replaced with HTML overlay for empty state
+  S7: SKY_TARGETS added to constants.js; App.js: selectedTarget state (default M87*), declination default 12.391°; ControlsPanel: Target dropdown hides declination slider for named targets, shows read-only Dec value
 
 2026-04-22 — Three-session physics upgrade complete (S1/S2/S3):
   S1: constants.js: TELESCOPE_COLORS extended to 17, ARRAY_PRESETS (3 presets), STATION_SEFD added; App.js+AppSidebar.js: array preset dropdown + Load Array button replaces single "Load EHT Array" button

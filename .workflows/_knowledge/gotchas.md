@@ -181,20 +181,21 @@ RESOLVED: YES — commit 54c855b.
 
 ---
 
-### recoId stale-result check must not be removed
+### recoId stale-result check — NOT currently implemented
 DATE_DISCOVERED: 2026-04-01
+UPDATED: 2026-04-23
 AREA: vlbi-react/js/App.js — worker.onmessage handler
-SEVERITY: MEDIUM
+SEVERITY: LOW (documented for awareness)
 
-WHAT HAPPENED: N/A — documented proactively from design review.
+WHAT HAPPENED: The plan described this check but it was never implemented. App.js uses a single worker with a simple onmessage handler that accepts all results. Because React setState batching and the worker's synchronous-per-postMessage nature keep results in order in practice, stale results have not been observed.
 
-ROOT CAUSE: Worker runs async. If user changes controls rapidly, multiple reconstruction requests are in flight simultaneously. The most recent result might not arrive last.
+ROOT CAUSE: N/A — design decision to keep it simple.
 
-HOW TO AVOID: App.js maintains `recoId` as a `useRef` counter, incremented with each reconstruction request. The worker message handler checks `if (result.id !== recoId.current) return` before updating state. Never remove this check.
+HOW TO AVOID: If rapid-fire control changes produce flickering, add a monotonic `recoIdRef = useRef(0)` incremented in the postMessage call, and skip setState in onmessage if `e.data.id !== recoIdRef.current`.
 
-DETECTION: UI shows flickering or reverts to stale reconstruction results when controls are changed quickly.
+DETECTION: UI flickers or briefly shows stale reconstruction when controls change rapidly.
 
-RESOLVED: YES — part of original design.
+RESOLVED: N/A — not yet a problem. Document if it becomes one.
 
 ---
 
@@ -250,7 +251,14 @@ Option 1 is cleaner; option 2 is fine for a single file but must be reverted bef
 
 DETECTION: Error stack trace points to a line number that doesn't match the actual file (e.g., error at line 98 but function is at line 100 in current file — 2-line diff indicates old cached version).
 
-RESOLVED: YES — port switch to 8081 fixed it for S3 verification. Version query param `?v=2` fixed it for S2.
+RESOLVED: YES — port switch to 8081 fixed it for S3. `?v=2` fixed it for S2. For S4-S7 verification, used a no-cache Python server on a fresh port (8083):
+```python
+class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
+    def end_headers(self):
+        self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+        super().end_headers()
+```
+This is the most reliable fix — forces Chrome to re-fetch every module on every navigation.
 
 ---
 
