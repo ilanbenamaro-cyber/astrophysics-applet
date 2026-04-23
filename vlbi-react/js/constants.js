@@ -87,11 +87,11 @@ export const BHEX_PRESET = {
 };
 
 export const SKY_TARGETS = {
-  'M87*':   { ra: 187.706, dec: 12.391,  description: 'Supermassive BH in Virgo A — primary EHT target' },
-  'Sgr A*': { ra: 266.417, dec: -29.008, description: 'Milky Way galactic center BH' },
-  '3C 279': { ra: 194.047, dec: -5.789,  description: 'Bright blazar, primary EHT calibrator' },
-  'Cen A':  { ra: 201.365, dec: -43.019, description: 'Nearest radio galaxy (NGC 5128)' },
-  'Custom': { ra: null,    dec: null,     description: 'Set declination manually' },
+  'M87*':   { ra: 187.706, dec: 12.391,  description: 'Supermassive BH in Virgo A — primary EHT target', shadowUas: 42   },
+  'Sgr A*': { ra: 266.417, dec: -29.008, description: 'Milky Way galactic center BH',                     shadowUas: 50   },
+  '3C 279': { ra: 194.047, dec: -5.789,  description: 'Bright blazar, primary EHT calibrator',            shadowUas: null },
+  'Cen A':  { ra: 201.365, dec: -43.019, description: 'Nearest radio galaxy (NGC 5128)',                  shadowUas: null },
+  'Custom': { ra: null,    dec: null,     description: 'Set declination and source size manually',         shadowUas: null },
 };
 
 export const INFO = {

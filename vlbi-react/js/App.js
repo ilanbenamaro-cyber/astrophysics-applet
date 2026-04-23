@@ -183,12 +183,22 @@ export function App() {
     setUvPointsGl(computeUVPointsGl(telescopes, { declination: controls.declination, duration: controls.duration, frequency: controls.frequency }));
   }, [telescopes, controls.declination, controls.duration, controls.frequency, controls.fovMuas]);
 
-  // Scale the source to occupy sourceFraction of the image, zero-pad the rest.
+  // For named targets with a known shadow size, derive sourceFraction physically.
+  // For Custom or null-shadow targets, fall back to user-controlled controls.sourceFraction.
+  const effectiveSourceFraction = useMemo(() => {
+    const target = SKY_TARGETS[selectedTarget];
+    if (target && target.shadowUas !== null) {
+      return Math.min(0.95, Math.max(0.05, target.shadowUas / controls.fovMuas));
+    }
+    return controls.sourceFraction;
+  }, [selectedTarget, controls.fovMuas, controls.sourceFraction]);
+
+  // Scale the source to occupy effectiveSourceFraction of the image, zero-pad the rest.
   // originalCanvas is always shown unscaled — only the worker input is affected.
   const scaledGrayscale = useMemo(() => {
     if (!grayscale) return null;
     const N = IMAGE_SIZE;
-    const sourcePx = Math.max(1, Math.round(controls.sourceFraction * N));
+    const sourcePx = Math.max(1, Math.round(effectiveSourceFraction * N));
     if (sourcePx === N) return grayscale; // no scaling needed
     const output = new Float64Array(N * N); // zeros = empty sky
     const outX0 = Math.floor((N - sourcePx) / 2);
@@ -202,7 +212,7 @@ export function App() {
       }
     }
     return output;
-  }, [grayscale, controls.sourceFraction]);
+  }, [grayscale, effectiveSourceFraction]);
 
   // Debounced reconstruction
   useEffect(() => {
@@ -441,6 +451,7 @@ export function App() {
           onReset=${handleReset}
           selectedTarget=${selectedTarget}
           onTargetChange=${handleTargetChange}
+          effectiveSourceFraction=${effectiveSourceFraction}
         />
 
         <main id="tour-globe" className="globe-wrapper" aria-label="Main visualization — 3D interactive globe">

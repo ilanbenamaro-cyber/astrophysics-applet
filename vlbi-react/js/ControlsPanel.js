@@ -2,7 +2,7 @@ import { html, useState, useEffect } from './core.js';
 import { InfoTooltip } from './InfoTooltip.js';
 import { SKY_TARGETS } from './constants.js';
 
-export function ControlsPanel({ controls, onChange, onOpenInfo, selectedTarget = 'Custom', onTargetChange }) {
+export function ControlsPanel({ controls, onChange, onOpenInfo, selectedTarget = 'Custom', onTargetChange, effectiveSourceFraction }) {
   // Local text state for FOV input so the user can type freely before committing
   const [fovText, setFovText] = useState(String(controls.fovMuas));
   useEffect(() => { setFovText(String(controls.fovMuas)); }, [controls.fovMuas]);
@@ -106,22 +106,29 @@ export function ControlsPanel({ controls, onChange, onOpenInfo, selectedTarget =
       </div>
     </div>
 
-    <div className="control-row">
-      <div className="control-label">
-        SOURCE SIZE
-        <${InfoTooltip} infoKey="sourceSize" onOpen=${onOpenInfo} />
-        <span className="val">${Math.round(controls.sourceFraction * controls.fovMuas)} <span style=${{ fontSize: 'var(--fs-sm)', textTransform: 'none' }}>μas</span></span>
+    ${selectedTarget === 'Custom' ? html`
+      <div className="control-row">
+        <div className="control-label">
+          SOURCE SIZE
+          <${InfoTooltip} infoKey="sourceSize" onOpen=${onOpenInfo} />
+          <span className="val">${Math.round(controls.sourceFraction * controls.fovMuas)} <span style=${{ fontSize: 'var(--fs-sm)', textTransform: 'none' }}>μas</span></span>
+        </div>
+        <input
+          type="range"
+          min="0.05"
+          max="1.0"
+          step="0.01"
+          value=${controls.sourceFraction}
+          onInput=${(e) => onChange('sourceFraction', parseFloat(e.target.value))}
+          aria-label="Source angular size"
+        />
       </div>
-      <input
-        type="range"
-        min="0.05"
-        max="1.0"
-        step="0.01"
-        value=${controls.sourceFraction}
-        onInput=${(e) => onChange('sourceFraction', parseFloat(e.target.value))}
-        aria-label="Source angular size"
-      />
-    </div>
+    ` : target?.shadowUas !== null && target?.shadowUas !== undefined ? html`
+      <div style=${{ fontSize: 'var(--fs-xs, 0.7rem)', opacity: 0.85, marginBottom: '4px' }}>
+        Source: ${target.shadowUas} μas
+        (${effectiveSourceFraction !== undefined ? (effectiveSourceFraction * 100).toFixed(1) : '—'}% of FOV)
+      </div>
+    ` : null}
 
     ${visibleSliders.map(s => html`
       <div className="control-row" key=${s.key}>
