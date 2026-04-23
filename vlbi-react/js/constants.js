@@ -86,6 +86,14 @@ export const BHEX_PRESET = {
   color: '#FFD700',
 };
 
+export const SKY_TARGETS = {
+  'M87*':   { ra: 187.706, dec: 12.391,  description: 'Supermassive BH in Virgo A — primary EHT target' },
+  'Sgr A*': { ra: 266.417, dec: -29.008, description: 'Milky Way galactic center BH' },
+  '3C 279': { ra: 194.047, dec: -5.789,  description: 'Bright blazar, primary EHT calibrator' },
+  'Cen A':  { ra: 201.365, dec: -43.019, description: 'Nearest radio galaxy (NGC 5128)' },
+  'Custom': { ra: null,    dec: null,     description: 'Set declination manually' },
+};
+
 export const INFO = {
   globe:       { title: 'Radio Telescope Globe',    body: 'Click anywhere on Earth to place a radio telescope. Every pair of telescopes forms a "baseline" — like a giant antenna spanning the distance between them. More telescopes = more baselines = sharper images.' },
   uvmap:       { title: 'UV-Plane Coverage',        body: 'As Earth rotates, each telescope pair sweeps an arc through Fourier space (the UV-plane). Each point sampled corresponds to one spatial frequency of the sky. The axis range auto-scales to the current UV coverage extent (max baseline × 1.2) and is labeled in gigawavelengths (Gλ) — the standard unit in radio astronomy publications. Dense, uniform coverage produces higher-fidelity reconstruction.' },

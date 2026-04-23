@@ -12,6 +12,7 @@ export function AppSidebar({
   bhexAdded, onAddBHEX,
   onClearAll, showCountryLabels, onToggleCountryLabels,
   controls, onControlChange, onOpenInfo, onReset,
+  selectedTarget, onTargetChange,
 }) {
   return html`
     <aside className="sidebar" aria-label="Controls and image selection">
@@ -67,6 +68,8 @@ export function AppSidebar({
           controls=${controls}
           onChange=${onControlChange}
           onOpenInfo=${onOpenInfo}
+          selectedTarget=${selectedTarget}
+          onTargetChange=${onTargetChange}
         />
       </section>
 

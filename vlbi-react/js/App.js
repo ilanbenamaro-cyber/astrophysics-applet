@@ -1,6 +1,7 @@
 // App root — manages all state, wires worker, renders layout.
 import { html, useState, useEffect, useCallback, useRef, useMemo } from './core.js';
-import { IMAGE_SIZE, TELESCOPE_COLORS, EHT_PRESETS, ARRAY_PRESETS, STATION_SEFD, BHEX_PRESET } from './constants.js';
+import { IMAGE_SIZE, TELESCOPE_COLORS, EHT_PRESETS, ARRAY_PRESETS, STATION_SEFD,
+         BHEX_PRESET, SKY_TARGETS } from './constants.js';
 import { computeUVPoints, computeUVPointsGl, computeUVFill, computeBaseline,
          latLonToECEF, computeSatelliteECEF } from './uvCompute.js';
 import { loadImagePresetAsync } from './presets.js';
@@ -31,7 +32,7 @@ export function App() {
   const [dirty, setDirty] = useState(null);
   const [restored, setRestored] = useState(null);
   const [controls, setControls] = useState({
-    declination: 30, duration: 12, frequency: 230,
+    declination: 12.391, duration: 12, frequency: 230,
     noise: 0, dishDiameter: 25, method: 'clean',
     fovMuas: 80, sourceFraction: 0.50,
   });
@@ -54,6 +55,7 @@ export function App() {
   const [status, setStatus] = useState({ msg: 'Select an image and place telescopes to begin', type: '' });
   const [isComputing, setIsComputing] = useState(false);
   const [beamDims, setBeamDims] = useState({ sigmaU: 2, sigmaV: 2, pa: 0 });
+  const [selectedTarget, setSelectedTarget] = useState('M87*');
 
   const workerRef = useRef(null);
   const reqIdRef = useRef(0);
@@ -127,6 +129,13 @@ export function App() {
   }, [selectedArrayPreset]);
 
   const bhexAdded = telescopes.some(t => t.name === 'BHEX');
+
+  const handleTargetChange = useCallback((name) => {
+    setSelectedTarget(name);
+    if (name !== 'Custom') {
+      setControls(c => ({ ...c, declination: SKY_TARGETS[name].dec }));
+    }
+  }, []);
 
   const handleAddBHEX = useCallback(() => {
     if (telescopes.some(t => t.name === 'BHEX')) return;
@@ -309,7 +318,8 @@ export function App() {
       setOriginalCanvas(previewCanvas);
       setSelectedPreset('blackhole');
     });
-    setControls({ declination: 30, duration: 12, frequency: 230, noise: 0, dishDiameter: 25, method: 'clean', fovMuas: 80, sourceFraction: 0.50 });
+    setSelectedTarget('M87*');
+    setControls({ declination: 12.391, duration: 12, frequency: 230, noise: 0, dishDiameter: 25, method: 'clean', fovMuas: 80, sourceFraction: 0.50 });
     setStatus({ msg: 'Reset. Place telescopes to begin.', type: '' });
     setDirty(null);
     setRestored(null);
@@ -429,6 +439,8 @@ export function App() {
           onControlChange=${(k, v) => setControls(p => ({ ...p, [k]: v }))}
           onOpenInfo=${setInfoKey}
           onReset=${handleReset}
+          selectedTarget=${selectedTarget}
+          onTargetChange=${handleTargetChange}
         />
 
         <main id="tour-globe" className="globe-wrapper" aria-label="Main visualization — 3D interactive globe">
