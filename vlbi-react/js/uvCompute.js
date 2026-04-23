@@ -38,6 +38,15 @@ export function baselineToUV(b, H, decDeg) {
   return { u, v };
 }
 
+const MIN_ELEVATION_RAD = 10 * Math.PI / 180;
+
+function computeElevation(lat_deg, ha_rad, dec_rad) {
+  const lat = lat_deg * Math.PI / 180;
+  const sinEl = Math.sin(lat) * Math.sin(dec_rad)
+              + Math.cos(lat) * Math.cos(dec_rad) * Math.cos(ha_rad);
+  return Math.asin(Math.max(-1, Math.min(1, sinEl)));
+}
+
 export function lerpColor(h1, h2, t) {
   const parse = h => [
     parseInt(h.slice(1,3),16),
@@ -63,6 +72,7 @@ export function computeUVPoints(telescopes, { declination, duration, frequency, 
   const scale = (1e3 / lambda_m) * fovRad;
   const uvPoints = [];
   const stationPairs = [];
+  const decRad = declination * Math.PI / 180;
 
   // Ground-ground pairs
   for (let i = 0; i < groundTels.length; i++) {
@@ -73,6 +83,8 @@ export function computeUVPoints(telescopes, { declination, duration, frequency, 
       const pairId = `${t1.id}-${t2.id}`;
       for (let s = 0; s <= STEPS; s++) {
         const H = -halfDur + (s / STEPS) * 2 * halfDur;
+        if (computeElevation(t1.lat, H, decRad) < MIN_ELEVATION_RAD) continue;
+        if (computeElevation(t2.lat, H, decRad) < MIN_ELEVATION_RAD) continue;
         const uv = baselineToUV(b, H, declination);
         const pu = uv.u * scale;
         const pv = uv.v * scale;
@@ -92,6 +104,7 @@ export function computeUVPoints(telescopes, { declination, duration, frequency, 
       const groundPos = latLonToECEF(ground.lat, ground.lon);
       for (let s = 0; s <= STEPS; s++) {
         const H = -halfDur + (s / STEPS) * 2 * halfDur;
+        if (computeElevation(ground.lat, H, decRad) < MIN_ELEVATION_RAD) continue;
         const t_hours = H / (2 * Math.PI) * 24;
         const satPos = computeSatelliteECEF(sat, t_hours);
         const bx = satPos.x - groundPos.x;
@@ -121,6 +134,7 @@ export function computeUVPointsGl(telescopes, { declination, duration, frequency
   const lambda_m = c_ms / (frequency * 1e9);
   const kmToGl = 1e3 / lambda_m / 1e9;
   const pts = [];
+  const decRadGl = declination * Math.PI / 180;
 
   // Ground-ground pairs
   for (let i = 0; i < groundTels.length; i++) {
@@ -131,6 +145,8 @@ export function computeUVPointsGl(telescopes, { declination, duration, frequency
       const pairId = `${t1.id}-${t2.id}`;
       for (let s = 0; s <= STEPS; s++) {
         const H = -halfDur + (s / STEPS) * 2 * halfDur;
+        if (computeElevation(t1.lat, H, decRadGl) < MIN_ELEVATION_RAD) continue;
+        if (computeElevation(t2.lat, H, decRadGl) < MIN_ELEVATION_RAD) continue;
         const uv = baselineToUV(b, H, declination);
         pts.push({ u:  uv.u * kmToGl, v:  uv.v * kmToGl, color, pairId });
         pts.push({ u: -uv.u * kmToGl, v: -uv.v * kmToGl, color, pairId });
@@ -146,6 +162,7 @@ export function computeUVPointsGl(telescopes, { declination, duration, frequency
       const groundPos = latLonToECEF(ground.lat, ground.lon);
       for (let s = 0; s <= STEPS; s++) {
         const H = -halfDur + (s / STEPS) * 2 * halfDur;
+        if (computeElevation(ground.lat, H, decRadGl) < MIN_ELEVATION_RAD) continue;
         const t_hours = H / (2 * Math.PI) * 24;
         const satPos = computeSatelliteECEF(sat, t_hours);
         const bx = satPos.x - groundPos.x;
