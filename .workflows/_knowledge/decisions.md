@@ -253,6 +253,68 @@ TRIGGERS_REVIEW_IF: UV display needs to show axis labels in a different unit (M�
 
 ---
 
+### Per-baseline SEFD noise model — RMS-relative scaling
+DATE: 2026-04-22
+LAST_VERIFIED: 2026-04-22
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: Worker noise uses `σ ∝ sqrt(SEFD_i × SEFD_j) / sefdGeomMean × visRms × noiseScale`. Noise is injected in the UV domain per-point using the stationPairs array parallel to uvPoints. The SEFD geometric mean across all pairs is used to preserve the slider's absolute noise level (noiseScale=1 ≈ same total noise as before).
+RATIONALE: The spec's literal formula (σ = sqrt(SEFD_i × SEFD_j) / sqrt(2 × BW × t_int)) gives σ in Jy (~0.002 Jy), incompatible with normalized vis values (~1.0). RMS-relative scaling makes ALMA baselines ~0.15× quieter and SMT/SPT ~2.1× noisier — physically correct relative differences — while keeping the slider behavior unchanged. Confirmed by Prof. Cárdenas-Avendaño.
+ALTERNATIVES_REJECTED: Literal Jy formula — would produce near-zero noise regardless of slider setting; flat noise (same σ all baselines) — physically incorrect, misses the key educational point about SEFD differences.
+TRIGGERS_REVIEW_IF: Absolute thermal noise in Jy/beam is needed for quantitative publications (would require proper bandwidth and integration time parameters).
+
+---
+
+### Physical beam taper: 1.02λ/D with fovRad
+DATE: 2026-04-22
+LAST_VERIFIED: 2026-04-22
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: Primary beam taper in worker.js uses `FWHM = 1.02λ/D` (Airy disk approximation). `fwhm_px = (fwhm_rad / fovRad) * N`. Worker receives `fovRad` explicitly in params (computed from fovMuas in App.js).
+RATIONALE: Previous formula `sigmaPx = (N/2) × (25/D) × (230/f) × 1.5` was empirically calibrated and broke at non-default FOV/dish combinations. Physical formula is correct at any parameter setting. fovRad is passed explicitly to avoid recomputing from fovMuas inside the worker.
+TRIGGERS_REVIEW_IF: Dish shape or illumination pattern changes (e.g. ALMA 12m vs 7m subarray mixing).
+
+---
+
+### CLEAN stopping: 3×noiseRms (border estimator)
+DATE: 2026-04-22
+LAST_VERIFIED: 2026-04-22
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: CLEAN stops when the residual peak falls below `3 × estimateNoiseRms(dirty, N)`. `estimateNoiseRms` samples the outer 10% border pixels and returns `sqrt(mean(px²))`.
+RATIONALE: 5%-of-peak stopping was noise-level dependent — high noise images over-cleaned (chasing noise peaks past the signal), low noise images under-cleaned (stopped too early when peak was still large). Border-based noise floor estimation is standard in radio astronomy (CASA CLEAN default). 3σ is the canonical detection threshold.
+TRIGGERS_REVIEW_IF: Very compact sources where border pixels contain significant source flux — the noise estimator would over-estimate noise. Only revisit if very high-resolution M87* imaging is required.
+
+---
+
+### Space telescope UV: Keplerian circular orbit, per-step ECEF position
+DATE: 2026-04-22
+LAST_VERIFIED: 2026-04-22
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: BHEX orbit is modeled as a Keplerian circular orbit. At each hour-angle step, `computeSatelliteECEF(sat, t_hours)` returns the ECEF position via perifocal-frame rotation: `x_orb = r*cos(θ), y_orb = r*sin(θ)`, then RAAN+inclination rotation. Ground-space baselines are computed per step (not as a fixed baseline vector) because the satellite position changes significantly over a 12h observation.
+RATIONALE: At 26,562 km altitude, the satellite moves ~230 km/hr. Using a fixed baseline vector would give a single UV point instead of a sweep arc. Per-step computation produces physically correct UV tracks showing the space-baseline's varying projection.
+ALTERNATIVES_REJECTED: Fixed baseline vector (uses average position) — correct only for geostationary satellites; full orbit propagation (J2, drag) — unnecessary precision for educational demonstration.
+TRIGGERS_REVIEW_IF: Non-circular orbit (BHEX is circular by design). If orbital parameters change from the approved values (alt=26562, inc=86, RAAN=277.7, period=12h), update BHEX_PRESET.
+
+---
+
+### Globe satellite rendering: 1.5× visual radius, ascending node position
+DATE: 2026-04-22
+LAST_VERIFIED: 2026-04-22
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: `syncSatelliteMarkers` places the BHEX sphere at the ascending node (θ=0) at `VISUAL_R = 1.5` (1.5× globe unit radius). The orbital ring is drawn as 64 line segments in the orbital plane (perifocal→ECEF rotation), also at 1.5× radius. ECEF→Three.js mapping: `three_x=ECEF_x, three_y=ECEF_z, three_z=-ECEF_y`.
+RATIONALE: 26,562 km / 6,371 km ≈ 4.2× real scale — displaying at true scale would put the marker far off-screen. 1.5× is visually informative (clearly "in orbit" above the globe) while fitting the viewport. Ascending node is a well-defined, reproducible position. ECEF→Three.js mapping follows Three.js Y-up convention (Three.js Y = geographic Z; Three.js Z = negative geographic Y).
+TRIGGERS_REVIEW_IF: Multiple space telescopes added at different altitudes — would need altitude-proportional visual scaling.
+
+---
+
 ## Contradiction Scanner
 
 Claude runs this check when adding a new decision:

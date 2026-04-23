@@ -16,8 +16,14 @@
 **Phase 1: COMPLETE** — committed 2026-04-12 as `bc212cb`
 > feat(vlbi-react): Phase 1 complete — contour map, physics notes, citation modal
 
+**Three-Session Physics Upgrade: COMPLETE** — committed 2026-04-22 as S1/S2/S3
+> S1 `3522052`: EHT 2017/2022/ngEHT Phase 1 presets + STATION_SEFD table
+> S2 `c87b715`: Physical beam taper (1.02λ/D), noise-floor CLEAN (3×RMS), per-baseline SEFD noise
+> S3 `1f9682c`: BHEX space telescope, Keplerian orbit UV, globe satellite rendering
+
 **Phase 2: BLOCKED** — pending meeting with Prof. Cárdenas-Avendaño on angular size
 > Do not implement any Phase 2 features until the blocker is resolved.
+> The three-session physics upgrade was orthogonal to Phase 2 — it did not unblock Phase 2.
 
 ---
 
@@ -55,32 +61,31 @@ Push to `main` → live within ~60 seconds.
 
 ---
 
-## WHAT'S WORKING (Phase 1 complete)
+## WHAT'S WORKING
 
-Full VLBI simulation pipeline:
-- 3D globe (Three.js) for telescope placement by globe click or EHT preset load
-- UV coverage synthesis (Thompson, Moran & Swenson eq. 4.1, conjugate symmetry)
+Full VLBI simulation pipeline + three-session physics upgrade (S1/S2/S3):
+- 3D globe (Three.js) for telescope placement by globe click or array preset load
+- **Array presets**: EHT 2017 (8 stations), EHT 2022 (11), ngEHT Phase 1 (17) — dropdown + Load Array button; STATION_SEFD table at 230 GHz
+- **BHEX space telescope**: + BHEX Satellite button; Keplerian orbit (alt 26562 km, inc 86°); gold sphere + orbital ring on globe; UV extends to ~35 Gλ vs ~10 Gλ EHT-only
+- UV coverage synthesis (TMS eq. 4.1, conjugate symmetry); ground-ground and ground-space baselines
 - Web Worker for off-main-thread reconstruction (CLEAN, Max Entropy, dirty-only)
-- Dirty image (raw IFFT), CLEAN deconvolution (Högbom), Max Entropy Method
-- ContourMap: viridis colormap, marching squares contours, beam ellipse, adaptive dynamic range thresholds, HTML overlay labels (no canvas text)
-- Tour: guided walkthrough of the simulation
-- A11y panel: screen-reader descriptions of sim state
-- Physics Notes modal: UV formula, CLEAN/MEM algorithms, EHT station sources
-- Citation modal: BibTeX + APA generator from live sim state
-- Angular resolution display (μas)
-- Contour overlays on dirty/restored image panels
-- Info tooltips on all panels
+- **Physical beam taper**: FWHM = 1.02λ/D; fwhm_px = (fwhm_rad/fovRad)×N
+- **CLEAN stopping**: 3×noiseRms (outer 10% border estimator) — standard radio astronomy practice
+- **Per-baseline SEFD noise**: σ ∝ sqrt(SEFD_i × SEFD_j)/sefdGeomMean × visRms (ALMA 0.15×, SMT/SPT 2.1×)
+- ContourMap: viridis colormap, marching squares, beam ellipse, adaptive DR thresholds, HTML overlay labels
+- Tour, A11y panel, Physics Notes modal, Citation modal
+- Angular resolution display (μas), info tooltips, contour overlays
 
 ---
 
 ## WHAT TO DO NEXT
 
-1. **Get Alejandro's answers to three blocking physics questions before any Phase 2 implementation** (see MEMORY.md entry "Project scope elevated to Harvard EHT talk standard")
-2. **Schedule/attend meeting with Prof. Cárdenas-Avendaño** — angular size, N benchmark, FOV approach
-3. **Benchmark N=512 and N=1024** in Web Worker — measure CLEAN ms/iteration before committing to IMAGE_SIZE
+1. **Push to main** — `git push origin main` to deploy three-session physics upgrade to GitHub Pages
+2. **Get Alejandro's answers to blocking physics questions before any Phase 2 implementation** (see MEMORY.md)
+3. **Schedule/attend meeting with Prof. Cárdenas-Avendaño** — angular size is the Phase 2 blocker
 4. **Phase 2 feature list is TBD** from that meeting — do not spec or build Phase 2 in advance
-5. If user asks for small improvements to Phase 1 features (UI polish, copy tweaks, bug fixes) — those are safe to implement without waiting for the meeting
-6. **Knowledge base is current as of 2026-04-20** — all files reconstructed 2026-04-12, synced 2026-04-20
+5. If user asks for small improvements to existing features (UI polish, copy tweaks, bug fixes) — those are safe to implement without waiting for the meeting
+6. **Knowledge base is current as of 2026-04-22** — synced post three-session physics upgrade
 
 ---
 
@@ -98,26 +103,32 @@ Full VLBI simulation pipeline:
 ## LAST SIGNIFICANT COMMITS
 
 ```
+1f9682c  feat(vlbi-react): S3 — BHEX space telescope, Keplerian orbit UV, globe satellite rendering
+c87b715  feat(vlbi-react): S2 — physical beam taper, noise-floor CLEAN, per-baseline SEFD noise
+3522052  feat(vlbi-react): S1 — EHT 2017/2022/ngEHT presets, SEFD constants table
+e0385fc  chore: sync knowledge files post-session 2026-04-20
 8c6ba01  feat(vlbi-react): M87* physical defaults, UV Gλ auto-scale, independent UV display pipeline
-f92e721  chore: add .gitignore — exclude playwright artifacts and screenshots
-335497a  feat(vlbi-react): N=512, FOV-derived UV scale, M87* physical defaults, contour boundary fix
-394fbb2  system: document Stop hook fix and /handoff primer.md ownership
-bc212cb  feat(vlbi-react): Phase 1 complete — contour map, physics notes, citation modal
 ```
 
-Files modified in 2026-04-20 session (8c6ba01):
-- `vlbi-react/js/App.js` — fovMuas default: 538→80; added `uvPointsGl` state; imports `computeUVPointsGl`; useEffect computes uvPointsGl; UVMap now receives uvPointsGl (not uvPoints)
-- `vlbi-react/js/UVMap.js` — full rewrite: receives Gλ coords (centered at 0,0); auto-scales canvas to max UV × 1.2; axis labels in Gλ; no FOV/frequency props
-- `vlbi-react/js/uvCompute.js` — added `computeUVPointsGl` (Gλ display pipeline); removed temporary diagnostic console.log
-- `vlbi-react/js/constants.js` — INFO.uvmap body updated to describe Gλ auto-scaling
+Files modified in 2026-04-22 session — S1 (3522052):
+- `vlbi-react/js/constants.js` — TELESCOPE_COLORS extended to 17 entries; ARRAY_PRESETS added (3 presets); STATION_SEFD added
+- `vlbi-react/js/App.js` — selectedArrayPreset state; loadEHTPresets delegates to ARRAY_PRESETS; handleLoadArrayPreset callback
+- `vlbi-react/js/AppSidebar.js` — array preset dropdown replaces single "Load EHT Array" button; "† Reference array" note for ngEHT
+- `vlbi-react/css/app.css` — .preset-selector-row, .preset-select, .preset-note, .bhex-button styles added
 
-Files modified in 2026-04-16 session (335497a):
-- `vlbi-react/js/constants.js` — IMAGE_SIZE confirmed 512 (was already set)
-- `vlbi-react/js/worker.js` — removed console.time/timeEnd benchmark instrumentation
-- `vlbi-react/js/App.js` — sourceFraction default: 0.25 → 0.50 (both useState and handleReset)
-- `vlbi-react/js/ContourMap.js` — boundary clip check on segment drawing loop (onBoundary epsilon=1px)
-- `.workflows/_knowledge/decisions.md` — IMAGE_SIZE→512 decision added, 256 entry SUPERSEDED
-- `.gitignore` — created (excludes .playwright-mcp/, test-results/, *.png)
+Files modified in 2026-04-22 session — S2 (c87b715):
+- `vlbi-react/js/uvCompute.js` — computeUVPoints now returns {uvPoints, stationPairs}; stationPairs pushed in parallel
+- `vlbi-react/js/App.js` — stationPairs state added; UV useEffect destructures new return; worker postMessage adds fovRad, stationPairs, sefdMap
+- `vlbi-react/js/worker.js` — physical beam taper (1.02λ/D+fovRad); estimateNoiseRms (border estimator); CLEAN stop→3×RMS; addPerBaselineNoise replaces addNoise
+
+Files modified in 2026-04-22 session — S3 (1f9682c):
+- `vlbi-react/js/constants.js` — BHEX_PRESET added
+- `vlbi-react/js/uvCompute.js` — computeSatelliteECEF added; ground-space baseline loops in computeUVPoints + computeUVPointsGl
+- `vlbi-react/js/App.js` — BHEX_PRESET import; bhexAdded computed; handleAddBHEX callback; bhexAdded+onAddBHEX props passed to AppSidebar
+- `vlbi-react/js/AppSidebar.js` — BHEX button (disables when added)
+- `vlbi-react/js/Globe.js` — satelliteGroupRef; syncSatelliteMarkers imported and called; satelliteGroup in cleanup
+- `vlbi-react/js/globeHelpers.js` — syncSatelliteMarkers added; syncTelescopeMarkers guards space telescopes; baseline arcs exclude space
+- `vlbi-react/js/TelescopeList.js` — space telescopes show "N km orbit" instead of lat/lon
 
 ---
 
@@ -144,6 +155,7 @@ constants.js ─ IMAGE_SIZE, EARTH_RADIUS_KM, TELESCOPE_COLORS, EHT_PRESETS, INF
 
 ## LAST UPDATED
 
+2026-04-22 — Three-session physics upgrade complete (S1/S2/S3); WHERE WE ARE, WHAT'S WORKING, WHAT TO DO NEXT, LAST SIGNIFICANT COMMITS all updated
 2026-04-20 — fovMuas default 538→80 (M87* physical scale); UV display now uses independent Gλ pipeline (computeUVPointsGl); UVMap auto-scales to UV extent in Gλ; last commits updated
 2026-04-16 — N=512 benchmark resolved; IMAGE_SIZE permanently 512; sourceFraction default 0.50; contour boundary fix; last commits updated
 2026-04-15 — Added session tooling section (new slash commands, multi-instance structure); updated last commit and knowledge base date

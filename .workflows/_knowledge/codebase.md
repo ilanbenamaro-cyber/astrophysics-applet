@@ -95,13 +95,22 @@ App.js
 ### Support modules
 ```
 core.js          — htm/preact re-exports (html, useState, useEffect, useRef, useMemo, useCallback)
-constants.js     — IMAGE_SIZE=512, EARTH_RADIUS_KM=6371, TELESCOPE_COLORS[8], EHT_PRESETS[8],
+constants.js     — IMAGE_SIZE=512, EARTH_RADIUS_KM=6371, TELESCOPE_COLORS[17], EHT_PRESETS[8],
+                   ARRAY_PRESETS {'EHT 2017':8, 'EHT 2022':11, 'ngEHT Phase 1':17},
+                   STATION_SEFD (per-station Jy at 230 GHz: ALMA=94, NOEMA=700, …, SMT=17100, SPT=19300),
+                   BHEX_PRESET (type:'space', alt 26562 km, inc 86°, RAAN 277.7°, period 12h),
                    INFO (tooltip text keyed by panel name), ISO_COUNTRY_NAMES (numeric→display)
-uvCompute.js     — latLonToECEF, computeBaseline, baselineToUV (TMS eq 4.1),
-                   computeUVPoints (pixel coords, FOV-scaled — reconstruction input),
-                   computeUVPointsGl (Gλ coords, FOV-independent — display only),
+uvCompute.js     — latLonToECEF, computeBaseline, computeSatelliteECEF (Keplerian orbit → ECEF),
+                   baselineToUV (TMS eq 4.1),
+                   computeUVPoints (pixel coords, FOV-scaled — reconstruction input)
+                     → returns { uvPoints, stationPairs } (stationPairs parallel array for SEFD lookup)
+                     → handles both ground-ground and ground-space baselines
+                   computeUVPointsGl (Gλ coords, FOV-independent — display only)
+                     → also handles ground-space baselines with Keplerian position per HA step
                    computeUVFill, lerpColor
-globeHelpers.js  — Three.js mesh helpers for globe, atmosphere, markers
+globeHelpers.js  — Three.js mesh helpers for globe, atmosphere, markers;
+                   syncTelescopeMarkers (skips space telescopes; ground baselines only),
+                   syncSatelliteMarkers (gold sphere at ascending node + orbital ring at 1.5× globe radius; CSS2DObject label)
 presets.js       — IMAGE_PRESETS: { 'blackhole': '../assets/black-hole.png', 'wfu-seal': '../assets/wfu-seal.png' }
 worker.js        — self-contained Web Worker (no imports — cannot use import maps)
 ```
@@ -119,7 +128,10 @@ worker.js        — self-contained Web Worker (no imports — cannot use import
     noise: number,       // noise amplitude [0,1]
     method: string,      // 'none' | 'clean' | 'mem'
     dishDiameter: number, // meters
-    frequency: number    // GHz
+    frequency: number,   // GHz
+    fovRad: number,      // image FOV in radians (fovMuas * π/(180*3.6e9))
+    stationPairs: [{a: string, b: string}],  // parallel to uvPoints; station name pairs for SEFD lookup
+    sefdMap: { [stationName]: number }       // per-station SEFD in Jy at observing frequency
   }
 }
 ```
@@ -156,13 +168,16 @@ Used by: UVMap.js display only — independent of FOV and image grid size. UVMap
 
 **Primary beam taper** (in `worker.js` → `reconstruct`):
 ```
-sigmaPx = (N/2) × (25 / dishDiameter) × (230 / frequency) × 1.5
-Applied as Gaussian envelope to dirty image before mask
+lambda_m = 3e8 / (frequency * 1e9)
+fwhm_rad = 1.02 * lambda_m / dishDiameter      ← physical Airy disk approximation
+fwhm_px  = (fwhm_rad / fovRad) * N
+sigmaPx  = fwhm_px / 2.355
+Applied as Gaussian envelope to dirty image (multiplication in image space before IFFT masking)
 ```
 
 **CLEAN** (Högbom algorithm in `worker.js`):
-- 1000 iterations, loop gain = 0.1
-- Stop at 5% of initial peak
+- 1000 iterations max, loop gain = 0.1
+- Stop at 3×noiseRms (estimated from outer 10% border pixels of dirty image)
 - PSF peak at index 0 (not N/2 — worker FFT convention)
 - Restore beam sigma = `max(1.5, halfWidth / 2.355)` where halfWidth estimated from dirty beam
 - Final: FFT-convolve model with restore beam, add residual
@@ -190,14 +205,17 @@ angularResolution = (λ_mm / (maxBaseline × 1e6)) × (180/π) × 3.6e9  [μas]
 Passed as prop to ContourMap for μas axis labels.
 
 ### State managed in App.js
-- `telescopes` — array of `{ id, name, lat, lon, color }`
+- `telescopes` — array of `{ id, name, lat, lon, color }` for ground; `{ id, name, type:'space', orbitalAltitudeKm, inclinationDeg, raanDeg, periodHours, color }` for BHEX
 - `dirtyData`, `restoredData` — Float64Array results from worker
 - `uvPoints` — current UV sample coordinates (pixel space, FOV-scaled — passed to worker)
+- `stationPairs` — `[{a, b}]` parallel to uvPoints — station name pairs for per-baseline SEFD noise
 - `uvPointsGl` — current UV sample coordinates in Gλ (display only — passed to UVMap)
 - `controls` — all slider/toggle values (noise, frequency, duration, declination, method, dishDiameter, fovMuas [default 80], sourceFraction [default 0.50])
-- `selectedImage` — current source image key
+- `selectedPreset` — current image preset key (blackhole/wfu-seal)
+- `selectedArrayPreset` — current array preset name ('EHT 2017' | 'EHT 2022' | 'ngEHT Phase 1')
 - `physicsNotesOpen`, `citationOpen` — modal state
 - `recoId` — monotonic ref for stale result detection
+- `bhexAdded` — computed (not state): `telescopes.some(t => t.name === 'BHEX')`
 
 ### IMAGE_PRESETS (asset paths relative to vlbi-react/)
 ```js
@@ -219,6 +237,10 @@ GitHub Pages from `main` branch root. Push to `main` = live within ~60 seconds.
 
 ## Last Updated
 
+2026-04-22 — Three-session physics upgrade complete (S1/S2/S3):
+  S1: constants.js: TELESCOPE_COLORS extended to 17, ARRAY_PRESETS (3 presets), STATION_SEFD added; App.js+AppSidebar.js: array preset dropdown + Load Array button replaces single "Load EHT Array" button
+  S2: computeUVPoints returns {uvPoints, stationPairs}; worker: physical beam taper (1.02λ/D+fovRad), CLEAN stops at 3×noiseRms, per-baseline SEFD noise model (addPerBaselineNoise); worker protocol extended with fovRad, stationPairs, sefdMap
+  S3: BHEX_PRESET added; computeSatelliteECEF (Keplerian); ground-space baseline loops in both UV pipelines; globeHelpers: syncSatelliteMarkers (orbital ring + gold sphere); Globe.js: satelliteGroupRef; TelescopeList: handles type==='space'
 2026-04-20 — uvCompute.js: added computeUVPointsGl (Gλ display pipeline); UVMap: rewrote to use Gλ coords with auto-scale; App.js: uvPointsGl state added, fovMuas default 538→80; UV display and reconstruction pipelines are now fully independent.
 2026-04-16 — IMAGE_SIZE updated to 512; ContourMap boundary clip noted; sourceFraction default updated to 0.50; worker protocol N updated.
 2026-04-12 — Full reconstruction to cover vlbi-react as live active codebase (post Phase-1 commit bc212cb).

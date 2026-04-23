@@ -234,6 +234,49 @@ RESOLVED: YES — commit 8c6ba01. `computeUVPointsGl` added to uvCompute.js; App
 
 ---
 
+### Playwright ES module registry persists across navigations — use a different port
+DATE_DISCOVERED: 2026-04-22
+AREA: Playwright browser session — any ES module served via HTTP
+SEVERITY: HIGH (development only — does not affect production)
+
+WHAT HAPPENED: After editing `uvCompute.js` (changed `computeUVPoints` return type from array to `{uvPoints, stationPairs}`), Playwright browser continued to use the old module from cache. Navigating to `about:blank` and back, closing the page with `browser_close`, and reloading all failed to clear the stale module. The error `Cannot read properties of undefined (reading 'length') at computeUVFill` persisted despite the file being correct on disk.
+
+ROOT CAUSE: Chromium's ES module registry is per-browsing-context (not per-page). `browser_close` closes the tab but not the context. The Playwright MCP server maintains a single browser context for the entire session, so the module registry survives all navigations.
+
+HOW TO AVOID: When a module's export signature changes (not just internal logic), use one of:
+1. **Different port**: `pkill -f "http.server PORT"; python3 -m http.server NEW_PORT &` — new origin = fresh module registry
+2. **Version query param**: change `import { ... } from './module.js'` to `./module.js?v=2` in ALL files that import it — remove before committing
+Option 1 is cleaner; option 2 is fine for a single file but must be reverted before commit.
+
+DETECTION: Error stack trace points to a line number that doesn't match the actual file (e.g., error at line 98 but function is at line 100 in current file — 2-line diff indicates old cached version).
+
+RESOLVED: YES — port switch to 8081 fixed it for S3 verification. Version query param `?v=2` fixed it for S2.
+
+---
+
+### Space telescope objects have no lat/lon — guard all coordinate renders
+DATE_DISCOVERED: 2026-04-22
+AREA: vlbi-react/js/TelescopeList.js, any component rendering telescope coordinates
+SEVERITY: MEDIUM
+
+WHAT HAPPENED: After adding BHEX via `handleAddBHEX`, TelescopeList.js crashed: `TypeError: Cannot read properties of undefined (reading 'toFixed')` at `tel.lat.toFixed(1)`. BHEX_PRESET has no `lat` or `lon` fields.
+
+ROOT CAUSE: TelescopeList assumed all telescope objects had `lat` and `lon`. Space telescopes (type === 'space') have orbital parameters instead.
+
+HOW TO AVOID: Any component rendering telescope coordinates must guard on `tel.type === 'space'`. Pattern:
+```js
+tel.type === 'space'
+  ? `${tel.orbitalAltitudeKm} km orbit`
+  : `${tel.lat.toFixed(1)}°, ${tel.lon.toFixed(1)}°`
+```
+Also: any UV computation receiving the full telescope array must split into `groundTels` and `spaceTels` before applying lat/lon-based ECEF conversion.
+
+DETECTION: Crash when BHEX is added to the array; `toFixed` of undefined.
+
+RESOLVED: YES — TelescopeList.js patched (2026-04-22); uvCompute.js splits arrays correctly.
+
+---
+
 ## Pattern: Things To Always Check
 
 □ After any change to telescope naming logic — verify EHT preset + manual click produces T(n+1) not T1
@@ -244,3 +287,6 @@ RESOLVED: YES — commit 8c6ba01. `computeUVPointsGl` added to uvCompute.js; App
 □ New EHT coordinates: verify longitude sign (East-positive standard) against published UV coverage
 □ groupSegments tolerance stays at 0.1 — only change with new measurement data
 □ Contour boundary segments: any segment with endpoint at canvas edge must be discarded (epsilon=1px) — do not fix in marching squares, fix in drawing loop
+□ Playwright module cache: if a module's export signature changed, switch HTTP server port or use ?v=N query param (remove before commit)
+□ Any component rendering telescope lat/lon must guard on type==='space' — BHEX has no lat/lon
+□ computeUVPoints/computeUVPointsGl must split telescopes into groundTels/spaceTels before ECEF conversion — space telescopes use computeSatelliteECEF, not latLonToECEF
