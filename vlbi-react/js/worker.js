@@ -229,6 +229,7 @@ function reconstruct(grayscale, uvPoints, params) {
   }
 
   let restoredImg;
+  let beamSigmaU, beamSigmaV;
 
   if (method === 'mem') {
     // Maximum Entropy Method (120 gradient-descent iterations)
@@ -326,22 +327,32 @@ function reconstruct(grayscale, uvPoints, params) {
       }
     }
 
-    // Estimate restore-beam sigma from dirty-beam FWHM
-    // PSF peak is at index 0 by IFFT convention; walk row 0 until below half-maximum.
+    // Estimate restore-beam sigma from dirty-beam FWHM in both U and V directions.
+    // PSF peak is at index 0 by IFFT convention.
+    // U-axis: scan row 0 (column index j); V-axis: scan column 0 (row index j, stride N).
     const halfMaxVal = psf[0] / 2;
-    let halfWidth = 2;
+    let halfWidthU = 2;
     for (let j = 1; j < N / 2; j++) {
-      if (psf[j] <= halfMaxVal) { halfWidth = j; break; }
+      if (psf[j] <= halfMaxVal) { halfWidthU = j; break; }
     }
-    const sigma = Math.max(1.5, halfWidth / 2.355);
+    let halfWidthV = 2;
+    for (let j = 1; j < N / 2; j++) {
+      if (psf[j * N] <= halfMaxVal) { halfWidthV = j; break; }
+    }
+    beamSigmaU = Math.max(1.5, halfWidthU / 2.355);
+    beamSigmaV = Math.max(1.5, halfWidthV / 2.355);
 
-    // Build Gaussian restore beam centered at [0][0] (periodic/IFFT convention)
+    // Build elliptical Gaussian restore beam centered at [0][0] (periodic/IFFT convention).
+    // i = row index → v direction (sigmaV); j = column index → u direction (sigmaU).
     const gaussC = new Float64Array(2*N*N);
     for (let i = 0; i < N; i++) {
       const di = Math.min(i, N - i);
       for (let j = 0; j < N; j++) {
         const dj = Math.min(j, N - j);
-        gaussC[2*(i*N+j)] = Math.exp(-(di*di + dj*dj) / (2 * sigma * sigma));
+        gaussC[2*(i*N+j)] = Math.exp(
+          -(dj*dj) / (2 * beamSigmaU * beamSigmaU)
+          -(di*di) / (2 * beamSigmaV * beamSigmaV)
+        );
       }
     }
     fft2d(gaussC, N, false);
@@ -369,16 +380,23 @@ function reconstruct(grayscale, uvPoints, params) {
     restoredImg = dirtyImg.slice();
   }
 
-  return { dirty: dirtyImg, restored: restoredImg };
+  // Theoretical beam fallback for MEM/dirty — 1.02λ/D converted to image pixels
+  if (!beamSigmaU) {
+    const fwhm_px = (1.02 * lambda_m / dishDiameter / fovRad) * N;
+    beamSigmaU = beamSigmaV = Math.max(1.5, fwhm_px / 2.355);
+  }
+
+  return { dirty: dirtyImg, restored: restoredImg, beamSigmaU, beamSigmaV, beamPA: 0 };
 }
 
 self.onmessage = function(e) {
   const { type, id, grayscale, uvPoints, params } = e.data;
   if (type !== 'reconstruct') return;
   try {
-    const { dirty, restored } = reconstruct(grayscale, uvPoints, params);
+    const { dirty, restored, beamSigmaU, beamSigmaV, beamPA } = reconstruct(grayscale, uvPoints, params);
     self.postMessage(
-      { type: 'result', id, dirty, restored, uvCount: uvPoints.length },
+      { type: 'result', id, dirty, restored, uvCount: uvPoints.length,
+        beamSigmaU, beamSigmaV, beamPA },
       [dirty.buffer, restored.buffer]
     );
   } catch(err) {

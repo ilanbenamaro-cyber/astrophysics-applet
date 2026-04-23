@@ -52,6 +52,7 @@ export function App() {
   const [tourActIndex, setTourActIndex] = useState(0);
   const [status, setStatus] = useState({ msg: 'Select an image and place telescopes to begin', type: '' });
   const [isComputing, setIsComputing] = useState(false);
+  const [beamDims, setBeamDims] = useState({ sigmaU: 2, sigmaV: 2, pa: 0 });
 
   const workerRef = useRef(null);
   const reqIdRef = useRef(0);
@@ -65,6 +66,9 @@ export function App() {
       if (e.data.type === 'result') {
         setDirty(e.data.dirty);
         setRestored(e.data.restored);
+        if (e.data.beamSigmaU !== undefined) {
+          setBeamDims({ sigmaU: e.data.beamSigmaU, sigmaV: e.data.beamSigmaV, pa: e.data.beamPA });
+        }
         setIsComputing(false);
         setStatus({ msg: `Reconstruction complete — ${e.data.uvCount ?? ''} UV samples`, type: 'success' });
       } else if (e.data.type === 'error') {
@@ -442,6 +446,9 @@ export function App() {
               fovMuas=${controls.fovMuas}
               controls=${controls}
               onOpenInfo=${setInfoKey}
+              beamSigmaU=${beamDims.sigmaU}
+              beamSigmaV=${beamDims.sigmaV}
+              beamPA=${beamDims.pa}
             />
           </section>
         </aside>

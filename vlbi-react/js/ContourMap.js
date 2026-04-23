@@ -159,7 +159,8 @@ const CONTOUR_LEVELS = [
 ];
 
 // ── ContourMap ────────────────────────────────────────────────────────────────
-export function ContourMap({ dirtyData, restoredData, N, angularResolution, fovMuas, controls, onOpenInfo }) {
+export function ContourMap({ dirtyData, restoredData, N, angularResolution, fovMuas, controls,
+                             onOpenInfo, beamSigmaU = 2, beamSigmaV = 2, beamPA = 0 }) {
   const [displayMode, setDisplayMode]   = useState('dirty');
   const [stats, setStats]               = useState(null);
   const [activeLevels, setActiveLevels] = useState([]);
@@ -361,28 +362,10 @@ export function ContourMap({ dirtyData, restoredData, N, angularResolution, fovM
     ctx.restore();
 
     // ── Beam ellipse — bottom-right corner, label rendered in HTML ──
-    // Estimate beam FWHM from dirty image: find actual peak, scan that row.
-    let beamRadPx = 8;
-    if (dirtyData && dirtyData.length > 0) {
-      let dPeakIdx = 0;
-      for (let i = 1; i < N * N; i++) {
-        if (dirtyData[i] > dirtyData[dPeakIdx]) dPeakIdx = i;
-      }
-      const dPeakRow = Math.floor(dPeakIdx / N);
-      const dPeakCol = dPeakIdx % N;
-      const peakVal  = dirtyData[dPeakRow * N + dPeakCol];
-      const halfMax  = peakVal / 2;
-      if (halfMax > 0) {
-        let halfWidth = 0;
-        for (let col = dPeakCol; col < N; col++) {
-          if (dirtyData[dPeakRow * N + col] < halfMax) { halfWidth = col - dPeakCol; break; }
-        }
-        if (halfWidth > 0 && halfWidth < N / 4) {
-          beamRadPx = (halfWidth / 2.355) * (DST / N);
-        }
-      }
-    }
-    beamRadPx = Math.max(8, Math.min(beamRadPx, 20));
+    // Radii derived from worker-measured PSF sigmas (CLEAN) or theoretical 1.02λ/D (MEM/dirty).
+    const scale    = DST / N;
+    const rxCanvas = Math.max(4, beamSigmaU * scale * 2.355 / 2);
+    const ryCanvas = Math.max(4, beamSigmaV * scale * 2.355 / 2);
 
     const BEAM_CX = DST - 80, BEAM_CY = CB_Y - 35;
     ctx.save();
@@ -390,7 +373,7 @@ export function ContourMap({ dirtyData, restoredData, N, angularResolution, fovM
     ctx.strokeStyle = 'white';
     ctx.lineWidth   = 1.5;
     ctx.beginPath();
-    ctx.ellipse(BEAM_CX, BEAM_CY, beamRadPx, beamRadPx * 0.8, 0, 0, Math.PI * 2);
+    ctx.ellipse(BEAM_CX, BEAM_CY, rxCanvas, ryCanvas, beamPA, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
     ctx.restore();
