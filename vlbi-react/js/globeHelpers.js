@@ -203,8 +203,9 @@ export function syncTelescopeMarkers(markerGroup, baselineGroup, telescopes) {
     baselineGroup.remove(child);
   }
 
-  // Add markers
+  // Add markers (ground telescopes only — space handled by syncSatelliteMarkers)
   for (const tel of telescopes) {
+    if (tel.type === 'space') continue;
     const pos = latLonToThreeJS(tel.lat, tel.lon);
     const geo = new THREE.SphereGeometry(0.022, 12, 12);
     const color = new THREE.Color(tel.color);
@@ -228,8 +229,8 @@ export function syncTelescopeMarkers(markerGroup, baselineGroup, telescopes) {
     mesh.add(label);
   }
 
-  // Add baselines (great-circle arcs)
-  const visibleTels = telescopes.filter(t => t.visible !== false);
+  // Add baselines (great-circle arcs, ground-only)
+  const visibleTels = telescopes.filter(t => t.visible !== false && t.type !== 'space');
   for (let i = 0; i < visibleTels.length; i++) {
     for (let j = i + 1; j < visibleTels.length; j++) {
       const t1 = visibleTels[i], t2 = visibleTels[j];
@@ -247,5 +248,61 @@ export function syncTelescopeMarkers(markerGroup, baselineGroup, telescopes) {
       const mat = new THREE.LineBasicMaterial({ color: blendColor, opacity: 0.5, transparent: true });
       baselineGroup.add(new THREE.Line(geo, mat));
     }
+  }
+}
+
+export function syncSatelliteMarkers(satelliteGroup, telescopes) {
+  while (satelliteGroup.children.length) {
+    const child = satelliteGroup.children[0];
+    child.traverse(obj => {
+      if (obj.isCSS2DObject && obj.element) obj.element.remove();
+    });
+    if (child.geometry) child.geometry.dispose();
+    if (child.material) child.material.dispose();
+    satelliteGroup.remove(child);
+  }
+
+  const VISUAL_R = 1.5;
+
+  for (const sat of telescopes.filter(t => t.type === 'space')) {
+    const raan = sat.raanDeg * Math.PI / 180;
+    const inc  = sat.inclinationDeg * Math.PI / 180;
+
+    // Static marker at ascending node (theta=0): ECEF → Three.js
+    const xe = VISUAL_R * Math.cos(raan);
+    const ye = VISUAL_R * Math.sin(raan);
+    const ze = 0;
+    const pos = new THREE.Vector3(xe, ze, -ye);
+
+    const color = new THREE.Color(sat.color);
+    const geo = new THREE.SphereGeometry(0.03, 12, 12);
+    const mat = new THREE.MeshPhongMaterial({ color, emissive: color, emissiveIntensity: 0.9 });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.copy(pos);
+    satelliteGroup.add(mesh);
+
+    const labelDiv = document.createElement('div');
+    labelDiv.className = 'tel-label';
+    labelDiv.textContent = sat.name;
+    labelDiv.style.backgroundColor = sat.color;
+    labelDiv.style.color = '#000';
+    const label = new CSS2DObject(labelDiv);
+    label.position.set(0, 0.05, 0);
+    mesh.add(label);
+
+    // Orbital ring — 64 segments in perifocal → ECEF frame
+    const ringPoints = [];
+    for (let i = 0; i <= 64; i++) {
+      const theta = (2 * Math.PI * i) / 64;
+      const xOrb = VISUAL_R * Math.cos(theta);
+      const yOrb = VISUAL_R * Math.sin(theta);
+      const rxe = xOrb * Math.cos(raan) - yOrb * Math.cos(inc) * Math.sin(raan);
+      const rye = xOrb * Math.sin(raan) + yOrb * Math.cos(inc) * Math.cos(raan);
+      const rze = yOrb * Math.sin(inc);
+      ringPoints.push(new THREE.Vector3(rxe, rze, -rye));
+    }
+    const ringGeo = new THREE.BufferGeometry().setFromPoints(ringPoints);
+    const ringMat = new THREE.LineBasicMaterial({ color: sat.color, opacity: 0.4, transparent: true });
+    satelliteGroup.add(new THREE.Line(ringGeo, ringMat));
   }
 }

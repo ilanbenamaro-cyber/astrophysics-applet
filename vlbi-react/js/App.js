@@ -1,6 +1,6 @@
 // App root — manages all state, wires worker, renders layout.
 import { html, useState, useEffect, useCallback, useRef, useMemo } from './core.js';
-import { IMAGE_SIZE, TELESCOPE_COLORS, EHT_PRESETS, ARRAY_PRESETS, STATION_SEFD } from './constants.js';
+import { IMAGE_SIZE, TELESCOPE_COLORS, EHT_PRESETS, ARRAY_PRESETS, STATION_SEFD, BHEX_PRESET } from './constants.js';
 import { computeUVPoints, computeUVPointsGl, computeUVFill, computeBaseline } from './uvCompute.js';
 import { loadImagePresetAsync } from './presets.js';
 import { Globe } from './Globe.js';
@@ -120,6 +120,17 @@ export function App() {
   const handleLoadArrayPreset = useCallback(() => {
     loadEHTPresets(selectedArrayPreset);
   }, [selectedArrayPreset]);
+
+  const bhexAdded = telescopes.some(t => t.name === 'BHEX');
+
+  const handleAddBHEX = useCallback(() => {
+    if (telescopes.some(t => t.name === 'BHEX')) return;
+    setTelescopes(prev => [...prev, {
+      id: telIdRef.current++,
+      ...BHEX_PRESET,
+      visible: true,
+    }]);
+  }, [telescopes]);
 
   const handleTelescopeAdd = useCallback((lat, lon) => {
     setTelescopes(prev => {
@@ -376,6 +387,8 @@ export function App() {
           selectedArrayPreset=${selectedArrayPreset}
           onArrayPresetChange=${setSelectedArrayPreset}
           onLoadArray=${handleLoadArrayPreset}
+          bhexAdded=${bhexAdded}
+          onAddBHEX=${handleAddBHEX}
           onClearAll=${() => { setTelescopes([]); telIdRef.current = 0; }}
           showCountryLabels=${showCountryLabels}
           onToggleCountryLabels=${() => setShowCountryLabels(v => !v)}

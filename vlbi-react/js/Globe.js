@@ -3,7 +3,7 @@ import { html, useRef, useEffect } from './core.js';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
-import { borderLineMat, loadEarthTextures, loadCountryBoundaries, syncTelescopeMarkers } from './globeHelpers.js';
+import { borderLineMat, loadEarthTextures, loadCountryBoundaries, syncTelescopeMarkers, syncSatelliteMarkers } from './globeHelpers.js';
 
 export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMotion, tourActive }) {
   const containerRef = useRef(null);
@@ -15,6 +15,7 @@ export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMo
   const earthMeshRef = useRef(null);
   const markerGroupRef = useRef(null);
   const baselineGroupRef = useRef(null);
+  const satelliteGroupRef = useRef(null);
   const animFrameRef = useRef(null);
   const autoRotateTimerRef = useRef(null);
   const countryLabelGroupRef = useRef(null);
@@ -151,12 +152,15 @@ export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMo
     // Groups
     const markerGroup = new THREE.Group();
     const baselineGroup = new THREE.Group();
+    const satelliteGroup = new THREE.Group();
     const countryLabelGroup = new THREE.Group();
     scene.add(markerGroup);
     scene.add(baselineGroup);
+    scene.add(satelliteGroup);
     scene.add(countryLabelGroup);
     markerGroupRef.current = markerGroup;
     baselineGroupRef.current = baselineGroup;
+    satelliteGroupRef.current = satelliteGroup;
     countryLabelGroupRef.current = countryLabelGroup;
 
     // Load photo textures + country borders; track cancellation for unmount
@@ -231,7 +235,7 @@ export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMo
       orbitControls.update();
       cloudMesh.rotation.y += 0.0001;
 
-      for (const group of [markerGroup, countryLabelGroup]) {
+      for (const group of [markerGroup, satelliteGroup, countryLabelGroup]) {
         const isCountryGroup = group === countryLabelGroup;
         for (const child of group.children) {
           child.getWorldPosition(_occVec);
@@ -262,6 +266,9 @@ export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMo
       countryLabelGroup.traverse(obj => {
         if (obj.isCSS2DObject && obj.element) obj.element.remove();
       });
+      satelliteGroup.traverse(obj => {
+        if (obj.isCSS2DObject && obj.element) obj.element.remove();
+      });
       renderer.dispose();
       if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
       if (container.contains(labelRenderer.domElement)) container.removeChild(labelRenderer.domElement);
@@ -272,8 +279,10 @@ export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMo
   useEffect(() => {
     const markerGroup = markerGroupRef.current;
     const baselineGroup = baselineGroupRef.current;
+    const satelliteGroup = satelliteGroupRef.current;
     if (!markerGroup || !baselineGroup) return;
     syncTelescopeMarkers(markerGroup, baselineGroup, telescopes);
+    if (satelliteGroup) syncSatelliteMarkers(satelliteGroup, telescopes);
   }, [telescopes]);
 
   return html`<div

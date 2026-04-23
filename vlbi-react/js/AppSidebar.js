@@ -9,6 +9,7 @@ export function AppSidebar({
   selectedPreset, onPresetSelect, onFileUpload,
   telescopes, onTelescopeRemove, onToggleVisibility,
   onLoadEHT, selectedArrayPreset, onArrayPresetChange, onLoadArray,
+  bhexAdded, onAddBHEX,
   onClearAll, showCountryLabels, onToggleCountryLabels,
   controls, onControlChange, onOpenInfo, onReset,
 }) {
@@ -39,6 +40,13 @@ export function AppSidebar({
           <button className="btn btn-primary" onClick=${onLoadArray}>Load Array</button>
         </div>
         ${selectedArrayPreset === 'ngEHT Phase 1' ? html`<span className="preset-note">† Reference array — coordinates approximate</span>` : null}
+        <button
+          className=${'btn bhex-button' + (bhexAdded ? ' bhex-added' : '')}
+          onClick=${onAddBHEX}
+          disabled=${bhexAdded}
+        >
+          ${bhexAdded ? 'BHEX Added ✓' : '＋ BHEX Satellite'}
+        </button>
         <div className="telescope-actions">
           <button className="btn btn-ghost" onClick=${onClearAll}>Clear All</button>
         </div>

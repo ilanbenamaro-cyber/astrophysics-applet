@@ -17,6 +17,20 @@ export function computeBaseline(t1, t2) {
   return { bx: p2.x - p1.x, by: p2.y - p1.y, bz: p2.z - p1.z };
 }
 
+export function computeSatelliteECEF(satellite, observationHourAngle) {
+  const r = EARTH_RADIUS_KM + satellite.orbitalAltitudeKm;
+  const inc = satellite.inclinationDeg * Math.PI / 180;
+  const raan = satellite.raanDeg * Math.PI / 180;
+  const omega = 2 * Math.PI / satellite.periodHours;
+  const theta = omega * observationHourAngle;
+  const x_orb = r * Math.cos(theta);
+  const y_orb = r * Math.sin(theta);
+  const x = x_orb * Math.cos(raan) - y_orb * Math.cos(inc) * Math.sin(raan);
+  const y = x_orb * Math.sin(raan) + y_orb * Math.cos(inc) * Math.cos(raan);
+  const z = y_orb * Math.sin(inc);
+  return { x, y, z };
+}
+
 export function baselineToUV(b, H, decDeg) {
   const d = decDeg * Math.PI / 180;
   const u =  Math.sin(H) * b.bx + Math.cos(H) * b.by;
@@ -38,8 +52,9 @@ export function lerpColor(h1, h2, t) {
 }
 
 export function computeUVPoints(telescopes, { declination, duration, frequency, N, fovMuas }) {
-  const visible = telescopes.filter(t => t.visible !== false && t.type !== 'space');
-  if (visible.length < 2) return { uvPoints: [], stationPairs: [] };
+  const groundTels = telescopes.filter(t => t.visible !== false && t.type !== 'space');
+  const spaceTels  = telescopes.filter(t => t.visible !== false && t.type === 'space');
+  if (groundTels.length < 2 && spaceTels.length === 0) return { uvPoints: [], stationPairs: [] };
   const STEPS = 200;
   const halfDur = (duration * Math.PI / 24);
   const c_ms = 299792458;
@@ -48,9 +63,11 @@ export function computeUVPoints(telescopes, { declination, duration, frequency, 
   const scale = (1e3 / lambda_m) * fovRad;
   const uvPoints = [];
   const stationPairs = [];
-  for (let i = 0; i < visible.length; i++) {
-    for (let j = i+1; j < visible.length; j++) {
-      const t1 = visible[i], t2 = visible[j];
+
+  // Ground-ground pairs
+  for (let i = 0; i < groundTels.length; i++) {
+    for (let j = i+1; j < groundTels.length; j++) {
+      const t1 = groundTels[i], t2 = groundTels[j];
       const b = computeBaseline(t1, t2);
       const color = lerpColor(t1.color, t2.color, 0.5);
       const pairId = `${t1.id}-${t2.id}`;
@@ -66,34 +83,81 @@ export function computeUVPoints(telescopes, { declination, duration, frequency, 
       }
     }
   }
+
+  // Ground-space pairs
+  for (const sat of spaceTels) {
+    for (const ground of groundTels) {
+      const color = lerpColor(sat.color, ground.color, 0.5);
+      const pairId = `${sat.id}-${ground.id}`;
+      const groundPos = latLonToECEF(ground.lat, ground.lon);
+      for (let s = 0; s <= STEPS; s++) {
+        const H = -halfDur + (s / STEPS) * 2 * halfDur;
+        const t_hours = H / (2 * Math.PI) * 24;
+        const satPos = computeSatelliteECEF(sat, t_hours);
+        const bx = satPos.x - groundPos.x;
+        const by = satPos.y - groundPos.y;
+        const bz = satPos.z - groundPos.z;
+        const uv = baselineToUV({ bx, by, bz }, H, declination);
+        const pu = uv.u * scale;
+        const pv = uv.v * scale;
+        uvPoints.push({ u:  pu + N/2, v:  pv + N/2, color, pairId });
+        stationPairs.push({ a: sat.name, b: ground.name });
+        uvPoints.push({ u: -pu + N/2, v: -pv + N/2, color, pairId });
+        stationPairs.push({ a: sat.name, b: ground.name });
+      }
+    }
+  }
+
   return { uvPoints, stationPairs };
 }
 
 export function computeUVPointsGl(telescopes, { declination, duration, frequency }) {
-  const visible = telescopes.filter(t => t.visible !== false);
-  if (visible.length < 2) return [];
+  const groundTels = telescopes.filter(t => t.visible !== false && t.type !== 'space');
+  const spaceTels  = telescopes.filter(t => t.visible !== false && t.type === 'space');
+  if (groundTels.length < 2 && spaceTels.length === 0) return [];
   const STEPS = 200;
   const halfDur = (duration * Math.PI / 24);
   const c_ms = 299792458;
   const lambda_m = c_ms / (frequency * 1e9);
   const kmToGl = 1e3 / lambda_m / 1e9;
   const pts = [];
-  for (let i = 0; i < visible.length; i++) {
-    for (let j = i+1; j < visible.length; j++) {
-      const t1 = visible[i], t2 = visible[j];
+
+  // Ground-ground pairs
+  for (let i = 0; i < groundTels.length; i++) {
+    for (let j = i+1; j < groundTels.length; j++) {
+      const t1 = groundTels[i], t2 = groundTels[j];
       const b = computeBaseline(t1, t2);
       const color = lerpColor(t1.color, t2.color, 0.5);
       const pairId = `${t1.id}-${t2.id}`;
       for (let s = 0; s <= STEPS; s++) {
         const H = -halfDur + (s / STEPS) * 2 * halfDur;
         const uv = baselineToUV(b, H, declination);
-        const uGl = uv.u * kmToGl;
-        const vGl = uv.v * kmToGl;
-        pts.push({ u:  uGl, v:  vGl, color, pairId });
-        pts.push({ u: -uGl, v: -vGl, color, pairId });
+        pts.push({ u:  uv.u * kmToGl, v:  uv.v * kmToGl, color, pairId });
+        pts.push({ u: -uv.u * kmToGl, v: -uv.v * kmToGl, color, pairId });
       }
     }
   }
+
+  // Ground-space pairs
+  for (const sat of spaceTels) {
+    for (const ground of groundTels) {
+      const color = lerpColor(sat.color, ground.color, 0.5);
+      const pairId = `${sat.id}-${ground.id}`;
+      const groundPos = latLonToECEF(ground.lat, ground.lon);
+      for (let s = 0; s <= STEPS; s++) {
+        const H = -halfDur + (s / STEPS) * 2 * halfDur;
+        const t_hours = H / (2 * Math.PI) * 24;
+        const satPos = computeSatelliteECEF(sat, t_hours);
+        const bx = satPos.x - groundPos.x;
+        const by = satPos.y - groundPos.y;
+        const bz = satPos.z - groundPos.z;
+        const uv = baselineToUV({ bx, by, bz }, H, declination);
+        pts.push({ u:  uv.u * kmToGl, v:  uv.v * kmToGl, color, pairId });
+        pts.push({ u: -uv.u * kmToGl, v: -uv.v * kmToGl, color, pairId });
+      }
+    }
+  }
+
   return pts;
 }
 

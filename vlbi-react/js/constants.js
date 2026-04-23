@@ -74,6 +74,18 @@ export const STATION_SEFD = {
   'GAM':   10000, 'CNI':   10000, 'SGO':   10000, 'BHEX':  10000,
 };
 
+export const BHEX_PRESET = {
+  name: 'BHEX',
+  type: 'space',
+  orbitalAltitudeKm: 26562,
+  inclinationDeg: 86,
+  raanDeg: 277.7,
+  periodHours: 12,
+  dishDiameter: 3.4,
+  sefd: 10000,
+  color: '#FFD700',
+};
+
 export const INFO = {
   globe:       { title: 'Radio Telescope Globe',    body: 'Click anywhere on Earth to place a radio telescope. Every pair of telescopes forms a "baseline" — like a giant antenna spanning the distance between them. More telescopes = more baselines = sharper images.' },
   uvmap:       { title: 'UV-Plane Coverage',        body: 'As Earth rotates, each telescope pair sweeps an arc through Fourier space (the UV-plane). Each point sampled corresponds to one spatial frequency of the sky. The axis range auto-scales to the current UV coverage extent (max baseline × 1.2) and is labeled in gigawavelengths (Gλ) — the standard unit in radio astronomy publications. Dense, uniform coverage produces higher-fidelity reconstruction.' },

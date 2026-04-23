@@ -16,7 +16,7 @@ export function TelescopeList({ telescopes, onRemove, onToggleVisibility }) {
         <div className="tel-item" key=${tel.id}>
           <span className="tel-dot" style=${{ backgroundColor: tel.color }}></span>
           <span className="tel-name" style=${{ opacity: tel.visible === false ? 0.4 : 1 }}>${tel.name}</span>
-          <span className="tel-coords">${tel.lat.toFixed(1)}°, ${tel.lon.toFixed(1)}°</span>
+          <span className="tel-coords">${tel.type === 'space' ? `${tel.orbitalAltitudeKm} km orbit` : `${tel.lat.toFixed(1)}°, ${tel.lon.toFixed(1)}°`}</span>
           <div className="tel-actions">
             <button
               className=${'tel-btn' + (tel.visible === false ? ' dim' : '')}
