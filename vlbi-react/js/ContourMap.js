@@ -164,6 +164,7 @@ export function ContourMap({ dirtyData, restoredData, N, angularResolution, fovM
   const [displayMode, setDisplayMode]   = useState('dirty');
   const [stats, setStats]               = useState(null);
   const [activeLevels, setActiveLevels] = useState([]);
+  const [isEmpty, setIsEmpty]           = useState(true);
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -178,15 +179,12 @@ export function ContourMap({ dirtyData, restoredData, N, angularResolution, fovM
     if (!activeData || activeData.length === 0) {
       ctx.fillStyle = '#0a0a20';
       ctx.fillRect(0, 0, DST, DST);
-      ctx.fillStyle    = 'rgba(136,136,176,0.4)';
-      ctx.font         = '22px Inter, sans-serif';
-      ctx.textAlign    = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('No data yet', DST / 2, DST / 2);
       setStats(null);
       setActiveLevels([]);
+      setIsEmpty(true);
       return;
     }
+    setIsEmpty(false);
 
     // ── Bilinear upscale to 512×512 ──
     const upscaled = bilinearUpscale(activeData, N, DST);
@@ -426,6 +424,11 @@ export function ContourMap({ dirtyData, restoredData, N, angularResolution, fovM
             style=${{ width: '100%', height: 'auto', aspectRatio: '1/1', display: 'block' }}
             aria-label="Professional contour map of radio interferometry reconstruction"
           ></canvas>
+          ${isEmpty ? html`
+            <div style=${{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center',
+              justifyContent: 'center', color: 'rgba(136,136,176,0.4)', fontSize: '1.1rem',
+              pointerEvents: 'none' }}>No data yet</div>
+          ` : null}
           <div className="contour-tick-overlay" aria-hidden="true">
             <span className="ctick ctick-top-left">+${(fovMuas / 2).toFixed(1)} <span style=${{ textTransform: 'none' }}>uas</span></span>
             <span className="ctick ctick-top-right">−${(fovMuas / 2).toFixed(1)} <span style=${{ textTransform: 'none' }}>uas</span></span>
