@@ -1,8 +1,15 @@
 import { html, useRef, useEffect, useState } from './core.js';
 
-export function UVMap({ uvPoints, N }) {
+function snrColor(sefdA, sefdB, minSnr, maxSnr) {
+  const snr = 1 / Math.sqrt((sefdA ?? 10000) * (sefdB ?? 10000));
+  const t = maxSnr > minSnr ? (snr - minSnr) / (maxSnr - minSnr) : 0.5;
+  return `hsl(45, ${(t * 100).toFixed(0)}%, ${(30 + t * 30).toFixed(0)}%)`;
+}
+
+export function UVMap({ uvPoints, N, pairSefdMap = null }) {
   const canvasRef = useRef(null);
   const [axisLabel, setAxisLabel] = useState('');
+  const [snrMode, setSnrMode] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -48,14 +55,20 @@ export function UVMap({ uvPoints, N }) {
       return;
     }
 
-    const byColor = {};
-    for (const p of uvPoints) {
-      if (!byColor[p.color]) byColor[p.color] = [];
-      byColor[p.color].push(p);
-    }
-    for (const [color, pts] of Object.entries(byColor)) {
-      ctx.fillStyle = color;
-      for (const p of pts) {
+    const useSnr = snrMode && pairSefdMap && Object.keys(pairSefdMap).length > 0;
+
+    if (useSnr) {
+      // Pre-compute SNR range across all unique pairs
+      let minSnr = Infinity, maxSnr = -Infinity;
+      for (const { sefdA, sefdB } of Object.values(pairSefdMap)) {
+        const snr = 1 / Math.sqrt(sefdA * sefdB);
+        if (snr < minSnr) minSnr = snr;
+        if (snr > maxSnr) maxSnr = snr;
+      }
+      // Draw each point with SNR color
+      for (const p of uvPoints) {
+        const pair = pairSefdMap[p.pairId] ?? { sefdA: 10000, sefdB: 10000 };
+        ctx.fillStyle = snrColor(pair.sefdA, pair.sefdB, minSnr, maxSnr);
         const { x, y } = toCanvas(p.u, p.v);
         const ix = Math.round(x);
         const iy = Math.round(y);
@@ -63,13 +76,40 @@ export function UVMap({ uvPoints, N }) {
           ctx.fillRect(ix, iy, 1, 1);
         }
       }
+    } else {
+      const byColor = {};
+      for (const p of uvPoints) {
+        if (!byColor[p.color]) byColor[p.color] = [];
+        byColor[p.color].push(p);
+      }
+      for (const [color, pts] of Object.entries(byColor)) {
+        ctx.fillStyle = color;
+        for (const p of pts) {
+          const { x, y } = toCanvas(p.u, p.v);
+          const ix = Math.round(x);
+          const iy = Math.round(y);
+          if (ix >= 0 && ix < DST && iy >= 0 && iy < DST) {
+            ctx.fillRect(ix, iy, 1, 1);
+          }
+        }
+      }
     }
 
     setAxisLabel(displayMax_Gl.toFixed(1));
-  }, [uvPoints, N]);
+  }, [uvPoints, N, snrMode, pairSefdMap]);
+
+  const hasPairs = pairSefdMap && Object.keys(pairSefdMap).length > 0;
 
   return html`
     <div style=${{ position: 'relative', display: 'inline-block', width: '100%' }}>
+      ${hasPairs ? html`
+        <button
+          className=${'btn btn-ghost btn-xs' + (snrMode ? ' btn-active' : '')}
+          style=${{ position: 'absolute', top: '4px', right: '4px', zIndex: 2, fontSize: '0.65rem', padding: '1px 5px' }}
+          onClick=${() => setSnrMode(m => !m)}
+          title="Toggle between baseline-pair and SNR coloring"
+        >Color: ${snrMode ? 'SNR' : 'Pair'}</button>
+      ` : null}
       <canvas
         ref=${canvasRef}
         width=${N}

@@ -420,6 +420,25 @@ export function App() {
     };
   }, [beamDims, controls.fovMuas]);
 
+  const pairSefdMap = useMemo(() => {
+    const m = {};
+    const visible = telescopes.filter(t => t.visible !== false);
+    const ground = visible.filter(t => t.type !== 'space');
+    const space  = visible.filter(t => t.type === 'space');
+    for (let i = 0; i < ground.length; i++) {
+      for (let j = i + 1; j < ground.length; j++) {
+        const a = ground[i], b = ground[j];
+        m[`${a.id}-${b.id}`] = { sefdA: sefdMap[a.name] ?? 10000, sefdB: sefdMap[b.name] ?? 10000 };
+      }
+    }
+    for (const sat of space) {
+      for (const g of ground) {
+        m[`${sat.id}-${g.id}`] = { sefdA: sefdMap[sat.name] ?? 10000, sefdB: sefdMap[g.name] ?? 10000 };
+      }
+    }
+    return m;
+  }, [telescopes, sefdMap]);
+
   const restoredLabel = controls.method === 'clean' ? 'CLEAN'
     : controls.method === 'mem' ? 'Max Entropy'
     : 'Restored';
@@ -508,7 +527,7 @@ export function App() {
         <aside className="right-panel" aria-label="Analysis outputs">
           <section id="tour-uv" className="panel-section">
             <h2>UV Coverage <${InfoTooltip} infoKey="uvmap" onOpen=${setInfoKey} /></h2>
-            <${UVMap} uvPoints=${uvPointsGl} N=${IMAGE_SIZE} />
+            <${UVMap} uvPoints=${uvPointsGl} N=${IMAGE_SIZE} pairSefdMap=${pairSefdMap} />
             <p className="caption">Fill: ${uvFill.toFixed(2)}% of spatial frequencies sampled · ${uvPoints.length} samples</p>
           </section>
 
