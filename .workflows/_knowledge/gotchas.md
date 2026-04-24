@@ -285,6 +285,45 @@ RESOLVED: YES — TelescopeList.js patched (2026-04-22); uvCompute.js splits arr
 
 ---
 
+### Math.max spread on Float64Array(N=512) causes stack overflow
+DATE_DISCOVERED: 2026-04-24
+AREA: vlbi-react/js/fitsExport.js, any code needing max of a large typed array
+SEVERITY: HIGH
+
+WHAT HAPPENED: `Math.max(...restoredData)` where `restoredData` is a Float64Array of 512×512=262144 elements throws "Maximum call stack size exceeded" — the spread operator pushes all 262144 values as function arguments, exhausting the call stack.
+
+ROOT CAUSE: JavaScript's function call stack has a limited number of arguments. Spreading a 262144-element array exceeds this limit universally across all browsers and Node.js.
+
+HOW TO AVOID: Always use a for-loop for peak-finding on large typed arrays:
+```js
+let peak = 0;
+for (let i = 0; i < data.length; i++) if (data[i] > peak) peak = data[i];
+```
+Same applies to any typed array of N=512 size (262144 elements for a 2D image).
+
+DETECTION: "Maximum call stack size exceeded" or "RangeError: too many arguments" from Math.max spread in worker or export code.
+
+RESOLVED: YES — fitsExport.js uses for-loop peak finding. All useMemo MAD computations also use for-loops.
+
+---
+
+### pairId is a string key, not an array index
+DATE_DISCOVERED: 2026-04-24
+AREA: vlbi-react/js/UVMap.js, vlbi-react/js/useSimulation.js — pairSefdMap
+SEVERITY: MEDIUM
+
+WHAT HAPPENED: Plan draft said "look up stationPairs[p.pairId]" — would fail because pairId is a string like "3-7" and stationPairs is a parallel array indexed 0,1,2... not by id strings.
+
+ROOT CAUSE: `uvPointsGl` points have `{ u, v, color, pairId }` where `pairId = \`${t1.id}-${t2.id}\`` (a string). The stationPairs array is parallel to uvPoints (pixel space) but NOT to uvPointsGl. Building a dedicated `pairSefdMap` keyed on the pairId string is the only correct lookup approach.
+
+HOW TO AVOID: `pairSefdMap` in useSimulation is built as: `m[\`${a.id}-${b.id}\`] = { sefdA, sefdB }`. UVMap looks up via `pairSefdMap[p.pairId] ?? { sefdA: 10000, sefdB: 10000 }`. Never try to use pairId as a numeric array index.
+
+DETECTION: SNR mode shows all baselines identical color (all hitting the 10000/10000 fallback).
+
+RESOLVED: YES — pairSefdMap built correctly in useSimulation useMemo (S10).
+
+---
+
 ## Pattern: Things To Always Check
 
 □ After any change to telescope naming logic — verify EHT preset + manual click produces T(n+1) not T1
@@ -298,3 +337,5 @@ RESOLVED: YES — TelescopeList.js patched (2026-04-22); uvCompute.js splits arr
 □ Playwright module cache: if a module's export signature changed, switch HTTP server port or use ?v=N query param (remove before commit)
 □ Any component rendering telescope lat/lon must guard on type==='space' — BHEX has no lat/lon
 □ computeUVPoints/computeUVPointsGl must split telescopes into groundTels/spaceTels before ECEF conversion — space telescopes use computeSatelliteECEF, not latLonToECEF
+□ Math.max spread on Float64Array of N=512 (262144 elements) → stack overflow. Always use for-loop for peak-finding.
+□ pairId is a string key ("3-7"), not an array index. Use pairSefdMap[p.pairId], never stationPairs[p.pairId].

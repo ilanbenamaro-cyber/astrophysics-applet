@@ -72,51 +72,74 @@ fft2d(grayscale) → buildUVMask(uvPoints) → applyUVMask → ifft2d → graysc
 
 ### Component tree
 ```
-App.js
-├── Globe.js                  — Three.js 3D globe; click → telescope placement
-├── AppSidebar.js
+App.js                        — global UI only: compareMode, infoKey, a11y, tour, modals
+│                               Instantiates left=useSimulation() + right=useSimulation()
+│                               Single-pane: uses left.* throughout
+│                               Compare mode: renders two <SimPane> components
+├── AppSidebar.js             — sidebar: image gallery, telescope list, controls, compare toggle
 │   └── ControlsPanel.js      — all sliders: noise, frequency, duration, declination, dish, method
-├── UVMap.js                  — canvas: UV coverage arcs (colored by baseline)
+├── Globe.js                  — Three.js 3D globe; click → telescope placement; ResizeObserver handles compact pane
+├── SimPane.js                — compact simulation pane for compare mode; receives full sim object
+├── UVMap.js                  — canvas: UV coverage arcs; two color modes: pair (default) and SNR
+├── MetricsPanel.js           — collapsible panel: beam FWHM, DR, UV fill %, UV samples, baseline stats
 ├── ImageCanvas.js            — dirty/restored side-by-side canvas panels
 ├── OriginalImagePanel.js     — source image display
-├── ContourMap.js             — professional contour map (viridis, marching squares, beam ellipse)
-├── StatusBar.js              — reconstruction status, UV fill %, dynamic range
+├── ContourMap.js             — professional contour map (viridis, marching squares, beam ellipse, Export FITS button)
+├── StatusBar.js              — reconstruction status
 ├── TelescopeList.js          — list of placed telescopes with remove buttons
 ├── InfoModal.js              — panel info popup
 ├── InfoTooltip.js            — hover tooltip on ? icons
-├── Tour.js                   — guided walkthrough orchestrator
+├── Tour.js                   — guided walkthrough orchestrator (disabled in compare mode)
 │   ├── TourCard.js           — tour step card UI
 │   └── TourDiagram.js        — inline SVG diagrams for tour steps
-├── A11yPanel.js              — screen-reader descriptions of current sim state
+├── A11yPanel.js              — accessibility settings panel
 ├── PhysicsNotesModal.js      — static modal: UV formula, CLEAN/MEM algorithms, EHT sources
 └── CitationModal.js          — BibTeX + APA citation generator from live sim state
 ```
 
 ### Support modules
 ```
-core.js          — htm/preact re-exports (html, useState, useEffect, useRef, useMemo, useCallback)
-constants.js     — IMAGE_SIZE=512, EARTH_RADIUS_KM=6371, TELESCOPE_COLORS[17], EHT_PRESETS[8],
-                   ARRAY_PRESETS {'EHT 2017':8, 'EHT 2022':11, 'ngEHT Phase 1':17},
-                   STATION_SEFD (per-station Jy at 230 GHz: ALMA=94, NOEMA=700, …, SMT=17100, SPT=19300),
-                   BHEX_PRESET (type:'space', alt 26562 km, inc 86°, RAAN 277.7°, period 12h),
-                   SKY_TARGETS {M87*: dec 12.391° shadowUas 42, Sgr A*: dec -29.008° shadowUas 50,
-                                3C 279: dec -5.789° shadowUas null, Cen A: dec -43.019° shadowUas null,
-                                Custom: dec null shadowUas null},
-                   INFO (tooltip text keyed by panel name), ISO_COUNTRY_NAMES (numeric→display)
-uvCompute.js     — latLonToECEF, computeBaseline, computeSatelliteECEF (Keplerian orbit → ECEF),
-                   baselineToUV (TMS eq 4.1),
-                   MIN_ELEVATION_RAD = 10° (elevation cutoff constant),
-                   computeElevation(lat_deg, ha_rad, dec_rad) → elevation angle,
-                   computeUVPoints (pixel coords, FOV-scaled — reconstruction input)
-                     → returns { uvPoints, stationPairs }; applies 10° elevation cutoff per telescope per HA step
-                   computeUVPointsGl (Gλ coords, FOV-independent — display only)
-                     → same elevation cutoff logic as computeUVPoints
-                   computeUVFill, lerpColor
-globeHelpers.js  — Three.js mesh helpers for globe, atmosphere, markers;
-                   syncTelescopeMarkers (skips space telescopes; ground baselines only),
-                   syncSatelliteMarkers (gold sphere at ascending node + orbital ring at 1.5× globe radius; CSS2DObject label)
-presets.js       — IMAGE_PRESETS: { 'blackhole': '../assets/black-hole.png', 'wfu-seal': '../assets/wfu-seal.png' }
-worker.js        — self-contained Web Worker (no imports — cannot use import maps)
+core.js           — htm/preact re-exports (html, useState, useEffect, useRef, useMemo, useCallback)
+constants.js      — IMAGE_SIZE=512, EARTH_RADIUS_KM=6371, TELESCOPE_COLORS[17], EHT_PRESETS[8],
+                    ARRAY_PRESETS {'EHT 2017':8, 'EHT 2022':11, 'ngEHT Phase 1':17},
+                    STATION_SEFD (per-station Jy at 230 GHz: ALMA=94, NOEMA=700, …, SMT=17100, SPT=19300),
+                    BHEX_PRESET (type:'space', alt 26562 km, inc 86°, RAAN 277.7°, period 12h),
+                    SKY_TARGETS {M87*: dec 12.391° shadowUas 42, Sgr A*: dec -29.008° shadowUas 50,
+                                 3C 279: dec -5.789° shadowUas null, Cen A: dec -43.019° shadowUas null,
+                                 Custom: dec null shadowUas null},
+                    INFO (tooltip text keyed by panel name), ISO_COUNTRY_NAMES (numeric→display)
+useSimulation.js  — custom React hook; all simulation state, effects, memos, and handlers.
+                    App.js calls left=useSimulation() and right=useSimulation() (always both — hooks cannot be conditional).
+                    Returns: telescopes, showCountryLabels, selectedPreset, selectedArrayPreset,
+                      grayscale, originalCanvas, uvPoints, stationPairs, uvPointsGl, uvFill,
+                      dirty, restored, controls, status, isComputing, uvCount, beamDims, selectedTarget,
+                      effectiveSourceFraction, angularRes, baselineStats, sefdMap, pairSefdMap,
+                      dynamicRange, beamFwhm, bhexAdded,
+                      setControls, setSelectedArrayPreset, setShowCountryLabels,
+                      handleTelescopeAdd/Remove/Toggle, handleTargetChange, handleAddBHEX,
+                      handleLoadArrayPreset, handlePresetSelect, handleFileUpload, handleReset,
+                      handleExportFITS, handleClearTelescopes, handleLoadDefaultEHT, loadEHTPresets
+fitsExport.js     — exportFITS(restoredData, N, controls, selectedTarget, beamDims)
+                    Writes FITS binary with WCS headers: CRVAL1/2 (RA/Dec), CDELT1 (negative), CDELT2,
+                    CRPIX1/2 = N/2+0.5, FREQ, BMAJ/BMIN, BUNIT='JY/BEAM', OBJECT.
+                    Float32 big-endian, rows flipped (FITS row 0 = bottom). Header+data padded to 2880-byte blocks.
+                    Peak finding uses for-loop (NOT Math.max spread — stack overflow at N=512).
+uvCompute.js      — latLonToECEF, computeBaseline, computeSatelliteECEF (Keplerian orbit → ECEF),
+                    baselineToUV (TMS eq 4.1),
+                    MIN_ELEVATION_RAD = 10° (elevation cutoff constant),
+                    computeElevation(lat_deg, ha_rad, dec_rad) → elevation angle,
+                    computeUVPoints (pixel coords, FOV-scaled — reconstruction input)
+                      → returns { uvPoints, stationPairs }; applies 10° elevation cutoff per telescope per HA step
+                    computeUVPointsGl (Gλ coords, FOV-independent — display only)
+                      → same elevation cutoff logic as computeUVPoints
+                    computeUVFill, lerpColor
+globeHelpers.js   — Three.js mesh helpers for globe, atmosphere, markers;
+                    syncTelescopeMarkers (skips space telescopes; ground baselines only),
+                    syncSatelliteMarkers (gold sphere at ascending node + orbital ring at 1.5× globe radius; CSS2DObject label)
+                    Globe.js has a ResizeObserver on its container div — works correctly in compact 280px SimPane pane.
+presets.js        — IMAGE_PRESETS: { 'blackhole': '../assets/black-hole.png', 'wfu-seal': '../assets/wfu-seal.png' }
+worker.js         — self-contained Web Worker (no imports — cannot use import maps).
+                    Each useSimulation instance spawns its own worker — two workers run in compare mode.
 ```
 
 ### Worker protocol
@@ -207,27 +230,64 @@ Applied as Gaussian envelope to dirty image (multiplication in image space befor
 - HTML overlays (not canvas text): tick axis labels (`.ctick`), colorbar values (`.contour-cb-labels`), contour level badges (`.contour-cb-levels`), beam label (`.contour-beam-label`)
 - Default displayMode: `'dirty'`
 
-**Angular resolution** (in `App.js` → `useMemo`):
+**Angular resolution** (in `useSimulation.js` → `useMemo`):
 ```
 maxBaseline = max Euclidean distance between any two telescope ECEF positions (km)
 angularResolution = (λ_mm / (maxBaseline × 1e6)) × (180/π) × 3.6e9  [μas]
 ```
 Passed as prop to ContourMap for μas axis labels.
 
-### State managed in App.js
+**Dynamic range** (in `useSimulation.js` → `useMemo`):
+```
+border = outer 10% pixels of restored image (margin = floor(N × 0.1) = 51px for N=512)
+med = median(border)
+madSigma = 1.4826 × median(|border[i] - med|)
+safeSigma = madSigma if finite & > 0 & < maxV×0.1, else maxV×0.01
+dynamicRange = maxV / safeSigma
+```
+Previously computed inside ContourMap.js (where it drove adaptive thresholds). Lifted to hook so MetricsPanel and ContourMap both receive it as a prop. ContourMap still computes its own sigma for the statsText σ: display line only.
+
+**UVMap SNR color mode** (in `UVMap.js`):
+```
+snrColor(sefdA, sefdB, minSnr, maxSnr):
+  snr = 1 / sqrt(sefdA × sefdB)
+  t = (snr - minSnr) / (maxSnr - minSnr)   [0..1]
+  hsl(45, t×100%, 30+t×30%)                [grey→gold]
+```
+Toggle button visible when `pairSefdMap` has entries. Default mode: pair-color (unchanged).
+pairId key format: `"${tel_a.id}-${tel_b.id}"` (string, e.g. "3-7"). Never use as array index.
+
+### State architecture — useSimulation hook vs App.js
+
+**useSimulation hook** (all simulation-specific state):
 - `telescopes` — array of `{ id, name, lat, lon, color }` for ground; `{ id, name, type:'space', orbitalAltitudeKm, inclinationDeg, raanDeg, periodHours, color }` for BHEX
-- `dirtyData`, `restoredData` — Float64Array results from worker
-- `uvPoints` — current UV sample coordinates (pixel space, FOV-scaled — passed to worker)
-- `stationPairs` — `[{a, b}]` parallel to uvPoints — station name pairs for per-baseline SEFD noise
-- `uvPointsGl` — current UV sample coordinates in Gλ (display only — passed to UVMap)
+- `dirty`, `restored` — Float64Array results from worker
+- `uvPoints` — pixel space, FOV-scaled — passed to worker
+- `stationPairs` — `[{a, b}]` parallel to uvPoints — station name pairs for SEFD noise
+- `uvPointsGl` — Gλ coords, display only — passed to UVMap
+- `uvCount` — number of UV samples from latest worker result
 - `controls` — all slider/toggle values (noise, frequency, duration, declination [default 12.391 = M87*], method, dishDiameter, fovMuas [default 80], sourceFraction [default 0.50 — only used when selectedTarget=Custom])
 - `selectedPreset` — current image preset key (blackhole/wfu-seal)
-- `selectedArrayPreset` — current array preset name ('EHT 2017' | 'EHT 2022' | 'ngEHT Phase 1')
-- `selectedTarget` — sky target name ('M87*' | 'Sgr A*' | '3C 279' | 'Cen A' | 'Custom'); auto-sets `controls.declination` for named targets
-- `effectiveSourceFraction` — useMemo: `shadowUas/fovMuas` for named targets with known shadow; falls back to `controls.sourceFraction` for Custom/null-shadow targets. Never stored in state.
-- `beamDims` — `{ sigmaU, sigmaV, pa }` from latest worker result; passed to ContourMap for ellipse rendering
-- `physicsNotesOpen`, `citationOpen` — modal state
-- `bhexAdded` — computed (not state): `telescopes.some(t => t.name === 'BHEX')`
+- `selectedArrayPreset` — 'EHT 2017' | 'EHT 2022' | 'ngEHT Phase 1'
+- `selectedTarget` — 'M87*' | 'Sgr A*' | '3C 279' | 'Cen A' | 'Custom'
+- `beamDims` — `{ sigmaU, sigmaV, pa }` from latest worker result
+- `showCountryLabels`, `grayscale`, `originalCanvas`, `status`, `isComputing`
+
+**Derived (useMemo in useSimulation, never in state):**
+- `effectiveSourceFraction` — `shadowUas/fovMuas` for named targets; `controls.sourceFraction` for Custom
+- `dynamicRange` — MAD-based: `maxPeak / (1.4826 × median(|border − median(border)|))`, 10% margin border
+- `beamFwhm` — `{ major: sigmaU×2.355×pixelScale, minor: sigmaV×2.355×pixelScale }` in μas
+- `sefdMap` — `{ stationName: SEFD_Jy }` per telescope
+- `pairSefdMap` — `{ "id1-id2": { sefdA, sefdB } }` keyed on pairId string (e.g. "3-7")
+- `angularRes` — string (e.g. "20 μas") or null; from max ECEF baseline + wavelength
+- `baselineStats` — `{ maxKm, maxGl, minGl }` or null
+- `bhexAdded` — `telescopes.some(t => t.name === 'BHEX')`
+
+**App.js** (global UI only — 7 state pieces):
+- `compareMode` — boolean; switches between single-pane and two-SimPane layout
+- `infoKey`, `physicsNotesOpen`, `citationOpen` — modal state
+- `a11y` — `{ highContrast, fontSize, reducedMotion }` (persisted to localStorage)
+- `a11yOpen`, `tourActive`, `tourActIndex`
 
 ### IMAGE_PRESETS (asset paths relative to vlbi-react/)
 ```js
@@ -248,6 +308,14 @@ GitHub Pages from `main` branch root. Push to `main` = live within ~60 seconds.
 ---
 
 ## Last Updated
+
+2026-04-24 — S9–S12 complete:
+  S9: INFO.sourceSize tooltip updated (42/50 μas). MetricsPanel.js (new). dynamicRange lifted to useSimulation useMemo (MAD). beamFwhm useMemo. uvCount state added. ContourMap accepts dynamicRange as prop.
+  S10: UVMap.js: SNR color mode (hsl 45, grey→gold). pairSefdMap prop (keyed on pairId string). Toggle button. pairSefdMap built in useSimulation useMemo.
+  S11: fitsExport.js (new): FITS binary, WCS headers, big-endian float32, 2880-byte blocks, row-flipped. handleExportFITS in useSimulation. Export FITS button in ContourMap.
+  S12a: useSimulation.js (new): all sim state, effects, memos, handlers extracted from App.js. App.js now global UI only.
+  S12b: SimPane.js (new): compact pane for compare mode (Globe+controls+UVMap+images+ContourMap). App.js: two useSimulation instances (left/right), compareMode state, compare layout. AppSidebar: compare button.
+  S12c: Globe ResizeObserver confirmed correct in 280px compact pane. .btn-ghost.btn-active CSS added.
 
 2026-04-24 — S8 complete: physically correct source angular size. effectiveSourceFraction useMemo in App.js; SKY_TARGETS.shadowUas (M87*=42, Sgr A*=50, others null); SOURCE SIZE slider hidden for named targets; read-only info line shows shadowUas and % of FOV.
 

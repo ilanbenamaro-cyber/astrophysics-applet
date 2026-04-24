@@ -217,9 +217,9 @@ TRIGGERS_REVIEW_IF: User research suggests visitors find dirty image confusing a
 
 ### Phase 2 blocked on angular size
 DATE: 2026-04-12
-LAST_VERIFIED: 2026-04-12
+LAST_VERIFIED: 2026-04-24
 EXPIRES: UNTIL_MEETING
-STATUS: ACTIVE — BLOCKING
+STATUS: SUPERSEDED — see "Physically correct source angular size" decision below. Phase 2 unblocked 2026-04-24.
 
 DECISION: No Phase 2 features to be implemented until angular size is resolved with Prof. Cárdenas-Avendaño.
 RATIONALE: Current implementation always fills the full FOV with the source, regardless of source size parameter. This is not physically correct — a source at a given declination and distance should subtend a specific angle. Phase 2 features (source size slider, multi-source, etc.) built on top of incorrect FOV behavior will need to be rewritten.
@@ -337,6 +337,60 @@ STATUS: ACTIVE
 DECISION: ControlsPanel.js shows the SOURCE SIZE range slider only when `selectedTarget === 'Custom'`. For named targets with `shadowUas !== null`, a read-only info line shows `"Source: N μas (X% of FOV)"`. For named targets with `shadowUas === null` (3C 279, Cen A — point-like/extended), neither slider nor info line is shown.
 RATIONALE: Exposing a source size slider for physically constrained targets (M87*, Sgr A*) would let users set scientifically wrong values — incompatible with the Harvard EHT talk standard. Point sources (3C 279) have no meaningful shadow size to display.
 TRIGGERS_REVIEW_IF: A named target is added that has a range of plausible shadow sizes (would warrant a "shadow uncertainty" display rather than a fixed value).
+
+---
+
+---
+
+### All simulation state in useSimulation hook, not App.js
+DATE: 2026-04-24
+LAST_VERIFIED: 2026-04-24
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: All simulation state, effects, memos, and handlers live in `useSimulation.js`. App.js holds only 7 global UI state pieces (compareMode, infoKey, physicsNotesOpen, citationOpen, a11y, a11yOpen, tourActive/Index).
+RATIONALE: S12b required two independent simulation instances for compare mode. React hooks cannot be called conditionally — both instances must always be instantiated. Extracting all sim logic to a hook (S12a) made the two-instance pattern clean and testable. App.js became a thin layout shell.
+ALTERNATIVES_REJECTED: Keep sim state in App.js and duplicate/share — would require lifting all state to a parent that doesn't exist, or creating a global context (overkill for 2 panes); prop drilling from App.js — would require all sub-components to accept both left/right sim states.
+TRIGGERS_REVIEW_IF: More than 2 simultaneous sim panes are needed (would warrant a sim array or context).
+
+---
+
+### Compare mode: two useSimulation instances always instantiated
+DATE: 2026-04-24
+LAST_VERIFIED: 2026-04-24
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: App.js always calls `const left = useSimulation()` and `const right = useSimulation()`, even in single-pane mode. In single-pane, `right` is idle (zero telescopes). In compare mode, both render as `SimPane` components. The `right` sim starts with EHT 2017 loaded (from its auto-load effect) — this is intentional.
+RATIONALE: React hooks cannot be called conditionally. Always instantiating both means `right.telescopes` accumulates EHT 2017 on mount, so when the user enters compare mode Config B is immediately usable rather than empty. Two Web Workers run in the background regardless — acceptable performance cost.
+CONSEQUENCE: Two Web Workers always running. Memory cost ~4MB (two 2MB Float64Array sets). This is noted in the UI header in compare mode.
+TRIGGERS_REVIEW_IF: Memory or CPU concern on low-end hardware during demos.
+
+---
+
+### dynamicRange computed in useSimulation hook, passed as prop to ContourMap
+DATE: 2026-04-24
+LAST_VERIFIED: 2026-04-24
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: Dynamic range (DR) is computed as a `useMemo` in `useSimulation.js` and passed as a prop to both ContourMap and MetricsPanel. ContourMap still computes its own local sigma for the statsText σ: display line, but does NOT re-derive DR from it. The prop-sourced DR drives adaptive contour thresholds.
+RATIONALE: MetricsPanel needed DR for the `DR:1` metric. Computing it twice (once in ContourMap internally, once in App.js/hook) would risk divergence. Single source of truth in the hook is canonical.
+ALGORITHM: MAD-based, 10% border margin. `madSigma = 1.4826 × median(|border − median(border)|)`. safeSigma guard: if madSigma is non-finite, zero, or > maxV×0.1, use maxV×0.01 fallback.
+TRIGGERS_REVIEW_IF: A sigma-based contour threshold (2σ, 3σ) proves more physical than DR-based (would require passing the noise sigma itself as a prop alongside DR).
+
+---
+
+### FITS export: WCS headers, big-endian float32, 2880-byte blocks
+DATE: 2026-04-24
+LAST_VERIFIED: 2026-04-24
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: `fitsExport.js` writes a valid FITS file with WCS headers using `application/fits` MIME type downloaded via Blob URL. FITS standard requires: big-endian float32 (`dv.setFloat32(offset, value, false)`), 80-char fixed-width header cards, padding to 2880-byte block boundaries (both header and data sections), row 0 = bottom of image (rows flipped: `fitsRow = N - 1 - row`). CDELT1 is negative (RA increases left).
+RATIONALE: FITS is the standard radio astronomy image format. WCS headers (CRVAL1/2, CDELT1/2, CRPIX1/2) are required for any downstream tool (CASA, ds9, astropy) to display the image with correct sky coordinates.
+CRITICAL: Peak finding uses a for-loop — NEVER `Math.max(...Float64Array)` which stack-overflows at N=512 (262144 elements).
+TRIGGERS_REVIEW_IF: 4D FITS (NAXIS=4, RA/Dec/frequency/Stokes) is needed for full radio astronomy compatibility.
 
 ---
 

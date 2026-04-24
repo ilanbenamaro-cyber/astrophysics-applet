@@ -226,7 +226,38 @@ IMPLICATION: Any future derived-from-target value should follow this pattern: us
 
 ---
 
+### useSimulation hook: all sim logic out of App.js
+DATE: 2026-04-24
+CATEGORY: pattern
+APPLIES_TO: vlbi-react/js/useSimulation.js, vlbi-react/js/App.js
+
+LEARNING: All simulation state, effects, memos, and handlers live in `useSimulation.js`. App.js holds only global UI state (modals, a11y, tour, compareMode). This split was required for compare mode (two independent sim instances) and improved testability.
+IMPLICATION: If App.js ever starts accumulating simulation logic again, move it back to the hook. The rule: if it would need to be duplicated in compare mode, it belongs in the hook.
+
+---
+
+### React hooks cannot be conditional — always instantiate both sim instances
+DATE: 2026-04-24
+CATEGORY: pattern
+APPLIES_TO: vlbi-react/js/App.js — compare mode
+
+LEARNING: `const left = useSimulation()` and `const right = useSimulation()` are ALWAYS called, even in single-pane mode. React prohibits conditional hook calls. The `right` sim auto-loads EHT 2017 on mount — intentional, so Config B is ready when user enters compare mode.
+IMPLICATION: Adding a third sim instance for a third pane would follow the same always-instantiated pattern. Never guard `useSimulation()` calls with an `if`.
+
+---
+
+### Peak-finding on typed arrays: for-loop only, never Math.max spread
+DATE: 2026-04-24
+CATEGORY: pattern
+APPLIES_TO: vlbi-react/js/fitsExport.js, any N=512 computation
+
+LEARNING: `Math.max(...Float64Array(262144))` throws "Maximum call stack size exceeded". Always use a for-loop for max/peak finding on large typed arrays. Confirmed at N=512 (512×512=262144 elements).
+IMPLICATION: Any future code that needs max/min of a reconstruction-sized array must use an explicit for-loop. This includes export, DR computation, normalization.
+
+---
+
 ## Last Updated
+2026-04-24 — S9–S12 complete: useSimulation hook pattern, compare mode architecture, peak-finding constraint
 2026-04-24 — Angular size blocker resolved; effectiveSourceFraction pattern added
 2026-04-20 — Added UV display pipeline independence pattern
 2026-04-16 — Added N=512 benchmark result and contour boundary artifact pattern
