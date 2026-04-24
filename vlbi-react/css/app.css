@@ -994,3 +994,55 @@ input[type="range"]::-moz-range-thumb {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+
+/* ── Compare Mode ── */
+.compare-layout {
+  display: grid;
+  grid-template-columns: 1fr 4px 1fr;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+.compare-divider {
+  background: var(--border);
+}
+.sim-pane {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: var(--bg-0);
+}
+.sim-pane-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-1);
+  flex-wrap: wrap;
+}
+.sim-pane-label {
+  font-weight: 700;
+  color: var(--accent-teal);
+  font-size: var(--fs-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+.sim-pane-globe {
+  position: relative;
+  height: 280px;
+  overflow: hidden;
+  background: #000;
+  flex-shrink: 0;
+}
+.sim-pane-controls {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-1);
+}
+.sim-pane-outputs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}

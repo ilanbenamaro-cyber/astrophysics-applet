@@ -15,11 +15,14 @@ import { MetricsPanel } from './MetricsPanel.js';
 import { AppSidebar } from './AppSidebar.js';
 import { A11yPanel } from './A11yPanel.js';
 import { Tour } from './Tour.js';
+import { SimPane } from './SimPane.js';
 
 export function App() {
-  const sim = useSimulation();
+  const left  = useSimulation();
+  const right = useSimulation();
 
   // ── Global UI state (not simulation-specific) ───────────────────────────────
+  const [compareMode, setCompareMode]       = useState(false);
   const [infoKey, setInfoKey]               = useState(null);
   const [physicsNotesOpen, setPhysicsNotesOpen] = useState(false);
   const [citationOpen, setCitationOpen]     = useState(false);
@@ -45,31 +48,39 @@ export function App() {
     localStorage.setItem('vlbi-a11y', JSON.stringify(a11y));
   }, [a11y]);
 
+  const handleToggleCompare = useCallback(() => {
+    setCompareMode(m => {
+      if (!m) setTourActive(false);  // exit tour when entering compare
+      return !m;
+    });
+  }, []);
+
   const handleTourAction = useCallback((action) => {
+    if (compareMode) return;
     switch (action.type) {
       case 'resetForTour':
-        sim.handleClearTelescopes();
+        left.handleClearTelescopes();
         break;
       case 'addTelescope':
-        sim.handleTelescopeAdd(action.lat, action.lon);
+        left.handleTelescopeAdd(action.lat, action.lon);
         break;
       case 'loadEHT':
-        sim.handleLoadDefaultEHT();
+        left.handleLoadDefaultEHT();
         break;
       case 'setMethod':
-        sim.setControls(p => ({ ...p, method: action.method }));
+        left.setControls(p => ({ ...p, method: action.method }));
         break;
       case 'setPreset':
-        sim.handlePresetSelect(action.preset);
+        left.handlePresetSelect(action.preset);
         break;
       default:
         break;
     }
-  }, [sim.handleClearTelescopes, sim.handleTelescopeAdd, sim.handleLoadDefaultEHT,
-      sim.setControls, sim.handlePresetSelect]);
+  }, [compareMode, left.handleClearTelescopes, left.handleTelescopeAdd, left.handleLoadDefaultEHT,
+      left.setControls, left.handlePresetSelect]);
 
-  const restoredLabel = sim.controls.method === 'clean' ? 'CLEAN'
-    : sim.controls.method === 'mem' ? 'Max Entropy'
+  const restoredLabel = left.controls.method === 'clean' ? 'CLEAN'
+    : left.controls.method === 'mem' ? 'Max Entropy'
     : 'Restored';
 
   return html`
@@ -80,132 +91,160 @@ export function App() {
           <p>Built with AI assistance and guidance by Prof. Alejandro Cárdenas-Avendaño</p>
           <p>Click the globe to place radio telescopes · Earth rotation synthesizes a virtual aperture the size of Earth</p>
         </div>
-        <button
-          className="tour-launch-btn"
-          style=${{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}
-          onClick=${() => { setTourActive(true); setTourActIndex(0); }}
-          aria-label="Start guided physics tour"
-        >◉ Tour</button>
+        ${!compareMode && html`
+          <button
+            className="tour-launch-btn"
+            style=${{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}
+            onClick=${() => { setTourActive(true); setTourActIndex(0); }}
+            aria-label="Start guided physics tour"
+          >◉ Tour</button>
+        `}
         <div className="header-stats">
-          <button
-            className="btn btn-ghost"
-            onClick=${() => setPhysicsNotesOpen(true)}
-            aria-label="View implementation notes and references"
-          >📋 Physics Notes</button>
-          <button
-            className="btn btn-ghost"
-            onClick=${() => setCitationOpen(true)}
-            aria-label="Generate citation for this simulation"
-          >📄 Cite</button>
-          ${sim.telescopes.length >= 2 ? html`
-            <span className="stat"><span className="stat-val">${sim.telescopes.length}</span>telescopes</span>
-            <span className="stat"><span className="stat-val">${sim.telescopes.length*(sim.telescopes.length-1)/2}</span>baselines</span>
-            <span className="stat"><span className="stat-val">${sim.uvFill.toFixed(1)}%</span>UV fill</span>
-            ${sim.angularRes ? html`<span className="stat"><span className="stat-val">${sim.angularRes}</span>resolution</span>` : null}
+          ${!compareMode && html`
+            <button
+              className="btn btn-ghost"
+              onClick=${() => setPhysicsNotesOpen(true)}
+              aria-label="View implementation notes and references"
+            >📋 Physics Notes</button>
+            <button
+              className="btn btn-ghost"
+              onClick=${() => setCitationOpen(true)}
+              aria-label="Generate citation for this simulation"
+            >📄 Cite</button>
+          `}
+          ${compareMode && html`
+            <button
+              className="btn btn-ghost"
+              onClick=${handleToggleCompare}
+              style=${{ fontWeight: 600 }}
+            >✕ Exit Compare</button>
+            <span style=${{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+              Compare mode — two independent simulations running simultaneously
+            </span>
+          `}
+          ${!compareMode && left.telescopes.length >= 2 ? html`
+            <span className="stat"><span className="stat-val">${left.telescopes.length}</span>telescopes</span>
+            <span className="stat"><span className="stat-val">${left.telescopes.length*(left.telescopes.length-1)/2}</span>baselines</span>
+            <span className="stat"><span className="stat-val">${left.uvFill.toFixed(1)}%</span>UV fill</span>
+            ${left.angularRes ? html`<span className="stat"><span className="stat-val">${left.angularRes}</span>resolution</span>` : null}
           ` : null}
-          <${A11yPanel}
-            settings=${a11y}
-            isOpen=${a11yOpen}
-            onToggle=${() => setA11yOpen(v => !v)}
-            onToggleHighContrast=${() => setA11y(s => ({ ...s, highContrast: !s.highContrast }))}
-            onSetFontSize=${(size) => setA11y(s => ({ ...s, fontSize: size }))}
-            onToggleReducedMotion=${() => setA11y(s => ({ ...s, reducedMotion: !s.reducedMotion }))}
-          />
+          ${!compareMode && html`
+            <${A11yPanel}
+              settings=${a11y}
+              isOpen=${a11yOpen}
+              onToggle=${() => setA11yOpen(v => !v)}
+              onToggleHighContrast=${() => setA11y(s => ({ ...s, highContrast: !s.highContrast }))}
+              onSetFontSize=${(size) => setA11y(s => ({ ...s, fontSize: size }))}
+              onToggleReducedMotion=${() => setA11y(s => ({ ...s, reducedMotion: !s.reducedMotion }))}
+            />
+          `}
         </div>
       </header>
 
-      <div className="layout">
-        <${AppSidebar}
-          selectedPreset=${sim.selectedPreset}
-          onPresetSelect=${sim.handlePresetSelect}
-          onFileUpload=${sim.handleFileUpload}
-          telescopes=${sim.telescopes}
-          onTelescopeRemove=${sim.handleTelescopeRemove}
-          onToggleVisibility=${sim.handleToggleVisibility}
-          onLoadEHT=${sim.loadEHTPresets}
-          selectedArrayPreset=${sim.selectedArrayPreset}
-          onArrayPresetChange=${sim.setSelectedArrayPreset}
-          onLoadArray=${sim.handleLoadArrayPreset}
-          bhexAdded=${sim.bhexAdded}
-          onAddBHEX=${sim.handleAddBHEX}
-          onClearAll=${sim.handleClearTelescopes}
-          showCountryLabels=${sim.showCountryLabels}
-          onToggleCountryLabels=${() => sim.setShowCountryLabels(v => !v)}
-          controls=${sim.controls}
-          onControlChange=${(k, v) => sim.setControls(p => ({ ...p, [k]: v }))}
-          onOpenInfo=${setInfoKey}
-          onReset=${sim.handleReset}
-          selectedTarget=${sim.selectedTarget}
-          onTargetChange=${sim.handleTargetChange}
-          effectiveSourceFraction=${sim.effectiveSourceFraction}
-        />
-
-        <main id="tour-globe" className="globe-wrapper" aria-label="Main visualization — 3D interactive globe">
-          <${Globe} telescopes=${sim.telescopes} onTelescopeAdd=${sim.handleTelescopeAdd} showCountryLabels=${sim.showCountryLabels} reducedMotion=${a11y.reducedMotion} tourActive=${tourActive} />
-          <${StatusBar} status=${sim.status} isComputing=${sim.isComputing} baselineStats=${sim.baselineStats} />
-          <${MetricsPanel}
-            beamFwhm=${sim.beamFwhm}
-            dynamicRange=${sim.dynamicRange}
-            uvFill=${sim.uvFill}
-            uvCount=${sim.uvCount}
-            baselineStats=${sim.baselineStats}
-            angularRes=${sim.angularRes}
+      ${compareMode ? html`
+        <div className="compare-layout">
+          <${SimPane} key="left"  sim=${left}  onOpenInfo=${setInfoKey} label="Config A" reducedMotion=${a11y.reducedMotion} />
+          <div className="compare-divider"></div>
+          <${SimPane} key="right" sim=${right} onOpenInfo=${setInfoKey} label="Config B" reducedMotion=${a11y.reducedMotion} />
+        </div>
+      ` : html`
+        <div className="layout">
+          <${AppSidebar}
+            selectedPreset=${left.selectedPreset}
+            onPresetSelect=${left.handlePresetSelect}
+            onFileUpload=${left.handleFileUpload}
+            telescopes=${left.telescopes}
+            onTelescopeRemove=${left.handleTelescopeRemove}
+            onToggleVisibility=${left.handleToggleVisibility}
+            onLoadEHT=${left.loadEHTPresets}
+            selectedArrayPreset=${left.selectedArrayPreset}
+            onArrayPresetChange=${left.setSelectedArrayPreset}
+            onLoadArray=${left.handleLoadArrayPreset}
+            bhexAdded=${left.bhexAdded}
+            onAddBHEX=${left.handleAddBHEX}
+            onClearAll=${left.handleClearTelescopes}
+            showCountryLabels=${left.showCountryLabels}
+            onToggleCountryLabels=${() => left.setShowCountryLabels(v => !v)}
+            controls=${left.controls}
+            onControlChange=${(k, v) => left.setControls(p => ({ ...p, [k]: v }))}
+            onOpenInfo=${setInfoKey}
+            onReset=${left.handleReset}
+            selectedTarget=${left.selectedTarget}
+            onTargetChange=${left.handleTargetChange}
+            effectiveSourceFraction=${left.effectiveSourceFraction}
+            compareMode=${compareMode}
+            onToggleCompare=${handleToggleCompare}
           />
-        </main>
 
-        <aside className="right-panel" aria-label="Analysis outputs">
-          <section id="tour-uv" className="panel-section">
-            <h2>UV Coverage <${InfoTooltip} infoKey="uvmap" onOpen=${setInfoKey} /></h2>
-            <${UVMap} uvPoints=${sim.uvPointsGl} N=${IMAGE_SIZE} pairSefdMap=${sim.pairSefdMap} />
-            <p className="caption">Fill: ${sim.uvFill.toFixed(2)}% of spatial frequencies sampled · ${sim.uvPoints.length} samples</p>
-          </section>
-
-          <section id="tour-images" className="panel-section">
-            <h2>Image Reconstruction</h2>
-            <div className="images-row">
-              <${OriginalImagePanel}
-                canvas=${sim.originalCanvas}
-                label="Ground Truth"
-                infoKey="ground"
-                onOpenInfo=${setInfoKey}
-              />
-              <${ImageCanvas}
-                data=${sim.dirty}
-                N=${IMAGE_SIZE}
-                label="Dirty Image"
-                infoKey="dirty"
-                onOpenInfo=${setInfoKey}
-              />
-              <${ImageCanvas}
-                data=${sim.restored}
-                N=${IMAGE_SIZE}
-                label=${restoredLabel}
-                infoKey="restored"
-                onOpenInfo=${setInfoKey}
-              />
-            </div>
-            <${ContourMap}
-              dirtyData=${sim.dirty}
-              restoredData=${sim.restored}
-              N=${IMAGE_SIZE}
-              angularResolution=${sim.angularRes}
-              fovMuas=${sim.controls.fovMuas}
-              controls=${sim.controls}
-              onOpenInfo=${setInfoKey}
-              beamSigmaU=${sim.beamDims.sigmaU}
-              beamSigmaV=${sim.beamDims.sigmaV}
-              beamPA=${sim.beamDims.pa}
-              dynamicRange=${sim.dynamicRange}
-              onExportFITS=${sim.handleExportFITS}
+          <main id="tour-globe" className="globe-wrapper" aria-label="Main visualization — 3D interactive globe">
+            <${Globe} telescopes=${left.telescopes} onTelescopeAdd=${left.handleTelescopeAdd} showCountryLabels=${left.showCountryLabels} reducedMotion=${a11y.reducedMotion} tourActive=${tourActive} />
+            <${StatusBar} status=${left.status} isComputing=${left.isComputing} baselineStats=${left.baselineStats} />
+            <${MetricsPanel}
+              beamFwhm=${left.beamFwhm}
+              dynamicRange=${left.dynamicRange}
+              uvFill=${left.uvFill}
+              uvCount=${left.uvCount}
+              baselineStats=${left.baselineStats}
+              angularRes=${left.angularRes}
             />
-          </section>
-        </aside>
-      </div>
+          </main>
+
+          <aside className="right-panel" aria-label="Analysis outputs">
+            <section id="tour-uv" className="panel-section">
+              <h2>UV Coverage <${InfoTooltip} infoKey="uvmap" onOpen=${setInfoKey} /></h2>
+              <${UVMap} uvPoints=${left.uvPointsGl} N=${IMAGE_SIZE} pairSefdMap=${left.pairSefdMap} />
+              <p className="caption">Fill: ${left.uvFill.toFixed(2)}% of spatial frequencies sampled · ${left.uvPoints.length} samples</p>
+            </section>
+
+            <section id="tour-images" className="panel-section">
+              <h2>Image Reconstruction</h2>
+              <div className="images-row">
+                <${OriginalImagePanel}
+                  canvas=${left.originalCanvas}
+                  label="Ground Truth"
+                  infoKey="ground"
+                  onOpenInfo=${setInfoKey}
+                />
+                <${ImageCanvas}
+                  data=${left.dirty}
+                  N=${IMAGE_SIZE}
+                  label="Dirty Image"
+                  infoKey="dirty"
+                  onOpenInfo=${setInfoKey}
+                />
+                <${ImageCanvas}
+                  data=${left.restored}
+                  N=${IMAGE_SIZE}
+                  label=${restoredLabel}
+                  infoKey="restored"
+                  onOpenInfo=${setInfoKey}
+                />
+              </div>
+              <${ContourMap}
+                dirtyData=${left.dirty}
+                restoredData=${left.restored}
+                N=${IMAGE_SIZE}
+                angularResolution=${left.angularRes}
+                fovMuas=${left.controls.fovMuas}
+                controls=${left.controls}
+                onOpenInfo=${setInfoKey}
+                beamSigmaU=${left.beamDims.sigmaU}
+                beamSigmaV=${left.beamDims.sigmaV}
+                beamPA=${left.beamDims.pa}
+                dynamicRange=${left.dynamicRange}
+                onExportFITS=${left.handleExportFITS}
+              />
+            </section>
+          </aside>
+        </div>
+      `}
 
       <${InfoModal} infoKey=${infoKey} onClose=${() => setInfoKey(null)} />
-      <${PhysicsNotesModal} open=${physicsNotesOpen} onClose=${() => setPhysicsNotesOpen(false)} fovMuas=${sim.controls.fovMuas} />
-      <${CitationModal} open=${citationOpen} onClose=${() => setCitationOpen(false)} telescopes=${sim.telescopes} controls=${sim.controls} selectedArrayPreset=${sim.selectedArrayPreset} bhexAdded=${sim.bhexAdded} />
-      ${tourActive && html`
+      ${!compareMode && html`
+        <${PhysicsNotesModal} open=${physicsNotesOpen} onClose=${() => setPhysicsNotesOpen(false)} fovMuas=${left.controls.fovMuas} />
+        <${CitationModal} open=${citationOpen} onClose=${() => setCitationOpen(false)} telescopes=${left.telescopes} controls=${left.controls} selectedArrayPreset=${left.selectedArrayPreset} bhexAdded=${left.bhexAdded} />
+      `}
+      ${tourActive && !compareMode && html`
         <${Tour}
           actIndex=${tourActIndex}
           onActChange=${setTourActIndex}

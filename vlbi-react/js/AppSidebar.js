@@ -13,6 +13,7 @@ export function AppSidebar({
   onClearAll, showCountryLabels, onToggleCountryLabels,
   controls, onControlChange, onOpenInfo, onReset,
   selectedTarget, onTargetChange, effectiveSourceFraction,
+  compareMode = false, onToggleCompare = null,
 }) {
   return html`
     <aside className="sidebar" aria-label="Controls and image selection">
@@ -74,6 +75,13 @@ export function AppSidebar({
         />
       </section>
 
+      ${onToggleCompare ? html`
+        <button
+          className=${'btn btn-ghost' + (compareMode ? ' btn-active' : '')}
+          onClick=${onToggleCompare}
+          style=${{ width: '100%', marginBottom: '6px' }}
+        >⊞ Compare Mode</button>
+      ` : null}
       <button className="btn btn-reset" onClick=${onReset}>↺ Reset All</button>
     </aside>
   `;
