@@ -99,7 +99,9 @@ constants.js     — IMAGE_SIZE=512, EARTH_RADIUS_KM=6371, TELESCOPE_COLORS[17],
                    ARRAY_PRESETS {'EHT 2017':8, 'EHT 2022':11, 'ngEHT Phase 1':17},
                    STATION_SEFD (per-station Jy at 230 GHz: ALMA=94, NOEMA=700, …, SMT=17100, SPT=19300),
                    BHEX_PRESET (type:'space', alt 26562 km, inc 86°, RAAN 277.7°, period 12h),
-                   SKY_TARGETS {M87*: dec 12.391°, Sgr A*: dec -29.008°, 3C 279: dec -5.789°, Cen A: dec -43.019°, Custom: dec null},
+                   SKY_TARGETS {M87*: dec 12.391° shadowUas 42, Sgr A*: dec -29.008° shadowUas 50,
+                                3C 279: dec -5.789° shadowUas null, Cen A: dec -43.019° shadowUas null,
+                                Custom: dec null shadowUas null},
                    INFO (tooltip text keyed by panel name), ISO_COUNTRY_NAMES (numeric→display)
 uvCompute.js     — latLonToECEF, computeBaseline, computeSatelliteECEF (Keplerian orbit → ECEF),
                    baselineToUV (TMS eq 4.1),
@@ -218,10 +220,11 @@ Passed as prop to ContourMap for μas axis labels.
 - `uvPoints` — current UV sample coordinates (pixel space, FOV-scaled — passed to worker)
 - `stationPairs` — `[{a, b}]` parallel to uvPoints — station name pairs for per-baseline SEFD noise
 - `uvPointsGl` — current UV sample coordinates in Gλ (display only — passed to UVMap)
-- `controls` — all slider/toggle values (noise, frequency, duration, declination [default 12.391 = M87*], method, dishDiameter, fovMuas [default 80], sourceFraction [default 0.50])
+- `controls` — all slider/toggle values (noise, frequency, duration, declination [default 12.391 = M87*], method, dishDiameter, fovMuas [default 80], sourceFraction [default 0.50 — only used when selectedTarget=Custom])
 - `selectedPreset` — current image preset key (blackhole/wfu-seal)
 - `selectedArrayPreset` — current array preset name ('EHT 2017' | 'EHT 2022' | 'ngEHT Phase 1')
-- `selectedTarget` — sky target name ('M87*' | 'Sgr A*' | '3C 279' | 'Cen A' | 'Custom'); selecting a named target auto-sets `controls.declination`
+- `selectedTarget` — sky target name ('M87*' | 'Sgr A*' | '3C 279' | 'Cen A' | 'Custom'); auto-sets `controls.declination` for named targets
+- `effectiveSourceFraction` — useMemo: `shadowUas/fovMuas` for named targets with known shadow; falls back to `controls.sourceFraction` for Custom/null-shadow targets. Never stored in state.
 - `beamDims` — `{ sigmaU, sigmaV, pa }` from latest worker result; passed to ContourMap for ellipse rendering
 - `physicsNotesOpen`, `citationOpen` — modal state
 - `bhexAdded` — computed (not state): `telescopes.some(t => t.name === 'BHEX')`
@@ -245,6 +248,8 @@ GitHub Pages from `main` branch root. Push to `main` = live within ~60 seconds.
 ---
 
 ## Last Updated
+
+2026-04-24 — S8 complete: physically correct source angular size. effectiveSourceFraction useMemo in App.js; SKY_TARGETS.shadowUas (M87*=42, Sgr A*=50, others null); SOURCE SIZE slider hidden for named targets; read-only info line shows shadowUas and % of FOV.
 
 2026-04-23 — Four-session physics+display upgrade complete (S4/S5/S6/S7):
   S4: worker.js: elliptical CLEAN restore beam (dual-axis PSF scan → sigmaU/sigmaV); ContourMap: beam ellipse uses measured sigmaU/sigmaV props; App.js: beamDims state

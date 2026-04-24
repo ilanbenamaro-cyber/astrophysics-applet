@@ -21,9 +21,20 @@
 > S2 `c87b715`: Physical beam taper (1.02λ/D), noise-floor CLEAN (3×RMS), per-baseline SEFD noise
 > S3 `1f9682c`: BHEX space telescope, Keplerian orbit UV, globe satellite rendering
 
-**Phase 2: BLOCKED** — pending meeting with Prof. Cárdenas-Avendaño on angular size
-> Do not implement any Phase 2 features until the blocker is resolved.
-> The three-session physics upgrade was orthogonal to Phase 2 — it did not unblock Phase 2.
+**Four-Session Display+Physics Upgrade: COMPLETE** — committed 2026-04-23 as S4/S5/S6/S7
+> S4 `79b49a9`: Elliptical CLEAN restore beam (dual-axis PSF scan → sigmaU/sigmaV)
+> S5 `ba2c024`: Elevation cutoffs (10°) — SPT excluded at M87*, GLT excluded at Sgr A*
+> S6 `6f74122`: Axis tick fix, baseline stats in StatusBar, modal updates (SEFD/BHEX/ngEHT refs)
+> S7 `c938dca`: Sky target selector — M87*, Sgr A*, 3C 279, Cen A, Custom; auto-sets declination
+
+**S8: COMPLETE** — committed 2026-04-24 as `5a002b6`
+> feat(vlbi-react): S8 — physically correct source angular size (M87* 42μas, Sgr A* 50μas)
+> Angular size blocker RESOLVED. effectiveSourceFraction = shadowUas/fovMuas for named targets.
+> SOURCE SIZE slider hidden for named targets; shown for Custom only.
+
+**Phase 2: UNBLOCKED** — angular size blocker resolved 2026-04-24
+> Prof. Cárdenas-Avendaño approved approach: sourceFraction = shadowUas / fovMuas
+> Phase 2 features can now proceed — see WHAT TO DO NEXT below.
 
 ---
 
@@ -51,11 +62,7 @@ Push to `main` → live within ~60 seconds.
 
 ## OPEN BLOCKERS
 
-**1. Angular size** — source always fills the entire FOV regardless of any source size parameter. This is physically incorrect. A radio source at a given angular size should subtend a specific angle in the image.
-
-- This blocks Phase 2 features: source size slider, multi-component sources, physically-scaled reconstruction, μas-accurate displays.
-- Do not implement Phase 2 until this is resolved.
-- Resolution requires a meeting with Prof. Cárdenas-Avendaño.
+**1. Angular size** — RESOLVED 2026-04-24 (S8). Named targets now use physically correct source size: M87* 42 μas, Sgr A* 50 μas. effectiveSourceFraction = shadowUas/fovMuas, auto-rescales with FOV. Phase 2 is unblocked.
 
 **2. IMAGE_SIZE = N** — RESOLVED for N=512. N=512 benchmarked at 414–690ms CLEAN (acceptable for demo). IMAGE_SIZE is now permanently 512 in constants.js. N=1024 question deferred to Alejandro meeting — only needed if beam must reach 8+ pixels at M87* physical scale.
 
@@ -63,29 +70,31 @@ Push to `main` → live within ~60 seconds.
 
 ## WHAT'S WORKING
 
-Full VLBI simulation pipeline + three-session physics upgrade (S1/S2/S3):
+Full VLBI simulation pipeline — S1 through S8 complete:
 - 3D globe (Three.js) for telescope placement by globe click or array preset load
-- **Array presets**: EHT 2017 (8 stations), EHT 2022 (11), ngEHT Phase 1 (17) — dropdown + Load Array button; STATION_SEFD table at 230 GHz
-- **BHEX space telescope**: + BHEX Satellite button; Keplerian orbit (alt 26562 km, inc 86°); gold sphere + orbital ring on globe; UV extends to ~35 Gλ vs ~10 Gλ EHT-only
+- **Array presets**: EHT 2017 (8 stations), EHT 2022 (11), ngEHT Phase 1 (17); STATION_SEFD table
+- **BHEX space telescope**: Keplerian orbit UV, globe satellite rendering; UV extends to ~35 Gλ
 - UV coverage synthesis (TMS eq. 4.1, conjugate symmetry); ground-ground and ground-space baselines
-- Web Worker for off-main-thread reconstruction (CLEAN, Max Entropy, dirty-only)
+- **Elevation cutoffs**: 10° minimum per telescope per HA step — SPT excluded at M87*, GLT at Sgr A*
+- Web Worker: CLEAN (elliptical restore beam from PSF), Max Entropy, dirty-only
 - **Physical beam taper**: FWHM = 1.02λ/D; fwhm_px = (fwhm_rad/fovRad)×N
-- **CLEAN stopping**: 3×noiseRms (outer 10% border estimator) — standard radio astronomy practice
-- **Per-baseline SEFD noise**: σ ∝ sqrt(SEFD_i × SEFD_j)/sefdGeomMean × visRms (ALMA 0.15×, SMT/SPT 2.1×)
-- ContourMap: viridis colormap, marching squares, beam ellipse, adaptive DR thresholds, HTML overlay labels
+- **CLEAN stopping**: 3×noiseRms (outer 10% border estimator)
+- **Per-baseline SEFD noise**: σ ∝ sqrt(SEFD_i × SEFD_j)/sefdGeomMean × visRms
+- **Elliptical restore beam**: dual-axis PSF scan → sigmaU/sigmaV; displayed in ContourMap
+- **Sky target selector**: M87*, Sgr A*, 3C 279, Cen A, Custom — auto-sets declination
+- **Physically correct source size**: M87* 42 μas, Sgr A* 50 μas; effectiveSourceFraction = shadowUas/fovMuas; auto-scales with FOV
+- ContourMap: viridis colormap, marching squares, HTML overlays, axis ticks ±FOV/2 and ±FOV/4
+- StatusBar: baseline stats (km + Gλ); PhysicsNotesModal: SEFD + BHEX sections; CitationModal: conditional refs
 - Tour, A11y panel, Physics Notes modal, Citation modal
-- Angular resolution display (μas), info tooltips, contour overlays
 
 ---
 
 ## WHAT TO DO NEXT
 
-1. **Push to main** — `git push origin main` to deploy three-session physics upgrade to GitHub Pages
-2. **Get Alejandro's answers to blocking physics questions before any Phase 2 implementation** (see MEMORY.md)
-3. **Schedule/attend meeting with Prof. Cárdenas-Avendaño** — angular size is the Phase 2 blocker
-4. **Phase 2 feature list is TBD** from that meeting — do not spec or build Phase 2 in advance
-5. If user asks for small improvements to existing features (UI polish, copy tweaks, bug fixes) — those are safe to implement without waiting for the meeting
-6. **Knowledge base is current as of 2026-04-22** — synced post three-session physics upgrade
+1. **Phase 2 is now unblocked** — angular size resolved in S8. Phase 2 features can proceed with Alejandro sign-off.
+2. **Discuss Phase 2 scope with Prof. Cárdenas-Avendaño** — what features are next? Multi-component sources? Dynamic range metrics? Source structure variations?
+3. **INFO.sourceSize tooltip** in constants.js is stale — it still references the old 538 μas / 25% / 134 μas text. Update to reflect the new 80 μas / physically-derived approach.
+4. **Knowledge base is current as of 2026-04-24** — synced post S8.
 
 ---
 
@@ -155,6 +164,7 @@ constants.js ─ IMAGE_SIZE, EARTH_RADIUS_KM, TELESCOPE_COLORS, EHT_PRESETS, INF
 
 ## LAST UPDATED
 
+2026-04-24 — S8 complete (angular size blocker resolved); Phase 2 unblocked; all sections updated
 2026-04-22 — Three-session physics upgrade complete (S1/S2/S3); WHERE WE ARE, WHAT'S WORKING, WHAT TO DO NEXT, LAST SIGNIFICANT COMMITS all updated
 2026-04-20 — fovMuas default 538→80 (M87* physical scale); UV display now uses independent Gλ pipeline (computeUVPointsGl); UVMap auto-scales to UV extent in Gλ; last commits updated
 2026-04-16 — N=512 benchmark resolved; IMAGE_SIZE permanently 512; sourceFraction default 0.50; contour boundary fix; last commits updated

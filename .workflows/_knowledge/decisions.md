@@ -315,6 +315,31 @@ TRIGGERS_REVIEW_IF: Multiple space telescopes added at different altitudes — w
 
 ---
 
+### Physically correct source angular size: effectiveSourceFraction = shadowUas / fovMuas
+DATE: 2026-04-24
+LAST_VERIFIED: 2026-04-24
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: Source angular size for named targets is derived as `effectiveSourceFraction = shadowUas / fovMuas`, clamped to [0.05, 0.95]. This is a `useMemo` in App.js, never stored in state. `controls.sourceFraction` is preserved for the Custom target path and the reset handler.
+RATIONALE: Physical radio source sizes are fixed angular quantities (M87* shadow = 42 μas, Sgr A* = 50 μas per EHT 2019/2022). The source must occupy the correct fraction of the FOV to be scientifically defensible at a Harvard EHT talk. Deriving it from shadowUas/fovMuas makes it automatically correct at any FOV, which eliminates the "source fills entire FOV" artifact that was Phase 2's primary blocker. Approved by Prof. Alejandro Cárdenas-Avendaño.
+ALTERNATIVES_REJECTED: Static sourceFraction per target (doesn't auto-scale with FOV); keeping user slider for all targets (physically wrong for named sources).
+TRIGGERS_REVIEW_IF: Shadow size measurements are revised by EHT publications (update shadowUas in SKY_TARGETS); new named target added (must include shadowUas or null).
+
+---
+
+### SOURCE SIZE slider hidden for named targets; shown only for Custom
+DATE: 2026-04-24
+LAST_VERIFIED: 2026-04-24
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: ControlsPanel.js shows the SOURCE SIZE range slider only when `selectedTarget === 'Custom'`. For named targets with `shadowUas !== null`, a read-only info line shows `"Source: N μas (X% of FOV)"`. For named targets with `shadowUas === null` (3C 279, Cen A — point-like/extended), neither slider nor info line is shown.
+RATIONALE: Exposing a source size slider for physically constrained targets (M87*, Sgr A*) would let users set scientifically wrong values — incompatible with the Harvard EHT talk standard. Point sources (3C 279) have no meaningful shadow size to display.
+TRIGGERS_REVIEW_IF: A named target is added that has a range of plausible shadow sizes (would warrant a "shadow uncertainty" display rather than a fixed value).
+
+---
+
 ## Contradiction Scanner
 
 Claude runs this check when adding a new decision:

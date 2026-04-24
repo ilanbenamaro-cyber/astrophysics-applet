@@ -32,14 +32,15 @@ IMPLICATION: Any future label added to ContourMap must use an HTML overlay eleme
 
 ---
 
-### Phase 2 blocked on angular size
+### Phase 2 angular size blocker — RESOLVED 2026-04-24
 DATE: 2026-04-12
+UPDATED: 2026-04-24
 CATEGORY: workflow
 APPLIES_TO: vlbi-react/ — Phase 2 features
 
-LEARNING: Source always fills full FOV regardless of any source size parameter. Not physically correct. Phase 2 features must not be implemented until this is resolved with Prof. Cárdenas-Avendaño.
-EVIDENCE: Prof. discussion identified this as the fundamental physics blocker for Phase 2 (source angular size → μas scale → physically correct FOV).
-IMPLICATION: If user asks for Phase 2 features (source size slider, multi-component sources, etc.), flag this blocker before implementing anything.
+LEARNING: Angular size blocker resolved in S8. `effectiveSourceFraction = shadowUas / fovMuas` for named targets (M87* 42 μas, Sgr A* 50 μas). Phase 2 features are now unblocked.
+EVIDENCE: S8 commit `5a002b6` — verified in browser: M87* shows "Source: 42 μas (52.5% of FOV)", Sgr A* shows "Source: 50 μas (62.5% of FOV)".
+IMPLICATION: Phase 2 features can proceed with Alejandro sign-off. No longer a blocker.
 
 ---
 
@@ -214,7 +215,19 @@ IMPLICATION: Never pass `uvPoints` (pixel space) to UVMap. Always pass `uvPoints
 
 ---
 
+### effectiveSourceFraction is derived, never stored in state
+DATE: 2026-04-24
+CATEGORY: pattern
+APPLIES_TO: vlbi-react/js/App.js
+
+LEARNING: `effectiveSourceFraction` is a `useMemo` computed from `SKY_TARGETS[selectedTarget].shadowUas / controls.fovMuas`. It is never stored in state. `controls.sourceFraction` remains in state only for the Custom target path and the reset handler. This separation keeps the controls reset handler clean and avoids stale state when switching between targets.
+EVIDENCE: S8 implementation — passing effectiveSourceFraction as prop through AppSidebar → ControlsPanel confirms the pattern works without state pollution.
+IMPLICATION: Any future derived-from-target value should follow this pattern: useMemo in App.js, prop-drilled, never setState.
+
+---
+
 ## Last Updated
+2026-04-24 — Angular size blocker resolved; effectiveSourceFraction pattern added
 2026-04-20 — Added UV display pipeline independence pattern
 2026-04-16 — Added N=512 benchmark result and contour boundary artifact pattern
 2026-04-16 — Added Stop hook fix entry: primer.md rewrite moved to /handoff, claude -p removed from Stop hook
