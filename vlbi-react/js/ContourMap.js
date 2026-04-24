@@ -161,7 +161,7 @@ const CONTOUR_LEVELS = [
 // ── ContourMap ────────────────────────────────────────────────────────────────
 export function ContourMap({ dirtyData, restoredData, N, angularResolution, fovMuas, controls,
                              onOpenInfo, beamSigmaU = 2, beamSigmaV = 2, beamPA = 0,
-                             dynamicRange = 0 }) {
+                             dynamicRange = 0, onExportFITS = null }) {
   const [displayMode, setDisplayMode]   = useState('dirty');
   const [stats, setStats]               = useState(null);
   const [activeLevels, setActiveLevels] = useState([]);
@@ -409,6 +409,14 @@ export function ContourMap({ dirtyData, restoredData, N, angularResolution, fovM
             className=${'btn btn-xs' + (displayMode === 'dirty' ? ' btn-active' : '')}
             onClick=${() => setDisplayMode('dirty')}
           >Dirty</button>
+          ${onExportFITS ? html`
+            <button
+              className="btn btn-xs"
+              onClick=${onExportFITS}
+              disabled=${!restoredData}
+              title="Export reconstruction as FITS file with WCS headers"
+            >Export FITS</button>
+          ` : null}
           <${InfoTooltip} infoKey="contourmap" onOpen=${onOpenInfo} />
         </div>
       </div>

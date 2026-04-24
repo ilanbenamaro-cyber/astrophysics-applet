@@ -5,6 +5,7 @@ import { IMAGE_SIZE, TELESCOPE_COLORS, EHT_PRESETS, ARRAY_PRESETS, STATION_SEFD,
 import { computeUVPoints, computeUVPointsGl, computeUVFill, computeBaseline,
          latLonToECEF, computeSatelliteECEF } from './uvCompute.js';
 import { loadImagePresetAsync } from './presets.js';
+import { exportFITS } from './fitsExport.js';
 import { Globe } from './Globe.js';
 import { InfoTooltip } from './InfoTooltip.js';
 import { InfoModal } from './InfoModal.js';
@@ -336,6 +337,11 @@ export function App() {
     setRestored(null);
   }
 
+  const handleExportFITS = useCallback(() => {
+    if (!restored) return;
+    exportFITS(restored, IMAGE_SIZE, controls, selectedTarget, beamDims);
+  }, [restored, controls, selectedTarget, beamDims]);
+
   const angularRes = useMemo(() => {
     if (telescopes.length < 2) return null;
     let maxKm = 0;
@@ -567,6 +573,7 @@ export function App() {
               beamSigmaV=${beamDims.sigmaV}
               beamPA=${beamDims.pa}
               dynamicRange=${dynamicRange}
+              onExportFITS=${handleExportFITS}
             />
           </section>
         </aside>
