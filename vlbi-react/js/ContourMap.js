@@ -160,7 +160,8 @@ const CONTOUR_LEVELS = [
 
 // ── ContourMap ────────────────────────────────────────────────────────────────
 export function ContourMap({ dirtyData, restoredData, N, angularResolution, fovMuas, controls,
-                             onOpenInfo, beamSigmaU = 2, beamSigmaV = 2, beamPA = 0 }) {
+                             onOpenInfo, beamSigmaU = 2, beamSigmaV = 2, beamPA = 0,
+                             dynamicRange = 0 }) {
   const [displayMode, setDisplayMode]   = useState('dirty');
   const [stats, setStats]               = useState(null);
   const [activeLevels, setActiveLevels] = useState([]);
@@ -232,11 +233,10 @@ export function ContourMap({ dirtyData, restoredData, N, angularResolution, fovM
     const madSigma = 1.4826 * absDevs[Math.floor(absDevs.length / 2)];
     // If sigma is unrealistically large (>10% of peak, e.g. noiseless simulation
     // where border still contains sidelobe energy), floor it to 1% of peak.
-    const safeSigma    = (isFinite(madSigma) && madSigma > 0 && madSigma < maxV * 0.1)
+    const safeSigma = (isFinite(madSigma) && madSigma > 0 && madSigma < maxV * 0.1)
       ? madSigma
       : (maxV > 0 ? maxV * 0.01 : 0);
-    const dynamicRange = safeSigma > 0 ? maxV / safeSigma : (maxV > 0 ? Infinity : 0);
-    const dataRange    = maxV - minV || 1;
+    const dataRange = maxV - minV || 1;
 
     // Helper: map a data value to its x position on the inset colorbar
     const cbX = (v) => 8 + Math.max(0, Math.min(DST - 16, (v - minV) / dataRange * (DST - 16)));
@@ -371,7 +371,7 @@ export function ContourMap({ dirtyData, restoredData, N, angularResolution, fovM
     ctx.restore();
 
     setStats({
-      minV, maxV, sigma: safeSigma, dynamicRange,
+      minV, maxV, sigma: safeSigma,
       cbMin:  fmtVal(minV),
       cbMax:  fmtVal(maxV),
       cbQ1:   fmtVal(minV + dataRange * 0.25),
@@ -382,8 +382,8 @@ export function ContourMap({ dirtyData, restoredData, N, angularResolution, fovM
     setActiveLevels(passed);
   }, [dirtyData, restoredData, displayMode, N, controls.frequency]);
 
-  const drText = stats
-    ? (!isFinite(stats.dynamicRange) ? '>1000:1' : stats.dynamicRange.toFixed(0) + ':1')
+  const drText = dynamicRange > 0
+    ? (!isFinite(dynamicRange) ? '>1000:1' : dynamicRange.toFixed(0) + ':1')
     : '—';
 
   const statsText = stats

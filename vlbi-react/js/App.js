@@ -14,6 +14,7 @@ import { UVMap } from './UVMap.js';
 import { ImageCanvas, OriginalImagePanel } from './ImageCanvas.js';
 import { ContourMap } from './ContourMap.js';
 import { StatusBar } from './StatusBar.js';
+import { MetricsPanel } from './MetricsPanel.js';
 import { AppSidebar } from './AppSidebar.js';
 import { A11yPanel } from './A11yPanel.js';
 import { Tour } from './Tour.js';
@@ -54,6 +55,7 @@ export function App() {
   const [tourActIndex, setTourActIndex] = useState(0);
   const [status, setStatus] = useState({ msg: 'Select an image and place telescopes to begin', type: '' });
   const [isComputing, setIsComputing] = useState(false);
+  const [uvCount, setUvCount] = useState(0);
   const [beamDims, setBeamDims] = useState({ sigmaU: 2, sigmaV: 2, pa: 0 });
   const [selectedTarget, setSelectedTarget] = useState('M87*');
 
@@ -72,6 +74,7 @@ export function App() {
         if (e.data.beamSigmaU !== undefined) {
           setBeamDims({ sigmaU: e.data.beamSigmaU, sigmaV: e.data.beamSigmaV, pa: e.data.beamPA });
         }
+        setUvCount(e.data.uvCount ?? 0);
         setIsComputing(false);
         setStatus({ msg: `Reconstruction complete — ${e.data.uvCount ?? ''} UV samples`, type: 'success' });
       } else if (e.data.type === 'error') {
@@ -234,8 +237,6 @@ export function App() {
       const gs = scaledGrayscale.slice();
       const uv = uvPoints.map(p => ({ u: p.u, v: p.v }));
       const sp = stationPairs;
-      const sefdMap = {};
-      telescopes.forEach(t => { sefdMap[t.name] = STATION_SEFD[t.name] ?? 10000; });
       workerRef.current.postMessage(
         { type: 'reconstruct', id, grayscale: gs, uvPoints: uv, params: {
             N: IMAGE_SIZE,
@@ -252,7 +253,7 @@ export function App() {
       );
     }, 100);
     return () => clearTimeout(computeTimerRef.current);
-  }, [uvPoints, stationPairs, scaledGrayscale, controls.noise, controls.method, controls.dishDiameter, controls.frequency, telescopes]);
+  }, [uvPoints, stationPairs, scaledGrayscale, controls.noise, controls.method, controls.dishDiameter, controls.frequency, sefdMap]);
 
   const IMAGE_PRESETS = { 'blackhole': '../assets/black-hole.png', 'wfu-seal': '../assets/wfu-seal.png' };
 
@@ -382,6 +383,43 @@ export function App() {
     return { maxKm, maxGl, minGl };
   }, [telescopes, controls.frequency]);
 
+  const sefdMap = useMemo(() => {
+    const m = {};
+    telescopes.forEach(t => { m[t.name] = STATION_SEFD[t.name] ?? 10000; });
+    return m;
+  }, [telescopes]);
+
+  const dynamicRange = useMemo(() => {
+    if (!restored || restored.length === 0) return 0;
+    let maxV = 0;
+    for (let i = 0; i < restored.length; i++) if (restored[i] > maxV) maxV = restored[i];
+    if (maxV === 0) return 0;
+    const Nm = IMAGE_SIZE;
+    const margin = Math.floor(Nm * 0.1);
+    const border = [];
+    for (let r = 0; r < Nm; r++) {
+      for (let c = 0; c < Nm; c++) {
+        if (r < margin || r >= Nm - margin || c < margin || c >= Nm - margin)
+          border.push(restored[r * Nm + c]);
+      }
+    }
+    const sorted = border.slice().sort((a, b) => a - b);
+    const med = sorted[Math.floor(sorted.length / 2)];
+    const absDevs = border.map(v => Math.abs(v - med)).sort((a, b) => a - b);
+    const madSigma = 1.4826 * absDevs[Math.floor(absDevs.length / 2)];
+    const safeSigma = (isFinite(madSigma) && madSigma > 0 && madSigma < maxV * 0.1)
+      ? madSigma : (maxV > 0 ? maxV * 0.01 : 0);
+    return safeSigma > 0 ? maxV / safeSigma : 0;
+  }, [restored]);
+
+  const beamFwhm = useMemo(() => {
+    const pixelScale = controls.fovMuas / IMAGE_SIZE;
+    return {
+      major: beamDims.sigmaU * 2.355 * pixelScale,
+      minor: beamDims.sigmaV * 2.355 * pixelScale,
+    };
+  }, [beamDims, controls.fovMuas]);
+
   const restoredLabel = controls.method === 'clean' ? 'CLEAN'
     : controls.method === 'mem' ? 'Max Entropy'
     : 'Restored';
@@ -457,6 +495,14 @@ export function App() {
         <main id="tour-globe" className="globe-wrapper" aria-label="Main visualization — 3D interactive globe">
           <${Globe} telescopes=${telescopes} onTelescopeAdd=${handleTelescopeAdd} showCountryLabels=${showCountryLabels} reducedMotion=${a11y.reducedMotion} tourActive=${tourActive} />
           <${StatusBar} status=${status} isComputing=${isComputing} baselineStats=${baselineStats} />
+          <${MetricsPanel}
+            beamFwhm=${beamFwhm}
+            dynamicRange=${dynamicRange}
+            uvFill=${uvFill}
+            uvCount=${uvCount}
+            baselineStats=${baselineStats}
+            angularRes=${angularRes}
+          />
         </main>
 
         <aside className="right-panel" aria-label="Analysis outputs">
@@ -501,6 +547,7 @@ export function App() {
               beamSigmaU=${beamDims.sigmaU}
               beamSigmaV=${beamDims.sigmaV}
               beamPA=${beamDims.pa}
+              dynamicRange=${dynamicRange}
             />
           </section>
         </aside>
