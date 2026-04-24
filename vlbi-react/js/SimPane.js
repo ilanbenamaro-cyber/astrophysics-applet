@@ -8,12 +8,11 @@ import { ContourMap } from './ContourMap.js';
 import { StatusBar } from './StatusBar.js';
 import { MetricsPanel } from './MetricsPanel.js';
 import { ControlsPanel } from './ControlsPanel.js';
+import { TelescopeList } from './TelescopeList.js';
 import { InfoTooltip } from './InfoTooltip.js';
 
 export function SimPane({ sim, onOpenInfo, label, reducedMotion = false }) {
-  const restoredLabel = sim.controls.method === 'clean' ? 'CLEAN'
-    : sim.controls.method === 'mem' ? 'Max Entropy'
-    : 'Restored';
+  const [showTels, setShowTels] = useState(false);
 
   return html`
     <div className="sim-pane">
@@ -22,14 +21,17 @@ export function SimPane({ sim, onOpenInfo, label, reducedMotion = false }) {
         <select
           className="preset-select"
           value=${sim.selectedArrayPreset}
-          onChange=${e => sim.setSelectedArrayPreset(e.target.value)}
+          onChange=${e => {
+            const v = e.target.value;
+            sim.setSelectedArrayPreset(v);
+            sim.handleLoadArrayPreset(v);
+          }}
           style=${{ flex: '1', minWidth: '0' }}
         >
           <option value="EHT 2017">EHT 2017 (8)</option>
           <option value="EHT 2022">EHT 2022 (11)</option>
           <option value="ngEHT Phase 1">ngEHT Ph1 (17)</option>
         </select>
-        <button className="btn btn-primary" style=${{ flexShrink: 0 }} onClick=${sim.handleLoadArrayPreset}>Load</button>
         <select
           className="preset-select"
           value=${sim.selectedTarget}
@@ -70,6 +72,32 @@ export function SimPane({ sim, onOpenInfo, label, reducedMotion = false }) {
         />
       </div>
 
+      <div className="sim-pane-telescope-section">
+        <button
+          className="btn btn-ghost btn-xs"
+          style=${{ width: '100%', justifyContent: 'space-between', padding: '6px 12px' }}
+          onClick=${() => setShowTels(s => !s)}
+        >
+          <span>Telescopes (${sim.telescopes.length})</span>
+          <span>${showTels ? '▲' : '▼'}</span>
+        </button>
+        ${showTels ? html`
+          <div style=${{ padding: '0 12px 8px' }}>
+            <button
+              className=${'btn btn-xs bhex-button' + (sim.bhexAdded ? ' bhex-added' : '')}
+              onClick=${sim.handleAddBHEX}
+              disabled=${sim.bhexAdded}
+              style=${{ width: '100%', marginBottom: '6px' }}
+            >${sim.bhexAdded ? 'BHEX Added ✓' : '＋ BHEX Satellite'}</button>
+            <${TelescopeList}
+              telescopes=${sim.telescopes}
+              onRemove=${sim.handleTelescopeRemove}
+              onToggleVisibility=${sim.handleToggleVisibility}
+            />
+          </div>
+        ` : null}
+      </div>
+
       <div className="sim-pane-outputs">
         <div className="panel-section">
           <h2>UV Coverage <${InfoTooltip} infoKey="uvmap" onOpen=${onOpenInfo} /></h2>
@@ -96,7 +124,7 @@ export function SimPane({ sim, onOpenInfo, label, reducedMotion = false }) {
             <${ImageCanvas}
               data=${sim.restored}
               N=${IMAGE_SIZE}
-              label=${restoredLabel}
+              label="CLEAN"
               infoKey="restored"
               onOpenInfo=${onOpenInfo}
             />
@@ -113,7 +141,6 @@ export function SimPane({ sim, onOpenInfo, label, reducedMotion = false }) {
             beamSigmaV=${sim.beamDims.sigmaV}
             beamPA=${sim.beamDims.pa}
             dynamicRange=${sim.dynamicRange}
-            onExportFITS=${sim.handleExportFITS}
           />
         </div>
       </div>

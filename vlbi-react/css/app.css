@@ -532,6 +532,26 @@ input[type="range"]::-moz-range-thumb {
 }
 .btn-ghost:hover { border-color: var(--accent-amber); color: var(--text-primary); }
 .btn-ghost.btn-active { background: var(--accent-teal); color: #000; border-color: var(--accent-teal); font-weight: 600; }
+.btn-compare {
+  width: 100%;
+  padding: 10px 16px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.btn-compare.active {
+  border-color: var(--accent-teal);
+  color: var(--accent-teal);
+}
+.btn-compare:hover {
+  border-color: var(--accent-amber);
+  color: var(--text-primary);
+}
 .btn-reset {
   margin: 12px 16px;
   background: var(--bg-2);
@@ -1039,6 +1059,10 @@ input[type="range"]::-moz-range-thumb {
 }
 .sim-pane-controls {
   padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-1);
+}
+.sim-pane-telescope-section {
   border-bottom: 1px solid var(--border);
   background: var(--bg-1);
 }

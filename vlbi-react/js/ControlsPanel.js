@@ -27,29 +27,9 @@ export function ControlsPanel({ controls, onChange, onOpenInfo, selectedTarget =
     ? sliders.filter(s => s.key !== 'declination')
     : sliders;
 
-  const methods = [
-    { key: 'dirty', label: 'Dirty Only'  },
-    { key: 'mem',   label: 'Max Entropy' },
-    { key: 'clean', label: 'CLEAN'       },
-  ];
-
   const target = SKY_TARGETS[selectedTarget];
 
   return html`<div>
-    <div className="control-label" style=${{ marginBottom: '6px' }}>
-      Method <${InfoTooltip} infoKey="method" onOpen=${onOpenInfo} />
-    </div>
-    <div className="method-row">
-      ${methods.map(m => html`
-        <button
-          key=${m.key}
-          className=${'method-btn' + (controls.method === m.key ? ' selected' : '')}
-          onClick=${() => onChange('method', m.key)}
-          aria-pressed=${controls.method === m.key}
-        >${m.label}</button>
-      `)}
-    </div>
-
     <div className="control-row">
       <div className="control-label" style=${{ width: '100%' }}>
         Target <${InfoTooltip} infoKey="declination" onOpen=${onOpenInfo} />

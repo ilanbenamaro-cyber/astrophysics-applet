@@ -79,10 +79,6 @@ export function App() {
   }, [compareMode, left.handleClearTelescopes, left.handleTelescopeAdd, left.handleLoadDefaultEHT,
       left.setControls, left.handlePresetSelect]);
 
-  const restoredLabel = left.controls.method === 'clean' ? 'CLEAN'
-    : left.controls.method === 'mem' ? 'Max Entropy'
-    : 'Restored';
-
   return html`
     <div className="app">
       <header className="header" style=${{ position: 'relative' }}>
@@ -215,7 +211,7 @@ export function App() {
                 <${ImageCanvas}
                   data=${left.restored}
                   N=${IMAGE_SIZE}
-                  label=${restoredLabel}
+                  label="CLEAN"
                   infoKey="restored"
                   onOpenInfo=${setInfoKey}
                 />
@@ -232,7 +228,6 @@ export function App() {
                 beamSigmaV=${left.beamDims.sigmaV}
                 beamPA=${left.beamDims.pa}
                 dynamicRange=${left.dynamicRange}
-                onExportFITS=${left.handleExportFITS}
               />
             </section>
           </aside>

@@ -161,7 +161,7 @@ const CONTOUR_LEVELS = [
 // ── ContourMap ────────────────────────────────────────────────────────────────
 export function ContourMap({ dirtyData, restoredData, N, angularResolution, fovMuas, controls,
                              onOpenInfo, beamSigmaU = 2, beamSigmaV = 2, beamPA = 0,
-                             dynamicRange = 0, onExportFITS = null }) {
+                             dynamicRange = 0 }) {
   const [displayMode, setDisplayMode]   = useState('dirty');
   const [stats, setStats]               = useState(null);
   const [activeLevels, setActiveLevels] = useState([]);
@@ -174,7 +174,7 @@ export function ContourMap({ dirtyData, restoredData, N, angularResolution, fovM
     const ctx = canvas.getContext('2d');
     const DST = 512;
 
-    const activeData = displayMode === 'dirty' ? dirtyData : restoredData;
+    const activeData = displayMode === 'clean' ? restoredData : dirtyData;
 
     // Placeholder when no data is available
     if (!activeData || activeData.length === 0) {
@@ -390,10 +390,6 @@ export function ContourMap({ dirtyData, restoredData, N, angularResolution, fovM
     ? `Peak: ${fmtVal(stats.maxV)} · σ: ${fmtVal(stats.sigma)} · DR: ${drText} · ${activeLevels.length} contour level${activeLevels.length !== 1 ? 's' : ''}`
     : '—';
 
-  const restoredBtnLabel = controls.method === 'clean' ? 'CLEAN'
-    : controls.method === 'mem' ? 'Max Entropy'
-    : 'Dirty';
-
   const activeLevelPcts = stats?.activeLevelPcts;
 
   return html`
@@ -402,21 +398,13 @@ export function ContourMap({ dirtyData, restoredData, N, angularResolution, fovM
         <span>Contour Map</span>
         <div className="contour-map-controls">
           <button
-            className=${'btn btn-xs' + (displayMode === 'restored' ? ' btn-active' : '')}
-            onClick=${() => setDisplayMode('restored')}
-          >${restoredBtnLabel}</button>
-          <button
             className=${'btn btn-xs' + (displayMode === 'dirty' ? ' btn-active' : '')}
             onClick=${() => setDisplayMode('dirty')}
           >Dirty</button>
-          ${onExportFITS ? html`
-            <button
-              className="btn btn-xs"
-              onClick=${onExportFITS}
-              disabled=${!restoredData}
-              title="Export reconstruction as FITS file with WCS headers"
-            >Export FITS</button>
-          ` : null}
+          <button
+            className=${'btn btn-xs' + (displayMode === 'clean' ? ' btn-active' : '')}
+            onClick=${() => setDisplayMode('clean')}
+          >CLEAN</button>
           <${InfoTooltip} infoKey="contourmap" onOpen=${onOpenInfo} />
         </div>
       </div>

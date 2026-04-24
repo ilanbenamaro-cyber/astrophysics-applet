@@ -99,8 +99,9 @@ export function useSimulation() {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleLoadArrayPreset = useCallback(() => {
-    loadEHTPresets(selectedArrayPreset);
+  const handleLoadArrayPreset = useCallback((nameOverride) => {
+    const name = (typeof nameOverride === 'string') ? nameOverride : selectedArrayPreset;
+    loadEHTPresets(name);
   }, [selectedArrayPreset]);
 
   // ── UV recomputation ────────────────────────────────────────────────────────

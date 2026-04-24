@@ -17,6 +17,14 @@ export function AppSidebar({
 }) {
   return html`
     <aside className="sidebar" aria-label="Controls and image selection">
+      ${onToggleCompare ? html`
+        <div style=${{ padding: '10px 16px 0' }}>
+          <button
+            className=${'btn btn-compare' + (compareMode ? ' active' : '')}
+            onClick=${onToggleCompare}
+          >⊞ Compare Mode</button>
+        </div>
+      ` : null}
       <section className="sidebar-section">
         <h2>Source Image <${InfoTooltip} infoKey="ground" onOpen=${onOpenInfo} /></h2>
         <${ImageGallery} selected=${selectedPreset} onSelect=${onPresetSelect} onUpload=${onFileUpload} />
@@ -33,13 +41,16 @@ export function AppSidebar({
           <select
             className="preset-select"
             value=${selectedArrayPreset}
-            onChange=${e => onArrayPresetChange(e.target.value)}
+            onChange=${e => {
+              const v = e.target.value;
+              onArrayPresetChange(v);
+              onLoadArray(v);
+            }}
           >
             <option value="EHT 2017">EHT 2017 (8 stations)</option>
             <option value="EHT 2022">EHT 2022 (11 stations)</option>
             <option value="ngEHT Phase 1">ngEHT Phase 1 (17 stations)</option>
           </select>
-          <button className="btn btn-primary" onClick=${onLoadArray}>Load Array</button>
         </div>
         ${selectedArrayPreset === 'ngEHT Phase 1' ? html`<span className="preset-note">† Reference array — coordinates approximate</span>` : null}
         <button
@@ -75,13 +86,6 @@ export function AppSidebar({
         />
       </section>
 
-      ${onToggleCompare ? html`
-        <button
-          className=${'btn btn-ghost' + (compareMode ? ' btn-active' : '')}
-          onClick=${onToggleCompare}
-          style=${{ width: '100%', marginBottom: '6px' }}
-        >⊞ Compare Mode</button>
-      ` : null}
       <button className="btn btn-reset" onClick=${onReset}>↺ Reset All</button>
     </aside>
   `;
