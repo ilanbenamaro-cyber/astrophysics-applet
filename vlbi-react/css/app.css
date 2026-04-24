@@ -514,12 +514,15 @@ input[type="range"]::-moz-range-thumb {
   font-size: var(--fs-sm);
   font-weight: 500;
   cursor: pointer;
-  transition: all 150ms ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease,
+              color 0.15s ease, transform 0.12s ease, box-shadow 0.12s ease;
   display: inline-flex;
   align-items: center;
   gap: 5px;
   font-family: var(--font);
 }
+.btn:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.35); }
+.btn:active { transform: translateY(0); box-shadow: none; }
 .btn-primary {
   background: var(--accent-teal);
   color: #000000;
@@ -1071,3 +1074,42 @@ input[type="range"]::-moz-range-thumb {
   display: flex;
   flex-direction: column;
 }
+
+/* ── P2: Smooth UI pass ─────────────────────────────────────────────────────── */
+select {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+select:hover { border-color: var(--accent-teal); }
+select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(196, 165, 85, 0.25);
+}
+
+input[type=range]::-webkit-slider-thumb {
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+input[type=range]:hover::-webkit-slider-thumb {
+  background: var(--accent-teal);
+  box-shadow: 0 0 6px rgba(196, 165, 85, 0.4);
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.metrics-panel { animation: fadeSlideIn 0.2s ease; }
+.info-modal-content { animation: fadeSlideIn 0.2s ease; }
+
+.contour-panel:hover {
+  box-shadow: inset 0 0 0 1px rgba(196, 165, 85, 0.2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn { transition: none !important; }
+  .btn:hover { transform: none; box-shadow: none; }
+  .metrics-panel, .info-modal-content { animation: none !important; }
+}
+[data-reduced-motion] .btn { transition: none !important; }
+[data-reduced-motion] .btn:hover { transform: none; box-shadow: none; }
+[data-reduced-motion] .metrics-panel,
+[data-reduced-motion] .info-modal-content { animation: none !important; }
