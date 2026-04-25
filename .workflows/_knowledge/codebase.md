@@ -76,22 +76,23 @@ App.js                        — global UI only: compareMode, infoKey, a11y, to
 │                               Instantiates left=useSimulation() + right=useSimulation()
 │                               Single-pane: uses left.* throughout
 │                               Compare mode: renders two <SimPane> components
-├── AppSidebar.js             — sidebar: image gallery, telescope list, controls, compare toggle
-│   └── ControlsPanel.js      — all sliders: noise, frequency, duration, declination, dish, method
+├── AppSidebar.js             — sidebar: compare toggle button at TOP (teal-bordered when active),
+│   │                           image gallery, telescope list, controls; array preset auto-loads on select
+│   └── ControlsPanel.js      — all sliders: noise, frequency, duration, declination, dish (no method buttons — removed P1)
 ├── Globe.js                  — Three.js 3D globe; click → telescope placement; ResizeObserver handles compact pane
-├── SimPane.js                — compact simulation pane for compare mode; receives full sim object
+├── SimPane.js                — compact simulation pane for compare mode; collapsible telescope section (with BHEX button)
 ├── UVMap.js                  — canvas: UV coverage arcs; two color modes: pair (default) and SNR
 ├── MetricsPanel.js           — collapsible panel: beam FWHM, DR, UV fill %, UV samples, baseline stats
 ├── ImageCanvas.js            — dirty/restored side-by-side canvas panels
 ├── OriginalImagePanel.js     — source image display
-├── ContourMap.js             — professional contour map (viridis, marching squares, beam ellipse, Export FITS button)
+├── ContourMap.js             — professional contour map (viridis, marching squares, beam ellipse, Dirty/CLEAN toggle)
 ├── StatusBar.js              — reconstruction status
 ├── TelescopeList.js          — list of placed telescopes with remove buttons
 ├── InfoModal.js              — panel info popup
 ├── InfoTooltip.js            — hover tooltip on ? icons
-├── Tour.js                   — guided walkthrough orchestrator (disabled in compare mode)
-│   ├── TourCard.js           — tour step card UI
-│   └── TourDiagram.js        — inline SVG diagrams for tour steps
+├── Tour.js                   — 12-act full-screen overlay tour; keyboard nav (← → Esc); autoActions per act
+│   ├── TourCard.js           — 2-column slide layout: header (dots+label+skip) + body (diagram|content) + footer
+│   └── TourDiagram.js        — 12 inline SVG diagrams (CSS-animated: Acts 2/4/8); no canvas, no ctx
 ├── A11yPanel.js              — accessibility settings panel
 ├── PhysicsNotesModal.js      — static modal: UV formula, CLEAN/MEM algorithms, EHT sources
 └── CitationModal.js          — BibTeX + APA citation generator from live sim state
@@ -228,7 +229,7 @@ Applied as Gaussian envelope to dirty image (multiplication in image space befor
 - Adaptive DR thresholds: DR<80 → 50% only; DR 80-200 → 50%+10%; DR>200 → all three levels
 - Canvas draws: viridis pixels, contour line segments, beam ellipse shape, axis tick marks, colorbar gradient, colorbar intermediate ticks, contour level tick marks above bar
 - HTML overlays (not canvas text): tick axis labels (`.ctick`), colorbar values (`.contour-cb-labels`), contour level badges (`.contour-cb-levels`), beam label (`.contour-beam-label`)
-- Default displayMode: `'dirty'`
+- Default displayMode: `'dirty'`; second button is `'clean'` (uses `restoredData`; key was renamed from `'restored'` in P1)
 
 **Angular resolution** (in `useSimulation.js` → `useMemo`):
 ```
@@ -308,6 +309,11 @@ GitHub Pages from `main` branch root. Push to `main` = live within ~60 seconds.
 ---
 
 ## Last Updated
+
+2026-04-24 — P1/P2/P3 UI polish + tour rewrite:
+  P1: compare button moved to top of AppSidebar; array preset auto-loads on select (Load Array button removed); Export FITS button removed from ContourMap UI (fitsExport.js code preserved); MEM removed from UI — ContourMap has Dirty/CLEAN toggle (state key 'clean', data source restoredData unchanged); SimPane: collapsible telescope section with BHEX inside; ControlsPanel: method-row removed entirely.
+  P2: CSS transitions (buttons lift/snap), MetricsPanel/modal fadeSlideIn, select hover border, slider thumb highlight. All transitions suppressed by media query + [data-reduced-motion]. --accent-orange: #ff9f43 added to :root.
+  P3: Tour.js rewritten (8→12 acts), TourCard.js rewritten (full-screen 2-column layout), TourDiagram.js rewritten (canvas+rAF→12 SVG functions; CSS-animated Acts 2/4/8). tour.css rewritten for full-screen overlay.
 
 2026-04-24 — S9–S12 complete:
   S9: INFO.sourceSize tooltip updated (42/50 μas). MetricsPanel.js (new). dynamicRange lifted to useSimulation useMemo (MAD). beamFwhm useMemo. uvCount state added. ContourMap accepts dynamicRange as prop.

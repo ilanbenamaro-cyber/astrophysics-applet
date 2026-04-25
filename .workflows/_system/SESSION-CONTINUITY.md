@@ -40,7 +40,12 @@
 > S12b `81b1610`: Compare mode — SimPane.js; two useSimulation instances; compare layout; AppSidebar compare toggle
 > S12c `5b65d84`: Globe ResizeObserver confirmed correct in 280px pane; .btn-ghost.btn-active CSS
 
-**ALL PLANNED SESSIONS COMPLETE — S1 through S12c**
+**UI Polish + Tour Rework: COMPLETE** — committed 2026-04-24 as P1/P2/P3
+> P1 `a090153`: compare button top, auto-load preset, remove export button, dirty/CLEAN only, telescope list in compare
+> P2 `9b1705f`: transitions, hover states, spacing polish (CSS only)
+> P3 `24ae8b6`: full-screen 12-act tour with SVG diagrams
+
+**ALL PLANNED SESSIONS COMPLETE — S1 through P3**
 
 ---
 
@@ -104,16 +109,17 @@ Full VLBI simulation pipeline — S1 through S12c complete:
 
 ## WHAT TO DO NEXT
 
-All S1–S12 sessions are complete. The simulator is feature-complete for the Harvard EHT talk.
+All S1–S12 + P1/P2/P3 are complete. The simulator is feature-complete for the Harvard EHT talk.
 
-1. **Demo session with Prof. Cárdenas-Avendaño** — walk through compare mode (EHT 2017 vs ngEHT Phase 1), FITS export, metrics panel, SNR color coding.
+1. **Demo session with Prof. Cárdenas-Avendaño** — walk through tour (12 acts, full-screen), compare mode (EHT 2017 vs ngEHT Phase 1), metrics panel, SNR color coding.
 2. **Harvard EHT talk preparation** — prepare a reference screenshot of compare mode: EHT 2017 (left) vs ngEHT Phase 1 (right), both CLEAN on M87* at 230 GHz.
 3. **Future enhancements** (no specific session planned):
    - Multi-component sources (model with multiple point sources or Gaussians)
    - Dynamic source structure (accretion disk animation)
    - Frequency-dependent source size (spectral index)
+   - Re-expose Export FITS button (code in fitsExport.js is intact — just needs button in ContourMap or toolbar)
    - These all require Alejandro sign-off before implementation.
-4. **Knowledge base is current as of 2026-04-24** — synced post S12c.
+4. **Knowledge base is current as of 2026-04-24** — synced post P3.
 
 ---
 
@@ -131,44 +137,34 @@ All S1–S12 sessions are complete. The simulator is feature-complete for the Ha
 ## LAST SIGNIFICANT COMMITS
 
 ```
-5b65d84  feat(vlbi-react): S12c — compare mode polish (.btn-ghost.btn-active CSS)
+24ae8b6  feat(vlbi-react): P3 — full-screen 12-act tour with SVG diagrams
+9b1705f  style(vlbi-react): P2 — transitions, hover states, spacing polish
+a090153  fix(vlbi-react): P1 — compare button top, auto-load preset, remove export button, dirty/CLEAN only, telescope list in compare
+08f62c8  chore: sync knowledge files post-session 2026-04-24
+5b65d84  feat(vlbi-react): S12c — compare mode polish
 81b1610  feat(vlbi-react): S12b — compare mode layout + SimPane component
 4a09670  feat(vlbi-react): S12a — extract useSimulation hook (single-pane regression clean)
 4f32794  feat(vlbi-react): S11 — FITS export with WCS headers
-940349b  feat(vlbi-react): S10 — per-baseline SNR color coding in UV coverage map
-542c7db  feat(vlbi-react): S9 — stale tooltip fix, image quality metrics panel
-c710443  chore: sync knowledge files post-session 2026-04-24
-5a002b6  feat(vlbi-react): S8 — physically correct source angular size (M87* 42μas, Sgr A* 50μas)
 ```
 
-Files modified in 2026-04-24 session — S9 (542c7db):
-- `vlbi-react/js/constants.js` — INFO.sourceSize.body updated (42/50 μas)
-- `vlbi-react/js/MetricsPanel.js` — NEW: collapsible metrics panel (beam FWHM, DR, UV fill, UV samples, max baseline, resolution)
-- `vlbi-react/js/App.js` — uvCount state; dynamicRange/beamFwhm useMemos; pairSefdMap useMemo; MetricsPanel rendered
-- `vlbi-react/js/ContourMap.js` — dynamicRange prop added; internal DR computation removed
-- `vlbi-react/css/app.css` — MetricsPanel styles added
+Files modified in P1 (a090153):
+- `vlbi-react/css/app.css` — .btn-compare, .btn-compare.active/.hover; .sim-pane-telescope-section; --accent-orange: #ff9f43 in :root
+- `vlbi-react/js/App.js` — restoredLabel removed; ImageCanvas label="CLEAN" hardcoded; onExportFITS prop removed from ContourMap
+- `vlbi-react/js/AppSidebar.js` — compare button moved to top of aside; select onChange auto-loads preset; Load Array button removed; compare button at bottom removed
+- `vlbi-react/js/ContourMap.js` — onExportFITS prop removed; displayMode 'restored'→'clean'; CLEAN button hardcoded; Export FITS button removed; restoredBtnLabel removed
+- `vlbi-react/js/ControlsPanel.js` — entire .method-row section removed (3 method-btn buttons + label + methods array)
+- `vlbi-react/js/SimPane.js` — TelescopeList import; collapsible telescope section (showTels state); BHEX button inside; no Load button; label="CLEAN" hardcoded; onExportFITS removed
+- `vlbi-react/js/useSimulation.js` — handleLoadArrayPreset accepts nameOverride (typeof string guard)
 
-Files modified in 2026-04-24 session — S10 (940349b):
-- `vlbi-react/js/UVMap.js` — snrColor function; pairSefdMap prop; snrMode toggle state; SNR draw path; toggle button
-- `vlbi-react/js/App.js` — pairSefdMap useMemo built from sefdMap + telescope ids
+Files modified in P2 (9b1705f):
+- `vlbi-react/css/app.css` — .btn transitions (lift/snap); @keyframes fadeSlideIn; .metrics-panel/.info-modal-content fade-in; select hover border + focus ring; range thumb highlight; reduced-motion suppression (media query + [data-reduced-motion])
 
-Files modified in 2026-04-24 session — S11 (4f32794):
-- `vlbi-react/js/fitsExport.js` — NEW: exportFITS function; WCS FITS binary writer
-- `vlbi-react/js/App.js` — handleExportFITS useCallback; onExportFITS prop to ContourMap
-- `vlbi-react/js/ContourMap.js` — onExportFITS prop; Export FITS button in .contour-map-controls
-
-Files modified in 2026-04-24 session — S12a (4a09670):
-- `vlbi-react/js/useSimulation.js` — NEW: all sim state/effects/memos/handlers extracted from App.js
-- `vlbi-react/js/App.js` — gutted to global UI; const sim = useSimulation(); all JSX uses sim.*
-
-Files modified in 2026-04-24 session — S12b (81b1610):
-- `vlbi-react/js/SimPane.js` — NEW: compact simulation pane (Globe+controls+UVMap+images+ContourMap)
-- `vlbi-react/js/App.js` — const left + right = useSimulation(); compareMode state; compare layout conditional; left.* refs
-- `vlbi-react/js/AppSidebar.js` — compareMode/onToggleCompare props; compare button before Reset All
-- `vlbi-react/css/app.css` — .compare-layout, .compare-divider, .sim-pane, .sim-pane-header, .sim-pane-globe, .sim-pane-controls, .sim-pane-outputs
-
-Files modified in 2026-04-24 session — S12c (5b65d84):
-- `vlbi-react/css/app.css` — .btn-ghost.btn-active style added
+Files modified in P3 (24ae8b6):
+- `vlbi-react/css/app.css` — --accent-orange added to :root
+- `vlbi-react/css/tour.css` — full rewrite: full-screen overlay, header dots, 2-column body, footer; @keyframes waveSweep/earthRotate/cleanStep; reduced-motion suppression
+- `vlbi-react/js/Tour.js` — full rewrite: TOUR_ACTS (12 acts), keyboard nav, autoActions
+- `vlbi-react/js/TourCard.js` — full rewrite: tour-header/body/footer layout; progress dots clickable
+- `vlbi-react/js/TourDiagram.js` — full rewrite: 12 SVG functions d01()–d12(); CSS-animated Acts 2/4/8; no canvas/ctx
 
 ---
 
@@ -178,21 +174,21 @@ Files modified in 2026-04-24 session — S12c (5b65d84):
 App.js ─── global UI only (compareMode, modals, a11y, tour)
 │           const left = useSimulation()   ← always instantiated
 │           const right = useSimulation()  ← always instantiated (idle when not in compare mode)
-├── AppSidebar.js ─────── sidebar (single-pane only); compare toggle button
+├── AppSidebar.js ─────── sidebar (single-pane only); compare toggle at TOP; preset auto-loads on select
 ├── Globe.js ─────────── Three.js 3D globe; ResizeObserver handles any container size
-├── SimPane.js ─────────── compact pane for compare mode (contains Globe+controls+UVMap+images)
+├── SimPane.js ─────────── compact pane for compare mode; collapsible telescope section (BHEX inside)
 ├── MetricsPanel.js ────── collapsible floating panel: beam FWHM, DR, UV fill, baselines
 ├── UVMap.js ─────────── UV coverage canvas; pair-color mode + SNR-color mode
 ├── ImageCanvas.js ───── dirty/restored canvas panels
-├── ContourMap.js ─────── viridis + marching squares + Export FITS button
+├── ContourMap.js ─────── viridis + marching squares + Dirty/CLEAN toggle (no Export FITS button in UI)
 ├── PhysicsNotesModal.js  static: UV formula, CLEAN/MEM, EHT sources (hidden in compare mode)
 ├── CitationModal.js ──── BibTeX + APA from live sim state (hidden in compare mode)
-├── Tour.js ─────────── guided walkthrough (disabled in compare mode)
+├── Tour.js ─────────── 12-act full-screen overlay tour; keyboard nav; autoActions; SVG diagrams
 └── A11yPanel.js ──────── accessibility settings (hidden in compare mode)
 
 useSimulation.js ─ custom hook. All sim state, effects, memos, handlers. Each call = one worker.
-worker.js ─ self-contained (no imports). Handles 'reconstruct' messages.
-fitsExport.js ─ exportFITS(): FITS binary writer with WCS headers.
+worker.js ─ self-contained (no imports). Handles 'reconstruct' messages. (MEM code preserved)
+fitsExport.js ─ exportFITS(): FITS binary writer with WCS headers. (Button removed from UI in P1)
 uvCompute.js ─ UV math (computeUVPoints [pixel/reconstruction], computeUVPointsGl [Gλ/display])
 constants.js ─ IMAGE_SIZE=512, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD, SKY_TARGETS, INFO
 ```
@@ -201,6 +197,7 @@ constants.js ─ IMAGE_SIZE=512, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD, 
 
 ## LAST UPDATED
 
+2026-04-24 — P1/P2/P3 complete (UI polish + tour rework); component map, commits, what to do next all updated
 2026-04-24 — S9–S12c complete (all planned sessions done); component map, what's working, what to do next all updated
 2026-04-24 — S8 complete (angular size blocker resolved); Phase 2 unblocked; all sections updated
 2026-04-22 — Three-session physics upgrade complete (S1/S2/S3); WHERE WE ARE, WHAT'S WORKING, WHAT TO DO NEXT, LAST SIGNIFICANT COMMITS all updated

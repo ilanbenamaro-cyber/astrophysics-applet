@@ -394,6 +394,44 @@ TRIGGERS_REVIEW_IF: 4D FITS (NAXIS=4, RA/Dec/frequency/Stokes) is needed for ful
 
 ---
 
+### MEM removed from UI; ContourMap has Dirty/CLEAN toggle only
+DATE: 2026-04-24
+LAST_VERIFIED: 2026-04-24
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: ControlsPanel.js no longer shows method buttons. ContourMap.js shows a two-button toggle: "Dirty" and "CLEAN" (displayMode values: `'dirty'` / `'clean'`). MEM code remains in worker.js. Export FITS button removed from ContourMap UI; `fitsExport.js` and `handleExportFITS` in useSimulation preserved.
+RATIONALE: MEM is algorithmically correct but produces visually similar output to CLEAN for demo purposes. Removing it simplifies the UI and avoids user confusion. The displayMode key was renamed from `'restored'` to `'clean'` for clarity; the data source (`restoredData` from worker) is unchanged. Export FITS is preserved in code for future use.
+ALTERNATIVES_REJECTED: Keeping MEM button behind a disclosure — adds visual noise for no educational gain at a live demo.
+TRIGGERS_REVIEW_IF: A demo scenario requires showing MEM/CLEAN comparison, or FITS export is re-added as a primary workflow.
+
+---
+
+### Tour: 12-act full-screen overlay with SVG+CSS diagrams
+DATE: 2026-04-24
+LAST_VERIFIED: 2026-04-24
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: Tour.js/TourCard.js/TourDiagram.js fully rewritten (P3). Layout: fixed full-screen overlay, 2-column body (60% SVG diagram / 40% text), progress dots, keyboard nav (← → Esc). 12 acts (was 8). All diagrams are inline SVG with CSS keyframe animations (Acts 2: waveSweep, Act 4: earthRotate, Act 8: cleanStep staggered). No canvas, no requestAnimationFrame, no ctx in TourDiagram.js.
+RATIONALE: The old bottom-anchored card with canvas diagrams was small and the canvas rAF loop was overengineered for mostly-static diagrams. Full-screen gives the SVG diagrams room to breathe and makes the tour feel like a proper physics explainer. CSS animations are trivially pauseable via `[data-reduced-motion]` and more maintainable than rAF loops. 12 acts cover the full VLBI pipeline: single dish → Fourier sampling → EHT → deconvolution → photon ring → ngEHT → BHEX → pipeline.
+CONSEQUENCES: tour.css stores all tour-specific styles (separate from app.css); SVG attributes in preact/htm use camelCase (`strokeWidth`, `textAnchor`); HTML entities don't decode in htm — use literal Unicode.
+TRIGGERS_REVIEW_IF: A demo scenario needs animated simulations inside the tour (e.g. live UV plane updating). At that point, a canvas overlay inside the SVG panel would be warranted.
+
+---
+
+### AppSidebar: compare button at top; array preset auto-loads on select
+DATE: 2026-04-24
+LAST_VERIFIED: 2026-04-24
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: Compare Mode button is at the top of the sidebar (above all sections), teal-bordered when active. The array preset `<select>` auto-triggers `onLoadArray(value)` in its onChange handler — the separate "Load Array" button is removed. `handleLoadArrayPreset` accepts a `nameOverride` string parameter; guard: `typeof nameOverride === 'string'` prevents SyntheticEvent passthrough when called without args.
+RATIONALE: Compare mode is the primary advanced feature and should be visually prominent. Auto-load on select reduces clicks and makes the preset selector behave like every other preset UI in the app. The `nameOverride` type guard is necessary because React onChange fires before state settles — the newly selected value must be passed directly, not read from state.
+TRIGGERS_REVIEW_IF: Array preset selection needs a confirmation step (e.g. "this will clear current telescopes — confirm?"). At that point, a two-step select + button flow would be warranted again.
+
+---
+
 ## Contradiction Scanner
 
 Claude runs this check when adding a new decision:

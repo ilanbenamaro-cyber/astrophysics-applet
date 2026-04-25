@@ -256,7 +256,30 @@ IMPLICATION: Any future code that needs max/min of a reconstruction-sized array 
 
 ---
 
+### SVG attributes in htm/preact use camelCase, not kebab-case
+DATE: 2026-04-24
+CATEGORY: pattern
+APPLIES_TO: vlbi-react/js/TourDiagram.js — any SVG rendered via htm template literals
+
+LEARNING: SVG attributes in preact/htm templates follow React camelCase convention: `strokeWidth`, `strokeDasharray`, `textAnchor`, `fillOpacity`, `fontSize` (via inline style). Kebab-case (`stroke-width`, `text-anchor`) is HTML/SVG attribute syntax — not used in JSX/htm. Font properties are set via `style={{ fontSize: '14px', fontFamily: ... }}` not as SVG attributes.
+EVIDENCE: TourDiagram.js P3 implementation — confirmed working in all 12 act diagrams.
+IMPLICATION: When writing SVG in any htm file, always use camelCase attribute names. If SVG renders but attributes appear ignored, check for kebab-case attributes.
+
+---
+
+### tour.css is a separate file from app.css
+DATE: 2026-04-24
+CATEGORY: pattern
+APPLIES_TO: vlbi-react/css/tour.css, vlbi-react/css/app.css
+
+LEARNING: Tour-specific CSS (overlay, header, body, footer, progress dots, SVG animation keyframes) lives in `vlbi-react/css/tour.css`, not in `app.css`. Both are loaded by `vlbi-react/index.html`. `--accent-orange` was added to `:root` in `app.css` since CSS variables must be declared on `:root`, but all `.tour-*` class rules belong in `tour.css`.
+EVIDENCE: Discovered when verifying P3 CSS changes — the plan assumed all tour CSS would go in app.css, but tour.css already existed as a separate file.
+IMPLICATION: When adding new tour styles, edit `tour.css` not `app.css`. When adding new global CSS custom properties, add to `:root` in `app.css`.
+
+---
+
 ## Last Updated
+2026-04-24 — P1/P2/P3 complete: SVG-in-htm camelCase pattern, tour.css separation pattern
 2026-04-24 — S9–S12 complete: useSimulation hook pattern, compare mode architecture, peak-finding constraint
 2026-04-24 — Angular size blocker resolved; effectiveSourceFraction pattern added
 2026-04-20 — Added UV display pipeline independence pattern
