@@ -1,604 +1,494 @@
-// TourDiagram — per-act clean vector canvas diagrams.
-// Each act gets a 400×340 canvas. Animations use timestamp-based requestAnimationFrame.
-import { html, useRef, useEffect } from './core.js';
+// TourDiagram.js — 12 SVG diagrams for the tour. No canvas, no requestAnimationFrame.
+// CSS animations (waveSweep, earthRotate, cleanStep) defined in tour.css.
+// All SVGs use viewBox="0 0 600 400". Colors are literal hex (CSS custom props unavailable in SVG attrs).
+import { html } from './core.js';
 
-// ── Helper: draw a text label ──────────────────────────────────────────────
-function label(ctx, text, x, y, { color = '#C4A555', size = 13, align = 'center' } = {}) {
-  ctx.save();
-  ctx.fillStyle = color;
-  ctx.font = `${size}px 'Inter', sans-serif`;
-  ctx.textAlign = align;
-  ctx.textBaseline = 'middle';
-  ctx.fillText(text, x, y);
-  ctx.restore();
-}
+const G   = '#C4A555';  // gold
+const AM  = '#9E7E38';  // amber
+const DIM = '#8888b0';  // dim text
+const TX  = '#e8e8f0';  // primary text
+const BG  = '#080810';  // dark bg
+const OR  = '#ff9f43';  // orange
+const PH  = '#FFD700';  // photon gold
+const BL  = '#4488cc';  // blue
+const GN  = '#44bb88';  // green
 
-// ── Helper: draw an arrow ──────────────────────────────────────────────────
-function arrow(ctx, x1, y1, x2, y2, { color = '#8888b0', width = 2 } = {}) {
-  ctx.save();
-  ctx.strokeStyle = color;
-  ctx.fillStyle = color;
-  ctx.lineWidth = width;
-  ctx.beginPath();
-  ctx.moveTo(x1, y1);
-  ctx.lineTo(x2, y2);
-  ctx.stroke();
-  const angle = Math.atan2(y2 - y1, x2 - x1);
-  const size = 9;
-  ctx.beginPath();
-  ctx.moveTo(x2, y2);
-  ctx.lineTo(x2 - size * Math.cos(angle - 0.4), y2 - size * Math.sin(angle - 0.4));
-  ctx.lineTo(x2 - size * Math.cos(angle + 0.4), y2 - size * Math.sin(angle + 0.4));
-  ctx.closePath();
-  ctx.fill();
-  ctx.restore();
-}
-
-// ── Helper: draw a sine wave ───────────────────────────────────────────────
-function sineWave(ctx, startX, endX, baseY, amplitude, phase, { color = '#C4A555', width = 2 } = {}) {
-  ctx.save();
-  ctx.strokeStyle = color;
-  ctx.lineWidth = width;
-  ctx.beginPath();
-  for (let x = startX; x <= endX; x += 2) {
-    const t = ((x - startX) / (endX - startX)) * Math.PI * 4;
-    const y = baseY + amplitude * Math.sin(t + phase);
-    x === startX ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+export function TourDiagram({ diagramId }) {
+  switch (diagramId) {
+    case 1:  return d01();
+    case 2:  return d02();
+    case 3:  return d03();
+    case 4:  return d04();
+    case 5:  return d05();
+    case 6:  return d06();
+    case 7:  return d07();
+    case 8:  return d08();
+    case 9:  return d09();
+    case 10: return d10();
+    case 11: return d11();
+    case 12: return d12();
+    default: return null;
   }
-  ctx.stroke();
-  ctx.restore();
 }
 
-// ── Helper: filled circle ──────────────────────────────────────────────────
-function filledCircle(ctx, x, y, r, fill, stroke = null) {
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
-  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
-  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.5; ctx.stroke(); }
-  ctx.restore();
+function d01() {
+  return html`<svg viewBox="0 0 600 400" width="100%" height="100%">
+    <rect width="600" height="400" fill=${BG} />
+    <line x1="300" y1="20" x2="300" y2="385" stroke="#2d2200" strokeWidth="1" />
+
+    <text x="145" y="32" textAnchor="middle" style=${{ fontSize: '13px', fontWeight: '700', fill: TX }}>Single Dish</text>
+    <path d="M 68 270 Q 145 200 222 270" fill="none" stroke=${G} strokeWidth="3" />
+    <line x1="145" y1="200" x2="145" y2="270" stroke=${G} strokeWidth="2" />
+    <circle cx="145" cy="196" r="4" fill=${G} />
+    <line x1="145" y1="196" x2="38" y2="68" stroke=${DIM} strokeWidth="1.5" strokeDasharray="5 3" />
+    <line x1="145" y1="196" x2="252" y2="68" stroke=${DIM} strokeWidth="1.5" strokeDasharray="5 3" />
+    <path d="M 93 128 A 62 62 0 0 1 197 128" fill="none" stroke=${DIM} strokeWidth="1" />
+    <text x="145" y="152" textAnchor="middle" style=${{ fontSize: '11px', fill: DIM }}>θ ≈ 2.7 arcsec</text>
+    <circle cx="145" cy="56" r="6" fill=${OR} />
+    <text x="145" y="49" textAnchor="middle" style=${{ fontSize: '10px', fill: OR }}>M87*</text>
+    <text x="145" y="305" textAnchor="middle" style=${{ fontSize: '12px', fill: TX }}>100 m dish</text>
+    <text x="145" y="322" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>λ/D = 1.3 mm / 100 m</text>
+    <text x="145" y="342" textAnchor="middle" style=${{ fontSize: '11px', fill: '#ff6b6b' }}>70,000× too blurry</text>
+
+    <text x="455" y="32" textAnchor="middle" style=${{ fontSize: '13px', fontWeight: '700', fill: TX }}>VLBI Array</text>
+    <circle cx="455" cy="198" r="85" fill="rgba(20,40,90,0.3)" stroke=${BL} strokeWidth="2" />
+    <text x="455" y="202" textAnchor="middle" style=${{ fontSize: '11px', fill: BL }}>Earth</text>
+    <circle cx="370" cy="198" r="6" fill=${G} />
+    <circle cx="540" cy="198" r="6" fill=${G} />
+    <line x1="376" y1="208" x2="534" y2="208" stroke=${G} strokeWidth="1.5" strokeDasharray="4 2" />
+    <text x="455" y="224" textAnchor="middle" style=${{ fontSize: '10px', fill: G }}>B ≈ 12,742 km</text>
+    <line x1="455" y1="113" x2="451" y2="58" stroke=${G} strokeWidth="1.5" />
+    <line x1="455" y1="113" x2="459" y2="58" stroke=${G} strokeWidth="1.5" />
+    <circle cx="455" cy="55" r="5" fill=${OR} />
+    <text x="455" y="49" textAnchor="middle" style=${{ fontSize: '10px', fill: OR }}>M87*</text>
+    <text x="455" y="82" textAnchor="middle" style=${{ fontSize: '11px', fill: G }}>θ ≈ 20 μas</text>
+    <text x="455" y="305" textAnchor="middle" style=${{ fontSize: '12px', fill: TX }}>Earth-baseline array</text>
+    <text x="455" y="322" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>λ/D⊕ = 1.3 mm / 12,742 km</text>
+    <text x="455" y="342" textAnchor="middle" style=${{ fontSize: '11px', fill: GN }}>Resolves 42 μas shadow</text>
+  </svg>`;
 }
 
-// ── Helper: stroke-only circle ────────────────────────────────────────────
-function strokeCircle(ctx, x, y, r, color, lw = 1.5, dash = []) {
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.strokeStyle = color;
-  ctx.lineWidth = lw;
-  if (dash.length) ctx.setLineDash(dash);
-  ctx.stroke();
-  ctx.restore();
+function d02() {
+  return html`<svg viewBox="0 0 600 400" width="100%" height="100%">
+    <rect width="600" height="400" fill=${BG} />
+    <text x="300" y="30" textAnchor="middle" style=${{ fontSize: '12px', fill: DIM }}>Baseline: two telescopes, one Fourier component</text>
+
+    <circle cx="300" cy="55" r="8" fill=${OR} />
+    <text x="300" y="48" textAnchor="middle" style=${{ fontSize: '10px', fill: OR }}>Radio source</text>
+
+    <line x1="100" y1="168" x2="500" y2="168" stroke="#1a1a38" strokeWidth="0.8" />
+    <line x1="100" y1="182" x2="500" y2="182" stroke="#1a1a38" strokeWidth="0.8" />
+    <line x1="100" y1="196" x2="500" y2="196" stroke="#1a1a38" strokeWidth="0.8" />
+    <line className="wave-line" x1="100" y1="175" x2="500" y2="175" stroke=${PH} strokeWidth="2.5" strokeOpacity="0.85" />
+
+    <path d="M 88 318 Q 148 272 208 318" fill="none" stroke=${G} strokeWidth="3" />
+    <line x1="148" y1="272" x2="148" y2="318" stroke=${G} strokeWidth="2" />
+    <circle cx="148" cy="268" r="5" fill=${G} />
+    <text x="148" y="350" textAnchor="middle" style=${{ fontSize: '11px', fill: TX }}>Telescope 1</text>
+
+    <path d="M 392 318 Q 452 272 512 318" fill="none" stroke=${G} strokeWidth="3" />
+    <line x1="452" y1="272" x2="452" y2="318" stroke=${G} strokeWidth="2" />
+    <circle cx="452" cy="268" r="5" fill=${G} />
+    <text x="452" y="350" textAnchor="middle" style=${{ fontSize: '11px', fill: TX }}>Telescope 2</text>
+
+    <line x1="153" y1="370" x2="447" y2="370" stroke=${DIM} strokeWidth="1.5" />
+    <line x1="153" y1="365" x2="153" y2="375" stroke=${DIM} strokeWidth="1.5" />
+    <line x1="447" y1="365" x2="447" y2="375" stroke=${DIM} strokeWidth="1.5" />
+    <text x="300" y="388" textAnchor="middle" style=${{ fontSize: '11px', fill: G }}>Baseline B → u = B/λ</text>
+
+    <line x1="148" y1="268" x2="300" y2="220" stroke=${OR} strokeWidth="1" strokeDasharray="3 2" />
+    <text x="210" y="235" textAnchor="middle" style=${{ fontSize: '10px', fill: OR }}>delay τ</text>
+
+    <rect x="480" y="55" width="105" height="85" fill="rgba(10,12,30,0.9)" stroke="#2d2200" strokeWidth="1" rx="3" />
+    <text x="532" y="73" textAnchor="middle" style=${{ fontSize: '10px', fill: G }}>UV plane</text>
+    <line x1="487" y1="97" x2="578" y2="97" stroke="#1a1a38" strokeWidth="0.5" />
+    <line x1="532" y1="60" x2="532" y2="133" stroke="#1a1a38" strokeWidth="0.5" />
+    <circle cx="555" cy="82" r="3" fill=${G} />
+    <circle cx="509" cy="112" r="3" fill=${G} fillOpacity="0.45" />
+    <text x="532" y="126" textAnchor="middle" style=${{ fontSize: '9px', fill: DIM }}>(u,v) + (−u,−v)</text>
+  </svg>`;
 }
 
-// ── Helper: stroke rectangle ──────────────────────────────────────────────
-function drawRect(ctx, x, y, w, h, stroke, lw = 2) {
-  ctx.save();
-  ctx.strokeStyle = stroke;
-  ctx.lineWidth = lw;
-  ctx.strokeRect(x, y, w, h);
-  ctx.restore();
+function d03() {
+  return html`<svg viewBox="0 0 600 400" width="100%" height="100%">
+    <rect width="600" height="400" fill=${BG} />
+    <text x="300" y="30" textAnchor="middle" style=${{ fontSize: '13px', fontWeight: '700', fill: TX }}>UV Plane — Fourier Space</text>
+
+    <rect x="65" y="48" width="470" height="300" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="4" />
+    <line x1="65" y1="198" x2="535" y2="198" stroke="#222245" strokeWidth="1" />
+    <line x1="300" y1="48" x2="300" y2="348" stroke="#222245" strokeWidth="1" />
+    <text x="528" y="212" style=${{ fontSize: '11px', fill: DIM }}>u</text>
+    <text x="306" y="62" style=${{ fontSize: '11px', fill: DIM }}>v</text>
+    <text x="305" y="213" style=${{ fontSize: '10px', fill: DIM }}>0</text>
+
+    <path d="M 120 108 Q 300 75 480 108" fill="none" stroke=${G} strokeWidth="2.5" />
+    <path d="M 120 288 Q 300 321 480 288" fill="none" stroke=${G} strokeWidth="2.5" strokeOpacity="0.45" />
+    <path d="M 148 85 Q 165 198 172 311" fill="none" stroke=${G} strokeWidth="2" strokeOpacity="0.65" />
+    <path d="M 452 85 Q 435 198 428 311" fill="none" stroke=${G} strokeWidth="2" strokeOpacity="0.3" />
+    <path d="M 198 122 Q 300 98 402 122" fill="none" stroke=${G} strokeWidth="1.8" strokeOpacity="0.75" />
+    <path d="M 198 274 Q 300 298 402 274" fill="none" stroke=${G} strokeWidth="1.8" strokeOpacity="0.35" />
+    <path d="M 108 155 Q 118 198 112 241" fill="none" stroke=${G} strokeWidth="1.2" strokeOpacity="0.5" />
+    <path d="M 492 155 Q 482 198 488 241" fill="none" stroke=${G} strokeWidth="1.2" strokeOpacity="0.25" />
+    <path d="M 235 138 Q 300 120 365 138" fill="none" stroke=${G} strokeWidth="1.5" strokeOpacity="0.55" />
+    <path d="M 235 258 Q 300 276 365 258" fill="none" stroke=${G} strokeWidth="1.5" strokeOpacity="0.28" />
+
+    <text x="300" y="372" textAnchor="middle" style=${{ fontSize: '11px', fill: DIM }}>V(u,v) = ∫∫ I(x,y) exp(−2πi(ux+vy)) dx dy</text>
+    <text x="80" y="342" style=${{ fontSize: '10px', fill: G }}>V(u,v) = V*(−u,−v)  conjugate symmetry</text>
+  </svg>`;
 }
 
-// ── Helper: filled+stroked ellipse ────────────────────────────────────────
-function filledEllipse(ctx, cx, cy, rx, ry, fill, stroke = null, lw = 1.5) {
-  ctx.save();
-  ctx.beginPath();
-  ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
-  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
-  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.stroke(); }
-  ctx.restore();
+function d04() {
+  return html`<svg viewBox="0 0 600 400" width="100%" height="100%">
+    <rect width="600" height="400" fill=${BG} />
+    <text x="165" y="30" textAnchor="middle" style=${{ fontSize: '12px', fontWeight: '700', fill: TX }}>Earth Rotation</text>
+    <text x="460" y="30" textAnchor="middle" style=${{ fontSize: '12px', fontWeight: '700', fill: TX }}>UV Arc Synthesis</text>
+    <line x1="305" y1="20" x2="305" y2="385" stroke="#2d2200" strokeWidth="1" />
+
+    <circle cx="185" cy="210" r="100" fill="rgba(20,40,90,0.25)" stroke=${BL} strokeWidth="2" />
+    <text x="185" y="214" textAnchor="middle" style=${{ fontSize: '11px', fill: BL }}>Earth</text>
+
+    <g className="earth-group">
+      <circle cx="185" cy="110" r="7" fill=${G} />
+      <circle cx="185" cy="310" r="7" fill=${G} />
+      <line x1="185" y1="117" x2="185" y2="303" stroke=${G} strokeWidth="1.5" strokeDasharray="4 3" />
+    </g>
+
+    <text x="185" y="362" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>12 h observation → full arc</text>
+
+    <rect x="328" y="55" width="248" height="270" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="4" />
+    <line x1="328" y1="190" x2="576" y2="190" stroke="#222245" strokeWidth="0.8" />
+    <line x1="452" y1="55" x2="452" y2="325" stroke="#222245" strokeWidth="0.8" />
+    <text x="568" y="200" style=${{ fontSize: '10px', fill: DIM }}>u</text>
+    <text x="457" y="68" style=${{ fontSize: '10px', fill: DIM }}>v</text>
+
+    <path d="M 352 120 Q 452 82 552 120 Q 524 190 552 260 Q 452 298 352 260 Q 380 190 352 120" fill="none" stroke=${G} strokeWidth="2.5" />
+    <path d="M 365 125 Q 452 92 539 125 Q 516 190 539 255 Q 452 288 365 255 Q 388 190 365 125" fill="none" stroke=${G} strokeWidth="1.5" strokeOpacity="0.4" />
+
+    <text x="452" y="350" textAnchor="middle" style=${{ fontSize: '10px', fill: G }}>One baseline → one elliptical arc</text>
+    <text x="452" y="366" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>28 baselines → 11,000+ UV samples</text>
+  </svg>`;
 }
 
-// ── Helper: parabolic dish via bezier ────────────────────────────────────
-function parabolicDish(ctx, cx, bottom, width, height, { color = '#C4A555', lw = 2.5 } = {}) {
-  ctx.save();
-  const left = cx - width / 2;
-  const right = cx + width / 2;
-  const top = bottom - height;
-  ctx.beginPath();
-  ctx.moveTo(left, bottom);
-  ctx.bezierCurveTo(left, top + height * 0.15, right, top + height * 0.15, right, bottom);
-  ctx.strokeStyle = color;
-  ctx.lineWidth = lw;
-  ctx.stroke();
-  ctx.restore();
-}
-
-// ── Act 1: Single-dish resolution ─────────────────────────────────────────
-function drawDish(ctx) {
-  const W = 400, H = 340;
-  // Main dish
-  parabolicDish(ctx, W / 2, H - 42, 120, 85);
-  // Focal point
-  const cx = W / 2, cy = H - 132;
-  filledCircle(ctx, cx, cy, 6, '#C4A555', '#C4A555');
-  // Resolution diverging dashed lines
-  ctx.save();
-  ctx.strokeStyle = '#8888b0';
-  ctx.lineWidth = 1.5;
-  ctx.setLineDash([5, 4]);
-  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx - 69, 24); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + 69, 24); ctx.stroke();
-  ctx.restore();
-  // Arc showing angle θ — computed from the exact line endpoint coordinates
-  const leftAngle  = Math.atan2(24 - cy, (cx - 69) - cx); // angle to left line tip
-  const rightAngle = Math.atan2(24 - cy, (cx + 69) - cx); // angle to right line tip
-  const midAngle   = (leftAngle + rightAngle) / 2;         // -π/2, straight up
-  ctx.save();
-  ctx.strokeStyle = '#9E7E38';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(cx, cy, 44, leftAngle, rightAngle);
-  ctx.stroke();
-  ctx.restore();
-  // Label at midpoint angle, 55px from focal point — sits between the lines
-  label(ctx, 'θ', cx + 55 * Math.cos(midAngle), cy + 55 * Math.sin(midAngle), { color: '#C4A555', size: 18 });
-  // D double-headed arrow
-  ctx.save();
-  ctx.strokeStyle = '#8888b0';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(W / 2 - 60, H - 16); ctx.lineTo(W / 2 + 60, H - 16); ctx.stroke();
-  ctx.restore();
-  arrow(ctx, W / 2 - 60, H - 16, W / 2 - 58, H - 16, { color: '#8888b0', width: 1.5 });
-  arrow(ctx, W / 2 + 60, H - 16, W / 2 + 58, H - 16, { color: '#8888b0', width: 1.5 });
-  label(ctx, 'D', W / 2, H - 4, { color: '#8888b0', size: 13 });
-  // Equation
-  label(ctx, 'θ ≈ λ/D', cx, 32, { color: '#e8e8f0', size: 15 });
-  // Second smaller dish (larger D → smaller θ)
-  parabolicDish(ctx, W * 0.82, H - 28, 60, 40, { color: '#9E7E38', lw: 2 });
-  filledCircle(ctx, W * 0.82, H - 28 - 30, 4, '#9E7E38', '#9E7E38');
-  ctx.save();
-  ctx.strokeStyle = '#9E7E3880';
-  ctx.lineWidth = 1;
-  ctx.setLineDash([4, 4]);
-  const scx = W * 0.82, scy = H - 58;
-  ctx.beginPath(); ctx.moveTo(scx, scy); ctx.lineTo(scx - 20, 40); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(scx, scy); ctx.lineTo(scx + 20, 40); ctx.stroke();
-  ctx.restore();
-  label(ctx, 'larger D → smaller θ', W * 0.72, 22, { color: '#9E7E38', size: 11, align: 'center' });
-}
-
-// ── Act 2: Two dishes + baseline + animated sine waves ────────────────────
-function drawBaseline(ctx, canvas, rafRef, reducedMotion) {
-  const W = 400, H = 340;
-
-  if (reducedMotion) {
-    parabolicDish(ctx, 75, H - 38, 75, 51);
-    parabolicDish(ctx, 325, H - 38, 75, 51);
-    ctx.save();
-    ctx.strokeStyle = '#8888b0';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([7, 5]);
-    ctx.beginPath(); ctx.moveTo(75, H - 90); ctx.lineTo(325, H - 90); ctx.stroke();
-    ctx.restore();
-    label(ctx, 'B', 200, H - 72, { color: '#8888b0', size: 14 });
-    label(ctx, 'ALMA', 75, H - 14, { color: '#9E7E38', size: 12 });
-    label(ctx, 'IRAM', 325, H - 14, { color: '#9E7E38', size: 12 });
-    sineWave(ctx, 20, 178, 115, 28, 0, { color: '#C4A555' });
-    sineWave(ctx, 222, 380, 115, 28, 0.8, { color: '#9E7E38' });
-    label(ctx, 'E₁', 14, 115, { color: '#C4A555', size: 13, align: 'left' });
-    label(ctx, 'E₂', 216, 115, { color: '#9E7E38', size: 13, align: 'left' });
-    label(ctx, 'τ', 200, 152, { color: '#8888b0', size: 13 });
-    return;
-  }
-
-  function frame(ts) {
-    const phase = ts * 0.0027;
-    ctx.clearRect(0, 0, W, H);
-    parabolicDish(ctx, 75, H - 38, 75, 51);
-    parabolicDish(ctx, 325, H - 38, 75, 51);
-    ctx.save();
-    ctx.strokeStyle = '#8888b0';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([7, 5]);
-    ctx.beginPath(); ctx.moveTo(75, H - 90); ctx.lineTo(325, H - 90); ctx.stroke();
-    ctx.restore();
-    label(ctx, 'B', 200, H - 72, { color: '#8888b0', size: 14 });
-    label(ctx, 'ALMA', 75, H - 14, { color: '#9E7E38', size: 12 });
-    label(ctx, 'IRAM', 325, H - 14, { color: '#9E7E38', size: 12 });
-    sineWave(ctx, 20, 178, 115, 28, phase, { color: '#C4A555' });
-    sineWave(ctx, 222, 380, 115, 28, phase - 0.9, { color: '#9E7E38' });
-    label(ctx, 'E₁', 14, 115, { color: '#C4A555', size: 13, align: 'left' });
-    label(ctx, 'E₂', 216, 115, { color: '#9E7E38', size: 13, align: 'left' });
-    label(ctx, 'delay τ', 200, 152, { color: '#8888b0', size: 12 });
-    rafRef.current = requestAnimationFrame(frame);
-  }
-  rafRef.current = requestAnimationFrame(frame);
-}
-
-// ── Act 3: Fourier connection ──────────────────────────────────────────────
-function drawFourier(ctx) {
-  const W = 400, H = 340;
-  // Left panel: sky
-  drawRect(ctx, 12, 30, 148, 255, '#333');
-  filledEllipse(ctx, 86, 157, 31, 38, 'rgba(196,165,85,0.25)', '#C4A555', 2);
-  label(ctx, 'I(x,y)', 86, 294, { color: '#8888b0', size: 12 });
-  label(ctx, 'Sky', 86, 18, { color: '#9E7E38', size: 13 });
-
-  // Fourier arrow
-  arrow(ctx, 178, 157, 212, 157, { color: '#C4A555', width: 2.5 });
-  label(ctx, 'ℱ', 195, 140, { color: '#C4A555', size: 17 });
-
-  // Right panel: UV plane
-  drawRect(ctx, 228, 30, 160, 255, '#333');
-  // Axes
-  ctx.save();
-  ctx.strokeStyle = '#333';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(308, 32); ctx.lineTo(308, 284); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(230, 157); ctx.lineTo(386, 157); ctx.stroke();
-  ctx.restore();
-  // UV points (9 visibility measurements)
-  const pts = [
-    [308, 157], [272, 113], [344, 201], [286, 193],
-    [330, 127], [308, 110], [308, 204], [260, 157], [356, 157],
+function d05() {
+  const sts = [
+    { x: 202, y: 248, name: 'ALMA', gold: true  },
+    { x:  78, y: 162, name: 'JCMT',  gold: false },
+    { x: 160, y: 163, name: 'LMT',   gold: false },
+    { x: 140, y: 134, name: 'SMT',   gold: false },
+    { x: 294, y: 126, name: 'IRAM',  gold: false },
+    { x: 218, y: 220, name: 'APEX',  gold: false },
+    { x: 298, y: 375, name: 'SPT',   gold: false },
+    { x: 420, y: 130, name: 'GLT',   gold: false },
   ];
-  pts.forEach(([x, y]) => {
-    filledCircle(ctx, x, y, 4, '#C4A555', '#9E7E38');
-  });
-  label(ctx, 'V(u,v)', 308, 294, { color: '#8888b0', size: 12 });
-  label(ctx, 'UV Plane', 308, 18, { color: '#9E7E38', size: 13 });
-  label(ctx, 'u', 390, 157, { color: '#8888b0', size: 13 });
-  label(ctx, 'v', 310, 36, { color: '#8888b0', size: 13, align: 'left' });
-}
-
-// ── Act 4: Earth rotation synthesis ───────────────────────────────────────
-function drawEarthRotation(ctx, canvas, rafRef, reducedMotion) {
-  const W = 400, H = 340;
-  const cx = W / 2, cy = H / 2;
-
-  if (reducedMotion) {
-    filledCircle(ctx, cx, cy, 28, '#0a1628', null);
-    strokeCircle(ctx, cx, cy, 28, '#C4A555', 2.5);
-    label(ctx, '🌍', cx, cy, { color: '#fff', size: 28 });
-    ctx.save();
-    ctx.strokeStyle = '#9E7E38';
-    ctx.lineWidth = 3;
-    ctx.shadowColor = '#9E7E38';
-    ctx.shadowBlur = 6;
-    ctx.beginPath();
-    ctx.arc(cx, cy, 93, -Math.PI / 2, Math.PI * 0.6);
-    ctx.stroke();
-    ctx.restore();
-    label(ctx, 'UV arc', cx + 100, cy - 26, { color: '#8888b0', size: 12 });
-    return;
-  }
-
-  function frame(ts) {
-    const angle = (ts * 0.00018) % 1;
-    ctx.clearRect(0, 0, W, H);
-    filledCircle(ctx, cx, cy, 28, '#0a1628', null);
-    strokeCircle(ctx, cx, cy, 28, '#C4A555', 2.5);
-    filledEllipse(ctx, cx - 8, cy - 5, 9, 14, 'rgba(34,100,60,0.6)', 'rgba(34,100,60,0.8)', 1);
-    // Growing UV arc
-    ctx.save();
-    ctx.strokeStyle = '#C4A555';
-    ctx.lineWidth = 3;
-    ctx.shadowColor = '#C4A555';
-    ctx.shadowBlur = 5;
-    ctx.beginPath();
-    ctx.arc(cx, cy, 93, -Math.PI / 2, -Math.PI / 2 + angle * Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
-    // Conjugate arc (dimmer)
-    ctx.save();
-    ctx.strokeStyle = '#9E7E38';
-    ctx.lineWidth = 2;
-    ctx.globalAlpha = 0.5;
-    ctx.beginPath();
-    ctx.arc(cx, cy, 93, Math.PI / 2, Math.PI / 2 + angle * Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
-    // Moving baseline dot
-    const dotAngle = -Math.PI / 2 + angle * Math.PI * 2;
-    const dx = cx + 93 * Math.cos(dotAngle);
-    const dy = cy + 93 * Math.sin(dotAngle);
-    filledCircle(ctx, dx, dy, 4.5, '#fff', '#C4A555');
-    label(ctx, 'Earth rotation →', cx, H - 10, { color: '#8888b0', size: 12 });
-    rafRef.current = requestAnimationFrame(frame);
-  }
-  rafRef.current = requestAnimationFrame(frame);
-}
-
-// ── Act 5: Dirty image (convolution diagram) ──────────────────────────────
-function drawDirtyBeam(ctx) {
-  const W = 400, H = 340;
-  const panels = [17, 147, 277];
-  const pw = 100, ph = 190, py = 50;
-  const pcy = py + ph / 2; // 145
-
-  panels.forEach(px => {
-    drawRect(ctx, px, py, pw, ph, '#333');
-  });
-
-  const c1x = panels[0] + pw / 2; // 67
-  const c2x = panels[1] + pw / 2; // 197
-  const c3x = panels[2] + pw / 2; // 327
-
-  // Panel 1: true sky source
-  filledEllipse(ctx, c1x, pcy, 20, 26, 'rgba(196,165,85,0.5)', '#C4A555', 2);
-  label(ctx, 'I_true', c1x, py + ph + 16, { color: '#8888b0', size: 12 });
-
-  // Convolution symbol
-  label(ctx, '⊛', 132, pcy, { color: '#C4A555', size: 26 });
-
-  // Panel 2: dirty beam (PSF) with sidelobes
-  filledCircle(ctx, c2x, pcy, 7, 'rgba(196,165,85,0.9)', '#C4A555');
-  for (let r of [28, 46, 66]) {
-    ctx.save();
-    ctx.strokeStyle = `rgba(196,165,85,${0.35 - r * 0.003})`;
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.arc(c2x, pcy, r, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
-  }
-  label(ctx, 'B (PSF)', c2x, py + ph + 16, { color: '#8888b0', size: 12 });
-
-  // Equals symbol
-  label(ctx, '=', 262, pcy, { color: '#C4A555', size: 26 });
-
-  // Panel 3: dirty image (blurred + rings)
-  filledEllipse(ctx, c3x, pcy, 26, 34, 'rgba(196,165,85,0.2)', '#C4A555', 1.5);
-  for (let r of [34, 52]) {
-    ctx.save();
-    ctx.strokeStyle = `rgba(196,165,85,${0.22 - r * 0.002})`;
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([3, 3]);
-    ctx.beginPath();
-    ctx.arc(c3x, pcy, r, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
-  }
-  label(ctx, 'I^D', c3x, py + ph + 16, { color: '#8888b0', size: 12 });
-
-  label(ctx, 'Dirty Image = True Sky ⊛ PSF', W / 2, 28, { color: '#9E7E38', size: 12 });
-}
-
-// ── Act 6: Max Entropy curve ───────────────────────────────────────────────
-function drawMEM(ctx) {
-  const W = 400, H = 340;
-  // Axes
-  ctx.save();
-  ctx.strokeStyle = '#333';
-  ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(37, 297); ctx.lineTo(362, 297); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(37, 42); ctx.lineTo(37, 297); ctx.stroke();
-  ctx.restore();
-  label(ctx, 'I (image)', 356, 316, { color: '#8888b0', size: 12, align: 'right' });
-  label(ctx, 'S(I)', 28, 44, { color: '#8888b0', size: 12, align: 'right' });
-
-  // Entropy curve (concave parabola)
-  ctx.save();
-  ctx.strokeStyle = '#C4A555';
-  ctx.lineWidth = 3;
-  ctx.shadowColor = '#C4A555';
-  ctx.shadowBlur = 4;
-  ctx.beginPath();
-  ctx.moveTo(56, 276);
-  ctx.bezierCurveTo(112, 64, 288, 64, 344, 276);
-  ctx.stroke();
-  ctx.restore();
-
-  // Peak marker
-  const peakX = 200, peakY = 76;
-  ctx.save();
-  ctx.strokeStyle = '#9E7E38';
-  ctx.lineWidth = 1.5;
-  ctx.setLineDash([5, 4]);
-  ctx.beginPath();
-  ctx.moveTo(peakX, peakY);
-  ctx.lineTo(peakX, 297);
-  ctx.stroke();
-  ctx.restore();
-  filledCircle(ctx, peakX, peakY, 6, '#C4A555', '#C4A555');
-  label(ctx, 'max S(I)', peakX, 56, { color: '#C4A555', size: 12 });
-
-  // χ² constraint annotation
-  ctx.save();
-  ctx.strokeStyle = '#9E7E38';
-  ctx.lineWidth = 1.5;
-  ctx.setLineDash([4, 3]);
-  ctx.beginPath(); ctx.moveTo(280, 178); ctx.lineTo(348, 178); ctx.stroke();
-  ctx.restore();
-  label(ctx, 'χ²≤1', 356, 178, { color: '#9E7E38', size: 12, align: 'left' });
-  label(ctx, 'Max Entropy: smoothest consistent image', W / 2, H - 10, { color: '#8888b0', size: 11 });
-}
-
-// ── Act 7: CLEAN loop animation ────────────────────────────────────────────
-function drawCLEAN(ctx, canvas, rafRef, reducedMotion) {
-  const W = 400, H = 340;
-  const cx = W / 2, cy = H / 2;
-
-  function drawStage(stage) {
-    ctx.clearRect(0, 0, W, H);
-    if (stage === 0) {
-      label(ctx, 'Residual Image', W / 2, 20, { color: '#9E7E38', size: 14 });
-      filledEllipse(ctx, cx, cy, 43.5, 54, 'rgba(196,165,85,0.12)', '#333', 1.5);
-      for (let r of [63, 90]) {
-        ctx.save();
-        ctx.strokeStyle = 'rgba(196,165,85,0.15)';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-      }
-      filledCircle(ctx, cx, cy, 9, '#C4A555', '#C4A555');
-      strokeCircle(ctx, cx, cy, 16.5, '#ff6b6b', 2.5);
-      label(ctx, 'find peak →', cx + 28, cy - 18, { color: '#ff6b6b', size: 13, align: 'left' });
-    } else if (stage === 1) {
-      label(ctx, 'Subtract γ · B', W / 2, 20, { color: '#9E7E38', size: 14 });
-      filledEllipse(ctx, cx, cy, 43.5, 54, 'rgba(196,165,85,0.12)', '#333', 1.5);
-      strokeCircle(ctx, cx, cy, 21, '#9E7E38', 2, [4, 3]);
-      arrow(ctx, cx, cy - 53, cx, cy - 84, { color: '#9E7E38', width: 2.5 });
-      label(ctx, '-γ·B centered here', cx, cy - 96, { color: '#9E7E38', size: 13 });
-      filledCircle(ctx, cx, cy, 5.5, '#C4A555', '#C4A555');
-    } else {
-      label(ctx, 'Smaller Residual', W / 2, 20, { color: '#9E7E38', size: 14 });
-      filledEllipse(ctx, cx, cy, 27.5, 34, 'rgba(196,165,85,0.1)', '#333', 1.5);
-      filledCircle(ctx, cx, cy, 5.5, '#9E7E38', '#9E7E38');
-      ctx.save();
-      ctx.strokeStyle = '#C4A555';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([4, 3]);
-      ctx.beginPath();
-      ctx.arc(cx + 75, cy, 45, -0.5, 3.8);
-      ctx.stroke();
-      ctx.restore();
-      arrow(ctx, cx + 70, cy - 44, cx + 54, cy - 52, { color: '#C4A555', width: 2 });
-      label(ctx, 'repeat', cx + 100, cy, { color: '#C4A555', size: 13 });
+  const pairs = [];
+  for (let i = 0; i < sts.length; i++) {
+    for (let j = i + 1; j < sts.length; j++) {
+      pairs.push([sts[i], sts[j]]);
     }
-    label(ctx, `Step ${stage + 1}/3`, 20, H - 12, { color: '#2d2200', size: 12, align: 'left' });
   }
+  return html`<svg viewBox="0 0 600 400" width="100%" height="100%">
+    <rect width="600" height="400" fill=${BG} />
+    <text x="300" y="28" textAnchor="middle" style=${{ fontSize: '13px', fontWeight: '700', fill: TX }}>EHT 2017 — 8 Stations, 28 Baselines</text>
 
-  if (reducedMotion) {
-    drawStage(0);
-    return;
-  }
+    <ellipse cx="300" cy="212" rx="272" ry="168" fill="rgba(12,22,55,0.35)" stroke="#1a2a5a" strokeWidth="1.5" />
+    <line x1="28" y1="212" x2="572" y2="212" stroke="#1a2a5a" strokeWidth="0.5" strokeDasharray="3 5" />
 
-  function frame(ts) {
-    // stage switches every 1.5 seconds
-    const stage = Math.floor(ts / 1500) % 3;
-    drawStage(stage);
-    rafRef.current = requestAnimationFrame(frame);
-  }
-  rafRef.current = requestAnimationFrame(frame);
+    ${pairs.map((p, i) => html`
+      <line key=${i} x1=${p[0].x} y1=${p[0].y} x2=${p[1].x} y2=${p[1].y}
+        stroke=${p[0].gold || p[1].gold ? G : BL}
+        strokeWidth=${p[0].gold || p[1].gold ? 1.5 : 0.8}
+        strokeOpacity=${p[0].gold || p[1].gold ? 0.55 : 0.2} />
+    `)}
+
+    ${sts.map(s => html`
+      <circle key=${s.name} cx=${s.x} cy=${s.y} r="6" fill=${s.gold ? G : BL} stroke="#080810" strokeWidth="1.5" />
+    `)}
+
+    <text x="202" y="264" textAnchor="middle" style=${{ fontSize: '11px', fontWeight: '700', fill: G }}>ALMA</text>
+    <text x="68"  y="154" textAnchor="middle" style=${{ fontSize: '9px', fill: TX }}>JCMT</text>
+    <text x="150" y="155" textAnchor="middle" style=${{ fontSize: '9px', fill: TX }}>LMT</text>
+    <text x="140" y="126" textAnchor="middle" style=${{ fontSize: '9px', fill: TX }}>SMT</text>
+    <text x="294" y="118" textAnchor="middle" style=${{ fontSize: '9px', fill: TX }}>IRAM</text>
+    <text x="298" y="368" textAnchor="middle" style=${{ fontSize: '9px', fill: TX }}>SPT</text>
+    <text x="430" y="122" textAnchor="middle" style=${{ fontSize: '9px', fill: TX }}>GLT</text>
+
+    <text x="300" y="390" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>Max baseline: ~10,900 km — Resolution: ~20 μas</text>
+  </svg>`;
 }
 
-// ── Act 8: EHT summary (three panels) ─────────────────────────────────────
-function drawSummary(ctx, canvas, rafRef, reducedMotion) {
-  const W = 400, H = 340;
-  const py = 40, ph = 190, pw = 95;
-  const px1 = 12, px2 = 122, px3 = 232;
-  const pcy = py + ph / 2; // 135
-
-  [px1, px2, px3].forEach(px => {
-    drawRect(ctx, px, py, pw, ph, '#333');
-  });
-
-  const c1x = px1 + pw / 2; // 59
-  const c2x = px2 + pw / 2; // 169
-  const c3x = px3 + pw / 2; // 279
-
-  // Panel 1: UV coverage arcs
-  ctx.save();
-  ctx.translate(c1x, pcy);
-  const uvArcs = [
-    [35, -1.1, 0.2],
-    [28, 0.8, 2.1],
-    [42, 1.8, 3.0],
-    [22, -0.3, 1.2],
-    [32, 2.4, 3.8],
+function d06() {
+  const data = [
+    { name: 'ALMA',  sefd:    70, color: G   },
+    { name: 'LMT',   sefd:   560, color: GN  },
+    { name: 'NOEMA', sefd:  1100, color: BL  },
+    { name: 'IRAM',  sefd:  2000, color: BL  },
+    { name: 'SMA',   sefd:  4900, color: DIM },
+    { name: 'APEX',  sefd:  5200, color: DIM },
+    { name: 'SMT',   sefd: 11900, color: '#555585' },
+    { name: 'SPT',   sefd: 13200, color: '#555585' },
   ];
-  uvArcs.forEach(([r, a1, a2], i) => {
-    ctx.strokeStyle = `hsl(${40 + i * 20},65%,58%)`;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(0, 0, r, a1, a2);
-    ctx.stroke();
-  });
-  ctx.restore();
-  label(ctx, 'UV', c1x, py + ph + 14, { color: '#8888b0', size: 12 });
-
-  // Arrow 1→2
-  arrow(ctx, px1 + pw + 5, pcy, px2 - 5, pcy, { color: '#555', width: 2 });
-
-  // Panel 2: dirty image (ring artifact)
-  filledEllipse(ctx, c2x, pcy, 15, 13, 'rgba(196,165,85,0.15)', '#C4A555', 1.5);
-  for (let r of [20, 32, 44]) {
-    ctx.save();
-    ctx.strokeStyle = `rgba(196,165,85,${0.28 - r * 0.004})`;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.arc(c2x, pcy, r, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
-  }
-  label(ctx, 'Dirty', c2x, py + ph + 14, { color: '#8888b0', size: 12 });
-
-  // Arrow 2→3
-  arrow(ctx, px2 + pw + 5, pcy, px3 - 5, pcy, { color: '#555', width: 2 });
-
-  // Panel 3: CLEAN result (animated pulse or static)
-  if (reducedMotion) {
-    filledCircle(ctx, c3x, pcy, 5, '#C4A555', '#C4A555');
-    label(ctx, 'CLEAN', c3x, py + ph + 14, { color: '#8888b0', size: 12 });
-    label(ctx, '8 telescopes · 20 μas', W / 2, H - 10, { color: '#9E7E38', size: 11 });
-    return;
-  }
-
-  // Draw static elements outside loop
-  label(ctx, '8 telescopes · 20 μas', W / 2, H - 10, { color: '#9E7E38', size: 11 });
-
-  function frame(ts) {
-    const pulse = ts * 0.0036;
-    ctx.clearRect(px3, py, pw, ph);
-    drawRect(ctx, px3, py, pw, ph, '#333');
-    ctx.save();
-    ctx.shadowColor = '#C4A555';
-    ctx.shadowBlur = 8 + 10 * Math.sin(pulse);
-    filledCircle(ctx, c3x, pcy, 5, '#C4A555', '#C4A555');
-    ctx.restore();
-    ctx.save();
-    ctx.strokeStyle = `rgba(196,165,85,${0.18 + 0.12 * Math.sin(pulse)})`;
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.arc(c3x, pcy, 20 + 6 * Math.sin(pulse), 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
-    label(ctx, 'CLEAN', c3x, py + ph + 14, { color: '#8888b0', size: 12 });
-    rafRef.current = requestAnimationFrame(frame);
-  }
-  rafRef.current = requestAnimationFrame(frame);
+  const minL = Math.log10(70);
+  const maxL = Math.log10(14000);
+  const BAR_W = 370;
+  return html`<svg viewBox="0 0 600 400" width="100%" height="100%">
+    <rect width="600" height="400" fill=${BG} />
+    <text x="300" y="28" textAnchor="middle" style=${{ fontSize: '13px', fontWeight: '700', fill: TX }}>Station Sensitivity (SEFD)</text>
+    <text x="300" y="46" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>Lower SEFD = more sensitive — scales as √(SEFD_i × SEFD_j) per baseline</text>
+    ${data.map((d, i) => {
+      const y = 62 + i * 38;
+      const frac = (Math.log10(d.sefd) - minL) / (maxL - minL);
+      const w = Math.round(frac * BAR_W) + 20;
+      return html`
+        <g key=${d.name}>
+          <text x="88" y=${y + 15} textAnchor="end" style=${{ fontSize: '11px', fill: TX }}>${d.name}</text>
+          <rect x="94" y=${y} width=${w} height="26" fill=${d.color} fillOpacity="0.65" rx="3" />
+          <text x=${94 + w + 7} y=${y + 16} style=${{ fontSize: '10px', fill: DIM }}>${d.sefd.toLocaleString()} Jy</text>
+        </g>
+      `;
+    })}
+    <text x="300" y="378" textAnchor="middle" style=${{ fontSize: '11px', fill: G }}>ALMA baseline: ~180× lower noise than SPT-JCMT</text>
+  </svg>`;
 }
 
-// ── Main component ──────────────────────────────────────────────────────────
-export function TourDiagram({ diagramAct, reducedMotion }) {
-  const canvasRef = useRef(null);
-  const rafRef = useRef(null);
+function d07() {
+  return html`<svg viewBox="0 0 600 400" width="100%" height="100%">
+    <rect width="600" height="400" fill=${BG} />
+    <text x="300" y="28" textAnchor="middle" style=${{ fontSize: '13px', fontWeight: '700', fill: TX }}>Dirty Image Formation</text>
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    <rect x="18" y="55" width="148" height="148" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="4" />
+    <text x="92" y="218" textAnchor="middle" style=${{ fontSize: '11px', fill: DIM }}>UV Coverage</text>
+    <line x1="18" y1="129" x2="166" y2="129" stroke="#1a1a38" strokeWidth="0.5" />
+    <line x1="92" y1="55" x2="92" y2="203" stroke="#1a1a38" strokeWidth="0.5" />
+    <path d="M 34  88 Q  92 70 150  88" fill="none" stroke=${G} strokeWidth="2" />
+    <path d="M 34 170 Q  92 188 150 170" fill="none" stroke=${G} strokeWidth="2" strokeOpacity="0.45" />
+    <path d="M 50  72 Q  60 129 55 186" fill="none" stroke=${G} strokeWidth="1.5" strokeOpacity="0.55" />
+    <path d="M 134 72 Q 124 129 129 186" fill="none" stroke=${G} strokeWidth="1.5" strokeOpacity="0.28" />
 
-    // Cancel any running animation from a previous act
-    if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-    }
+    <text x="183" y="130" textAnchor="middle" style=${{ fontSize: '20px', fill: DIM }}>*</text>
+    <text x="183" y="152" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>convolve</text>
 
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    <rect x="200" y="55" width="148" height="148" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="4" />
+    <text x="274" y="218" textAnchor="middle" style=${{ fontSize: '11px', fill: DIM }}>Dirty Beam (PSF)</text>
+    <circle cx="274" cy="129" r="42" fill="none" stroke=${G} strokeWidth="0.6" strokeOpacity="0.2" />
+    <circle cx="274" cy="129" r="29" fill="none" stroke=${G} strokeWidth="0.8" strokeOpacity="0.3" />
+    <circle cx="274" cy="129" r="18" fill="none" stroke=${G} strokeWidth="1.4" strokeOpacity="0.5" />
+    <circle cx="274" cy="129" r="9"  fill="none" stroke=${G} strokeWidth="2" strokeOpacity="0.75" />
+    <circle cx="274" cy="129" r="3"  fill=${G} />
 
-    switch (diagramAct) {
-      case 1: drawDish(ctx); break;
-      case 2: drawBaseline(ctx, canvas, rafRef, reducedMotion); break;
-      case 3: drawFourier(ctx); break;
-      case 4: drawEarthRotation(ctx, canvas, rafRef, reducedMotion); break;
-      case 5: drawDirtyBeam(ctx); break;
-      case 6: drawMEM(ctx); break;
-      case 7: drawCLEAN(ctx, canvas, rafRef, reducedMotion); break;
-      case 8: drawSummary(ctx, canvas, rafRef, reducedMotion); break;
-      default: break;
-    }
+    <text x="365" y="130" textAnchor="middle" style=${{ fontSize: '18px', fill: DIM }}>=</text>
 
-    return () => {
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
-      }
-    };
-  }, [diagramAct, reducedMotion]);
+    <rect x="382" y="55" width="200" height="148" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="4" />
+    <text x="482" y="218" textAnchor="middle" style=${{ fontSize: '11px', fill: DIM }}>Dirty Image I^D</text>
+    <circle cx="482" cy="129" r="55" fill="none" stroke=${G} strokeWidth="0.5" strokeOpacity="0.12" />
+    <circle cx="482" cy="129" r="38" fill="none" stroke=${G} strokeWidth="0.7" strokeOpacity="0.18" />
+    <circle cx="482" cy="129" r="24" fill="none" stroke=${G} strokeWidth="1" strokeOpacity="0.35" />
+    <circle cx="482" cy="129" r="13" fill="none" stroke=${G} strokeWidth="1.6" strokeOpacity="0.6" />
+    <circle cx="482" cy="129" r="5"  fill=${G} fillOpacity="0.8" />
 
-  return html`
-    <canvas
-      ref=${canvasRef}
-      width="400"
-      height="340"
-      className="tour-diagram-canvas"
-      aria-label=${'Physics diagram for tour act ' + diagramAct}
-    ></canvas>
-  `;
+    <text x="300" y="252" textAnchor="middle" style=${{ fontSize: '13px', fill: TX }}>I^D = I_true * B</text>
+    <text x="300" y="275" textAnchor="middle" style=${{ fontSize: '11px', fill: DIM }}>dirty = sky brightness convolved with dirty beam (PSF)</text>
+
+    <rect x="220" y="295" width="160" height="30" fill="rgba(196,165,85,0.12)" stroke=${G} strokeWidth="1" rx="4" />
+    <text x="300" y="315" textAnchor="middle" style=${{ fontSize: '11px', fill: G }}>CLEAN removes sidelobes</text>
+
+    <text x="300" y="368" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>Sidelobes mimic real source structure — deconvolution is essential</text>
+  </svg>`;
+}
+
+function d08() {
+  return html`<svg viewBox="0 0 600 400" width="100%" height="100%">
+    <rect width="600" height="400" fill=${BG} />
+    <text x="300" y="28" textAnchor="middle" style=${{ fontSize: '13px', fontWeight: '700', fill: TX }}>CLEAN Algorithm (Hogbom 1974)</text>
+
+    <g className="clean-step-1">
+      <rect x="80" y="50" width="440" height="62" fill="rgba(196,165,85,0.1)" stroke=${G} strokeWidth="1.5" rx="6" />
+      <text x="105" y="72" style=${{ fontSize: '13px', fontWeight: '700', fill: G }}>1. Find brightest peak</text>
+      <text x="105" y="96" style=${{ fontSize: '11px', fill: DIM }}>Locate maximum in residual image: position x_max, value r_max</text>
+    </g>
+
+    <g className="clean-step-2">
+      <rect x="80" y="128" width="440" height="62" fill="rgba(255,159,67,0.1)" stroke=${OR} strokeWidth="1.5" rx="6" />
+      <text x="105" y="150" style=${{ fontSize: '13px', fontWeight: '700', fill: OR }}>2. Subtract dirty beam</text>
+      <text x="105" y="174" style=${{ fontSize: '11px', fill: DIM }}>r ← r − γ · r_max · B(x − x_max)   loop gain γ ≈ 0.1</text>
+    </g>
+
+    <g className="clean-step-3">
+      <rect x="80" y="206" width="440" height="62" fill="rgba(68,136,204,0.1)" stroke=${BL} strokeWidth="1.5" rx="6" />
+      <text x="105" y="228" style=${{ fontSize: '13px', fontWeight: '700', fill: BL }}>3. Save clean component</text>
+      <text x="105" y="252" style=${{ fontSize: '11px', fill: DIM }}>Add γ · r_max delta function to model at x_max</text>
+    </g>
+
+    <g className="clean-step-4">
+      <rect x="80" y="284" width="440" height="62" fill="rgba(68,187,136,0.1)" stroke=${GN} strokeWidth="1.5" rx="6" />
+      <text x="105" y="306" style=${{ fontSize: '13px', fontWeight: '700', fill: GN }}>4. Repeat then restore</text>
+      <text x="105" y="330" style=${{ fontSize: '11px', fill: DIM }}>Iterate until |r| < 3σ_noise, then convolve model with clean beam</text>
+    </g>
+
+    <text x="300" y="375" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>Sidelobes removed · Resolution preserved · Used in every radio image since 1974</text>
+  </svg>`;
+}
+
+function d09() {
+  return html`<svg viewBox="0 0 600 400" width="100%" height="100%">
+    <rect width="600" height="400" fill="#020208" />
+    <text x="300" y="28" textAnchor="middle" style=${{ fontSize: '13px', fontWeight: '700', fill: TX }}>M87* Shadow and Photon Ring</text>
+
+    <circle cx="300" cy="210" r="128" fill="none" stroke="rgba(255,120,0,0.1)" strokeWidth="22" />
+    <circle cx="300" cy="210" r="110" fill="none" stroke="rgba(255,150,0,0.18)" strokeWidth="14" />
+    <circle cx="300" cy="210" r="95"  fill="none" stroke="rgba(255,200,40,0.28)" strokeWidth="8" />
+
+    <circle cx="300" cy="210" r="82" fill="none" stroke=${PH} strokeWidth="3.5" />
+    <circle cx="300" cy="210" r="78" fill="none" stroke=${PH} strokeWidth="1" strokeOpacity="0.4" />
+
+    <circle cx="300" cy="210" r="70" fill="#020208" />
+    <circle cx="300" cy="210" r="58" fill="#010103" />
+
+    <path d="M 192 95  C 250 118 285 162 280 210 C 275 258 252 295 278 348" fill="none" stroke="rgba(255,215,0,0.5)" strokeWidth="1.5" />
+    <path d="M 408 80  C 352 130 312 162 318 210 C 324 258 348 298 302 362" fill="none" stroke="rgba(255,215,0,0.4)" strokeWidth="1.5" />
+    <path d="M 145 240 C 188 228 232 218 258 214 C 284 210 308 202 340 196" fill="none" stroke="rgba(255,215,0,0.35)" strokeWidth="1.5" />
+
+    <rect x="415" y="62" width="168" height="82" fill="rgba(2,2,10,0.85)" stroke="#2d2200" strokeWidth="1" rx="4" />
+    <text x="499" y="82" textAnchor="middle" style=${{ fontSize: '11px', fontWeight: '700', fill: TX }}>Scale</text>
+    <circle cx="435" cy="114" r="14" fill="none" stroke=${PH} strokeWidth="2.5" />
+    <text x="462" y="118" style=${{ fontSize: '10px', fill: TX }}>42 μas shadow</text>
+    <circle cx="435" cy="95"  r="7"  fill="none" stroke=${G} strokeWidth="1.5" />
+    <text x="456" y="99" style=${{ fontSize: '10px', fill: G }}>~20 μas beam</text>
+
+    <text x="300" y="362" textAnchor="middle" style=${{ fontSize: '11px', fill: DIM }}>M87* · 6.5 billion M_sun · 55 million light-years</text>
+    <text x="300" y="380" textAnchor="middle" style=${{ fontSize: '10px', fill: G }}>First imaged April 10, 2019 — EHT Collaboration</text>
+  </svg>`;
+}
+
+function d10() {
+  const leftArcs = [
+    "M 50 112 Q 145 82 240 112 Q 220 172 240 232 Q 145 262 50 232 Q 70 172 50 112",
+    "M 68 100 Q 145 76 222 100 Q 208 172 222 244 Q 145 268 68 244 Q 82 172 68 100",
+    "M 88 128 Q 145 108 202 128",
+    "M 88 216 Q 145 236 202 216",
+    "M 44 148 Q 54 172 46 196",
+    "M 246 148 Q 236 172 244 196",
+  ];
+  const rightArcs = [];
+  for (let r = 0; r < 7; r++) {
+    const shrink = r * 6;
+    rightArcs.push(`M ${342 + shrink} ${110 + r * 2} Q 452 ${80 + r * 5} ${562 - shrink} ${110 + r * 2} Q ${545 - r * 4} 172 ${562 - shrink} ${234 - r * 2} Q 452 ${264 - r * 5} ${342 + shrink} ${234 - r * 2} Q ${359 + r * 4} 172 ${342 + shrink} ${110 + r * 2}`);
+  }
+  for (let a = 0; a < 5; a++) {
+    rightArcs.push(`M ${375 + a * 18} ${102 + a * 4} Q ${390 + a * 14} 172 ${382 + a * 16} ${242 - a * 4}`);
+    rightArcs.push(`M ${529 - a * 18} ${102 + a * 4} Q ${514 - a * 14} 172 ${522 - a * 16} ${242 - a * 4}`);
+  }
+  return html`<svg viewBox="0 0 600 400" width="100%" height="100%">
+    <rect width="600" height="400" fill=${BG} />
+    <text x="300" y="28" textAnchor="middle" style=${{ fontSize: '13px', fontWeight: '700', fill: TX }}>EHT 2017 vs ngEHT Phase 1</text>
+
+    <rect x="18" y="48" width="260" height="264" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="4" />
+    <text x="148" y="68" textAnchor="middle" style=${{ fontSize: '12px', fontWeight: '700', fill: TX }}>EHT 2017</text>
+    <text x="148" y="85" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>8 stations · 28 baselines</text>
+    <line x1="18" y1="172" x2="278" y2="172" stroke="#1a1a38" strokeWidth="0.5" />
+    <line x1="148" y1="48" x2="148" y2="312" stroke="#1a1a38" strokeWidth="0.5" />
+    ${leftArcs.map((d, i) => html`<path key=${i} d=${d} fill="none" stroke=${G} strokeWidth=${i < 2 ? 2 : 1.5} strokeOpacity=${i < 2 ? 0.75 : 0.5} />`)}
+    <text x="148" y="325" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>UV fill: ~0.8%</text>
+    <text x="148" y="342" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>Dynamic range: ~50:1</text>
+
+    <rect x="322" y="48" width="260" height="264" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="4" />
+    <text x="452" y="68" textAnchor="middle" style=${{ fontSize: '12px', fontWeight: '700', fill: G }}>ngEHT Phase 1</text>
+    <text x="452" y="85" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>17 stations · 136 baselines</text>
+    <line x1="322" y1="172" x2="582" y2="172" stroke="#1a1a38" strokeWidth="0.5" />
+    <line x1="452" y1="48" x2="452" y2="312" stroke="#1a1a38" strokeWidth="0.5" />
+    ${rightArcs.map((d, i) => html`<path key=${i} d=${d} fill="none" stroke=${G} strokeWidth="1" strokeOpacity=${Math.max(0.08, 0.55 - i * 0.03)} />`)}
+    <text x="452" y="325" textAnchor="middle" style=${{ fontSize: '10px', fill: G }}>UV fill: ~3.5%</text>
+    <text x="452" y="342" textAnchor="middle" style=${{ fontSize: '10px', fill: G }}>Dynamic range: ~200:1</text>
+
+    <text x="300" y="382" textAnchor="middle" style=${{ fontSize: '11px', fill: G }}>4.4× more baselines — sharper images, higher dynamic range</text>
+  </svg>`;
+}
+
+function d11() {
+  return html`<svg viewBox="0 0 600 400" width="100%" height="100%">
+    <rect width="600" height="400" fill="#020208" />
+    <text x="300" y="28" textAnchor="middle" style=${{ fontSize: '13px', fontWeight: '700', fill: TX }}>BHEX Space VLBI</text>
+
+    <circle cx="300" cy="205" r="52" fill="rgba(20,50,120,0.5)" stroke=${BL} strokeWidth="2" />
+    <text x="300" y="209" textAnchor="middle" style=${{ fontSize: '11px', fill: BL }}>Earth</text>
+
+    <circle cx="258" cy="180" r="5" fill=${G} />
+    <text x="245" y="172" style=${{ fontSize: '9px', fill: G }}>ALMA</text>
+    <circle cx="294" cy="156" r="4" fill=${BL} />
+    <text x="284" y="148" style=${{ fontSize: '9px', fill: BL }}>IRAM</text>
+    <circle cx="328" cy="172" r="4" fill=${BL} />
+    <text x="334" y="164" style=${{ fontSize: '9px', fill: BL }}>JCMT</text>
+    <circle cx="300" cy="255" r="4" fill=${BL} />
+    <text x="288" y="270" style=${{ fontSize: '9px', fill: BL }}>SPT</text>
+
+    <ellipse cx="300" cy="205" rx="225" ry="92" fill="none" stroke="#2a2a55" strokeWidth="1.5" strokeDasharray="6 3" transform="rotate(-22,300,205)" />
+
+    <circle cx="506" cy="158" r="9" fill=${OR} stroke=${G} strokeWidth="2" />
+    <text x="524" y="150" style=${{ fontSize: '10px', fill: OR }}>BHEX</text>
+    <rect x="497" y="149" width="4" height="18" fill=${OR} fillOpacity="0.5" />
+    <rect x="501" y="149" width="14" height="4" fill=${OR} fillOpacity="0.3" />
+
+    <line x1="499" y1="164" x2="262" y2="181" stroke=${G} strokeWidth="1.5" strokeDasharray="5 3" strokeOpacity="0.7" />
+    <line x1="499" y1="162" x2="332" y2="174" stroke=${BL} strokeWidth="1"   strokeDasharray="5 3" strokeOpacity="0.5" />
+    <line x1="499" y1="164" x2="302" y2="251" stroke=${DIM} strokeWidth="1"  strokeDasharray="5 3" strokeOpacity="0.4" />
+
+    <rect x="15" y="52" width="175" height="92" fill="rgba(2,2,12,0.85)" stroke="#2d2200" strokeWidth="1" rx="4" />
+    <text x="103" y="72" textAnchor="middle" style=${{ fontSize: '11px', fontWeight: '700', fill: TX }}>Angular Resolution</text>
+    <text x="28"  y="92"  style=${{ fontSize: '11px', fill: DIM }}>EHT ground: ~20 μas</text>
+    <text x="28"  y="114" style=${{ fontSize: '11px', fill: OR }}>BHEX space: ~6 μas</text>
+    <text x="28"  y="133" style=${{ fontSize: '10px', fill: DIM }}>~3.5× improvement</text>
+
+    <text x="300" y="358" textAnchor="middle" style=${{ fontSize: '11px', fill: DIM }}>Orbital baselines: up to ~35 Gigaλ</text>
+    <text x="300" y="376" textAnchor="middle" style=${{ fontSize: '11px', fill: G }}>Resolves photon ring at sub-shadow scales</text>
+  </svg>`;
+}
+
+function d12() {
+  return html`<svg viewBox="0 0 600 400" width="100%" height="100%">
+    <rect width="600" height="400" fill=${BG} />
+    <text x="300" y="28" textAnchor="middle" style=${{ fontSize: '13px', fontWeight: '700', fill: TX }}>From Visibilities to Science</text>
+
+    <rect x="12" y="46" width="270" height="158" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="4" />
+    <text x="147" y="66" textAnchor="middle" style=${{ fontSize: '11px', fill: G }}>UV Coverage</text>
+    <line x1="12" y1="122" x2="282" y2="122" stroke="#1a1a38" strokeWidth="0.5" />
+    <line x1="147" y1="46" x2="147" y2="204" stroke="#1a1a38" strokeWidth="0.5" />
+    <path d="M 40 90 Q 147 68 254 90 Q 232 122 254 154 Q 147 176 40 154 Q 62 122 40 90" fill="none" stroke=${G} strokeWidth="2" />
+    <path d="M 58 78 Q 147 62 236 78 Q 220 122 236 166 Q 147 182 58 166 Q 74 122 58 78"  fill="none" stroke=${G} strokeWidth="1.5" strokeOpacity="0.5" />
+    <path d="M 80 94 Q 147 78 214 94" fill="none" stroke=${G} strokeWidth="1.2" strokeOpacity="0.6" />
+    <path d="M 80 150 Q 147 166 214 150" fill="none" stroke=${G} strokeWidth="1.2" strokeOpacity="0.3" />
+
+    <rect x="318" y="46" width="270" height="158" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="4" />
+    <text x="453" y="66" textAnchor="middle" style=${{ fontSize: '11px', fill: G }}>Image Metrics</text>
+    <text x="330"  y="90"  style=${{ fontSize: '11px', fill: TX }}>Beam FWHM</text>
+    <text x="580"  y="90"  textAnchor="end" style=${{ fontSize: '11px', fill: G }}>~20 μas</text>
+    <text x="330"  y="112" style=${{ fontSize: '11px', fill: TX }}>Dynamic Range</text>
+    <text x="580"  y="112" textAnchor="end" style=${{ fontSize: '11px', fill: G }}>~50:1</text>
+    <text x="330"  y="134" style=${{ fontSize: '11px', fill: TX }}>UV Fill</text>
+    <text x="580"  y="134" textAnchor="end" style=${{ fontSize: '11px', fill: G }}>0.8%</text>
+    <text x="330"  y="156" style=${{ fontSize: '11px', fill: TX }}>Baselines</text>
+    <text x="580"  y="156" textAnchor="end" style=${{ fontSize: '11px', fill: G }}>28</text>
+    <text x="330"  y="178" style=${{ fontSize: '11px', fill: TX }}>Max baseline</text>
+    <text x="580"  y="178" textAnchor="end" style=${{ fontSize: '11px', fill: G }}>10,900 km</text>
+
+    <rect x="12" y="218" width="270" height="158" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="4" />
+    <text x="147" y="238" textAnchor="middle" style=${{ fontSize: '11px', fill: G }}>FITS Export (WCS)</text>
+    <text x="24" y="260" style=${{ fontSize: '9px', fill: DIM, fontFamily: 'monospace' }}>SIMPLE  = T</text>
+    <text x="24" y="276" style=${{ fontSize: '9px', fill: TX,  fontFamily: 'monospace' }}>CRVAL1  = 187.7059</text>
+    <text x="24" y="292" style=${{ fontSize: '9px', fill: TX,  fontFamily: 'monospace' }}>CDELT1  = 1.94E-09</text>
+    <text x="24" y="308" style=${{ fontSize: '9px', fill: TX,  fontFamily: 'monospace' }}>FREQ    = 2.30E+11</text>
+    <text x="24" y="324" style=${{ fontSize: '9px', fill: G,   fontFamily: 'monospace' }}>BMAJ    = 5.56E-09</text>
+    <text x="24" y="340" style=${{ fontSize: '9px', fill: DIM, fontFamily: 'monospace' }}>BUNIT   = 'JY/BEAM'</text>
+    <text x="24" y="358" style=${{ fontSize: '10px', fill: DIM }}>Import in CASA, AIPS, Astropy</text>
+
+    <rect x="318" y="218" width="270" height="158" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="4" />
+    <text x="453" y="238" textAnchor="middle" style=${{ fontSize: '11px', fill: G }}>Dynamic Range</text>
+    <text x="330"  y="266" style=${{ fontSize: '10px', fill: DIM }}>EHT 2017</text>
+    <rect x="330" y="270" width="98" height="20" fill=${G} fillOpacity="0.65" rx="3" />
+    <text x="436" y="284" style=${{ fontSize: '10px', fill: G }}>~50:1</text>
+    <text x="330"  y="308" style=${{ fontSize: '10px', fill: DIM }}>EHT 2022</text>
+    <rect x="330" y="312" width="144" height="20" fill=${G} fillOpacity="0.65" rx="3" />
+    <text x="482" y="326" style=${{ fontSize: '10px', fill: G }}>~100:1</text>
+    <text x="330"  y="350" style=${{ fontSize: '10px', fill: DIM }}>ngEHT Ph1</text>
+    <rect x="330" y="354" width="216" height="20" fill=${G} fillOpacity="0.85" rx="3" />
+    <text x="554" y="368" style=${{ fontSize: '10px', fill: G }}>~200:1</text>
+  </svg>`;
 }

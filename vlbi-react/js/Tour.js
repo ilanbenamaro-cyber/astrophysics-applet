@@ -1,203 +1,166 @@
-// Tour — orchestrates the 8-act physics guided tour.
-// Manages act definitions, auto-actions, spotlight elevation, and navigation.
-import { html, useEffect, useRef, useCallback } from './core.js';
-import { useLayoutEffect } from 'react';
+// Tour.js — 12-act full-screen physics tour with SVG diagrams.
+import { html, useEffect, useRef } from './core.js';
 import { TourCard } from './TourCard.js';
 
-// ── Act definitions ────────────────────────────────────────────────────────
-// Each act: { title, spotlightId, diagramAct, text, mathLatex, terms, autoActions, userHint }
-// spotlightId: null = full dim overlay, string = elevate that DOM element above overlay
-// autoActions: array of { type, ...params } dispatched to onTourAction prop
-const ACTS = [
+const TOUR_ACTS = [
   {
-    title: 'Single-Dish Resolution',
-    spotlightId: null,
-    diagramAct: 1,
-    text: 'A single radio dish has angular resolution θ ≈ λ/D, where λ is the observing wavelength and D is the dish diameter. For the EHT\'s 1.3 mm observations, even a 100 m dish — the largest on Earth — gives only ~2.7 arcsecond resolution. A black hole shadow subtends roughly 40 microarcseconds on the sky: 70,000 times smaller than a 100 m dish can resolve. No single dish on Earth, or any plausible Earth-based dish, can image a black hole. The only solution is to make D effectively the size of Earth itself — by linking many dishes together into an interferometric array.',
-    mathLatex: '\\theta \\approx \\frac{\\lambda}{D}',
-    terms: [
-      { sym: 'θ', desc: 'Angular resolution (radians) — how small a detail you can see' },
-      { sym: 'λ', desc: 'Observing wavelength (1.3 mm for the EHT)' },
-      { sym: 'D', desc: 'Dish diameter — larger dishes give finer resolution' },
+    title: "Why We Can't Just Build a Bigger Dish",
+    paragraphs: [
+      "A single radio dish resolves angular detail down to θ ≈ λ/D, where λ is wavelength and D is dish diameter. At 1.3 mm (230 GHz), even a 100 m dish — the largest steerable dish on Earth — yields only ~2.7 arcsecond resolution.",
+      "The shadow of M87* subtends 42 microarcseconds: 70,000 times smaller than a 100 m dish can resolve. No physically plausible single dish could image a black hole shadow. The only solution is to make D effectively Earth's diameter — by linking many dishes into an interferometric array.",
     ],
-    autoActions: [],
-    userHint: null,
+    hint: "Load the EHT 2017 array and notice how 28 baselines synthesize a virtual aperture the size of Earth.",
+    diagramId: 1,
+    autoActions: [{ type: 'resetForTour' }, { type: 'loadEHT' }],
   },
   {
-    title: 'Baselines & Correlations',
-    spotlightId: 'tour-globe',
-    diagramAct: 2,
-    text: 'Two telescopes separated by a baseline B correlate their received radio signals. Each telescope records the electric field E(t) of incoming radio waves, timestamped with atomic clocks accurate to femtoseconds. The key observable is the visibility V₁₂ — the time-averaged product of the two electric fields, with one delayed by τ to account for the extra path length. This delay τ encodes the direction of the source: as the source moves across the sky (due to Earth\'s rotation), τ changes, allowing us to reconstruct angular structure. The EHT correlates signals recorded on hard drives that are physically flown between continents — no real-time connection is fast enough for the data rates involved.',
-    mathLatex: 'V_{12} \\sim \\langle E_1(t)\\,E_2(t-\\tau) \\rangle',
-    terms: [
-      { sym: 'V₁₂', desc: 'Visibility — the measured correlation between telescope 1 and 2' },
-      { sym: 'E₁, E₂', desc: 'Electric field (radio signal) at each telescope' },
-      { sym: 'τ', desc: 'Geometric delay — the extra path length difference' },
-      { sym: '⟨ ⟩', desc: 'Time average — integrated over many wave cycles' },
+    title: "Two Telescopes, One Fourier Component",
+    paragraphs: [
+      "Two telescopes separated by baseline B correlate their radio signals. Each telescope records the electric field E(t), timestamped with atomic clocks accurate to femtoseconds. The key observable is the visibility V₁₂ — the time-averaged product of the two fields, one delayed by τ to account for the extra path length.",
+      "Each baseline measures exactly one Fourier coefficient of the sky brightness distribution. The angular scale it probes is set by baseline length divided by wavelength: u = B/λ. This is the fundamental sampling equation of aperture synthesis.",
     ],
+    hint: "Two telescopes are placed on the globe. Watch the single UV arc they trace as Earth rotates.",
+    diagramId: 2,
     autoActions: [
       { type: 'resetForTour' },
-      { type: 'addTelescope', lat: -23.029, lon: -67.755 }, // ALMA
-      { type: 'addTelescope', lat: 37.066, lon: -3.392 },   // IRAM
+      { type: 'addTelescope', lat: -23.029, lon: -67.755 },
+      { type: 'addTelescope', lat: 19.823, lon: -155.478 },
     ],
-    userHint: null,
   },
   {
-    title: 'The Fourier Connection',
-    spotlightId: 'tour-uv',
-    diagramAct: 3,
-    text: 'The van Cittert-Zernike theorem is the mathematical heart of interferometry: the visibility V(u,v) measured by a baseline is exactly one Fourier coefficient of the sky brightness distribution I(x,y). Each baseline samples one point (u,v) in \'Fourier space\', also called the UV plane. The spatial frequency u = B_EW/λ determines which angular scale on the sky that baseline is sensitive to — short baselines see large-scale structure, long baselines resolve fine details. To recover the full sky image I(x,y), we need to sample enough UV points and then inverse Fourier transform. With only a handful of baselines, the reconstruction is incomplete — this is the fundamental challenge of sparse aperture synthesis.',
-    mathLatex: 'V(u,v) = \\iint I(x,y)\\,e^{-2\\pi i(ux+vy)}\\,dx\\,dy',
-    terms: [
-      { sym: 'V(u,v)', desc: 'Visibility at spatial frequency (u, v) — what we measure' },
-      { sym: 'I(x,y)', desc: 'Sky brightness at position (x, y) — what we want' },
-      { sym: 'u, v', desc: 'Spatial frequencies = baseline length ÷ wavelength' },
-      { sym: 'x, y', desc: 'Angular sky coordinates (radians from phase centre)' },
-      { sym: 'e^{−2πi·}', desc: 'Fourier kernel — complex exponential oscillating across the sky' },
+    title: "Building the Fourier Plane",
+    paragraphs: [
+      "The van Cittert–Zernike theorem is the mathematical heart of interferometry: the visibility V(u,v) is exactly one Fourier coefficient of the sky brightness I(x,y). Each baseline samples one point in Fourier space (the UV plane). Conjugate symmetry gives us V*(u,v) = V(-u,-v), doubling our coverage.",
+      "Short baselines measure large-scale structure; long baselines resolve fine detail. To recover the full image I(x,y), enough UV points must be sampled, then inverse-Fourier-transformed. With only a handful of baselines the reconstruction is incomplete — this is the fundamental challenge of sparse aperture synthesis.",
     ],
+    hint: "Load the EHT array and observe how each of the 28 baselines traces its own arc in the UV plane.",
+    diagramId: 3,
+    autoActions: [{ type: 'resetForTour' }, { type: 'loadEHT' }],
+  },
+  {
+    title: "Earth Rotation Synthesis",
+    paragraphs: [
+      "As Earth rotates, the projected separation between each telescope pair changes in both length and direction. In the UV plane, each baseline traces an elliptical arc — its shape determined by baseline length, orientation, and source declination.",
+      "The EHT observes M87* for ~4 hours per night, during which each baseline sweeps a substantial arc. With 8 stations there are 28 baselines, each sweeping its own arc — yielding 11,000+ UV samples per observation night. Longer observations mean denser UV coverage and sharper images.",
+    ],
+    hint: "Drag the Duration slider — watch the UV arcs fill in as observation time increases.",
+    diagramId: 4,
     autoActions: [],
-    userHint: null,
   },
   {
-    title: 'Earth-Rotation Synthesis',
-    spotlightId: 'tour-uv',
-    diagramAct: 4,
-    text: 'As Earth rotates over the course of an observation, the projected separation between each telescope pair changes in both length and direction. In the UV plane, each baseline traces an elliptical arc — the shape determined by the baseline\'s length, orientation, and the declination of the target source. The EHT observes M87* for roughly 4 hours per night, during which each baseline sweeps a substantial arc. With 8 stations there are 28 baselines, each sweeping its own arc — giving 11,000+ UV samples per observation night. More rotation time means denser UV coverage, which means a sharper, more faithful image reconstruction.',
-    mathLatex: 'u = \\frac{B_x \\sin H + B_y \\cos H}{\\lambda}',
-    terms: [
-      { sym: 'u', desc: 'East-West spatial frequency sampled at hour angle H' },
-      { sym: 'Bₓ', desc: 'East-West component of baseline vector (metres)' },
-      { sym: 'Bᵧ', desc: 'North-South component of baseline vector (metres)' },
-      { sym: 'H', desc: 'Hour angle — how far Earth has rotated during the observation' },
-      { sym: 'λ', desc: 'Observing wavelength' },
+    title: "Eight Telescopes, One Earth-Sized Dish",
+    paragraphs: [
+      "The EHT 2017 array linked 8 stations spanning Earth's full diameter: from the South Pole (SPT) to Greenland (GLT) and from Chile (ALMA/APEX) to Hawaii (SMA/JCMT). The maximum baseline exceeds 10,000 km, close to Earth's diameter.",
+      "ALMA — the Atacama Large Millimeter/submillimeter Array — anchors the EHT array as its most sensitive station, with SEFD ~70 Jy. The longest ALMA baselines set the ultimate angular resolution: ~20 microarcseconds, sufficient to image the shadow of M87*.",
     ],
-    autoActions: [
-      { type: 'loadEHT' },
-    ],
-    userHint: 'Try dragging the Duration slider in the sidebar — watch the UV arcs fill in.',
+    hint: "Select EHT 2017 in the sidebar — all 8 stations load and the UV coverage fills in over 12 hours.",
+    diagramId: 5,
+    autoActions: [{ type: 'resetForTour' }, { type: 'loadEHT' }],
   },
   {
-    title: 'The Dirty Image',
-    spotlightId: 'tour-images',
-    diagramAct: 5,
-    text: 'Inverse Fourier transforming the incomplete UV data does not give a clean image — it gives the \'dirty image\', which is the true sky convolved with the array\'s point spread function (PSF), called the dirty beam. The dirty beam has a narrow central peak (the actual resolution) surrounded by sidelobes from the missing UV coverage. These sidelobes create ringing artefacts that can look like real structure but are purely instrumental. For the EHT, the dirty beam sidelobes are severe because UV coverage is sparse — only 28 baselines compared to the millions a filled aperture would have. The goal of image reconstruction is to deconvolve the dirty beam from the dirty image and recover something close to the true sky.',
-    mathLatex: 'I^D = I_{\\text{true}} * B',
-    terms: [
-      { sym: 'I^D', desc: 'Dirty image — the raw reconstruction with artefacts' },
-      { sym: 'I_true', desc: 'True sky brightness — what we are trying to recover' },
-      { sym: '*', desc: 'Convolution — the smearing operation' },
-      { sym: 'B', desc: 'Dirty beam (PSF) — determined by which UV points are sampled' },
+    title: "Not All Baselines Are Equal",
+    paragraphs: [
+      "Each telescope has a System Equivalent Flux Density (SEFD) — its noise floor. ALMA has SEFD ~70 Jy; the South Pole Telescope ~13,000 Jy. Per-baseline thermal noise scales as σ ∝ √(SEFD_i × SEFD_j): a baseline linking two ALMA-class dishes would be ~180× more sensitive than an SPT–JCMT baseline.",
+      "This sensitivity structure shapes which Fourier components are measured reliably. Short, sensitive baselines constrain large-scale flux; long, noisy baselines resolve fine structure with large error bars. The SNR color mode on the UV map shows gold for ALMA-anchored baselines and grey for high-SEFD pairs.",
     ],
-    autoActions: [
-      { type: 'setMethod', method: 'dirty' },
-    ],
-    userHint: null,
+    hint: "Toggle SNR Color Mode on the UV map — gold arcs are ALMA-anchored; grey arcs have high thermal noise.",
+    diagramId: 6,
+    autoActions: [],
   },
   {
-    title: 'Max Entropy Reconstruction',
-    spotlightId: 'tour-controls',
-    diagramAct: 6,
-    text: 'Maximum Entropy Method (MEM) finds the image that is most consistent with the measured visibilities while making the fewest additional assumptions about the sky. It maximises the information entropy S(I) — a measure of image smoothness and uniformity — subject to the data-fidelity constraint χ² ≤ 1, which requires the reconstructed image\'s predicted visibilities to match the measured ones within noise. The prior model Mᵢ is typically a flat, uniform image — encoding \'I know nothing beyond what the data tells me\'. MEM naturally suppresses sidelobes without explicit deconvolution, because the maximum-entropy image has no unnecessary structure. The EHT team used MEM-based methods as one of four independent imaging pipelines to validate the 2019 image.',
-    mathLatex: '\\max\\; S(I) = -\\sum_i I_i \\ln\\!\\frac{I_i}{M_i} \\quad \\text{s.t.}\\; \\chi^2 \\leq 1',
-    terms: [
-      { sym: 'S(I)', desc: 'Image entropy — higher means smoother, fewer assumptions' },
-      { sym: 'Iᵢ', desc: 'Brightness of pixel i in the reconstruction' },
-      { sym: 'Mᵢ', desc: 'Prior model pixel — default is a uniform flat image' },
-      { sym: 'χ² ≤ 1', desc: 'Data constraint — residuals must match the noise level' },
+    title: "The Dirty Image",
+    paragraphs: [
+      "Inverse Fourier transforming the incomplete UV data produces the 'dirty image' — the true sky convolved with the array's point spread function (PSF), called the dirty beam. The dirty beam has a narrow central peak (the angular resolution) surrounded by sidelobes from missing UV coverage.",
+      "For the EHT, dirty beam sidelobes are severe because UV coverage is sparse — 28 baselines versus millions for a filled aperture. These sidelobes create ringing artefacts that can mimic real source structure. Deconvolution algorithms like CLEAN remove them.",
     ],
-    autoActions: [
-      { type: 'setMethod', method: 'mem' },
-    ],
-    userHint: null,
+    hint: "Click 'Dirty' in the Contour Map panel to see the raw reconstruction with sidelobe artefacts visible.",
+    diagramId: 7,
+    autoActions: [],
   },
   {
-    title: 'CLEAN Deconvolution',
-    spotlightId: 'tour-controls',
-    diagramAct: 7,
-    text: 'CLEAN is the workhorse deconvolution algorithm of radio astronomy, developed by Jan Högbom in 1974 and used in virtually every radio image since. It iteratively finds the brightest peak in the dirty image, subtracts a fraction γ (the loop gain, typically 0.1) of the dirty beam centred on that peak, and accumulates the subtracted flux as a \'clean component\'. After many iterations — typically hundreds to thousands — the residual approaches the noise floor. The clean components are then convolved with a smooth Gaussian \'clean beam\' (whose width matches the central peak of the dirty beam) and the residuals are added back. This two-step process removes sidelobes while preserving the angular resolution of the array. CLEAN works best on compact sources; for extended emission, MEM often outperforms it.',
-    mathLatex: 'r \\leftarrow r - \\gamma\\,\\hat{r}_{\\max}\\, B(x - x_{\\max})',
-    terms: [
-      { sym: 'r', desc: 'Residual image — updated after each CLEAN iteration' },
-      { sym: 'γ', desc: 'Loop gain — fraction of peak subtracted per step (~0.1)' },
-      { sym: 'r̂_max', desc: 'Amplitude of the brightest remaining point' },
-      { sym: 'B', desc: 'Dirty beam — subtracted centred on the peak location' },
-      { sym: 'x_max', desc: 'Position of the current peak in the residual image' },
+    title: "CLEAN Deconvolution",
+    paragraphs: [
+      "CLEAN, developed by Jan Högbom in 1974, iteratively finds the brightest peak in the dirty image, subtracts a fraction γ ≈ 0.1 of the dirty beam centred on that peak, and accumulates the subtracted flux as a 'clean component'. This repeats until residuals approach the noise floor.",
+      "The clean components are then convolved with a smooth Gaussian 'clean beam' (sized to match the PSF's central peak) and residuals are added back. This removes sidelobes while preserving angular resolution. CLEAN is still used in virtually every radio image produced today.",
     ],
-    autoActions: [
-      { type: 'setMethod', method: 'clean' },
-    ],
-    userHint: null,
+    hint: "Click 'CLEAN' in the Contour Map to compare the deconvolved reconstruction against the dirty image.",
+    diagramId: 8,
+    autoActions: [{ type: 'setMethod', method: 'clean' }],
   },
   {
-    title: 'Black Hole Imaging',
-    spotlightId: null,
-    diagramAct: 8,
-    text: 'The Event Horizon Telescope used 8 stations spanning Earth\'s diameter to achieve ~20 microarcsecond angular resolution at 230 GHz (1.3 mm wavelength). On April 10, 2019, it released the first image of a black hole: the shadow of M87*, a 6.5-billion solar mass black hole 55 million light-years away in the Virgo galaxy cluster. The image shows a bright emission ring surrounding a central dark region — the photon sphere and shadow caused by the black hole\'s immense gravity bending light. Four independent imaging teams used different algorithms (including MEM and CLEAN variants) and all recovered consistent images, confirming the result is robust. The EHT collaboration processed 5 petabytes of data recorded on half a ton of hard drives flown from the South Pole. You just simulated the core physics that made this possible.',
-    mathLatex: '\\theta_{\\min} = \\frac{\\lambda}{D_\\oplus} \\approx 20\\,\\mu\\text{as}',
-    terms: [
-      { sym: 'θ_min', desc: 'Minimum angular resolution achievable with Earth-baseline VLBI' },
-      { sym: 'λ', desc: '1.3 mm — the EHT observing wavelength (230 GHz)' },
-      { sym: 'D⊕', desc: 'Earth\'s diameter (12,742 km) — the maximum possible baseline' },
-      { sym: 'μas', desc: 'Microarcseconds — millionths of an arcsecond' },
+    title: "The Photon Ring of M87*",
+    paragraphs: [
+      "The shadow of M87* — a 6.5-billion solar mass black hole 55 million light-years away — subtends 42 microarcseconds. Surrounding it is a bright emission ring caused by photons spiralling near the event horizon before escaping toward us.",
+      "On April 10, 2019, the EHT released the first image of a black hole. Four independent imaging teams using different algorithms all recovered consistent images. The 2022 EHT papers added polarimetric structure revealing the magnetic field threading the accretion flow at the event horizon.",
     ],
-    autoActions: [
-      { type: 'loadEHT' },
-      { type: 'setPreset', preset: 'blackhole' },
-      { type: 'setMethod', method: 'clean' },
+    hint: "The blackhole source is loaded. Run CLEAN and look for the ring structure in the Contour Map.",
+    diagramId: 9,
+    autoActions: [{ type: 'setPreset', preset: 'blackhole' }],
+  },
+  {
+    title: "From EHT to ngEHT",
+    paragraphs: [
+      "The next-generation EHT (ngEHT) will add up to 10 new stations — filling geographic gaps in East Asia, Africa, South America, and the Arctic — growing from 8 to 17+ stations and from 28 to 136+ baselines.",
+      "Denser UV coverage translates directly to reduced sidelobes, higher dynamic range, and the ability to reconstruct extended emission like the M87 jet base. The ngEHT also targets movie-mode imaging of Sgr A* — tracking structural changes across a single night as the accretion flow orbits the black hole.",
     ],
-    userHint: null,
+    hint: "Switch to 'ngEHT Phase 1' in the array selector and compare UV coverage density against EHT 2017.",
+    diagramId: 10,
+    autoActions: [],
+  },
+  {
+    title: "Beyond Earth: The BHEX Mission",
+    paragraphs: [
+      "The Black Hole Explorer (BHEX) is a proposed space-VLBI mission placing a 3.5 m dish in medium Earth orbit, extending baselines to ~35 Gigaλ — roughly 3× longer than Earth's diameter allows.",
+      "At these baselines BHEX would resolve the photon ring of M87* at ~6 microarcseconds, enabling direct measurement of the ring's sharp lensed structure predicted by General Relativity. Ground-space baselines link the orbiting antenna to the full EHT ground array.",
+    ],
+    hint: "Click '+ BHEX Satellite' in the sidebar — watch the UV coverage extend to 35 Gλ baselines.",
+    diagramId: 11,
+    autoActions: [],
+  },
+  {
+    title: "From Visibilities to Science",
+    paragraphs: [
+      "The full VLBI pipeline: raw visibilities → calibration → UV coverage → deconvolution → image quality metrics (dynamic range, beam FWHM, UV fill %) → FITS export with WCS headers for follow-up analysis in CASA, AIPS, or Astropy.",
+      "The MetricsPanel shows key diagnostics: dynamic range (MAD estimator), beam FWHM in microarcseconds, UV fill percentage, and baseline count. Compare mode lets you run EHT 2017 and ngEHT Phase 1 side-by-side — seeing directly how improved UV coverage translates to sharper, higher dynamic-range images.",
+    ],
+    hint: "Open the metrics panel (bottom-right of the globe) and try compare mode: EHT 2017 vs ngEHT Phase 1.",
+    diagramId: 12,
+    autoActions: [],
   },
 ];
 
-// ── Tour component ──────────────────────────────────────────────────────────
 export function Tour({ actIndex, onActChange, onClose, onTourAction, reducedMotion }) {
-  const ranAutoRef = useRef(new Set());
+  const ranAutoRef = useRef(-1);
 
-  // Fire auto-actions once per act (on first visit)
   useEffect(() => {
-    if (ranAutoRef.current.has(actIndex)) return;
-    ranAutoRef.current.add(actIndex);
-    const act = ACTS[actIndex];
-    act.autoActions.forEach((action, i) => {
+    if (ranAutoRef.current === actIndex) return;
+    ranAutoRef.current = actIndex;
+    const act = TOUR_ACTS[actIndex];
+    act.autoActions?.forEach((action, i) => {
       setTimeout(() => onTourAction(action), i * 90);
     });
   }, [actIndex, onTourAction]);
 
-  // Spotlight: add glow class to target DOM element
-  useLayoutEffect(() => {
-    const spotId = ACTS[actIndex].spotlightId;
-    if (!spotId) return;
-    const el = document.getElementById(spotId);
-    if (!el) return;
-    el.classList.add('tour-spotlight-active');
-    return () => el.classList.remove('tour-spotlight-active');
-  }, [actIndex]);
-
-  const handleNext = useCallback(() => {
-    if (actIndex < ACTS.length - 1) {
-      onActChange(actIndex + 1);
-    } else {
-      onClose();
-    }
-  }, [actIndex, onActChange, onClose]);
-
-  const handleBack = useCallback(() => {
-    if (actIndex > 0) onActChange(actIndex - 1);
-  }, [actIndex, onActChange]);
-
-  const hasSpot = !!ACTS[actIndex].spotlightId;
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowRight' && actIndex < TOUR_ACTS.length - 1) onActChange(actIndex + 1);
+      if (e.key === 'ArrowLeft' && actIndex > 0) onActChange(actIndex - 1);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [actIndex, onClose, onActChange]);
 
   return html`
-    <div>
-      <div className=${'tour-overlay' + (hasSpot ? '' : ' tour-overlay--dim')}></div>
+    <div className="tour-overlay" role="dialog" aria-modal="true" aria-label="VLBI Physics Tour">
       <${TourCard}
-        key=${actIndex}
-        act=${ACTS[actIndex]}
+        act=${TOUR_ACTS[actIndex]}
         actIndex=${actIndex}
-        totalActs=${ACTS.length}
-        onNext=${handleNext}
-        onBack=${handleBack}
+        totalActs=${TOUR_ACTS.length}
+        onNext=${() => actIndex < TOUR_ACTS.length - 1 ? onActChange(actIndex + 1) : onClose()}
+        onBack=${() => actIndex > 0 && onActChange(actIndex - 1)}
         onSkip=${onClose}
+        onJump=${onActChange}
         reducedMotion=${reducedMotion}
       />
     </div>
