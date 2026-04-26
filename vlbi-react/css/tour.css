@@ -16,92 +16,116 @@
   to   { opacity: 1; }
 }
 
-/* ── Hero SVG (full-viewport background layer) ──────────────────────────── */
+/* ── Visual zone (top 68vh — SVG fills it completely) ───────────────────── */
 
-.tour-hero {
-  position: absolute;
-  inset: 0;
+.tour-visual {
+  flex: 0 0 68vh;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.tour-hero svg {
+.tour-visual svg {
   width: 100%;
   height: 100%;
+  display: block;
 }
 
-/* ── Text overlay (right side, vertically centered) ─────────────────────── */
-
-.tour-text-overlay {
-  position: absolute;
-  right: 6%;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 32%;
-  max-width: 440px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  pointer-events: none;
+.tour-visual img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  display: block;
 }
 
-/* Act 6: image is left-aligned, text pushed further right / narrower */
-.tour-text-overlay.text-right {
-  right: 3%;
-  width: 28%;
-  max-width: 380px;
+/* ── Text panel (bottom strip — never overlaps visual) ──────────────────── */
+
+.tour-text-panel {
+  flex: 1;
+  min-height: 0;
+  border-top: 1px solid rgba(196, 165, 85, 0.2);
+  background: rgba(4, 4, 8, 0.98);
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  grid-template-rows: auto 1fr auto;
+  padding: 16px 28px 14px;
+  gap: 0 24px;
+  overflow: hidden;
 }
+
+/* ── Chapter badge (col 1, row 1) ────────────────────────────────────────── */
 
 .tour-chapter-badge {
-  font-size: 0.72rem;
-  letter-spacing: 0.25em;
+  grid-column: 1;
+  grid-row: 1;
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: #C4A555;
-  margin-bottom: 2px;
+  padding-top: 3px;
+  white-space: nowrap;
+  align-self: start;
 }
 
-.tour-chapter-badge.ch-2 { color: #4ecdc4; }
-.tour-chapter-badge.ch-3 { color: #C4A555; }
+/* ── Act title (col 2, row 1) ────────────────────────────────────────────── */
 
 .tour-act-title {
-  font-size: clamp(1.3rem, 2.4vw, 1.9rem);
+  grid-column: 2;
+  grid-row: 1;
+  font-size: clamp(1.1rem, 2vw, 1.5rem);
   font-weight: 800;
   color: #f0f0f8;
   line-height: 1.2;
-  letter-spacing: -0.01em;
-  margin: 0;
+  margin: 0 0 8px 0;
+  padding: 0;
+}
+
+/* ── Body: paragraphs + equation (col 2, row 2) ─────────────────────────── */
+
+.tour-body {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: hidden;
+  min-height: 0;
 }
 
 .tour-paragraph {
-  font-size: clamp(0.82rem, 1.2vw, 0.98rem);
-  line-height: 1.85;
+  font-size: clamp(0.78rem, 1.1vw, 0.9rem);
+  line-height: 1.65;
   color: #c0c0d8;
-  opacity: 0;
-  transform: translateY(14px);
   margin: 0;
+  opacity: 0;
+  transform: translateY(10px);
 }
 
 .tour-paragraph.p-visible {
-  animation: textReveal 0.7s ease forwards;
+  animation: textReveal 0.6s ease forwards;
 }
 
 .tour-equation-block {
   margin-top: 4px;
-  padding: 13px 16px;
+  padding: 8px 14px;
   background: rgba(255, 215, 0, 0.06);
-  border-left: 3px solid #FFD700;
-  border-radius: 4px;
+  border-left: 2px solid #FFD700;
+  border-radius: 3px;
   opacity: 0;
-  transform: translateY(12px);
+  transform: translateY(8px);
+  flex-shrink: 0;
 }
 
 .tour-equation-block.eq-visible {
-  animation: textReveal 0.9s ease forwards;
+  animation: textReveal 0.8s ease forwards;
 }
 
 .tour-equation {
-  font-size: clamp(0.95rem, 1.5vw, 1.2rem);
+  font-size: clamp(0.85rem, 1.3vw, 1.05rem);
   color: #FFD700;
   font-family: 'Courier New', 'Courier', monospace;
   letter-spacing: 0.02em;
@@ -109,10 +133,10 @@
 }
 
 .tour-subtext {
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   color: #8888b0;
   font-style: italic;
-  margin-top: 5px;
+  margin-top: 4px;
   line-height: 1.5;
 }
 
@@ -120,20 +144,52 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Continue hint (bottom-right) ───────────────────────────────────────── */
+/* ── Nav col (col 3, all rows) ───────────────────────────────────────────── */
+
+.tour-nav-col {
+  grid-column: 3;
+  grid-row: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+
+.tour-skip {
+  background: none;
+  border: 1px solid rgba(196, 165, 85, 0.25);
+  color: #8888b0;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 16px;
+  cursor: pointer;
+  font-family: var(--font, 'Inter', sans-serif);
+  white-space: nowrap;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.tour-skip:hover {
+  border-color: #C4A555;
+  color: #C4A555;
+}
+
+.tour-nav-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
 
 .tour-continue-hint {
-  position: absolute;
-  bottom: 52px;
-  right: 6%;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: #C4A555;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   opacity: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  text-align: right;
   pointer-events: none;
 }
 
@@ -146,40 +202,36 @@
   50%       { opacity: 1; }
 }
 
-/* ── Navigation arrows (left/right edges) ───────────────────────────────── */
-
-.tour-nav-prev,
-.tour-nav-next {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+.tour-nav-btn {
   background: none;
-  border: none;
-  cursor: pointer;
+  border: 1px solid rgba(196, 165, 85, 0.3);
   color: #C4A555;
-  font-size: 2rem;
-  padding: 20px 16px;
-  opacity: 0.25;
-  transition: opacity 0.2s ease;
-  z-index: 20;
+  padding: 6px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
   font-family: var(--font, 'Inter', sans-serif);
+  letter-spacing: 0.05em;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
 }
 
-.tour-nav-prev { left: 0; }
-.tour-nav-next { right: 0; }
+.tour-nav-btn:hover:not(:disabled) {
+  background: rgba(196, 165, 85, 0.1);
+  border-color: #C4A555;
+}
 
-.tour-nav-prev:hover,
-.tour-nav-next:hover { opacity: 0.9; }
-
-.tour-nav-next.nav-ready { opacity: 0.65; }
-
-.tour-nav-prev:disabled,
-.tour-nav-next:disabled {
-  opacity: 0.08;
+.tour-nav-btn:disabled {
+  opacity: 0.2;
   cursor: default;
 }
 
-/* ── Progress bar (gold line at bottom) ─────────────────────────────────── */
+.tour-nav-btn.btn-primary {
+  background: rgba(196, 165, 85, 0.15);
+  border-color: #C4A555;
+}
+
+/* ── Progress bar (absolute at bottom of .tour-cinematic) ────────────────── */
 
 .tour-progress-track {
   position: absolute;
@@ -187,38 +239,14 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: rgba(196, 165, 85, 0.15);
+  background: rgba(196, 165, 85, 0.12);
+  z-index: 5;
 }
 
 .tour-progress-fill {
   height: 100%;
   background: #C4A555;
   transition: width 0.6s ease;
-}
-
-/* ── Skip button (top-right pill) ───────────────────────────────────────── */
-
-.tour-skip {
-  position: absolute;
-  top: 20px;
-  right: 24px;
-  background: none;
-  border: 1px solid rgba(196, 165, 85, 0.28);
-  color: #8888b0;
-  font-size: 0.73rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 5px 15px;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: border-color 0.2s ease, color 0.2s ease;
-  z-index: 20;
-  font-family: var(--font, 'Inter', sans-serif);
-}
-
-.tour-skip:hover {
-  border-color: #C4A555;
-  color: #C4A555;
 }
 
 /* ── Chapter title cards ────────────────────────────────────────────────── */
