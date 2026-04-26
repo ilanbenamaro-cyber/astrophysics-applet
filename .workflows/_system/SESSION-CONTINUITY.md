@@ -43,9 +43,14 @@
 **UI Polish + Tour Rework: COMPLETE** — committed 2026-04-24 as P1/P2/P3
 > P1 `a090153`: compare button top, auto-load preset, remove export button, dirty/CLEAN only, telescope list in compare
 > P2 `9b1705f`: transitions, hover states, spacing polish (CSS only)
-> P3 `24ae8b6`: full-screen 12-act tour with SVG diagrams
+> P3 `24ae8b6`: full-screen 12-act tour with SVG diagrams (intermediate — superseded below)
 
-**ALL PLANNED SESSIONS COMPLETE — S1 through P3**
+**Tour Cinematic Rewrite: COMPLETE** — committed 2026-04-25/26
+> `8eb63cb`: tour diagram upgrade — richer SVG, more math, 700×500 viewBox, 12 acts with 3 paragraphs each
+> `2c9f59b`: tour diagram fixes — elliptic UV arcs (SVG A arc syntax), equirectangular grid world map, CLEAN animation fix
+> `d3b13b0`: cinematic 8-act tour full rewrite — animPhase state machine (visual→text→ready); chapter title cards before Ch II (act 3) and Ch III (act 6); 1200×700 viewBox; deep-space visual language (#010103 bg, gold equations, teal data); real EHT M87* image Act 6 (assets/eht-m87-2019.jpg 36KB JPEG); Tour contract (App.js wiring + exported function signature + autoAction types) unchanged
+
+**ALL PLANNED SESSIONS COMPLETE — S1 through P3 + Tour Cinematic Rewrite**
 
 ---
 
@@ -111,7 +116,7 @@ Full VLBI simulation pipeline — S1 through S12c complete:
 
 All S1–S12 + P1/P2/P3 are complete. The simulator is feature-complete for the Harvard EHT talk.
 
-1. **Demo session with Prof. Cárdenas-Avendaño** — walk through tour (12 acts, full-screen), compare mode (EHT 2017 vs ngEHT Phase 1), metrics panel, SNR color coding.
+1. **Demo session with Prof. Cárdenas-Avendaño** — walk through tour (8 acts, cinematic), compare mode (EHT 2017 vs ngEHT Phase 1), metrics panel, SNR color coding.
 2. **Harvard EHT talk preparation** — prepare a reference screenshot of compare mode: EHT 2017 (left) vs ngEHT Phase 1 (right), both CLEAN on M87* at 230 GHz.
 3. **Future enhancements** (no specific session planned):
    - Multi-component sources (model with multiple point sources or Gaussians)
@@ -119,7 +124,7 @@ All S1–S12 + P1/P2/P3 are complete. The simulator is feature-complete for the 
    - Frequency-dependent source size (spectral index)
    - Re-expose Export FITS button (code in fitsExport.js is intact — just needs button in ContourMap or toolbar)
    - These all require Alejandro sign-off before implementation.
-4. **Knowledge base is current as of 2026-04-24** — synced post P3.
+4. **Knowledge base is current as of 2026-04-26** — synced post Tour Cinematic Rewrite.
 
 ---
 
@@ -137,34 +142,21 @@ All S1–S12 + P1/P2/P3 are complete. The simulator is feature-complete for the 
 ## LAST SIGNIFICANT COMMITS
 
 ```
+d3b13b0  feat(vlbi-react): cinematic 8-act tour — full rewrite
+2c9f59b  fix(vlbi-react): tour diagram fixes — elliptic UV arcs, grid world map, CLEAN animation
+8eb63cb  feat(vlbi-react): tour diagram upgrade — richer SVG, more math, 700×500 viewBox, no text overlaps
+be577e3  chore: sync knowledge files post-session 2026-04-24
 24ae8b6  feat(vlbi-react): P3 — full-screen 12-act tour with SVG diagrams
 9b1705f  style(vlbi-react): P2 — transitions, hover states, spacing polish
 a090153  fix(vlbi-react): P1 — compare button top, auto-load preset, remove export button, dirty/CLEAN only, telescope list in compare
-08f62c8  chore: sync knowledge files post-session 2026-04-24
-5b65d84  feat(vlbi-react): S12c — compare mode polish
-81b1610  feat(vlbi-react): S12b — compare mode layout + SimPane component
-4a09670  feat(vlbi-react): S12a — extract useSimulation hook (single-pane regression clean)
-4f32794  feat(vlbi-react): S11 — FITS export with WCS headers
 ```
 
-Files modified in P1 (a090153):
-- `vlbi-react/css/app.css` — .btn-compare, .btn-compare.active/.hover; .sim-pane-telescope-section; --accent-orange: #ff9f43 in :root
-- `vlbi-react/js/App.js` — restoredLabel removed; ImageCanvas label="CLEAN" hardcoded; onExportFITS prop removed from ContourMap
-- `vlbi-react/js/AppSidebar.js` — compare button moved to top of aside; select onChange auto-loads preset; Load Array button removed; compare button at bottom removed
-- `vlbi-react/js/ContourMap.js` — onExportFITS prop removed; displayMode 'restored'→'clean'; CLEAN button hardcoded; Export FITS button removed; restoredBtnLabel removed
-- `vlbi-react/js/ControlsPanel.js` — entire .method-row section removed (3 method-btn buttons + label + methods array)
-- `vlbi-react/js/SimPane.js` — TelescopeList import; collapsible telescope section (showTels state); BHEX button inside; no Load button; label="CLEAN" hardcoded; onExportFITS removed
-- `vlbi-react/js/useSimulation.js` — handleLoadArrayPreset accepts nameOverride (typeof string guard)
-
-Files modified in P2 (9b1705f):
-- `vlbi-react/css/app.css` — .btn transitions (lift/snap); @keyframes fadeSlideIn; .metrics-panel/.info-modal-content fade-in; select hover border + focus ring; range thumb highlight; reduced-motion suppression (media query + [data-reduced-motion])
-
-Files modified in P3 (24ae8b6):
-- `vlbi-react/css/app.css` — --accent-orange added to :root
-- `vlbi-react/css/tour.css` — full rewrite: full-screen overlay, header dots, 2-column body, footer; @keyframes waveSweep/earthRotate/cleanStep; reduced-motion suppression
-- `vlbi-react/js/Tour.js` — full rewrite: TOUR_ACTS (12 acts), keyboard nav, autoActions
-- `vlbi-react/js/TourCard.js` — full rewrite: tour-header/body/footer layout; progress dots clickable
-- `vlbi-react/js/TourDiagram.js` — full rewrite: 12 SVG functions d01()–d12(); CSS-animated Acts 2/4/8; no canvas/ctx
+Files modified in Tour Cinematic Rewrite (d3b13b0):
+- `assets/eht-m87-2019.jpg` — new: real EHT M87* image, 36KB JPEG, from Wikimedia Commons
+- `vlbi-react/css/tour.css` — full rewrite: .tour-cinematic full-viewport, .tour-hero SVG bg, .tour-text-overlay (right 32%), animPhase CSS; @keyframes: waveSweepCinema, earthRotateCinema, drawArc, stationReveal, lineReveal, scrubberMove, cleanHighlight, imageReveal, panelSlideIn, chapterReveal; .uv-draw-1/2/3 stroke-dashoffset; .station-dot-1..8 sequential stagger; .scrubber-reveal translateX(422px); full reduced-motion suppression
+- `vlbi-react/js/Tour.js` — full rewrite: 8-act TOUR_ACTS; animPhase state machine (visual→text→ready); CHAPTER_CARDS at actIndex 2 and 5; setChapterCard(false) guard at top of animPhase effect; 3 timer refs (animTimerRef, textTimerRef, chapterTimerRef); ranAutoRef autoAction dedup
+- `vlbi-react/js/TourCard.js` — full rewrite: visibleCount single useEffect; .tour-hero SVG + .tour-text-overlay layout; .text-right for act.diagramId===6; chapter badge; progress bar width=(actIndex/(totalActs-1))*100%
+- `vlbi-react/js/TourDiagram.js` — full rewrite: 8 SVG functions d01()–d08(), viewBox="0 0 1200 700", #010103 bg; d06 uses ../assets/eht-m87-2019.jpg
 
 ---
 
@@ -183,7 +175,7 @@ App.js ─── global UI only (compareMode, modals, a11y, tour)
 ├── ContourMap.js ─────── viridis + marching squares + Dirty/CLEAN toggle (no Export FITS button in UI)
 ├── PhysicsNotesModal.js  static: UV formula, CLEAN/MEM, EHT sources (hidden in compare mode)
 ├── CitationModal.js ──── BibTeX + APA from live sim state (hidden in compare mode)
-├── Tour.js ─────────── 12-act full-screen overlay tour; keyboard nav; autoActions; SVG diagrams
+├── Tour.js ─────────── 8-act cinematic tour; animPhase state machine (visual→text→ready); chapter title cards before Ch II/III; keyboard nav; autoActions; SVG diagrams
 └── A11yPanel.js ──────── accessibility settings (hidden in compare mode)
 
 useSimulation.js ─ custom hook. All sim state, effects, memos, handlers. Each call = one worker.
@@ -197,6 +189,7 @@ constants.js ─ IMAGE_SIZE=512, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD, 
 
 ## LAST UPDATED
 
+2026-04-26 — Tour Cinematic Rewrite complete (8-act, animPhase machine, chapter cards, real EHT image); WHERE WE ARE, component map, commits, what to do next all updated
 2026-04-24 — P1/P2/P3 complete (UI polish + tour rework); component map, commits, what to do next all updated
 2026-04-24 — S9–S12c complete (all planned sessions done); component map, what's working, what to do next all updated
 2026-04-24 — S8 complete (angular size blocker resolved); Phase 2 unblocked; all sections updated

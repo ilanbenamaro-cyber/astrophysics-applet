@@ -324,6 +324,84 @@ RESOLVED: YES — pairSefdMap built correctly in useSimulation useMemo (S10).
 
 ---
 
+### Tour animPhase: chapter card stale state if navigation is fast
+DATE_DISCOVERED: 2026-04-26
+AREA: vlbi-react/js/Tour.js — animPhase useEffect
+SEVERITY: MEDIUM
+
+WHAT HAPPENED: When the user navigated away before the 2200ms chapter card timer fired, `chapterCard` state remained `true` on the new act. If the new act has no chapter card, the stale card overlay persisted indefinitely.
+
+ROOT CAUSE: The animPhase useEffect only called `setChapterCard(true)` when `CHAPTER_CARDS[actIndex]` exists. It never reset to `false` when navigating to an act without a chapter card. The 2200ms cleanup timer from the previous act was running on the old actIndex and did nothing useful.
+
+HOW TO AVOID: Always call `setChapterCard(false)` unconditionally at the **start** of the animPhase useEffect (before the CHAPTER_CARDS[actIndex] check). Pattern:
+```js
+useEffect(() => {
+  clearTimeout(animTimerRef.current);
+  clearTimeout(textTimerRef.current);
+  clearTimeout(chapterTimerRef.current);
+  setChapterCard(false);           // ← MUST be first, always resets
+  setAnimPhase(...);
+  if (CHAPTER_CARDS[actIndex]) {
+    setChapterCard(true);
+    chapterTimerRef.current = setTimeout(() => setChapterCard(false), 2200);
+  }
+  ...
+}, [actIndex, reducedMotion]);
+```
+
+DETECTION: Chapter title card ("Chapter II / THE SOLUTION") persists on an act that should not show a chapter card, especially when navigating quickly with the ← / → arrows.
+
+RESOLVED: YES — Tour.js setChapterCard(false) guard added (2026-04-26).
+
+---
+
+### Tour TourCard: visibleCount must use a single consolidated useEffect
+DATE_DISCOVERED: 2026-04-26
+AREA: vlbi-react/js/TourCard.js — visibleCount useEffect
+SEVERITY: MEDIUM
+
+WHAT HAPPENED: A two-effect approach (one effect resetting count to 0 when animPhase !== 'text', a separate effect setting count to `all` when animPhase === 'ready') caused a brief visual flash: count was set to 0 first, then to `all` on the next render. Paragraphs briefly disappeared before reappearing.
+
+ROOT CAUSE: React batches state updates within a single effect, but updates from two separate effects can render as two separate frames. The sequence was: Effect 1 fires (animPhase='ready') → count=0 renders → Effect 2 fires → count=all renders. One extra render shows all paragraphs gone momentarily.
+
+HOW TO AVOID: Use a single switch-style useEffect for visibleCount. All three animPhase cases must be handled in one effect:
+```js
+useEffect(() => {
+  const all = act.paragraphs.length + 1;
+  if (animPhase === 'visual') { setVisibleCount(0); return; }
+  if (animPhase === 'ready' || reducedMotion) { setVisibleCount(all); return; }
+  // 'text': reveal items one by one
+  let i = 0;
+  const iv = setInterval(() => { i++; setVisibleCount(i); if (i >= all) clearInterval(iv); }, 800);
+  return () => clearInterval(iv);
+}, [animPhase, act, reducedMotion]);
+```
+
+DETECTION: Paragraphs briefly flash invisible when the animPhase transitions from 'visual' → 'ready' (reduced motion / skip).
+
+RESOLVED: YES — TourCard.js consolidated to single effect (2026-04-26).
+
+---
+
+### Tour d05 CLEAN scrubber: translateX distance must match SVG panel geometry exactly
+DATE_DISCOVERED: 2026-04-26
+AREA: vlbi-react/css/tour.css — @keyframes scrubberMove; vlbi-react/js/TourDiagram.js — d05()
+SEVERITY: LOW
+
+WHAT HAPPENED: CSS keyframe `scrubberMove` initially used `translateX(580px)` (a rough estimate). The CLEAN panel in d05 starts at x=710 and ends at x=1132, giving an exact width of 422px. At 580px the scrubber rect overshot the panel boundary and left a visible gap.
+
+ROOT CAUSE: The scrubber rect starts at x=710 (left edge of CLEAN panel) with width=422. Its starting position coincides with the dirty/CLEAN dividing line. To reveal the CLEAN panel the rect must slide exactly 422px to the right. Any deviation either leaves dirty panel artifacts or clips into the next visual zone.
+
+HOW TO AVOID: When changing d05's CLEAN panel width or x-position, update `scrubberMove` translateX to match: `CLEAN panel width = (CLEAN panel x2) - (CLEAN panel x1)`. The value must be consistent in the @keyframes definition, the `.scrubber-reveal` reduced-motion override, AND the `[data-reduced-motion]` override.
+
+FIX: `@keyframes scrubberMove { from { transform: translateX(0); } to { transform: translateX(422px); } }` — and the scrubber rect starts at x=710 (the dividing line between dirty and CLEAN panels).
+
+DETECTION: CLEAN panel not fully revealed (scrubber stops short), or scrubber overshoots into surrounding content.
+
+RESOLVED: YES — corrected to translateX(422px) (2026-04-26).
+
+---
+
 ## Pattern: Things To Always Check
 
 □ After any change to telescope naming logic — verify EHT preset + manual click produces T(n+1) not T1
@@ -339,3 +417,6 @@ RESOLVED: YES — pairSefdMap built correctly in useSimulation useMemo (S10).
 □ computeUVPoints/computeUVPointsGl must split telescopes into groundTels/spaceTels before ECEF conversion — space telescopes use computeSatelliteECEF, not latLonToECEF
 □ Math.max spread on Float64Array of N=512 (262144 elements) → stack overflow. Always use for-loop for peak-finding.
 □ pairId is a string key ("3-7"), not an array index. Use pairSefdMap[p.pairId], never stationPairs[p.pairId].
+□ Tour.js animPhase useEffect: setChapterCard(false) must be the FIRST statement — before any CHAPTER_CARDS[actIndex] check. Prevents stale chapter card on acts without a card.
+□ TourCard.js visibleCount: single consolidated useEffect (not two separate effects) — prevents flash on visual→ready transition.
+□ Tour d05 scrubberMove translateX must equal the CLEAN panel width in d05() SVG geometry. If d05 panel layout changes, update CSS keyframe and both reduced-motion overrides to match.

@@ -262,7 +262,7 @@ CATEGORY: pattern
 APPLIES_TO: vlbi-react/js/TourDiagram.js — any SVG rendered via htm template literals
 
 LEARNING: SVG attributes in preact/htm templates follow React camelCase convention: `strokeWidth`, `strokeDasharray`, `textAnchor`, `fillOpacity`, `fontSize` (via inline style). Kebab-case (`stroke-width`, `text-anchor`) is HTML/SVG attribute syntax — not used in JSX/htm. Font properties are set via `style={{ fontSize: '14px', fontFamily: ... }}` not as SVG attributes.
-EVIDENCE: TourDiagram.js P3 implementation — confirmed working in all 12 act diagrams.
+EVIDENCE: TourDiagram.js confirmed working across all 8 act diagrams (d01–d08) in the cinematic rewrite.
 IMPLICATION: When writing SVG in any htm file, always use camelCase attribute names. If SVG renders but attributes appear ignored, check for kebab-case attributes.
 
 ---
@@ -272,13 +272,25 @@ DATE: 2026-04-24
 CATEGORY: pattern
 APPLIES_TO: vlbi-react/css/tour.css, vlbi-react/css/app.css
 
-LEARNING: Tour-specific CSS (overlay, header, body, footer, progress dots, SVG animation keyframes) lives in `vlbi-react/css/tour.css`, not in `app.css`. Both are loaded by `vlbi-react/index.html`. `--accent-orange` was added to `:root` in `app.css` since CSS variables must be declared on `:root`, but all `.tour-*` class rules belong in `tour.css`.
-EVIDENCE: Discovered when verifying P3 CSS changes — the plan assumed all tour CSS would go in app.css, but tour.css already existed as a separate file.
+LEARNING: Tour-specific CSS (full-screen overlay, hero SVG container, text overlay, animation keyframes, chapter card, reduced-motion overrides) lives in `vlbi-react/css/tour.css`, not in `app.css`. Both are loaded by `vlbi-react/index.html`. `--accent-orange` was added to `:root` in `app.css` since CSS variables must be declared on `:root`, but all `.tour-*` class rules belong in `tour.css`.
+EVIDENCE: Confirmed across P3 + cinematic rewrite — tour.css holds all 8-act diagram keyframes (drawArc, stationReveal, scrubberMove, imageReveal, panelSlideIn, etc.) and the animPhase CSS classes.
 IMPLICATION: When adding new tour styles, edit `tour.css` not `app.css`. When adding new global CSS custom properties, add to `:root` in `app.css`.
 
 ---
 
+### Tour animPhase state machine: clear-all-then-set pattern
+DATE: 2026-04-26
+CATEGORY: pattern
+APPLIES_TO: vlbi-react/js/Tour.js — animPhase useEffect
+
+LEARNING: The animPhase useEffect must follow a strict pattern: (1) clearTimeout all 3 timers first, (2) setChapterCard(false) unconditionally, (3) setAnimPhase, (4) then conditionally set new timers. Any deviation — even calling setChapterCard(false) after the CHAPTER_CARDS check — produces stale overlays or overlapping timers when users navigate quickly between acts.
+EVIDENCE: Stale chapter card bug discovered during cinematic rewrite: navigating away before 2200ms caused the chapter card to persist on an act that shouldn't show one. Fixed by moving setChapterCard(false) above all conditional logic.
+IMPLICATION: Whenever adding state managed by timers in a component that responds to actIndex changes, always follow: clearAll → resetAll → conditionallySet. Never assume a cleanup return alone is sufficient — the cleanup only runs on the *next* render, not synchronously.
+
+---
+
 ## Last Updated
+2026-04-26 — Tour Cinematic Rewrite: animPhase pattern, stale "12 act" references corrected to 8 acts
 2026-04-24 — P1/P2/P3 complete: SVG-in-htm camelCase pattern, tour.css separation pattern
 2026-04-24 — S9–S12 complete: useSimulation hook pattern, compare mode architecture, peak-finding constraint
 2026-04-24 — Angular size blocker resolved; effectiveSourceFraction pattern added

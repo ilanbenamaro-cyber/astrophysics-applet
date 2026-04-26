@@ -411,12 +411,24 @@ TRIGGERS_REVIEW_IF: A demo scenario requires showing MEM/CLEAN comparison, or FI
 DATE: 2026-04-24
 LAST_VERIFIED: 2026-04-24
 EXPIRES: NEVER
+STATUS: SUPERSEDED — see "Tour: 8-act cinematic" below (2026-04-26)
+
+DECISION: Tour.js/TourCard.js/TourDiagram.js fully rewritten (P3). Layout: fixed full-screen overlay, 2-column body (60% SVG diagram / 40% text), progress dots, keyboard nav (← → Esc). 12 acts. CSS-animated Acts 2/4/8.
+NOTE: This was an intermediate state. The 12-act tour was further refined in this same session and replaced with the 8-act cinematic version documented below.
+
+---
+
+### Tour: 8-act cinematic — animPhase state machine, deep-space visual language
+DATE: 2026-04-26
+LAST_VERIFIED: 2026-04-26
+EXPIRES: NEVER
 STATUS: ACTIVE
 
-DECISION: Tour.js/TourCard.js/TourDiagram.js fully rewritten (P3). Layout: fixed full-screen overlay, 2-column body (60% SVG diagram / 40% text), progress dots, keyboard nav (← → Esc). 12 acts (was 8). All diagrams are inline SVG with CSS keyframe animations (Acts 2: waveSweep, Act 4: earthRotate, Act 8: cleanStep staggered). No canvas, no requestAnimationFrame, no ctx in TourDiagram.js.
-RATIONALE: The old bottom-anchored card with canvas diagrams was small and the canvas rAF loop was overengineered for mostly-static diagrams. Full-screen gives the SVG diagrams room to breathe and makes the tour feel like a proper physics explainer. CSS animations are trivially pauseable via `[data-reduced-motion]` and more maintainable than rAF loops. 12 acts cover the full VLBI pipeline: single dish → Fourier sampling → EHT → deconvolution → photon ring → ngEHT → BHEX → pipeline.
-CONSEQUENCES: tour.css stores all tour-specific styles (separate from app.css); SVG attributes in preact/htm use camelCase (`strokeWidth`, `textAnchor`); HTML entities don't decode in htm — use literal Unicode.
-TRIGGERS_REVIEW_IF: A demo scenario needs animated simulations inside the tour (e.g. live UV plane updating). At that point, a canvas overlay inside the SVG panel would be warranted.
+DECISION: Tour fully rewritten to 8 acts across 3 chapters: Ch I The Problem (acts 1–2), Ch II The Solution (acts 3–5), Ch III The Frontier (acts 6–8). animPhase 3-state machine: 'visual' (SVG animation plays, → arrow disabled) → 'text' (paragraphs reveal 1/800ms, → skips to 'ready') → 'ready' (continue hint pulses, → advances). Chapter title cards (2.2s overlay) appear before acts at actIndex 2 and 5. Tour.js holds all 3 timers as refs (animTimerRef, textTimerRef, chapterTimerRef); all cleared + setChapterCard(false) at the top of every actIndex effect. TourCard.js: visibleCount driven by a single consolidated useEffect (not two separate effects — prevents flash on visual→ready transitions). TourDiagram.js: 8 SVG functions d01()–d08(), viewBox 1200×700, #010103 bg. Real EHT M87* JPEG (assets/eht-m87-2019.jpg, 36KB) used in Act 6 via href="../assets/eht-m87-2019.jpg". Deep-space visual language: gold equations (#FFD700), teal data (#4ecdc4), dark backgrounds. Tour App.js contract unchanged (exported function signature, autoAction types).
+RATIONALE: 12-act tour was too long for a live EHT demo. 8 acts covers the complete physics story (single dish → UV sampling → aperture synthesis → EHT → deconvolution → first light → BHEX → simulator) without overrunning attention. The animPhase machine gives each act a cinematic rhythm matching how planetarium shows and science films present concepts: visual first, then prose, then advance. Three explicit timer refs with clearTimeout at effect start prevents stale overlapping timers when the user navigates quickly between acts.
+ALTERNATIVES_REJECTED: Pure CSS transitions (no state machine) — cannot conditionally disable the → arrow during visual phase; 12-act tour — too many acts for a live demo; canvas overlay for diagrams — overengineered for mostly-static educational diagrams.
+CONSEQUENCES: assets/eht-m87-2019.jpg added at project root (not vlbi-react/assets/ — vlbi-react references root assets as ../assets/); tour.css stores keyframes separate from app.css; SVG camelCase attributes throughout TourDiagram.js.
+TRIGGERS_REVIEW_IF: Acts need to be added for ngEHT Phase 1 comparison (increase act count); live UV plane simulation inside the tour is needed (requires canvas overlay in SVG panel); tour needs audio narration (requires audio sync layer).
 
 ---
 

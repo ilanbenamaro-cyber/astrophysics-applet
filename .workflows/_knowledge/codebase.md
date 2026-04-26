@@ -90,9 +90,9 @@ App.js                        — global UI only: compareMode, infoKey, a11y, to
 ├── TelescopeList.js          — list of placed telescopes with remove buttons
 ├── InfoModal.js              — panel info popup
 ├── InfoTooltip.js            — hover tooltip on ? icons
-├── Tour.js                   — 12-act full-screen overlay tour; keyboard nav (← → Esc); autoActions per act
-│   ├── TourCard.js           — 2-column slide layout: header (dots+label+skip) + body (diagram|content) + footer
-│   └── TourDiagram.js        — 12 inline SVG diagrams (CSS-animated: Acts 2/4/8); no canvas, no ctx
+├── Tour.js                   — 8-act cinematic tour; animPhase state machine (visual→text→ready); chapter title cards before Ch II (act 3) / Ch III (act 6); keyboard nav (← → Esc); autoActions per act
+│   ├── TourCard.js           — cinematic layout: full-viewport .tour-hero SVG bg + .tour-text-overlay (right 32%); visibleCount state drives 1/800ms paragraph reveal; .text-right for Act 6 (EHT image left, text right)
+│   └── TourDiagram.js        — 8 SVG functions d01()–d08(), viewBox="0 0 1200 700", #010103 bg; CSS-animated: stroke-dashoffset UV arcs (Act 3), sequential station reveal (Act 4), scrubber wipe (Act 5), EHT image brightness fade (Act 6), panel slide-in (Act 8); real EHT M87* JPEG in d06 (../assets/eht-m87-2019.jpg); no canvas, no ctx
 ├── A11yPanel.js              — accessibility settings panel
 ├── PhysicsNotesModal.js      — static modal: UV formula, CLEAN/MEM algorithms, EHT sources
 └── CitationModal.js          — BibTeX + APA citation generator from live sim state
@@ -310,10 +310,13 @@ GitHub Pages from `main` branch root. Push to `main` = live within ~60 seconds.
 
 ## Last Updated
 
+2026-04-26 — Tour Cinematic Rewrite complete:
+  d3b13b0: Tour reduced from 12 to 8 acts. New animPhase state machine (visual→text→ready) in Tour.js; 3 timer refs (animTimerRef/textTimerRef/chapterTimerRef) all cleared at start of each actIndex effect. Chapter title cards (2.2s overlay) before acts 3 and 6. TourCard.js: visibleCount single-effect (not two effects — prevents flash). TourDiagram.js: 8 SVG functions, viewBox 1200×700, deep-space visual language. Real EHT M87* JPEG added as assets/eht-m87-2019.jpg (36KB). tour.css: new keyframes (waveSweepCinema, earthRotateCinema, drawArc, stationReveal, scrubberMove, imageReveal, panelSlideIn), UV arc stroke-dashoffset classes, sequential station-dot stagger.
+
 2026-04-24 — P1/P2/P3 UI polish + tour rewrite:
   P1: compare button moved to top of AppSidebar; array preset auto-loads on select (Load Array button removed); Export FITS button removed from ContourMap UI (fitsExport.js code preserved); MEM removed from UI — ContourMap has Dirty/CLEAN toggle (state key 'clean', data source restoredData unchanged); SimPane: collapsible telescope section with BHEX inside; ControlsPanel: method-row removed entirely.
   P2: CSS transitions (buttons lift/snap), MetricsPanel/modal fadeSlideIn, select hover border, slider thumb highlight. All transitions suppressed by media query + [data-reduced-motion]. --accent-orange: #ff9f43 added to :root.
-  P3: Tour.js rewritten (8→12 acts), TourCard.js rewritten (full-screen 2-column layout), TourDiagram.js rewritten (canvas+rAF→12 SVG functions; CSS-animated Acts 2/4/8). tour.css rewritten for full-screen overlay.
+  P3: Tour.js rewritten (12-act intermediate), TourCard.js rewritten (full-screen layout), TourDiagram.js rewritten (canvas+rAF→SVG). tour.css rewritten for full-screen overlay. Superseded by d3b13b0 above.
 
 2026-04-24 — S9–S12 complete:
   S9: INFO.sourceSize tooltip updated (42/50 μas). MetricsPanel.js (new). dynamicRange lifted to useSimulation useMemo (MAD). beamFwhm useMemo. uvCount state added. ContourMap accepts dynamicRange as prop.
