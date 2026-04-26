@@ -289,7 +289,30 @@ IMPLICATION: Whenever adding state managed by timers in a component that respond
 
 ---
 
+### SVG filter IDs in TourDiagram.js must be diagram-scoped
+DATE: 2026-04-26
+CATEGORY: pattern
+APPLIES_TO: vlbi-react/js/TourDiagram.js — all d0N() SVG <defs>
+
+LEARNING: Each diagram's `<filter>` and gradient IDs must include the diagram number (e.g. `bloom-d01`, `earthGrad-d03`). Inline SVG filters are scoped to the HTML document, not the SVG element — if two SVGs share an ID, the browser uses the first defs block in DOM order. React may keep prior-act SVGs in the DOM during transitions, so shared IDs would cross-contaminate filters.
+EVIDENCE: Architectural decision made during tour art pass (2026-04-26, commit 614932a).
+IMPLICATION: When adding new SVG diagrams to TourDiagram.js, always suffix all filter and gradient IDs with the diagram number. Apply as `filter="url(#bloom-d01)"` not via style object.
+
+---
+
+### CSS `transform-box: fill-box` required for CSS-animated SVG elements
+DATE: 2026-04-26
+CATEGORY: pattern
+APPLIES_TO: vlbi-react/css/tour.css — any class animating transform on SVG elements
+
+LEARNING: CSS `transform-origin: center` on an SVG element resolves to the center of the entire SVG viewport, not the element's bounding box. `transform-box: fill-box` makes `transform-origin` relative to the element's own fill bounding box — restoring the HTML-expected behavior. This is required for `translateX` (`.baseline-pulse`), rotations, and scales applied via CSS to SVG elements.
+EVIDENCE: .baseline-pulse bug discovered during art pass (2026-04-26, commit 614932a). Fixed by adding `transform-box: fill-box; transform-origin: center` to the class rule.
+IMPLICATION: Any new CSS animation class targeting an SVG element that uses transform must include these two declarations. This does not apply to SVG `transform` attribute animations.
+
+---
+
 ## Last Updated
+2026-04-26 — Tour Art Pass: SVG filter scoping pattern, transform-box pattern added
 2026-04-26 — Tour Cinematic Rewrite: animPhase pattern, stale "12 act" references corrected to 8 acts
 2026-04-24 — P1/P2/P3 complete: SVG-in-htm camelCase pattern, tour.css separation pattern
 2026-04-24 — S9–S12 complete: useSimulation hook pattern, compare mode architecture, peak-finding constraint

@@ -444,6 +444,32 @@ TRIGGERS_REVIEW_IF: Array preset selection needs a confirmation step (e.g. "this
 
 ---
 
+### SVG bloom filter architecture: per-diagram scoped IDs
+DATE: 2026-04-26
+LAST_VERIFIED: 2026-04-26
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: Each d0N() diagram in TourDiagram.js defines its own `<defs>` block with filter IDs scoped to that diagram: `bloom-d01` through `bloom-d08`, `softglow-d01..d08`, `hardblur-d01`, `hardblur-d05`, `starblur-d04`, `starblur-d07`, gradient IDs likewise scoped (e.g. `earthGrad-d03`, `beamGlow1-d01`). Applied via `filter="url(#bloom-d01)"` not via style.
+RATIONALE: React may keep prior act SVGs in the DOM during transitions. Shared filter IDs (`bloom`, `softglow`) across multiple inline SVGs would reference whichever `<filter>` the browser encounters first — visually wrong. Diagram-scoped IDs guarantee each SVG references its own filter definition. `filter` is an SVG attribute string, not a style property — must not be placed in a camelCase style object.
+ALTERNATIVES_REJECTED: Single shared `<defs>` block at document level — conflicts with React rendering model where each TourDiagram SVG is self-contained; class-level filter override — SVG doesn't support inheriting filter from class selector in the same way.
+TRIGGERS_REVIEW_IF: Tour diagrams are refactored into individual files and each gets its own `<defs>` scoped naturally to its file scope.
+
+---
+
+### d05: single-canvas sidelobe→photon-ring transformation (replacing scrubber wipe)
+DATE: 2026-04-26
+LAST_VERIFIED: 2026-04-26
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: Act 5 (CLEAN deconvolution) replaced the scrubber-wipe animation (a rect sliding over a dirty/CLEAN two-panel layout) with a single-canvas transformation: 5 concentric rings (sl-ring-1..5) fade out in staggered sequence via `sidelobeRingFade1–5` keyframes, a gold photon ring emerges via `photonRingReveal`, a black interior appears via `shadowReveal`, and the label transitions from "Dirty Image" (`labelDirtyFade`) to "CLEAN Image" (`labelCleanFade`). All centered at cx=600, cy=330.
+RATIONALE: The scrubber wipe was visually flat and didn't convey the physics of deconvolution. The sidelobe→photon-ring transformation visually encodes the key concept: CLEAN removes sidelobes and reveals the true photon ring structure. Five staggered rings give a sense of layers being peeled away. The single-canvas approach avoids the geometry coupling between SVG coordinates and CSS translateX distance that caused gotcha #d05-scrubber.
+ALTERNATIVES_REJECTED: Scrubber wipe — retained as CSS code (scrubberMove keyframe preserved in tour.css) but unused; side-by-side dirty/CLEAN panels — less dramatic and doesn't express the transformation concept.
+TRIGGERS_REVIEW_IF: A more physically accurate deconvolution animation is developed (e.g. iterative CLEAN steps as separate frames).
+
+---
+
 ## Contradiction Scanner
 
 Claude runs this check when adding a new decision:

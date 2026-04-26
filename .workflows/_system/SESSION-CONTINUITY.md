@@ -45,12 +45,17 @@
 > P2 `9b1705f`: transitions, hover states, spacing polish (CSS only)
 > P3 `24ae8b6`: full-screen 12-act tour with SVG diagrams (intermediate — superseded below)
 
+**Tour Art Pass: COMPLETE** — committed 2026-04-26
+> `614932a`: Complete art rewrite of TourDiagram.js (d01–d08) + tour.css additive update.
+> Bloom/softglow/hardblur SVG filter system (per-diagram scoped IDs bloom-d01..d08); metallic dish parabolas; volumetric beam cone (radialGradient polygon); painted Earth spheres (radialGradient + night shadow overlay); STARS[180] deterministic star field; continent outlines in d04; d04 expanded to 9 stations (added GLT at -68.703°, 76.535°); d05 replaced scrubber-wipe with single-canvas sidelobe→photon-ring transformation (5 sl-ring-* staggered fade, photon-ring-emerge, shadow-emerge, label-dirty→label-clean); BHEX data beam (.data-beam pulse) in d07; 280-star 3-depth-layer field in d07; luminous gold CTA (fontSize=36, fontWeight=900, bloom) in d08; 14 new CSS keyframes + 10 new animation classes; earth-group-cinema transform-origin updated 330×370→290×350; station-dot-9/label-9 rules added; uv-draw-* arc lengths recalculated (693/548/427); transform-box: fill-box on .baseline-pulse; full reduced-motion coverage.
+> `f12d196`: Tour layout fix — visual area top 68vh, text panel bottom 32vh, zero overlap.
+
 **Tour Cinematic Rewrite: COMPLETE** — committed 2026-04-25/26
 > `8eb63cb`: tour diagram upgrade — richer SVG, more math, 700×500 viewBox, 12 acts with 3 paragraphs each
 > `2c9f59b`: tour diagram fixes — elliptic UV arcs (SVG A arc syntax), equirectangular grid world map, CLEAN animation fix
 > `d3b13b0`: cinematic 8-act tour full rewrite — animPhase state machine (visual→text→ready); chapter title cards before Ch II (act 3) and Ch III (act 6); 1200×700 viewBox; deep-space visual language (#010103 bg, gold equations, teal data); real EHT M87* image Act 6 (assets/eht-m87-2019.jpg 36KB JPEG); Tour contract (App.js wiring + exported function signature + autoAction types) unchanged
 
-**ALL PLANNED SESSIONS COMPLETE — S1 through P3 + Tour Cinematic Rewrite**
+**ALL PLANNED SESSIONS COMPLETE — S1 through P3 + Tour Cinematic Rewrite + Tour Art Pass**
 
 ---
 
@@ -142,14 +147,19 @@ All S1–S12 + P1/P2/P3 are complete. The simulator is feature-complete for the 
 ## LAST SIGNIFICANT COMMITS
 
 ```
+614932a  feat(vlbi-react): tour art pass — bloom filters, star fields, painted Earth, sidelobe→photon transformation, BHEX data beam, luminous CTA
+f12d196  fix(vlbi-react): tour layout — visual top 68vh, text panel bottom, zero overlap
+bb81ed1  chore: sync knowledge files post-session 2026-04-26
 d3b13b0  feat(vlbi-react): cinematic 8-act tour — full rewrite
 2c9f59b  fix(vlbi-react): tour diagram fixes — elliptic UV arcs, grid world map, CLEAN animation
 8eb63cb  feat(vlbi-react): tour diagram upgrade — richer SVG, more math, 700×500 viewBox, no text overlaps
 be577e3  chore: sync knowledge files post-session 2026-04-24
 24ae8b6  feat(vlbi-react): P3 — full-screen 12-act tour with SVG diagrams
-9b1705f  style(vlbi-react): P2 — transitions, hover states, spacing polish
-a090153  fix(vlbi-react): P1 — compare button top, auto-load preset, remove export button, dirty/CLEAN only, telescope list in compare
 ```
+
+Files modified in Tour Art Pass (614932a):
+- `vlbi-react/js/TourDiagram.js` — complete rewrite of d01()–d08(): color constants, STARS[180] array, bloom filter defs (diagram-scoped), metallic dishes, painted Earth spheres, continent outlines, 9 stations (d04), sidelobe→photon transformation (d05), BHEX data beam + 3-layer star field (d07), luminous CTA (d08)
+- `vlbi-react/css/tour.css` — additive: .earth-group-cinema transform-origin 290×350; station-dot-9/label-9; 14 new @keyframes (pulseTravel, uvPointAppear, stationPulse, baselinePulse, sidelobeRingFade1–5, photonRingReveal, shadowReveal, labelDirtyFade, labelCleanFade, dataPulse); 10 new animation classes; transform-box: fill-box on .baseline-pulse; full reduced-motion block extension
 
 Files modified in Tour Cinematic Rewrite (d3b13b0):
 - `assets/eht-m87-2019.jpg` — new: real EHT M87* image, 36KB JPEG, from Wikimedia Commons
@@ -189,6 +199,7 @@ constants.js ─ IMAGE_SIZE=512, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD, 
 
 ## LAST UPDATED
 
+2026-04-26 — Tour Art Pass complete (bloom filters, star fields, painted Earth, sidelobe→photon transformation, BHEX data beam, CTA); WHERE WE ARE, commits, LAST UPDATED all updated
 2026-04-26 — Tour Cinematic Rewrite complete (8-act, animPhase machine, chapter cards, real EHT image); WHERE WE ARE, component map, commits, what to do next all updated
 2026-04-24 — P1/P2/P3 complete (UI polish + tour rework); component map, commits, what to do next all updated
 2026-04-24 — S9–S12c complete (all planned sessions done); component map, what's working, what to do next all updated

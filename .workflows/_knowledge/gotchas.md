@@ -383,6 +383,45 @@ RESOLVED: YES — TourCard.js consolidated to single effect (2026-04-26).
 
 ---
 
+### SVG filter IDs must be scoped per diagram — no shared filter IDs across inline SVGs
+DATE_DISCOVERED: 2026-04-26
+AREA: vlbi-react/js/TourDiagram.js — all d0N() SVG <defs> blocks
+SEVERITY: HIGH
+
+WHAT HAPPENED: If two TourDiagram SVGs both define `<filter id="bloom">`, the browser uses the first one in DOM order for both. When React keeps a prior act's SVG in the DOM during transitions, the wrong filter applies to the next act's elements — bloom intensity, blur radius, or color matrix from the wrong diagram.
+
+ROOT CAUSE: Inline SVG `<filter>` elements are scoped to the document (not to the SVG element). Multiple SVGs with the same filter ID in one HTML document reference whichever `<defs>` block the browser parsed first.
+
+HOW TO AVOID: Always use diagram-scoped filter IDs in TourDiagram.js: `bloom-d01` through `bloom-d08`, `softglow-d03`, `hardblur-d05`, etc. Apply as `filter="url(#bloom-d01)"` (SVG attribute, not a style object). Gradient IDs likewise: `earthGrad-d03`, `beamGlow1-d01`, etc.
+
+DETECTION: Bloom or filter effect looks wrong on an act — different blur radius or unexpected color. SVG renders but filters appear to apply the wrong parameters.
+
+RESOLVED: YES — all 8 diagram defs blocks use scoped IDs (2026-04-26, commit 614932a).
+
+---
+
+### CSS `transform` on SVG elements requires `transform-box: fill-box`
+DATE_DISCOVERED: 2026-04-26
+AREA: vlbi-react/css/tour.css — .baseline-pulse; any CSS-animated SVG element using translateX/Y
+SEVERITY: MEDIUM
+
+WHAT HAPPENED: `.baseline-pulse` CSS animation uses `translateX(760px)` on an SVG `<circle>`. In SVG, the CSS transform origin defaults to `0 0` (top-left of the SVG viewport), not the element's center. The circle was translating from the wrong origin, overshooting or missing its target position.
+
+ROOT CAUSE: CSS `transform-origin` behaves differently in SVG vs HTML. In HTML, `transform-origin: 50% 50%` refers to the element's own bounding box. In SVG, `%` values are relative to the SVG viewport, not the element — so `50% 50%` means the center of the whole SVG canvas. Setting `transform-box: fill-box` makes `%` values relative to the element's fill bounding box, restoring HTML-like behavior.
+
+HOW TO AVOID: Any SVG element animated via CSS `transform` (translate, rotate, scale) must have:
+```css
+transform-box: fill-box;
+transform-origin: center;
+```
+This is not needed for SVG `transform` attribute animations (which use the SVG coordinate system natively).
+
+DETECTION: CSS-animated SVG element moves to the wrong position or wrong angle. The animation plays but the element ends up offset from the intended target.
+
+RESOLVED: YES — `.baseline-pulse` in tour.css has `transform-box: fill-box; transform-origin: center` (2026-04-26, commit 614932a).
+
+---
+
 ### Tour d05 CLEAN scrubber: translateX distance must match SVG panel geometry exactly
 DATE_DISCOVERED: 2026-04-26
 AREA: vlbi-react/css/tour.css — @keyframes scrubberMove; vlbi-react/js/TourDiagram.js — d05()
@@ -420,3 +459,5 @@ RESOLVED: YES — corrected to translateX(422px) (2026-04-26).
 □ Tour.js animPhase useEffect: setChapterCard(false) must be the FIRST statement — before any CHAPTER_CARDS[actIndex] check. Prevents stale chapter card on acts without a card.
 □ TourCard.js visibleCount: single consolidated useEffect (not two separate effects) — prevents flash on visual→ready transition.
 □ Tour d05 scrubberMove translateX must equal the CLEAN panel width in d05() SVG geometry. If d05 panel layout changes, update CSS keyframe and both reduced-motion overrides to match.
+□ SVG filter IDs in TourDiagram.js must be diagram-scoped (bloom-d01..d08, not "bloom"). Multiple inline SVGs in one document share the same filter ID namespace — a shared ID resolves to the first defs block in DOM order.
+□ CSS-animated SVG elements using translateX/Y/rotate must have `transform-box: fill-box; transform-origin: center` — otherwise % transform-origin values resolve to SVG viewport, not element bounding box.
