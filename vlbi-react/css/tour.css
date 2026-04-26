@@ -140,10 +140,10 @@
   to   { transform: rotate(360deg); }
 }
 
-@keyframes cleanStep {
-  0%, 18%  { opacity: 0; }
-  25%, 92% { opacity: 1; }
-  100%     { opacity: 0; }
+@keyframes cleanHighlight {
+  0%, 18%   { opacity: 0.65; }
+  30%, 70%  { opacity: 1.0; }
+  88%, 100% { opacity: 0.65; }
 }
 
 .wave-line   { animation: waveSweep 3s ease-in-out infinite; }
@@ -153,10 +153,15 @@
   transform-origin: 185px 210px;
 }
 
-.clean-step-1 { animation: cleanStep 6s 0s    infinite both; }
-.clean-step-2 { animation: cleanStep 6s 1.5s  infinite both; }
-.clean-step-3 { animation: cleanStep 6s 3s    infinite both; }
-.clean-step-4 { animation: cleanStep 6s 4.5s  infinite both; }
+.clean-step-1,
+.clean-step-2,
+.clean-step-3,
+.clean-step-4 { opacity: 0.65; }
+
+.clean-step-1 { animation: cleanHighlight 6s 0s    infinite both; }
+.clean-step-2 { animation: cleanHighlight 6s 1.5s  infinite both; }
+.clean-step-3 { animation: cleanHighlight 6s 3s    infinite both; }
+.clean-step-4 { animation: cleanHighlight 6s 4.5s  infinite both; }
 
 /* ── Tour Launch Button ──────────────────────────────────────────────────── */
 
@@ -189,14 +194,20 @@
 @media (prefers-reduced-motion: reduce) {
   .tour-overlay { animation: none !important; }
   .wave-line,
-  .earth-group,
-  .clean-step-1, .clean-step-2, .clean-step-3, .clean-step-4 { animation: none !important; }
+  .earth-group { animation: none !important; }
+  .clean-step-1, .clean-step-2, .clean-step-3, .clean-step-4 {
+    animation: none !important;
+    opacity: 1 !important;
+  }
 }
 
 [data-reduced-motion] .tour-overlay { animation: none !important; }
 [data-reduced-motion] .wave-line,
-[data-reduced-motion] .earth-group,
+[data-reduced-motion] .earth-group { animation: none !important; }
 [data-reduced-motion] .clean-step-1,
 [data-reduced-motion] .clean-step-2,
 [data-reduced-motion] .clean-step-3,
-[data-reduced-motion] .clean-step-4 { animation: none !important; }
+[data-reduced-motion] .clean-step-4 {
+  animation: none !important;
+  opacity: 1 !important;
+}

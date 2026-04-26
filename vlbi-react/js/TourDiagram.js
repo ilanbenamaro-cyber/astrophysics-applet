@@ -86,27 +86,27 @@ function d02() {
     <line x1="80" y1="176" x2="620" y2="176" stroke="#1a1a38" strokeWidth="0.8" />
     <line className="wave-line" x1="80" y1="155" x2="620" y2="155" stroke=${PH} strokeWidth="2.5" strokeOpacity="0.85" />
 
-    <path d="M 98,368 Q 168,310 238,368" fill="none" stroke=${G} strokeWidth="3.5" />
-    <line x1="168" y1="310" x2="168" y2="368" stroke=${G} strokeWidth="2" />
-    <circle cx="168" cy="306" r="6" fill=${G} />
-    <text x="168" y="400" textAnchor="middle" style=${{ fontSize: '11px', fill: TX }}>Telescope 1</text>
-    <text x="168" y="416" textAnchor="middle" style=${{ fontSize: '9px', fill: DIM }}>(ALMA, Chile)</text>
+    <path d="M 98,288 Q 168,230 238,288" fill="none" stroke=${G} strokeWidth="3.5" />
+    <line x1="168" y1="230" x2="168" y2="288" stroke=${G} strokeWidth="2" />
+    <circle cx="168" cy="226" r="6" fill=${G} />
+    <text x="168" y="318" textAnchor="middle" style=${{ fontSize: '11px', fill: TX }}>Telescope 1</text>
+    <text x="168" y="334" textAnchor="middle" style=${{ fontSize: '9px', fill: DIM }}>(ALMA, Chile)</text>
 
-    <path d="M 462,368 Q 532,310 602,368" fill="none" stroke=${G} strokeWidth="3.5" />
-    <line x1="532" y1="310" x2="532" y2="368" stroke=${G} strokeWidth="2" />
-    <circle cx="532" cy="306" r="6" fill=${G} />
-    <text x="532" y="400" textAnchor="middle" style=${{ fontSize: '11px', fill: TX }}>Telescope 2</text>
-    <text x="532" y="416" textAnchor="middle" style=${{ fontSize: '9px', fill: DIM }}>(JCMT, Hawaii)</text>
+    <path d="M 462,288 Q 532,230 602,288" fill="none" stroke=${G} strokeWidth="3.5" />
+    <line x1="532" y1="230" x2="532" y2="288" stroke=${G} strokeWidth="2" />
+    <circle cx="532" cy="226" r="6" fill=${G} />
+    <text x="532" y="318" textAnchor="middle" style=${{ fontSize: '11px', fill: TX }}>Telescope 2</text>
+    <text x="532" y="334" textAnchor="middle" style=${{ fontSize: '9px', fill: DIM }}>(JCMT, Hawaii)</text>
 
-    <line x1="168" y1="75" x2="168" y2="300" stroke=${OR} strokeWidth="1" strokeDasharray="3 2" />
-    <line x1="532" y1="75" x2="532" y2="300" stroke=${OR} strokeWidth="1" strokeDasharray="3 2" />
-    <text x="350" y="238" textAnchor="middle" style=${{ fontSize: '11px', fill: OR }}>τ_g = B·ŝ/c</text>
-    <line x1="350" y1="246" x2="350" y2="265" stroke=${OR} strokeWidth="1.5" />
+    <line x1="168" y1="75" x2="168" y2="222" stroke=${OR} strokeWidth="1" strokeDasharray="3 2" />
+    <line x1="532" y1="75" x2="532" y2="222" stroke=${OR} strokeWidth="1" strokeDasharray="3 2" />
+    <text x="350" y="172" textAnchor="middle" style=${{ fontSize: '11px', fill: OR }}>τ_g = B·ŝ/c</text>
+    <line x1="350" y1="179" x2="350" y2="196" stroke=${OR} strokeWidth="1.5" />
 
-    <line x1="174" y1="440" x2="526" y2="440" stroke=${DIM} strokeWidth="1.5" />
-    <line x1="174" y1="435" x2="174" y2="445" stroke=${DIM} strokeWidth="1.5" />
-    <line x1="526" y1="435" x2="526" y2="445" stroke=${DIM} strokeWidth="1.5" />
-    <text x="350" y="458" textAnchor="middle" style=${{ fontSize: '11px', fill: G }}>Baseline B → spatial frequency u = B/λ</text>
+    <line x1="174" y1="378" x2="526" y2="378" stroke=${DIM} strokeWidth="1.5" />
+    <line x1="174" y1="373" x2="174" y2="383" stroke=${DIM} strokeWidth="1.5" />
+    <line x1="526" y1="373" x2="526" y2="383" stroke=${DIM} strokeWidth="1.5" />
+    <text x="350" y="396" textAnchor="middle" style=${{ fontSize: '11px', fill: G }}>Baseline B → spatial frequency u = B/λ</text>
 
     <rect x="556" y="48" width="128" height="108" fill="rgba(8,10,30,0.92)" stroke="#2d2200" strokeWidth="1" rx="4" />
     <text x="620" y="67" textAnchor="middle" style=${{ fontSize: '10px', fill: G }}>UV plane</text>
@@ -117,9 +117,9 @@ function d02() {
     <text x="648" y="82" style=${{ fontSize: '8px', fill: TX }}>(u,v)</text>
     <text x="562" y="130" style=${{ fontSize: '8px', fill: DIM }}>(-u,-v)</text>
 
-    <rect x="18" y="430" width="220" height="54" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="4" />
-    <text x="128" y="452" textAnchor="middle" style=${{ fontSize: '11px', fill: G }}>V₁₂ = ⟨E₁(t) · E₂*(t+τ)⟩</text>
-    <text x="128" y="470" textAnchor="middle" style=${{ fontSize: '9px', fill: DIM }}>Visibility = one Fourier component</text>
+    <rect x="18" y="415" width="220" height="54" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="4" />
+    <text x="128" y="437" textAnchor="middle" style=${{ fontSize: '11px', fill: G }}>V₁₂ = ⟨E₁(t) · E₂*(t+τ)⟩</text>
+    <text x="128" y="455" textAnchor="middle" style=${{ fontSize: '9px', fill: DIM }}>Visibility = one Fourier component</text>
   </svg>`;
 }
 
@@ -146,17 +146,28 @@ function d03() {
     <text x="466" y="258" style=${{ fontSize: '9px', fill: DIM }}>+4</text>
     <text x="586" y="258" style=${{ fontSize: '9px', fill: DIM }}>+8</text>
 
-    <path d="M 115,152 Q 350,88 585,152 Q 608,242 585,332 Q 350,396 115,332 Q 92,242 115,152" fill="none" stroke=${G} strokeWidth="2.5" />
-    <path d="M 115,152 Q 350,88 585,152 Q 608,242 585,332 Q 350,396 115,332 Q 92,242 115,152" fill="none" stroke=${G} strokeWidth="2.5" strokeOpacity="0.35" />
-    <path d="M 148,118 Q 350,72 552,118 Q 530,242 552,366 Q 350,412 148,366 Q 170,242 148,118" fill="none" stroke=${G} strokeWidth="2" strokeOpacity="0.65" />
-    <path d="M 200,178 Q 350,152 500,178" fill="none" stroke=${G} strokeWidth="1.8" strokeOpacity="0.75" />
-    <path d="M 200,306 Q 350,332 500,306" fill="none" stroke=${G} strokeWidth="1.8" strokeOpacity="0.35" />
-    <path d="M 322,90 Q 308,242 316,394" fill="none" stroke=${G} strokeWidth="1.5" strokeOpacity="0.6" />
-    <path d="M 378,90 Q 392,242 384,394" fill="none" stroke=${G} strokeWidth="1.5" strokeOpacity="0.28" />
-    <path d="M 224,190 Q 350,168 476,190" fill="none" stroke=${G} strokeWidth="1.2" strokeOpacity="0.5" />
-    <path d="M 224,294 Q 350,316 476,294" fill="none" stroke=${G} strokeWidth="1.2" strokeOpacity="0.22" />
-    <path d="M 332,112 Q 320,242 326,372" fill="none" stroke=${G} strokeWidth="1.2" strokeOpacity="0.42" />
-    <path d="M 368,112 Q 380,242 374,372" fill="none" stroke=${G} strokeWidth="1.2" strokeOpacity="0.18" />
+    <path d="M 120,242 A 230,148 0 0 0 580,242" fill="none" stroke=${G} strokeWidth="2.5" strokeOpacity="0.9" />
+    <path d="M 120,242 A 230,148 0 0 1 580,242" fill="none" stroke=${G} strokeWidth="2.5" strokeOpacity="0.4" />
+
+    <g transform="rotate(28, 350, 242)">
+      <path d="M 155,242 A 195,125 0 0 0 545,242" fill="none" stroke=${G} strokeWidth="2.0" strokeOpacity="0.7" />
+      <path d="M 155,242 A 195,125 0 0 1 545,242" fill="none" stroke=${G} strokeWidth="1.5" strokeOpacity="0.28" />
+    </g>
+
+    <g transform="rotate(-22, 350, 242)">
+      <path d="M 182,242 A 168,108 0 0 0 518,242" fill="none" stroke=${G} strokeWidth="1.8" strokeOpacity="0.65" />
+      <path d="M 182,242 A 168,108 0 0 1 518,242" fill="none" stroke=${G} strokeWidth="1.4" strokeOpacity="0.25" />
+    </g>
+
+    <g transform="rotate(52, 350, 242)">
+      <path d="M 220,242 A 130,83 0 0 0 480,242" fill="none" stroke=${G} strokeWidth="1.5" strokeOpacity="0.55" />
+      <path d="M 220,242 A 130,83 0 0 1 480,242" fill="none" stroke=${G} strokeWidth="1.2" strokeOpacity="0.22" />
+    </g>
+
+    <g transform="rotate(75, 350, 242)">
+      <path d="M 262,242 A 88,56 0 0 0 438,242" fill="none" stroke=${G} strokeWidth="1.2" strokeOpacity="0.45" />
+      <path d="M 262,242 A 88,56 0 0 1 438,242" fill="none" stroke=${G} strokeWidth="1.0" strokeOpacity="0.18" />
+    </g>
 
     <rect x="158" y="408" width="384" height="24" fill="rgba(0,0,0,0.5)" rx="3" />
     <text x="350" y="424" textAnchor="middle" style=${{ fontSize: '11px', fill: G }}>V(u,v) = ∫∫ I(l,m) · exp(-2πi(ul+vm)) dl dm</text>
@@ -208,60 +219,67 @@ function d04() {
 }
 
 function d05() {
+  // Equirectangular projection: lat [-70,80], lon [-180,180]
+  // x = 25 + (lon+180)/360*650,  y = 45 + (80-lat)/150*390
   const sts = [
-    { x: 282, y: 281, name: 'ALMA',     gold: true  },
-    { x: 91,  y: 188, name: 'SMA/JCMT', gold: true  },
-    { x: 229, y: 190, name: 'LMT',      gold: false },
-    { x: 349, y: 146, name: 'IRAM',     gold: false },
-    { x: 210, y: 157, name: 'SMT',      gold: false },
-    { x: 310, y: 459, name: 'SPT',      gold: false },
-    { x: 279, y: 62,  name: 'GLT',      gold: false },
-    { x: 367, y: 131, name: 'NOEMA',    gold: false },
-    { x: 213, y: 158, name: 'KP',       gold: false },
+    { x: 229, y: 332, name: 'ALMA',     gold: true  },
+    { x:  70, y: 213, name: 'SMA/JCMT', gold: false },
+    { x: 175, y: 215, name: 'LMT',      gold: false },
+    { x: 344, y: 165, name: 'IRAM',     gold: false },
+    { x: 361, y: 143, name: 'NOEMA',    gold: false },
+    { x: 152, y: 177, name: 'SMT',      gold: false },
+    { x: 227, y:  55, name: 'GLT',      gold: false },
+    { x: 270, y: 435, name: 'SPT',      gold: false, pole: true },
   ];
+  const almaX = 229, almaY = 332;
   const pairs = [];
   for (let i = 0; i < sts.length; i++) {
     for (let j = i + 1; j < sts.length; j++) {
       pairs.push([sts[i], sts[j]]);
     }
   }
-  const labels = [
-    { name: 'ALMA',     x: 296, y: 274, color: G,  size: '10px' },
-    { name: 'SMA/JCMT', x: 55,  y: 184, color: TX, size: '9px'  },
-    { name: 'LMT',      x: 215, y: 183, color: TX, size: '9px'  },
-    { name: 'IRAM',     x: 355, y: 139, color: TX, size: '9px'  },
-    { name: 'SMT',      x: 196, y: 151, color: TX, size: '9px'  },
-    { name: 'SPT',      x: 316, y: 452, color: TX, size: '9px'  },
-    { name: 'GLT',      x: 286, y: 55,  color: TX, size: '9px'  },
-  ];
+  // Vertical grid lines (longitude every 30°)
+  const vLons = [-180,-150,-120,-90,-60,-30,0,30,60,90,120,150,180];
+  const vXs   = vLons.map(l => Math.round(25 + (l+180)/360*650));
+  // Horizontal grid lines (latitude every 30° within [-60,80])
+  const hLats = [60, 30, 0, -30, -60];
+  const hYs   = hLats.map(l => Math.round(45 + (80-l)/150*390));
 
   return html`<svg viewBox="0 0 700 500" width="100%" height="100%">
     <rect width="700" height="500" fill=${BG} />
-    <text x="350" y="28" textAnchor="middle" style=${{ fontSize: '13px', fontWeight: '700', fill: TX }}>EHT 2017 Array</text>
+    <text x="350" y="25" textAnchor="middle" style=${{ fontSize: '13px', fontWeight: '700', fill: TX }}>EHT 2017 Array</text>
 
-    <path d="M 90,80 L 230,60 L 265,85 L 280,120 L 250,165 L 220,200 L 190,230 L 165,240 L 130,220 L 100,190 L 78,160 L 72,120 Z" fill="rgba(30,50,80,0.4)" stroke="#1a2a4a" strokeWidth="1" />
-    <path d="M 190,240 L 220,230 L 255,260 L 270,290 L 280,340 L 265,400 L 240,430 L 215,420 L 200,390 L 190,350 L 185,300 L 185,260 Z" fill="rgba(30,50,80,0.4)" stroke="#1a2a4a" strokeWidth="1" />
-    <path d="M 330,80 L 380,70 L 400,80 L 410,110 L 390,130 L 360,125 L 340,140 L 320,130 L 315,110 L 325,95 Z" fill="rgba(30,50,80,0.4)" stroke="#1a2a4a" strokeWidth="1" />
-    <path d="M 330,140 L 390,130 L 420,160 L 430,200 L 420,260 L 400,310 L 370,330 L 345,310 L 325,270 L 315,220 L 320,180 L 330,155 Z" fill="rgba(30,50,80,0.4)" stroke="#1a2a4a" strokeWidth="1" />
-    <path d="M 400,60 L 520,50 L 600,80 L 620,120 L 580,150 L 540,160 L 500,140 L 460,130 L 420,110 L 400,85 Z" fill="rgba(30,50,80,0.4)" stroke="#1a2a4a" strokeWidth="1" />
-    <path d="M 520,280 L 590,270 L 620,310 L 610,360 L 570,380 L 530,360 L 510,320 Z" fill="rgba(30,50,80,0.4)" stroke="#1a2a4a" strokeWidth="1" />
+    <rect x="25" y="45" width="650" height="390" fill="rgba(8,10,25,0.6)" stroke="#2d2200" strokeWidth="1" />
 
-    ${pairs.map((p, i) => html`<line key=${i} x1=${p[0].x} y1=${p[0].y} x2=${p[1].x} y2=${p[1].y} stroke=${p[0].gold && p[0].name === 'ALMA' || p[1].gold && p[1].name === 'ALMA' ? G : BL} strokeWidth=${p[0].name === 'ALMA' || p[1].name === 'ALMA' ? 1.2 : 0.7} strokeOpacity=${p[0].name === 'ALMA' || p[1].name === 'ALMA' ? 0.45 : 0.15} />`)}
+    ${vXs.map((x, i) => html`<line key=${'v'+i} x1=${x} y1="45" x2=${x} y2="435" stroke="#1a1a48" strokeWidth="0.6" strokeOpacity=${vLons[i] === 0 ? 0.9 : 0.6} />`)}
+    ${hYs.map((y, i) => html`<line key=${'h'+i} x1="25" y1=${y} x2="675" y2=${y} stroke="#1a1a48" strokeWidth="0.6" strokeOpacity=${hLats[i] === 0 ? 0.9 : 0.6} />`)}
 
-    <circle cx="282" cy="281" r="7" fill=${G} stroke=${BG} strokeWidth="1.5" />
-    <circle cx="91"  cy="188" r="6" fill=${G} fillOpacity="0.8" />
-    <circle cx="229" cy="190" r="5" fill=${BL} stroke=${BG} strokeWidth="1.5" />
-    <circle cx="349" cy="146" r="5" fill=${BL} />
-    <circle cx="210" cy="157" r="5" fill=${BL} />
-    <circle cx="310" cy="459" r="5" fill=${BL} />
-    <circle cx="279" cy="62"  r="5" fill=${BL} />
-    <circle cx="367" cy="131" r="5" fill=${BL} />
-    <circle cx="213" cy="158" r="4" fill=${BL} fillOpacity="0.7" />
+    <text x="354" y="262" style=${{ fontSize: '8px', fill: '#2a2a68' }}>0°</text>
+    <text x="350" y="275" textAnchor="middle" style=${{ fontSize: '8px', fill: '#2a2a68' }}>equator</text>
 
-    ${labels.map(l => html`<text key=${l.name} x=${l.x} y=${l.y} style=${{ fontSize: l.size, fill: l.color }}>${l.name}</text>`)}
+    ${pairs.map((p, i) => {
+      const isAlma = p[0].name === 'ALMA' || p[1].name === 'ALMA';
+      return html`<line key=${i} x1=${p[0].x} y1=${p[0].y} x2=${p[1].x} y2=${p[1].y}
+        stroke=${isAlma ? G : BL}
+        strokeWidth=${isAlma ? 1.1 : 0.6}
+        strokeOpacity=${isAlma ? 0.45 : 0.12} />`;
+    })}
 
-    <rect x="50" y="467" width="600" height="24" fill="rgba(0,0,0,0.5)" rx="3" />
-    <text x="350" y="483" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>Max baseline: ~10,900 km  ·  Resolution: ~20 μas  ·  N(N-1)/2 = 28 baselines</text>
+    ${sts.map(s => html`<circle key=${s.name} cx=${s.x} cy=${s.y} r=${s.gold ? 7 : 5}
+      fill=${s.gold ? G : BL} stroke=${BG} strokeWidth="1.2"
+      fillOpacity=${s.pole ? 0.7 : 1} />`)}
+
+    <text x="239" y="328" style=${{ fontSize: '10px', fill: G }}>ALMA</text>
+    <text x="40"  y="225" style=${{ fontSize: '9px',  fill: TX }}>SMA/JCMT</text>
+    <text x="180" y="208" style=${{ fontSize: '9px',  fill: TX }}>LMT</text>
+    <text x="307" y="162" style=${{ fontSize: '9px',  fill: TX }}>IRAM</text>
+    <text x="367" y="140" style=${{ fontSize: '9px',  fill: TX }}>NOEMA</text>
+    <text x="158" y="170" style=${{ fontSize: '9px',  fill: TX }}>SMT</text>
+    <text x="233" y="68"  style=${{ fontSize: '9px',  fill: TX }}>GLT</text>
+    <text x="250" y="448" style=${{ fontSize: '9px',  fill: DIM }}>SPT ↓</text>
+
+    <rect x="25" y="445" width="650" height="24" fill="rgba(0,0,0,0.5)" rx="3" />
+    <text x="350" y="461" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>Max baseline: ~10,900 km · Resolution: ~20 μas · N(N-1)/2 = 28 baselines · ALMA baselines in gold</text>
   </svg>`;
 }
 
@@ -440,24 +458,6 @@ function d09() {
 }
 
 function d10() {
-  const leftArcs = [
-    { d: "M 52,122 Q 179,82 306,122 Q 282,213 306,304 Q 179,344 52,304 Q 76,213 52,122",   w: 2,   op: 0.75 },
-    { d: "M 72,108 Q 179,74 286,108 Q 265,213 286,318 Q 179,352 72,318 Q 93,213 72,108",    w: 1.5, op: 0.5  },
-    { d: "M 100,138 Q 179,116 258,138", w: 1.4, op: 0.6  },
-    { d: "M 100,288 Q 179,310 258,288", w: 1.4, op: 0.3  },
-    { d: "M 38,164 Q 50,213 40,262",   w: 1.2, op: 0.5  },
-    { d: "M 320,164 Q 308,213 318,262", w: 1.2, op: 0.25 },
-  ];
-  const rightArcs = [];
-  for (let r = 0; r < 8; r++) {
-    const s = r * 5;
-    rightArcs.push({ d: `M ${370+s} ${108+r*2} Q 521 ${72+r*4} ${672-s} ${108+r*2} Q ${652-r*3} 213 ${672-s} ${318-r*2} Q 521 ${354-r*4} ${370+s} ${318-r*2} Q ${390+r*3} 213 ${370+s} ${108+r*2}`, op: Math.max(0.08, 0.55 - r * 0.05) });
-  }
-  for (let a = 0; a < 5; a++) {
-    rightArcs.push({ d: `M ${400+a*16} ${100+a*3} Q ${414+a*12} 213 ${408+a*14} ${326-a*3}`, op: Math.max(0.08, 0.45 - a * 0.06) });
-    rightArcs.push({ d: `M ${642-a*16} ${100+a*3} Q ${628-a*12} 213 ${634-a*14} ${326-a*3}`, op: Math.max(0.08, 0.45 - a * 0.06) });
-  }
-
   return html`<svg viewBox="0 0 700 500" width="100%" height="100%">
     <rect width="700" height="500" fill=${BG} />
     <text x="350" y="32" textAnchor="middle" style=${{ fontSize: '13px', fontWeight: '700', fill: TX }}>EHT 2017 vs ngEHT Phase 1</text>
@@ -465,17 +465,68 @@ function d10() {
     <rect x="18" y="48" width="322" height="330" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="4" />
     <text x="179" y="68" textAnchor="middle" style=${{ fontSize: '12px', fontWeight: '700', fill: TX }}>EHT 2017</text>
     <text x="179" y="84" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>8 stations · 28 baselines</text>
-    <line x1="22" y1="213" x2="336" y2="213" stroke="#1a1a38" strokeWidth="0.5" />
-    <line x1="179" y1="52" x2="179" y2="374" stroke="#1a1a38" strokeWidth="0.5" />
-    ${leftArcs.map((a, i) => html`<path key=${i} d=${a.d} fill="none" stroke=${G} strokeWidth=${a.w} strokeOpacity=${a.op} />`)}
+    <line x1="22"  y1="213" x2="336" y2="213" stroke="#1a1a38" strokeWidth="0.5" />
+    <line x1="179" y1="52"  x2="179" y2="374" stroke="#1a1a38" strokeWidth="0.5" />
+
+    <path d="M 52,213 A 127,82 0 0 0 306,213" fill="none" stroke=${G} strokeWidth="2.0" strokeOpacity="0.75" />
+    <path d="M 52,213 A 127,82 0 0 1 306,213" fill="none" stroke=${G} strokeWidth="2.0" strokeOpacity="0.35" />
+
+    <g transform="rotate(30, 179, 213)">
+      <path d="M 71,213 A 108,70 0 0 0 287,213" fill="none" stroke=${G} strokeWidth="1.6" strokeOpacity="0.65" />
+      <path d="M 71,213 A 108,70 0 0 1 287,213" fill="none" stroke=${G} strokeWidth="1.4" strokeOpacity="0.28" />
+    </g>
+
+    <g transform="rotate(58, 179, 213)">
+      <path d="M 97,213 A 82,52 0 0 0 261,213" fill="none" stroke=${G} strokeWidth="1.4" strokeOpacity="0.55" />
+      <path d="M 97,213 A 82,52 0 0 1 261,213" fill="none" stroke=${G} strokeWidth="1.2" strokeOpacity="0.22" />
+    </g>
+
     <text x="179" y="392" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>UV fill: ~0.8%  ·  DR: ~50:1</text>
 
     <rect x="360" y="48" width="322" height="330" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="4" />
     <text x="521" y="68" textAnchor="middle" style=${{ fontSize: '12px', fontWeight: '700', fill: G }}>ngEHT Phase 1</text>
     <text x="521" y="84" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>17 stations · 136 baselines</text>
     <line x1="364" y1="213" x2="678" y2="213" stroke="#1a1a38" strokeWidth="0.5" />
-    <line x1="521" y1="52" x2="521" y2="374" stroke="#1a1a38" strokeWidth="0.5" />
-    ${rightArcs.map((a, i) => html`<path key=${i} d=${a.d} fill="none" stroke=${G} strokeWidth="1" strokeOpacity=${a.op} />`)}
+    <line x1="521" y1="52"  x2="521" y2="374" stroke="#1a1a38" strokeWidth="0.5" />
+
+    <path d="M 394,213 A 127,82 0 0 0 648,213" fill="none" stroke=${G} strokeWidth="2.0" strokeOpacity="0.75" />
+    <path d="M 394,213 A 127,82 0 0 1 648,213" fill="none" stroke=${G} strokeWidth="2.0" strokeOpacity="0.35" />
+
+    <g transform="rotate(20, 521, 213)">
+      <path d="M 403,213 A 118,76 0 0 0 639,213" fill="none" stroke=${G} strokeWidth="1.7" strokeOpacity="0.68" />
+      <path d="M 403,213 A 118,76 0 0 1 639,213" fill="none" stroke=${G} strokeWidth="1.5" strokeOpacity="0.3" />
+    </g>
+
+    <g transform="rotate(42, 521, 213)">
+      <path d="M 413,213 A 108,70 0 0 0 629,213" fill="none" stroke=${G} strokeWidth="1.6" strokeOpacity="0.62" />
+      <path d="M 413,213 A 108,70 0 0 1 629,213" fill="none" stroke=${G} strokeWidth="1.4" strokeOpacity="0.27" />
+    </g>
+
+    <g transform="rotate(-18, 521, 213)">
+      <path d="M 421,213 A 100,64 0 0 0 621,213" fill="none" stroke=${G} strokeWidth="1.5" strokeOpacity="0.56" />
+      <path d="M 421,213 A 100,64 0 0 1 621,213" fill="none" stroke=${G} strokeWidth="1.3" strokeOpacity="0.24" />
+    </g>
+
+    <g transform="rotate(62, 521, 213)">
+      <path d="M 433,213 A 88,56 0 0 0 609,213" fill="none" stroke=${G} strokeWidth="1.3" strokeOpacity="0.50" />
+      <path d="M 433,213 A 88,56 0 0 1 609,213" fill="none" stroke=${G} strokeWidth="1.1" strokeOpacity="0.21" />
+    </g>
+
+    <g transform="rotate(-40, 521, 213)">
+      <path d="M 445,213 A 76,48 0 0 0 597,213" fill="none" stroke=${G} strokeWidth="1.2" strokeOpacity="0.44" />
+      <path d="M 445,213 A 76,48 0 0 1 597,213" fill="none" stroke=${G} strokeWidth="1.0" strokeOpacity="0.18" />
+    </g>
+
+    <g transform="rotate(10, 521, 213)">
+      <path d="M 466,213 A 55,35 0 0 0 576,213" fill="none" stroke=${G} strokeWidth="1.0" strokeOpacity="0.38" />
+      <path d="M 466,213 A 55,35 0 0 1 576,213" fill="none" stroke=${G} strokeWidth="0.9" strokeOpacity="0.16" />
+    </g>
+
+    <g transform="rotate(50, 521, 213)">
+      <path d="M 473,213 A 48,30 0 0 0 569,213" fill="none" stroke=${G} strokeWidth="0.9" strokeOpacity="0.33" />
+      <path d="M 473,213 A 48,30 0 0 1 569,213" fill="none" stroke=${G} strokeWidth="0.8" strokeOpacity="0.14" />
+    </g>
+
     <text x="521" y="392" textAnchor="middle" style=${{ fontSize: '10px', fill: G }}>UV fill: ~3.5%  ·  DR: ~200:1</text>
 
     <rect x="100" y="410" width="500" height="28" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="4" />
