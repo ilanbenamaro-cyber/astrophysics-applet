@@ -317,7 +317,7 @@
 
 .earth-group-cinema {
   animation: earthRotateCinema 10s linear infinite;
-  transform-origin: 330px 370px;
+  transform-origin: 290px 350px;
 }
 
 /* UV arc drawing via stroke-dashoffset (Act 3) */
@@ -326,12 +326,12 @@
   to   { stroke-dashoffset: 0; }
 }
 
-.uv-draw-1      { stroke-dasharray: 572; stroke-dashoffset: 572; animation: drawArc 4.0s 0.5s ease forwards; }
-.uv-draw-1-conj { stroke-dasharray: 572; stroke-dashoffset: 572; animation: drawArc 4.0s 0.8s ease forwards; }
-.uv-draw-2      { stroke-dasharray: 440; stroke-dashoffset: 440; animation: drawArc 3.5s 1.0s ease forwards; }
-.uv-draw-2-conj { stroke-dasharray: 440; stroke-dashoffset: 440; animation: drawArc 3.5s 1.2s ease forwards; }
-.uv-draw-3      { stroke-dasharray: 364; stroke-dashoffset: 364; animation: drawArc 3.0s 1.4s ease forwards; }
-.uv-draw-3-conj { stroke-dasharray: 364; stroke-dashoffset: 364; animation: drawArc 3.0s 1.6s ease forwards; }
+.uv-draw-1      { stroke-dasharray: 693; stroke-dashoffset: 693; animation: drawArc 4.0s 0.5s ease forwards; }
+.uv-draw-1-conj { stroke-dasharray: 693; stroke-dashoffset: 693; animation: drawArc 4.0s 0.8s ease forwards; }
+.uv-draw-2      { stroke-dasharray: 548; stroke-dashoffset: 548; animation: drawArc 3.5s 1.0s ease forwards; }
+.uv-draw-2-conj { stroke-dasharray: 548; stroke-dashoffset: 548; animation: drawArc 3.5s 1.2s ease forwards; }
+.uv-draw-3      { stroke-dasharray: 427; stroke-dashoffset: 427; animation: drawArc 3.0s 1.4s ease forwards; }
+.uv-draw-3-conj { stroke-dasharray: 427; stroke-dashoffset: 427; animation: drawArc 3.0s 1.6s ease forwards; }
 
 /* Station reveal (Act 4) */
 @keyframes stationReveal {
@@ -348,6 +348,7 @@
 .station-dot-6 { animation: stationReveal 0.6s 2.3s ease forwards; opacity: 0; }
 .station-dot-7 { animation: stationReveal 0.6s 2.7s ease forwards; opacity: 0; }
 .station-dot-8 { animation: stationReveal 0.6s 3.1s ease forwards; opacity: 0; }
+.station-dot-9 { animation: stationReveal 0.6s 3.5s ease forwards; opacity: 0; }
 
 /* Baseline / inset line reveal (Act 4) */
 @keyframes lineReveal {
@@ -368,6 +369,7 @@
 .station-label-6 { animation: lineReveal 0.5s 2.5s ease forwards; opacity: 0; }
 .station-label-7 { animation: lineReveal 0.5s 2.9s ease forwards; opacity: 0; }
 .station-label-8 { animation: lineReveal 0.5s 3.3s ease forwards; opacity: 0; }
+.station-label-9 { animation: lineReveal 0.5s 3.7s ease forwards; opacity: 0; }
 
 /* CLEAN scrubber (Act 5) */
 @keyframes scrubberMove {
@@ -410,6 +412,97 @@
 .metrics-reveal { animation: panelSlideIn 0.8s 2.0s ease forwards; opacity: 0; }
 .fits-reveal    { animation: panelSlideIn 0.8s 2.5s ease forwards; opacity: 0; }
 .cta-text       { animation: panelSlideIn 1.2s 3.0s ease forwards; opacity: 0; }
+
+/* ── d02: Baseline pulse (traveling signal) ────────────────────────────── */
+@keyframes pulseTravel {
+  0%   { transform: translateX(0);    opacity: 0; }
+  5%   { opacity: 1; }
+  95%  { opacity: 1; }
+  100% { transform: translateX(760px); opacity: 0; }
+}
+.baseline-pulse {
+  animation: pulseTravel 3s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes uvPointAppear {
+  0%, 60% { opacity: 0; }
+  70%     { opacity: 1; }
+  100%    { opacity: 1; }
+}
+.uv-point-appear {
+  animation: uvPointAppear 3s ease-in-out infinite;
+}
+
+/* ── d04: Station pulse / baseline flow ────────────────────────────────── */
+@keyframes stationPulse {
+  0%, 100% { opacity: 0.7; }
+  50%      { opacity: 1.0; }
+}
+.station-pulse {
+  animation: stationPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes baselinePulse {
+  from { stroke-dashoffset: 200; }
+  to   { stroke-dashoffset: 0; }
+}
+.baseline-flow {
+  stroke-dasharray: 12 8;
+  animation: baselinePulse 2s linear infinite;
+}
+
+/* ── d05: Sidelobe→photon-ring transformation ───────────────────────────── */
+@keyframes sidelobeRingFade1 { 0%,25%  { opacity: .7  } 85%,100% { opacity: 0 } }
+@keyframes sidelobeRingFade2 { 0%,35%  { opacity: .55 } 90%,100% { opacity: 0 } }
+@keyframes sidelobeRingFade3 { 0%,45%  { opacity: .4  } 95%,100% { opacity: 0 } }
+@keyframes sidelobeRingFade4 { 0%,55%  { opacity: .28 } 100%     { opacity: 0 } }
+@keyframes sidelobeRingFade5 { 0%,65%  { opacity: .18 } 100%     { opacity: 0 } }
+.sl-ring-1 { animation: sidelobeRingFade1 4s 0.3s forwards; }
+.sl-ring-2 { animation: sidelobeRingFade2 4s 0.3s forwards; }
+.sl-ring-3 { animation: sidelobeRingFade3 4s 0.3s forwards; }
+.sl-ring-4 { animation: sidelobeRingFade4 4s 0.3s forwards; }
+.sl-ring-5 { animation: sidelobeRingFade5 4s 0.3s forwards; }
+
+@keyframes photonRingReveal {
+  0%, 40%  { opacity: 0; }
+  70%      { opacity: 0.7; }
+  100%     { opacity: 1; }
+}
+.photon-ring-emerge {
+  animation: photonRingReveal 4s 0.3s forwards;
+  opacity: 0;
+}
+
+@keyframes shadowReveal {
+  0%, 50%  { opacity: 0; }
+  100%     { opacity: 1; }
+}
+.shadow-emerge {
+  animation: shadowReveal 4s 0.3s forwards;
+  opacity: 0;
+}
+
+@keyframes labelDirtyFade {
+  0%,40% { opacity: 1; } 80%,100% { opacity: 0; }
+}
+@keyframes labelCleanFade {
+  0%,40% { opacity: 0; } 80%,100% { opacity: 1; }
+}
+.label-dirty { animation: labelDirtyFade 4s 0.3s forwards; }
+.label-clean { animation: labelCleanFade 4s 0.3s forwards; opacity: 0; }
+
+/* ── d07: Space baseline data beam ─────────────────────────────────────── */
+@keyframes dataPulse {
+  0%   { stroke-dashoffset: 300; opacity: 0.4; }
+  50%  { opacity: 1; }
+  100% { stroke-dashoffset: 0;   opacity: 0.4; }
+}
+.data-beam {
+  stroke-dasharray: 20 8;
+  animation: dataPulse 2.5s linear infinite;
+}
 
 /* ── Tour Launch Button (used by AppSidebar) ─────────────────────────────── */
 
@@ -460,9 +553,9 @@
   }
 
   .station-dot-1, .station-dot-2, .station-dot-3, .station-dot-4,
-  .station-dot-5, .station-dot-6, .station-dot-7, .station-dot-8,
+  .station-dot-5, .station-dot-6, .station-dot-7, .station-dot-8, .station-dot-9,
   .station-label-1, .station-label-2, .station-label-3, .station-label-4,
-  .station-label-5, .station-label-6, .station-label-7, .station-label-8,
+  .station-label-5, .station-label-6, .station-label-7, .station-label-8, .station-label-9,
   .alma-baseline, .other-baseline, .uv-inset,
   .metrics-reveal, .fits-reveal, .cta-text {
     animation: none !important;
@@ -476,6 +569,36 @@
 
   .clean-step-1, .clean-step-2,
   .clean-step-3, .clean-step-4 {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  .baseline-pulse, .uv-point-appear, .station-pulse, .baseline-flow, .data-beam {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  .sl-ring-1, .sl-ring-2, .sl-ring-3, .sl-ring-4, .sl-ring-5 {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+
+  .photon-ring-emerge {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  .shadow-emerge {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  .label-dirty {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+
+  .label-clean {
     animation: none !important;
     opacity: 1 !important;
   }
@@ -514,6 +637,7 @@
 [data-reduced-motion] .station-dot-6,
 [data-reduced-motion] .station-dot-7,
 [data-reduced-motion] .station-dot-8,
+[data-reduced-motion] .station-dot-9,
 [data-reduced-motion] .station-label-1,
 [data-reduced-motion] .station-label-2,
 [data-reduced-motion] .station-label-3,
@@ -522,6 +646,7 @@
 [data-reduced-motion] .station-label-6,
 [data-reduced-motion] .station-label-7,
 [data-reduced-motion] .station-label-8,
+[data-reduced-motion] .station-label-9,
 [data-reduced-motion] .alma-baseline,
 [data-reduced-motion] .other-baseline,
 [data-reduced-motion] .uv-inset,
@@ -541,6 +666,40 @@
 [data-reduced-motion] .clean-step-2,
 [data-reduced-motion] .clean-step-3,
 [data-reduced-motion] .clean-step-4 {
+  animation: none !important;
+  opacity: 1 !important;
+}
+
+[data-reduced-motion] .baseline-pulse,
+[data-reduced-motion] .uv-point-appear,
+[data-reduced-motion] .station-pulse,
+[data-reduced-motion] .baseline-flow,
+[data-reduced-motion] .data-beam {
+  animation: none !important;
+  opacity: 1 !important;
+}
+
+[data-reduced-motion] .sl-ring-1,
+[data-reduced-motion] .sl-ring-2,
+[data-reduced-motion] .sl-ring-3,
+[data-reduced-motion] .sl-ring-4,
+[data-reduced-motion] .sl-ring-5 {
+  animation: none !important;
+  opacity: 0 !important;
+}
+
+[data-reduced-motion] .photon-ring-emerge,
+[data-reduced-motion] .shadow-emerge {
+  animation: none !important;
+  opacity: 1 !important;
+}
+
+[data-reduced-motion] .label-dirty {
+  animation: none !important;
+  opacity: 0 !important;
+}
+
+[data-reduced-motion] .label-clean {
   animation: none !important;
   opacity: 1 !important;
 }
