@@ -1,169 +1,389 @@
-/* ── Tour: Full-Screen Overlay ────────────────────────────────────────────── */
+/* ── Cinematic Tour Overlay ─────────────────────────────────────────────── */
 
-.tour-overlay {
+.tour-cinematic {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(0, 0, 0, 0.92);
+  background: #010103;
   display: flex;
   flex-direction: column;
-  animation: tourFadeIn 0.25s ease;
-}
-
-@keyframes tourFadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-/* ── Header: progress dots + act label + skip ────────────────────────────── */
-
-.tour-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 24px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-
-.tour-progress {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.tour-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--border);
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  transition: background 0.2s ease;
-}
-
-.tour-dot.done   { background: rgba(196, 165, 85, 0.45); }
-.tour-dot.active { background: var(--accent-teal); }
-
-.tour-act-label {
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-  margin: 0 12px;
-}
-
-.tour-skip-btn {
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: var(--font);
-  padding: 4px 8px;
-}
-
-.tour-skip-btn:hover { color: var(--text-primary); }
-
-/* ── Body: diagram (left 60%) + content (right 40%) ─────────────────────── */
-
-.tour-body {
-  display: grid;
-  grid-template-columns: 3fr 2fr;
-  flex: 1;
   overflow: hidden;
-  min-height: 0;
+  animation: tourFadeIn 0.4s ease;
 }
 
-.tour-diagram {
+@keyframes tourFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Hero SVG (full-viewport background layer) ──────────────────────────── */
+
+.tour-hero {
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 32px;
-  border-right: 1px solid var(--border);
-  background: rgba(0, 0, 0, 0.3);
-  overflow: hidden;
 }
 
-.tour-diagram svg { max-width: 100%; max-height: 100%; }
+.tour-hero svg {
+  width: 100%;
+  height: 100%;
+}
 
-.tour-content {
-  padding: 32px;
-  overflow-y: auto;
+/* ── Text overlay (right side, vertically centered) ─────────────────────── */
+
+.tour-text-overlay {
+  position: absolute;
+  right: 6%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32%;
+  max-width: 440px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
+  pointer-events: none;
 }
 
-.tour-title {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.25;
+/* Act 6: image is left-aligned, text pushed further right / narrower */
+.tour-text-overlay.text-right {
+  right: 3%;
+  width: 28%;
+  max-width: 380px;
 }
 
-.tour-text {
-  font-size: 0.9rem;
-  line-height: 1.7;
-  color: var(--text-secondary);
+.tour-chapter-badge {
+  font-size: 0.72rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #C4A555;
+  margin-bottom: 2px;
+}
+
+.tour-chapter-badge.ch-2 { color: #4ecdc4; }
+.tour-chapter-badge.ch-3 { color: #C4A555; }
+
+.tour-act-title {
+  font-size: clamp(1.3rem, 2.4vw, 1.9rem);
+  font-weight: 800;
+  color: #f0f0f8;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
   margin: 0;
 }
 
-.tour-hint {
-  margin-top: auto;
-  padding: 10px 14px;
-  background: rgba(196, 165, 85, 0.08);
-  border: 1px solid rgba(196, 165, 85, 0.25);
-  border-radius: 5px;
-  font-size: 0.82rem;
-  color: var(--accent-teal);
+.tour-paragraph {
+  font-size: clamp(0.82rem, 1.2vw, 0.98rem);
+  line-height: 1.85;
+  color: #c0c0d8;
+  opacity: 0;
+  transform: translateY(14px);
+  margin: 0;
 }
 
-/* ── Footer: back + next ─────────────────────────────────────────────────── */
+.tour-paragraph.p-visible {
+  animation: textReveal 0.7s ease forwards;
+}
 
-.tour-footer {
+.tour-equation-block {
+  margin-top: 4px;
+  padding: 13px 16px;
+  background: rgba(255, 215, 0, 0.06);
+  border-left: 3px solid #FFD700;
+  border-radius: 4px;
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.tour-equation-block.eq-visible {
+  animation: textReveal 0.9s ease forwards;
+}
+
+.tour-equation {
+  font-size: clamp(0.95rem, 1.5vw, 1.2rem);
+  color: #FFD700;
+  font-family: 'Courier New', 'Courier', monospace;
+  letter-spacing: 0.02em;
+  line-height: 1.5;
+}
+
+.tour-subtext {
+  font-size: 0.76rem;
+  color: #8888b0;
+  font-style: italic;
+  margin-top: 5px;
+  line-height: 1.5;
+}
+
+@keyframes textReveal {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Continue hint (bottom-right) ───────────────────────────────────────── */
+
+.tour-continue-hint {
+  position: absolute;
+  bottom: 52px;
+  right: 6%;
+  font-size: 0.75rem;
+  color: #C4A555;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 14px 24px;
-  border-top: 1px solid var(--border);
-  flex-shrink: 0;
+  gap: 8px;
+  pointer-events: none;
 }
 
-/* ── SVG diagram CSS animations ──────────────────────────────────────────── */
-
-@keyframes waveSweep {
-  from { transform: translateX(-200px); opacity: 0; }
-  20%  { opacity: 1; }
-  80%  { opacity: 1; }
-  to   { transform: translateX(700px); opacity: 0; }
+.tour-continue-hint.hint-visible {
+  animation: hintPulse 2s ease infinite;
 }
 
-@keyframes earthRotate {
+@keyframes hintPulse {
+  0%, 100% { opacity: 0.35; }
+  50%       { opacity: 1; }
+}
+
+/* ── Navigation arrows (left/right edges) ───────────────────────────────── */
+
+.tour-nav-prev,
+.tour-nav-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #C4A555;
+  font-size: 2rem;
+  padding: 20px 16px;
+  opacity: 0.25;
+  transition: opacity 0.2s ease;
+  z-index: 20;
+  font-family: var(--font, 'Inter', sans-serif);
+}
+
+.tour-nav-prev { left: 0; }
+.tour-nav-next { right: 0; }
+
+.tour-nav-prev:hover,
+.tour-nav-next:hover { opacity: 0.9; }
+
+.tour-nav-next.nav-ready { opacity: 0.65; }
+
+.tour-nav-prev:disabled,
+.tour-nav-next:disabled {
+  opacity: 0.08;
+  cursor: default;
+}
+
+/* ── Progress bar (gold line at bottom) ─────────────────────────────────── */
+
+.tour-progress-track {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(196, 165, 85, 0.15);
+}
+
+.tour-progress-fill {
+  height: 100%;
+  background: #C4A555;
+  transition: width 0.6s ease;
+}
+
+/* ── Skip button (top-right pill) ───────────────────────────────────────── */
+
+.tour-skip {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  background: none;
+  border: 1px solid rgba(196, 165, 85, 0.28);
+  color: #8888b0;
+  font-size: 0.73rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 5px 15px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+  z-index: 20;
+  font-family: var(--font, 'Inter', sans-serif);
+}
+
+.tour-skip:hover {
+  border-color: #C4A555;
+  color: #C4A555;
+}
+
+/* ── Chapter title cards ────────────────────────────────────────────────── */
+
+.chapter-card {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #010103;
+  animation: chapterReveal 2.2s ease forwards;
+  z-index: 10;
+  pointer-events: none;
+}
+
+@keyframes chapterReveal {
+  0%   { opacity: 0; }
+  18%  { opacity: 1; }
+  72%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.chapter-number {
+  font-size: 0.82rem;
+  letter-spacing: 0.4em;
+  color: #C4A555;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+
+.chapter-title-card {
+  font-size: clamp(2rem, 4.5vw, 3.8rem);
+  font-weight: 900;
+  color: #f0f0f8;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.chapter-subtitle {
+  margin-top: 16px;
+  font-size: 0.9rem;
+  color: #8888b0;
+  letter-spacing: 0.08em;
+  font-style: italic;
+}
+
+/* ── SVG animation keyframes ────────────────────────────────────────────── */
+
+/* Wavefront sweep (Act 2) */
+@keyframes waveSweepCinema {
+  from { transform: translateX(-400px); opacity: 0; }
+  12%  { opacity: 1; }
+  88%  { opacity: 1; }
+  to   { transform: translateX(1600px); opacity: 0; }
+}
+
+.wave-line-cinema {
+  animation: waveSweepCinema 3.5s ease-in-out infinite;
+}
+
+/* Earth rotation (Act 3) */
+@keyframes earthRotateCinema {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
 
+.earth-group-cinema {
+  animation: earthRotateCinema 10s linear infinite;
+  transform-origin: 330px 370px;
+}
+
+/* UV arc drawing via stroke-dashoffset (Act 3) */
+@keyframes drawArc {
+  from { stroke-dashoffset: var(--arc-len, 600); }
+  to   { stroke-dashoffset: 0; }
+}
+
+.uv-draw-1      { stroke-dasharray: 572; stroke-dashoffset: 572; animation: drawArc 4.0s 0.5s ease forwards; }
+.uv-draw-1-conj { stroke-dasharray: 572; stroke-dashoffset: 572; animation: drawArc 4.0s 0.8s ease forwards; }
+.uv-draw-2      { stroke-dasharray: 440; stroke-dashoffset: 440; animation: drawArc 3.5s 1.0s ease forwards; }
+.uv-draw-2-conj { stroke-dasharray: 440; stroke-dashoffset: 440; animation: drawArc 3.5s 1.2s ease forwards; }
+.uv-draw-3      { stroke-dasharray: 364; stroke-dashoffset: 364; animation: drawArc 3.0s 1.4s ease forwards; }
+.uv-draw-3-conj { stroke-dasharray: 364; stroke-dashoffset: 364; animation: drawArc 3.0s 1.6s ease forwards; }
+
+/* Station reveal (Act 4) */
+@keyframes stationReveal {
+  0%   { opacity: 0; transform: scale(0); }
+  60%  { opacity: 1; transform: scale(1.5); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.station-dot-1 { animation: stationReveal 0.6s 0.3s ease forwards; opacity: 0; }
+.station-dot-2 { animation: stationReveal 0.6s 0.7s ease forwards; opacity: 0; }
+.station-dot-3 { animation: stationReveal 0.6s 1.1s ease forwards; opacity: 0; }
+.station-dot-4 { animation: stationReveal 0.6s 1.5s ease forwards; opacity: 0; }
+.station-dot-5 { animation: stationReveal 0.6s 1.9s ease forwards; opacity: 0; }
+.station-dot-6 { animation: stationReveal 0.6s 2.3s ease forwards; opacity: 0; }
+.station-dot-7 { animation: stationReveal 0.6s 2.7s ease forwards; opacity: 0; }
+.station-dot-8 { animation: stationReveal 0.6s 3.1s ease forwards; opacity: 0; }
+
+/* Baseline / inset line reveal (Act 4) */
+@keyframes lineReveal {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.alma-baseline  { animation: lineReveal 1.0s 3.5s ease forwards; opacity: 0; }
+.other-baseline { animation: lineReveal 1.0s 3.8s ease forwards; opacity: 0; }
+.uv-inset       { animation: lineReveal 1.0s 4.2s ease forwards; opacity: 0; }
+
+/* Station label reveal (same timing as dots) */
+.station-label-1 { animation: lineReveal 0.5s 0.5s ease forwards; opacity: 0; }
+.station-label-2 { animation: lineReveal 0.5s 0.9s ease forwards; opacity: 0; }
+.station-label-3 { animation: lineReveal 0.5s 1.3s ease forwards; opacity: 0; }
+.station-label-4 { animation: lineReveal 0.5s 1.7s ease forwards; opacity: 0; }
+.station-label-5 { animation: lineReveal 0.5s 2.1s ease forwards; opacity: 0; }
+.station-label-6 { animation: lineReveal 0.5s 2.5s ease forwards; opacity: 0; }
+.station-label-7 { animation: lineReveal 0.5s 2.9s ease forwards; opacity: 0; }
+.station-label-8 { animation: lineReveal 0.5s 3.3s ease forwards; opacity: 0; }
+
+/* CLEAN scrubber (Act 5) */
+@keyframes scrubberMove {
+  from { transform: translateX(0); }
+  to   { transform: translateX(422px); }
+}
+
+.scrubber-reveal {
+  animation: scrubberMove 3.5s 0.5s ease-in-out forwards;
+}
+
+/* CLEAN step highlight (Act 5, all steps visible) */
 @keyframes cleanHighlight {
-  0%, 18%   { opacity: 0.65; }
+  0%, 18%   { opacity: 0.55; }
   30%, 70%  { opacity: 1.0; }
-  88%, 100% { opacity: 0.65; }
+  88%, 100% { opacity: 0.55; }
 }
 
-.wave-line   { animation: waveSweep 3s ease-in-out infinite; }
+.clean-step-1 { animation: cleanHighlight 6s 0.0s infinite both; }
+.clean-step-2 { animation: cleanHighlight 6s 1.5s infinite both; }
+.clean-step-3 { animation: cleanHighlight 6s 3.0s infinite both; }
+.clean-step-4 { animation: cleanHighlight 6s 4.5s infinite both; }
 
-.earth-group {
-  animation: earthRotate 8s linear infinite;
-  transform-origin: 185px 210px;
+/* EHT image reveal (Act 6) */
+@keyframes imageReveal {
+  from { opacity: 0; filter: brightness(0) saturate(0.3); }
+  to   { opacity: 1; filter: brightness(1) saturate(1); }
 }
 
-.clean-step-1,
-.clean-step-2,
-.clean-step-3,
-.clean-step-4 { opacity: 0.65; }
+.eht-image-reveal {
+  animation: imageReveal 4s ease forwards;
+}
 
-.clean-step-1 { animation: cleanHighlight 6s 0s    infinite both; }
-.clean-step-2 { animation: cleanHighlight 6s 1.5s  infinite both; }
-.clean-step-3 { animation: cleanHighlight 6s 3s    infinite both; }
-.clean-step-4 { animation: cleanHighlight 6s 4.5s  infinite both; }
+/* Panel slide-in (Act 8) */
+@keyframes panelSlideIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
-/* ── Tour Launch Button ──────────────────────────────────────────────────── */
+.metrics-reveal { animation: panelSlideIn 0.8s 2.0s ease forwards; opacity: 0; }
+.fits-reveal    { animation: panelSlideIn 0.8s 2.5s ease forwards; opacity: 0; }
+.cta-text       { animation: panelSlideIn 1.2s 3.0s ease forwards; opacity: 0; }
+
+/* ── Tour Launch Button (used by AppSidebar) ─────────────────────────────── */
 
 .tour-launch-btn {
   display: flex;
@@ -189,25 +409,122 @@
   transform: scale(1.03);
 }
 
-/* ── Reduced motion ──────────────────────────────────────────────────────── */
+/* ── Reduced motion ─────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
-  .tour-overlay { animation: none !important; }
-  .wave-line,
-  .earth-group { animation: none !important; }
-  .clean-step-1, .clean-step-2, .clean-step-3, .clean-step-4 {
+  .tour-cinematic,
+  .chapter-card { animation: none !important; }
+
+  .wave-line-cinema,
+  .earth-group-cinema { animation: none !important; }
+
+  .uv-draw-1, .uv-draw-1-conj,
+  .uv-draw-2, .uv-draw-2-conj,
+  .uv-draw-3, .uv-draw-3-conj {
+    animation: none !important;
+    stroke-dashoffset: 0 !important;
+  }
+
+  .eht-image-reveal {
+    animation: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+  }
+
+  .station-dot-1, .station-dot-2, .station-dot-3, .station-dot-4,
+  .station-dot-5, .station-dot-6, .station-dot-7, .station-dot-8,
+  .station-label-1, .station-label-2, .station-label-3, .station-label-4,
+  .station-label-5, .station-label-6, .station-label-7, .station-label-8,
+  .alma-baseline, .other-baseline, .uv-inset,
+  .metrics-reveal, .fits-reveal, .cta-text {
     animation: none !important;
     opacity: 1 !important;
   }
+
+  .scrubber-reveal {
+    animation: none !important;
+    transform: translateX(422px) !important;
+  }
+
+  .clean-step-1, .clean-step-2,
+  .clean-step-3, .clean-step-4 {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  .tour-paragraph { animation: none !important; opacity: 1 !important; transform: none !important; }
+  .tour-equation-block { animation: none !important; opacity: 1 !important; transform: none !important; }
 }
 
-[data-reduced-motion] .tour-overlay { animation: none !important; }
-[data-reduced-motion] .wave-line,
-[data-reduced-motion] .earth-group { animation: none !important; }
+[data-reduced-motion] .tour-cinematic,
+[data-reduced-motion] .chapter-card { animation: none !important; }
+
+[data-reduced-motion] .wave-line-cinema,
+[data-reduced-motion] .earth-group-cinema { animation: none !important; }
+
+[data-reduced-motion] .uv-draw-1,
+[data-reduced-motion] .uv-draw-1-conj,
+[data-reduced-motion] .uv-draw-2,
+[data-reduced-motion] .uv-draw-2-conj,
+[data-reduced-motion] .uv-draw-3,
+[data-reduced-motion] .uv-draw-3-conj {
+  animation: none !important;
+  stroke-dashoffset: 0 !important;
+}
+
+[data-reduced-motion] .eht-image-reveal {
+  animation: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+[data-reduced-motion] .station-dot-1,
+[data-reduced-motion] .station-dot-2,
+[data-reduced-motion] .station-dot-3,
+[data-reduced-motion] .station-dot-4,
+[data-reduced-motion] .station-dot-5,
+[data-reduced-motion] .station-dot-6,
+[data-reduced-motion] .station-dot-7,
+[data-reduced-motion] .station-dot-8,
+[data-reduced-motion] .station-label-1,
+[data-reduced-motion] .station-label-2,
+[data-reduced-motion] .station-label-3,
+[data-reduced-motion] .station-label-4,
+[data-reduced-motion] .station-label-5,
+[data-reduced-motion] .station-label-6,
+[data-reduced-motion] .station-label-7,
+[data-reduced-motion] .station-label-8,
+[data-reduced-motion] .alma-baseline,
+[data-reduced-motion] .other-baseline,
+[data-reduced-motion] .uv-inset,
+[data-reduced-motion] .metrics-reveal,
+[data-reduced-motion] .fits-reveal,
+[data-reduced-motion] .cta-text {
+  animation: none !important;
+  opacity: 1 !important;
+}
+
+[data-reduced-motion] .scrubber-reveal {
+  animation: none !important;
+  transform: translateX(422px) !important;
+}
+
 [data-reduced-motion] .clean-step-1,
 [data-reduced-motion] .clean-step-2,
 [data-reduced-motion] .clean-step-3,
 [data-reduced-motion] .clean-step-4 {
   animation: none !important;
   opacity: 1 !important;
+}
+
+[data-reduced-motion] .tour-paragraph {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+[data-reduced-motion] .tour-equation-block {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
 }

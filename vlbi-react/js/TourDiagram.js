@@ -1,652 +1,582 @@
-// TourDiagram.js — 12 SVG tour diagrams. viewBox="0 0 700 500" for all.
-// CSS animations (waveSweep, earthRotate, cleanStep) defined in tour.css.
-// htm safety: NEVER use bare < or > in SVG text content — use ${'<'} and ${'>'}
+// TourDiagram.js — 8 SVG hero diagrams for the cinematic VLBI tour.
+// All diagrams: viewBox="0 0 1200 700", background #010103.
+// CSS animations are handled via className — see tour.css for keyframes.
+// htm safety: NEVER use bare < or > in SVG text content.
 import { html } from './core.js';
-
-const G   = '#C4A555';  // gold
-const AM  = '#9E7E38';  // amber
-const DIM = '#8888b0';  // dim text
-const TX  = '#e8e8f0';  // primary text
-const BG  = '#080810';  // dark bg
-const OR  = '#ff9f43';  // orange
-const PH  = '#FFD700';  // photon gold
-const BL  = '#4488cc';  // blue
-const GN  = '#44bb88';  // green
 
 export function TourDiagram({ diagramId }) {
   switch (diagramId) {
-    case 1:  return d01();
-    case 2:  return d02();
-    case 3:  return d03();
-    case 4:  return d04();
-    case 5:  return d05();
-    case 6:  return d06();
-    case 7:  return d07();
-    case 8:  return d08();
-    case 9:  return d09();
-    case 10: return d10();
-    case 11: return d11();
-    case 12: return d12();
+    case 1: return d01();
+    case 2: return d02();
+    case 3: return d03();
+    case 4: return d04();
+    case 5: return d05();
+    case 6: return d06();
+    case 7: return d07();
+    case 8: return d08();
     default: return null;
   }
 }
 
+// ── d01: The Resolution Problem ──────────────────────────────────────────────
+// Left: single dish, wide beam, unresolved source.
+// Right: Earth-baseline array, narrow beam, resolved shadow.
 function d01() {
-  return html`<svg viewBox="0 0 700 500" width="100%" height="100%">
-    <rect width="700" height="500" fill=${BG} />
-    <line x1="350" y1="30" x2="350" y2="480" stroke="#2d2200" strokeWidth="1" />
+  return html`
+    <svg viewBox="0 0 1200 700" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1200" height="700" fill="#010103" />
 
-    <text x="175" y="45" textAnchor="middle" style=${{ fontSize: '13px', fontWeight: '700', fill: TX }}>Single Dish</text>
-    <path d="M 88,310 Q 175,230 262,310" fill="none" stroke=${G} strokeWidth="3.5" />
-    <line x1="175" y1="230" x2="175" y2="310" stroke=${G} strokeWidth="2" />
-    <circle cx="175" cy="226" r="5" fill=${G} />
-    <line x1="175" y1="226" x2="60" y2="60" stroke=${DIM} strokeWidth="1.5" strokeDasharray="5 3" />
-    <line x1="175" y1="226" x2="290" y2="60" stroke=${DIM} strokeWidth="1.5" strokeDasharray="5 3" />
-    <path d="M 108,155 A 76,76 0 0 1 242,155" fill="none" stroke=${DIM} strokeWidth="1" />
-    <text x="175" y="178" textAnchor="middle" style=${{ fontSize: '11px', fill: DIM }}>θ ≈ 3.3 arcsec</text>
-    <circle cx="175" cy="52" r="7" fill=${OR} />
-    <text x="175" y="42" textAnchor="middle" style=${{ fontSize: '10px', fill: OR }}>M87*</text>
-    <rect x="88" y="338" width="174" height="60" fill="rgba(196,165,85,0.06)" stroke=${G} strokeWidth="1" rx="4" />
-    <text x="175" y="357" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>λ = 1.3 mm, D = 100 m</text>
-    <text x="175" y="375" textAnchor="middle" style=${{ fontSize: '11px', fill: TX }}>θ_min = 1.22λ/D ≈ 3.3 arcsec</text>
-    <text x="175" y="392" textAnchor="middle" style=${{ fontSize: '11px', fill: '#ff6b6b' }}>70,000× too blurry</text>
+      <!-- divider -->
+      <line x1="600" y1="30" x2="600" y2="670" stroke="#1e1800" strokeWidth="1" />
 
-    <text x="525" y="45" textAnchor="middle" style=${{ fontSize: '13px', fontWeight: '700', fill: TX }}>VLBI Array</text>
-    <circle cx="525" cy="270" r="105" fill="rgba(20,40,90,0.3)" stroke=${BL} strokeWidth="2" />
-    <text x="525" y="274" textAnchor="middle" style=${{ fontSize: '11px', fill: BL }}>Earth</text>
-    <circle cx="420" cy="270" r="7" fill=${G} stroke=${BG} strokeWidth="1.5" />
-    <circle cx="618" cy="270" r="7" fill=${G} stroke=${BG} strokeWidth="1.5" />
-    <line x1="427" y1="270" x2="611" y2="270" stroke=${G} strokeWidth="1.5" strokeDasharray="4 2" />
-    <text x="519" y="292" textAnchor="middle" style=${{ fontSize: '10px', fill: G }}>B ≈ 12,742 km</text>
-    <line x1="525" y1="165" x2="519" y2="52" stroke=${G} strokeWidth="1.5" />
-    <line x1="525" y1="165" x2="531" y2="52" stroke=${G} strokeWidth="1.5" />
-    <path d="M 509,130 A 20,20 0 0 1 541,130" fill="none" stroke=${G} strokeWidth="1" />
-    <text x="525" y="118" textAnchor="middle" style=${{ fontSize: '11px', fill: G }}>θ ≈ 20 μas</text>
-    <circle cx="525" cy="52" r="7" fill=${OR} />
-    <text x="525" y="42" textAnchor="middle" style=${{ fontSize: '10px', fill: OR }}>M87*</text>
-    <rect x="438" y="338" width="174" height="60" fill="rgba(68,187,136,0.06)" stroke=${GN} strokeWidth="1" rx="4" />
-    <text x="525" y="357" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>λ = 1.3 mm, D = 12,742 km</text>
-    <text x="525" y="375" textAnchor="middle" style=${{ fontSize: '11px', fill: TX }}>θ_synth ≈ 20 μas</text>
-    <text x="525" y="392" textAnchor="middle" style=${{ fontSize: '11px', fill: GN }}>Resolves 42 μas shadow</text>
+      <!-- ─── LEFT: single dish ─── -->
+      <!-- M87* source (unresolved — just a ring) -->
+      <circle cx="300" cy="58" r="11" fill="none" stroke="#FFD700" strokeWidth="2" />
+      <text x="300" y="40" textAnchor="middle" fill="#FFD700" fontSize="13" fontWeight="600">M87*</text>
 
-    <text x="350" y="470" textAnchor="middle" style=${{ fontSize: '11px', fill: DIM }}>Rayleigh criterion: θ_min = 1.22 λ/D</text>
-  </svg>`;
+      <!-- Wide beam cone (dashed) -->
+      <line x1="300" y1="296" x2="148" y2="68" stroke="#8888b0" strokeWidth="1.5" strokeDasharray="8 4" strokeOpacity="0.7" />
+      <line x1="300" y1="296" x2="452" y2="68" stroke="#8888b0" strokeWidth="1.5" strokeDasharray="8 4" strokeOpacity="0.7" />
+      <!-- Beam arc showing angular width -->
+      <path d="M 210,195 A 104,32 0 0 1 390,195" stroke="#8888b0" strokeWidth="1" fill="none" strokeOpacity="0.8" />
+      <text x="300" y="238" textAnchor="middle" fill="#8888b0" fontSize="16">θ ≈ 2.7 arcsec</text>
+
+      <!-- Dish parabola -->
+      <path d="M 130,425 Q 300,295 470,425" stroke="#C4A555" strokeWidth="4" fill="none" />
+      <!-- Stub -->
+      <line x1="300" y1="295" x2="300" y2="425" stroke="#C4A555" strokeWidth="3" />
+      <!-- Receiver -->
+      <circle cx="300" cy="291" r="9" fill="#C4A555" />
+
+      <!-- Labels -->
+      <text x="300" y="504" textAnchor="middle" fill="#8888b0" fontSize="13">100 m dish</text>
+      <text x="300" y="558" textAnchor="middle" fill="#ff6b6b" fontSize="15" fontWeight="700">70,000× too blurry</text>
+
+      <!-- ─── RIGHT: Earth-baseline array ─── -->
+      <!-- M87* source (resolved — solid gold dot) -->
+      <circle cx="900" cy="48" r="6" fill="#FFD700" />
+      <text x="900" y="32" textAnchor="middle" fill="#FFD700" fontSize="13" fontWeight="600">M87*</text>
+
+      <!-- Narrow beam lines -->
+      <line x1="900" y1="250" x2="893" y2="58" stroke="#C4A555" strokeWidth="1.5" strokeOpacity="0.9" />
+      <line x1="900" y1="250" x2="907" y2="58" stroke="#C4A555" strokeWidth="1.5" strokeOpacity="0.9" />
+      <text x="900" y="100" textAnchor="middle" fill="#4ecdc4" fontSize="19" fontWeight="700">θ ≈ 20 μas</text>
+
+      <!-- Atmosphere glow -->
+      <circle cx="900" cy="380" r="148" fill="none" stroke="rgba(78,205,196,0.12)" strokeWidth="14" />
+      <!-- Earth -->
+      <circle cx="900" cy="380" r="130" fill="rgba(12,25,75,0.65)" stroke="#4ecdc4" strokeWidth="2.5" />
+
+      <!-- Station dots -->
+      <circle cx="772" cy="380" r="9" fill="#C4A555" />
+      <circle cx="1028" cy="380" r="9" fill="#C4A555" />
+      <!-- Baseline dashed -->
+      <line x1="781" y1="380" x2="1019" y2="380" stroke="#C4A555" strokeWidth="2" strokeDasharray="6 3" strokeOpacity="0.8" />
+      <text x="900" y="430" textAnchor="middle" fill="#C4A555" fontSize="14">B ≈ 10,900 km</text>
+
+      <!-- Result label -->
+      <text x="900" y="558" textAnchor="middle" fill="#4ecdc4" fontSize="15" fontWeight="600">Resolves 42 μas shadow</text>
+
+      <!-- Bottom equation -->
+      <text x="600" y="640" textAnchor="middle" fill="#FFD700" fontSize="20" fontWeight="800">λ / D_Earth ≈ 20 μas</text>
+    </svg>
+  `;
 }
 
+// ── d02: The Baseline ─────────────────────────────────────────────────────────
+// Two dishes, sweeping wavefront, geometric delay, UV plane inset.
 function d02() {
-  return html`<svg viewBox="0 0 700 500" width="100%" height="100%">
-    <rect width="700" height="500" fill=${BG} />
-    <text x="350" y="35" textAnchor="middle" style=${{ fontSize: '13px', fontWeight: '700', fill: TX }}>Two Telescopes — One Visibility</text>
+  return html`
+    <svg viewBox="0 0 1200 700" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1200" height="700" fill="#010103" />
 
-    <circle cx="350" cy="65" r="10" fill=${OR} />
-    <text x="350" y="55" textAnchor="middle" style=${{ fontSize: '10px', fill: OR }}>Radio source</text>
+      <!-- Radio source (top center) -->
+      <circle cx="600" cy="52" r="14" fill="rgba(255,215,0,0.18)" stroke="#FFD700" strokeWidth="2" />
+      <circle cx="600" cy="52" r="7" fill="#FFD700" />
+      <text x="600" y="34" textAnchor="middle" fill="#FFD700" fontSize="13" fontWeight="600">Radio Source (M87*)</text>
 
-    <line x1="80" y1="148" x2="620" y2="148" stroke="#1a1a38" strokeWidth="0.8" />
-    <line x1="80" y1="162" x2="620" y2="162" stroke="#1a1a38" strokeWidth="0.8" />
-    <line x1="80" y1="176" x2="620" y2="176" stroke="#1a1a38" strokeWidth="0.8" />
-    <line className="wave-line" x1="80" y1="155" x2="620" y2="155" stroke=${PH} strokeWidth="2.5" strokeOpacity="0.85" />
+      <!-- Static wavefront background lines (very dim) -->
+      <line x1="60" y1="178" x2="1140" y2="178" stroke="#1a1a38" strokeWidth="0.8" />
+      <line x1="60" y1="193" x2="1140" y2="193" stroke="#1a1a38" strokeWidth="0.8" />
+      <line x1="60" y1="208" x2="1140" y2="208" stroke="#1a1a38" strokeWidth="0.8" />
 
-    <path d="M 98,288 Q 168,230 238,288" fill="none" stroke=${G} strokeWidth="3.5" />
-    <line x1="168" y1="230" x2="168" y2="288" stroke=${G} strokeWidth="2" />
-    <circle cx="168" cy="226" r="6" fill=${G} />
-    <text x="168" y="318" textAnchor="middle" style=${{ fontSize: '11px', fill: TX }}>Telescope 1</text>
-    <text x="168" y="334" textAnchor="middle" style=${{ fontSize: '9px', fill: DIM }}>(ALMA, Chile)</text>
+      <!-- Animated wavefront -->
+      <line className="wave-line-cinema" x1="60" y1="190" x2="1140" y2="190" stroke="#FFD700" strokeWidth="2.5" strokeOpacity="0.8" />
 
-    <path d="M 462,288 Q 532,230 602,288" fill="none" stroke=${G} strokeWidth="3.5" />
-    <line x1="532" y1="230" x2="532" y2="288" stroke=${G} strokeWidth="2" />
-    <circle cx="532" cy="226" r="6" fill=${G} />
-    <text x="532" y="318" textAnchor="middle" style=${{ fontSize: '11px', fill: TX }}>Telescope 2</text>
-    <text x="532" y="334" textAnchor="middle" style=${{ fontSize: '9px', fill: DIM }}>(JCMT, Hawaii)</text>
+      <!-- ─── Telescope 1 (left) ─── -->
+      <path d="M 90,530 Q 220,425 350,530" stroke="#C4A555" strokeWidth="5" fill="none" />
+      <line x1="220" y1="425" x2="220" y2="530" stroke="#C4A555" strokeWidth="3" />
+      <circle cx="220" cy="421" r="10" fill="#C4A555" />
+      <text x="220" y="588" textAnchor="middle" fill="#f0f0f8" fontSize="16" fontWeight="600">Telescope 1</text>
+      <text x="220" y="608" textAnchor="middle" fill="#8888b0" fontSize="13">ALMA · Chile</text>
 
-    <line x1="168" y1="75" x2="168" y2="222" stroke=${OR} strokeWidth="1" strokeDasharray="3 2" />
-    <line x1="532" y1="75" x2="532" y2="222" stroke=${OR} strokeWidth="1" strokeDasharray="3 2" />
-    <text x="350" y="172" textAnchor="middle" style=${{ fontSize: '11px', fill: OR }}>τ_g = B·ŝ/c</text>
-    <line x1="350" y1="179" x2="350" y2="196" stroke=${OR} strokeWidth="1.5" />
+      <!-- ─── Telescope 2 (right) ─── -->
+      <path d="M 850,530 Q 980,425 1110,530" stroke="#C4A555" strokeWidth="5" fill="none" />
+      <line x1="980" y1="425" x2="980" y2="530" stroke="#C4A555" strokeWidth="3" />
+      <circle cx="980" cy="421" r="10" fill="#C4A555" />
+      <text x="980" y="588" textAnchor="middle" fill="#f0f0f8" fontSize="16" fontWeight="600">Telescope 2</text>
+      <text x="980" y="608" textAnchor="middle" fill="#8888b0" fontSize="13">JCMT · Hawaii</text>
 
-    <line x1="174" y1="378" x2="526" y2="378" stroke=${DIM} strokeWidth="1.5" />
-    <line x1="174" y1="373" x2="174" y2="383" stroke=${DIM} strokeWidth="1.5" />
-    <line x1="526" y1="373" x2="526" y2="383" stroke=${DIM} strokeWidth="1.5" />
-    <text x="350" y="396" textAnchor="middle" style=${{ fontSize: '11px', fill: G }}>Baseline B → spatial frequency u = B/λ</text>
+      <!-- Geometric delay lines (vertical dashes) -->
+      <line x1="220" y1="66" x2="220" y2="413" stroke="#ff9f43" strokeWidth="1.5" strokeDasharray="5 3" strokeOpacity="0.8" />
+      <line x1="980" y1="66" x2="980" y2="413" stroke="#ff9f43" strokeWidth="1.5" strokeDasharray="5 3" strokeOpacity="0.8" />
+      <text x="588" y="315" textAnchor="middle" fill="#ff9f43" fontSize="26" fontWeight="700">τ_g</text>
+      <text x="600" y="345" textAnchor="middle" fill="#ff9f43" fontSize="18">= B·ŝ/c</text>
 
-    <rect x="556" y="48" width="128" height="108" fill="rgba(8,10,30,0.92)" stroke="#2d2200" strokeWidth="1" rx="4" />
-    <text x="620" y="67" textAnchor="middle" style=${{ fontSize: '10px', fill: G }}>UV plane</text>
-    <line x1="560" y1="99" x2="680" y2="99" stroke="#1a1a38" strokeWidth="0.5" />
-    <line x1="620" y1="54" x2="620" y2="150" stroke="#1a1a38" strokeWidth="0.5" />
-    <circle cx="642" cy="78" r="4" fill=${G} />
-    <circle cx="598" cy="120" r="4" fill=${G} fillOpacity="0.4" />
-    <text x="648" y="82" style=${{ fontSize: '8px', fill: TX }}>(u,v)</text>
-    <text x="562" y="130" style=${{ fontSize: '8px', fill: DIM }}>(-u,-v)</text>
+      <!-- Baseline measurement bar -->
+      <line x1="226" y1="650" x2="974" y2="650" stroke="#C4A555" strokeWidth="2" />
+      <line x1="226" y1="643" x2="226" y2="657" stroke="#C4A555" strokeWidth="2" />
+      <line x1="974" y1="643" x2="974" y2="657" stroke="#C4A555" strokeWidth="2" />
+      <text x="600" y="672" textAnchor="middle" fill="#C4A555" fontSize="14">Baseline B = 10,900 km  →  u = B/λ = 8.4 Gλ</text>
 
-    <rect x="18" y="415" width="220" height="54" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="4" />
-    <text x="128" y="437" textAnchor="middle" style=${{ fontSize: '11px', fill: G }}>V₁₂ = ⟨E₁(t) · E₂*(t+τ)⟩</text>
-    <text x="128" y="455" textAnchor="middle" style=${{ fontSize: '9px', fill: DIM }}>Visibility = one Fourier component</text>
-  </svg>`;
+      <!-- UV plane inset (top right) -->
+      <rect x="938" y="36" width="244" height="204" fill="rgba(6,8,22,0.96)" stroke="#2d2200" strokeWidth="1.5" rx="6" />
+      <text x="1060" y="60" textAnchor="middle" fill="#C4A555" fontSize="13" fontWeight="600">UV plane</text>
+      <!-- Grid lines in UV inset -->
+      <line x1="944" y1="138" x2="1176" y2="138" stroke="#111130" strokeWidth="0.7" />
+      <line x1="1060" y1="42" x2="1060" y2="234" stroke="#111130" strokeWidth="0.7" />
+      <!-- UV points (conjugate pair) -->
+      <circle cx="1098" cy="106" r="5" fill="#C4A555" />
+      <text x="1110" y="110" fill="#f0f0f8" fontSize="11">(u,v)</text>
+      <circle cx="1022" cy="170" r="5" fill="#C4A555" fillOpacity="0.35" />
+      <text x="966" y="174" fill="#8888b0" fontSize="11">(-u,-v)</text>
+      <text x="1060" y="230" textAnchor="middle" fill="#8888b0" fontSize="11">conjugate symmetry</text>
+    </svg>
+  `;
 }
 
+// ── d03: Earth Rotation Synthesis ────────────────────────────────────────────
+// Earth rotating (left) + UV arcs drawing via stroke-dashoffset (right).
 function d03() {
-  return html`<svg viewBox="0 0 700 500" width="100%" height="100%">
-    <rect width="700" height="500" fill=${BG} />
-    <text x="350" y="35" textAnchor="middle" style=${{ fontSize: '13px', fontWeight: '700', fill: TX }}>UV Plane — Fourier Space</text>
+  return html`
+    <svg viewBox="0 0 1200 700" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1200" height="700" fill="#010103" />
 
-    <rect x="60" y="52" width="580" height="380" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="6" />
+      <!-- ─── LEFT: Rotating Earth ─── -->
+      <!-- Atmosphere glow -->
+      <circle cx="330" cy="370" r="192" fill="none" stroke="rgba(78,205,196,0.1)" strokeWidth="18" />
+      <!-- Earth -->
+      <circle cx="330" cy="370" r="172" fill="rgba(10,20,65,0.72)" stroke="#4ecdc4" strokeWidth="2.5" />
 
-    <circle cx="350" cy="242" r="60"  fill="none" stroke="#1a1a48" strokeWidth="0.4" />
-    <circle cx="350" cy="242" r="120" fill="none" stroke="#1a1a48" strokeWidth="0.4" />
-    <circle cx="350" cy="242" r="180" fill="none" stroke="#1a1a48" strokeWidth="0.4" />
-    <circle cx="350" cy="242" r="240" fill="none" stroke="#1a1a48" strokeWidth="0.4" />
-    <circle cx="350" cy="242" r="282" fill="none" stroke="#1a1a48" strokeWidth="0.3" />
+      <!-- Rotating group: telescope dots + baseline line -->
+      <g className="earth-group-cinema">
+        <line x1="330" y1="200" x2="330" y2="540" stroke="#C4A555" strokeWidth="2" strokeDasharray="7 4" strokeOpacity="0.7" />
+        <circle cx="330" cy="200" r="10" fill="#C4A555" />
+        <circle cx="330" cy="540" r="10" fill="#C4A555" />
+      </g>
 
-    <line x1="65" y1="242" x2="635" y2="242" stroke="#222245" strokeWidth="1" />
-    <line x1="350" y1="57" x2="350" y2="427" stroke="#222245" strokeWidth="1" />
-    <text x="624" y="258" style=${{ fontSize: '11px', fill: TX }}>u (Gλ)</text>
-    <text x="358" y="70" style=${{ fontSize: '11px', fill: TX }}>v (Gλ)</text>
-    <text x="355" y="258" style=${{ fontSize: '10px', fill: DIM }}>0</text>
-    <text x="112" y="258" style=${{ fontSize: '9px', fill: DIM }}>-8</text>
-    <text x="232" y="258" style=${{ fontSize: '9px', fill: DIM }}>-4</text>
-    <text x="466" y="258" style=${{ fontSize: '9px', fill: DIM }}>+4</text>
-    <text x="586" y="258" style=${{ fontSize: '9px', fill: DIM }}>+8</text>
+      <!-- Hour angle labels -->
+      <text x="138" y="618" fill="#8888b0" fontSize="14">H = −6h</text>
+      <text x="440" y="638" fill="#8888b0" fontSize="14">→ +6h</text>
+      <text x="330" y="598" textAnchor="middle" fill="#4ecdc4" fontSize="14">12h observation</text>
+      <text x="330" y="78" textAnchor="middle" fill="#f0f0f8" fontSize="17" fontWeight="700">Earth Rotation</text>
 
-    <path d="M 120,242 A 230,148 0 0 0 580,242" fill="none" stroke=${G} strokeWidth="2.5" strokeOpacity="0.9" />
-    <path d="M 120,242 A 230,148 0 0 1 580,242" fill="none" stroke=${G} strokeWidth="2.5" strokeOpacity="0.4" />
+      <!-- ─── RIGHT: UV plane ─── -->
+      <rect x="720" y="60" width="440" height="520" fill="rgba(4,5,16,0.97)" stroke="#1e1800" strokeWidth="1.5" rx="6" />
 
-    <g transform="rotate(28, 350, 242)">
-      <path d="M 155,242 A 195,125 0 0 0 545,242" fill="none" stroke=${G} strokeWidth="2.0" strokeOpacity="0.7" />
-      <path d="M 155,242 A 195,125 0 0 1 545,242" fill="none" stroke=${G} strokeWidth="1.5" strokeOpacity="0.28" />
-    </g>
+      <!-- UV axes -->
+      <line x1="726" y1="320" x2="1154" y2="320" stroke="#1e1e40" strokeWidth="1" />
+      <line x1="940" y1="66" x2="940" y2="574" stroke="#1e1e40" strokeWidth="1" />
+      <text x="1148" y="338" fill="#8888b0" fontSize="13">u</text>
+      <text x="948" y="82" fill="#8888b0" fontSize="13">v</text>
+      <text x="940" y="42" textAnchor="middle" fill="#C4A555" fontSize="14" fontWeight="600">UV Plane</text>
 
-    <g transform="rotate(-22, 350, 242)">
-      <path d="M 182,242 A 168,108 0 0 0 518,242" fill="none" stroke=${G} strokeWidth="1.8" strokeOpacity="0.65" />
-      <path d="M 182,242 A 168,108 0 0 1 518,242" fill="none" stroke=${G} strokeWidth="1.4" strokeOpacity="0.25" />
-    </g>
+      <!-- UV arc 1 (largest, angle 0°) — upper + conjugate -->
+      <path className="uv-draw-1" d="M 726,320 A 214,136 0 0 0 1154,320" stroke="#C4A555" strokeWidth="2.5" fill="none" />
+      <path className="uv-draw-1-conj" d="M 726,320 A 214,136 0 0 1 1154,320" stroke="#C4A555" strokeWidth="2.5" fill="none" strokeOpacity="0.35" />
 
-    <g transform="rotate(52, 350, 242)">
-      <path d="M 220,242 A 130,83 0 0 0 480,242" fill="none" stroke=${G} strokeWidth="1.5" strokeOpacity="0.55" />
-      <path d="M 220,242 A 130,83 0 0 1 480,242" fill="none" stroke=${G} strokeWidth="1.2" strokeOpacity="0.22" />
-    </g>
+      <!-- UV arc 2 (medium, rotated 30°) -->
+      <g transform="rotate(30, 940, 320)">
+        <path className="uv-draw-2" d="M 770,320 A 170,108 0 0 0 1110,320" stroke="#C4A555" strokeWidth="2" fill="none" />
+        <path className="uv-draw-2-conj" d="M 770,320 A 170,108 0 0 1 1110,320" stroke="#C4A555" strokeWidth="1.5" fill="none" strokeOpacity="0.3" />
+      </g>
 
-    <g transform="rotate(75, 350, 242)">
-      <path d="M 262,242 A 88,56 0 0 0 438,242" fill="none" stroke=${G} strokeWidth="1.2" strokeOpacity="0.45" />
-      <path d="M 262,242 A 88,56 0 0 1 438,242" fill="none" stroke=${G} strokeWidth="1.0" strokeOpacity="0.18" />
-    </g>
+      <!-- UV arc 3 (smaller, rotated -25°) -->
+      <g transform="rotate(-25, 940, 320)">
+        <path className="uv-draw-3" d="M 800,320 A 140,88 0 0 0 1080,320" stroke="#C4A555" strokeWidth="1.8" fill="none" />
+        <path className="uv-draw-3-conj" d="M 800,320 A 140,88 0 0 1 1080,320" stroke="#C4A555" strokeWidth="1.4" fill="none" strokeOpacity="0.28" />
+      </g>
 
-    <rect x="158" y="408" width="384" height="24" fill="rgba(0,0,0,0.5)" rx="3" />
-    <text x="350" y="424" textAnchor="middle" style=${{ fontSize: '11px', fill: G }}>V(u,v) = ∫∫ I(l,m) · exp(-2πi(ul+vm)) dl dm</text>
+      <!-- UV panel labels -->
+      <text x="940" y="605" textAnchor="middle" fill="#C4A555" fontSize="14">One baseline → one elliptical arc</text>
+      <text x="940" y="628" textAnchor="middle" fill="#8888b0" fontSize="12">28 baselines × 12 hours → 11,000+ UV samples</text>
 
-    <text x="68" y="446" style=${{ fontSize: '10px', fill: DIM }}>V(-u,-v) = V*(u,v)  →  double coverage for real sky</text>
-    <text x="350" y="468" textAnchor="middle" style=${{ fontSize: '9px', fill: DIM }}>van Cittert-Zernike · TMS eq. 1.4</text>
-  </svg>`;
+      <!-- Arrow linking left to right -->
+      <text x="600" y="340" textAnchor="middle" fill="#555570" fontSize="28">→</text>
+    </svg>
+  `;
 }
 
+// ── d04: The Event Horizon Telescope (world map + station reveal) ─────────────
 function d04() {
-  return html`<svg viewBox="0 0 700 500" width="100%" height="100%">
-    <rect width="700" height="500" fill=${BG} />
-    <line x1="355" y1="20" x2="355" y2="485" stroke="#2d2200" strokeWidth="1" />
+  // Equirectangular projection: x = 40 + (lon+180)/360*1120, y = 60 + (80-lat)/150*520
+  const proj = (lon, lat) => ({
+    x: Math.round(40 + (lon + 180) / 360 * 1120),
+    y: Math.round(Math.min(60 + (80 - lat) / 150 * 520, 575)),
+  });
 
-    <text x="177" y="35" textAnchor="middle" style=${{ fontSize: '12px', fontWeight: '700', fill: TX }}>Earth Rotation</text>
-    <circle cx="177" cy="255" r="112" fill="rgba(20,40,90,0.25)" stroke=${BL} strokeWidth="2.5" />
-    <text x="177" y="259" textAnchor="middle" style=${{ fontSize: '11px', fill: BL }}>Earth</text>
-    <line x1="65" y1="255" x2="289" y2="255" stroke=${BL} strokeWidth="0.5" strokeOpacity="0.4" />
+  const stations = [
+    { ...proj(-67.755, -23.029), name: 'ALMA', isAlma: true },
+    { ...proj(-67.759, -23.006), dx: 4, dy: -3, name: 'APEX', isAlma: true },
+    { ...proj(-155.478, 19.823), name: 'SMA', isAlma: false },
+    { ...proj(-155.472, 19.824), dx: 5, dy: -5, name: 'JCMT', isAlma: false },
+    { ...proj(-97.314, 18.986), name: 'LMT', isAlma: false },
+    { ...proj(-3.392, 37.066), name: 'IRAM', isAlma: false },
+    { ...proj(-109.891, 32.701), name: 'SMT', isAlma: false },
+    { ...proj(-44.65, -89.991), name: 'SPT', isAlma: false },
+  ].map(s => ({ ...s, x: s.x + (s.dx || 0), y: s.y + (s.dy || 0) }));
 
-    <g className="earth-group" style=${{ transformOrigin: '177px 255px' }}>
-      <circle cx="177" cy="143" r="8" fill=${G} />
-      <circle cx="177" cy="367" r="8" fill=${G} />
-      <line x1="177" y1="151" x2="177" y2="359" stroke=${G} strokeWidth="1.5" strokeDasharray="4 3" />
-    </g>
-
-    <text x="177" y="406" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>H = -6h → +6h</text>
-    <text x="177" y="422" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>12 h baseline sweep</text>
-
-    <text x="528" y="35" textAnchor="middle" style=${{ fontSize: '12px', fontWeight: '700', fill: TX }}>UV Arc Synthesis</text>
-    <rect x="368" y="52" width="314" height="330" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="4" />
-    <line x1="372" y1="217" x2="678" y2="217" stroke="#222245" strokeWidth="0.8" />
-    <line x1="525" y1="56" x2="525" y2="378" stroke="#222245" strokeWidth="0.8" />
-    <text x="668" y="229" style=${{ fontSize: '10px', fill: DIM }}>u</text>
-    <text x="530" y="68" style=${{ fontSize: '10px', fill: DIM }}>v</text>
-
-    <path d="M 380,142 Q 525,96 670,142 Q 646,217 670,292 Q 525,338 380,292 Q 404,217 380,142" fill="none" stroke=${G} strokeWidth="2.5" />
-    <path d="M 392,148 Q 525,108 658,148 Q 636,217 658,286 Q 525,326 392,286 Q 414,217 392,148" fill="none" stroke=${G} strokeWidth="1.5" strokeOpacity="0.35" />
-
-    <text x="525" y="362" textAnchor="middle" style=${{ fontSize: '11px', fill: G }}>One baseline</text>
-    <text x="525" y="378" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>→ one elliptical arc</text>
-
-    <rect x="368" y="397" width="314" height="72" fill="rgba(8,10,25,0.85)" stroke="#2d2200" strokeWidth="1" rx="4" />
-    <text x="378" y="416" style=${{ fontSize: '10px', fill: G }}>u = (Bx·sinH + By·cosH) / λ</text>
-    <text x="378" y="434" style=${{ fontSize: '9.5px', fill: G }}>v = (-Bx·sinδ·cosH + By·sinδ·sinH + Bz·cosδ) / λ</text>
-    <text x="378" y="453" style=${{ fontSize: '9px', fill: DIM }}>TMS equation 4.1</text>
-
-    <text x="350" y="482" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>28 baselines × 12 hours → 11,000+ UV samples per night</text>
-  </svg>`;
-}
-
-function d05() {
-  // Equirectangular projection: lat [-70,80], lon [-180,180]
-  // x = 25 + (lon+180)/360*650,  y = 45 + (80-lat)/150*390
-  const sts = [
-    { x: 229, y: 332, name: 'ALMA',     gold: true  },
-    { x:  70, y: 213, name: 'SMA/JCMT', gold: false },
-    { x: 175, y: 215, name: 'LMT',      gold: false },
-    { x: 344, y: 165, name: 'IRAM',     gold: false },
-    { x: 361, y: 143, name: 'NOEMA',    gold: false },
-    { x: 152, y: 177, name: 'SMT',      gold: false },
-    { x: 227, y:  55, name: 'GLT',      gold: false },
-    { x: 270, y: 435, name: 'SPT',      gold: false, pole: true },
-  ];
-  const almaX = 229, almaY = 332;
-  const pairs = [];
-  for (let i = 0; i < sts.length; i++) {
-    for (let j = i + 1; j < sts.length; j++) {
-      pairs.push([sts[i], sts[j]]);
+  const baselines = [];
+  for (let i = 0; i < stations.length; i++) {
+    for (let j = i + 1; j < stations.length; j++) {
+      baselines.push({
+        x1: stations[i].x, y1: stations[i].y,
+        x2: stations[j].x, y2: stations[j].y,
+        isAlma: stations[i].isAlma || stations[j].isAlma,
+      });
     }
   }
-  // Vertical grid lines (longitude every 30°)
-  const vLons = [-180,-150,-120,-90,-60,-30,0,30,60,90,120,150,180];
-  const vXs   = vLons.map(l => Math.round(25 + (l+180)/360*650));
-  // Horizontal grid lines (latitude every 30° within [-60,80])
-  const hLats = [60, 30, 0, -30, -60];
-  const hYs   = hLats.map(l => Math.round(45 + (80-l)/150*390));
 
-  return html`<svg viewBox="0 0 700 500" width="100%" height="100%">
-    <rect width="700" height="500" fill=${BG} />
-    <text x="350" y="25" textAnchor="middle" style=${{ fontSize: '13px', fontWeight: '700', fill: TX }}>EHT 2017 Array</text>
+  const latLines = [-60, -30, 0, 30, 60].map(lat => ({
+    y: Math.round(60 + (80 - lat) / 150 * 520),
+    isEquator: lat === 0,
+  }));
+  const lonLines = [-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150].map(lon => ({
+    x: Math.round(40 + (lon + 180) / 360 * 1120),
+  }));
 
-    <rect x="25" y="45" width="650" height="390" fill="rgba(8,10,25,0.6)" stroke="#2d2200" strokeWidth="1" />
+  return html`
+    <svg viewBox="0 0 1200 700" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1200" height="700" fill="#010103" />
 
-    ${vXs.map((x, i) => html`<line key=${'v'+i} x1=${x} y1="45" x2=${x} y2="435" stroke="#1a1a48" strokeWidth="0.6" strokeOpacity=${vLons[i] === 0 ? 0.9 : 0.6} />`)}
-    ${hYs.map((y, i) => html`<line key=${'h'+i} x1="25" y1=${y} x2="675" y2=${y} stroke="#1a1a48" strokeWidth="0.6" strokeOpacity=${hLats[i] === 0 ? 0.9 : 0.6} />`)}
+      <!-- Map background -->
+      <rect x="40" y="60" width="1120" height="520" fill="rgba(4,6,20,0.9)" rx="4" />
 
-    <text x="354" y="262" style=${{ fontSize: '8px', fill: '#2a2a68' }}>0°</text>
-    <text x="350" y="275" textAnchor="middle" style=${{ fontSize: '8px', fill: '#2a2a68' }}>equator</text>
+      <!-- Grid lines (lat) -->
+      ${latLines.map((l, i) => html`
+        <line key=${'lat'+i} x1="40" y1=${l.y} x2="1160" y2=${l.y}
+          stroke=${l.isEquator ? '#1c1c3a' : '#12122a'}
+          strokeWidth=${l.isEquator ? 1 : 0.5}
+          strokeOpacity=${l.isEquator ? 0.9 : 0.6} />
+      `)}
 
-    ${pairs.map((p, i) => {
-      const isAlma = p[0].name === 'ALMA' || p[1].name === 'ALMA';
-      return html`<line key=${i} x1=${p[0].x} y1=${p[0].y} x2=${p[1].x} y2=${p[1].y}
-        stroke=${isAlma ? G : BL}
-        strokeWidth=${isAlma ? 1.1 : 0.6}
-        strokeOpacity=${isAlma ? 0.45 : 0.12} />`;
-    })}
+      <!-- Grid lines (lon) -->
+      ${lonLines.map((l, i) => html`
+        <line key=${'lon'+i} x1=${l.x} y1="60" x2=${l.x} y2="580"
+          stroke="#12122a" strokeWidth="0.5" strokeOpacity="0.5" />
+      `)}
 
-    ${sts.map(s => html`<circle key=${s.name} cx=${s.x} cy=${s.y} r=${s.gold ? 7 : 5}
-      fill=${s.gold ? G : BL} stroke=${BG} strokeWidth="1.2"
-      fillOpacity=${s.pole ? 0.7 : 1} />`)}
+      <!-- Baselines (appear after stations) -->
+      ${baselines.map((b, i) => html`
+        <line key=${'bl'+i}
+          x1=${b.x1} y1=${b.y1} x2=${b.x2} y2=${b.y2}
+          className=${b.isAlma ? 'alma-baseline' : 'other-baseline'}
+          stroke=${b.isAlma ? '#C4A555' : '#3366aa'}
+          strokeWidth=${b.isAlma ? 1.4 : 0.7}
+          strokeOpacity=${b.isAlma ? 0.55 : 0.2} />
+      `)}
 
-    <text x="239" y="328" style=${{ fontSize: '10px', fill: G }}>ALMA</text>
-    <text x="40"  y="225" style=${{ fontSize: '9px',  fill: TX }}>SMA/JCMT</text>
-    <text x="180" y="208" style=${{ fontSize: '9px',  fill: TX }}>LMT</text>
-    <text x="307" y="162" style=${{ fontSize: '9px',  fill: TX }}>IRAM</text>
-    <text x="367" y="140" style=${{ fontSize: '9px',  fill: TX }}>NOEMA</text>
-    <text x="158" y="170" style=${{ fontSize: '9px',  fill: TX }}>SMT</text>
-    <text x="233" y="68"  style=${{ fontSize: '9px',  fill: TX }}>GLT</text>
-    <text x="250" y="448" style=${{ fontSize: '9px',  fill: DIM }}>SPT ↓</text>
+      <!-- Station dots (sequential reveal) -->
+      ${stations.map((s, i) => html`
+        <circle key=${'dot'+i}
+          cx=${s.x} cy=${s.y} r=${s.isAlma ? 11 : 8}
+          fill=${s.isAlma ? '#C4A555' : '#4ecdc4'}
+          className=${'station-dot-'+(i+1)} />
+      `)}
 
-    <rect x="25" y="445" width="650" height="24" fill="rgba(0,0,0,0.5)" rx="3" />
-    <text x="350" y="461" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>Max baseline: ~10,900 km · Resolution: ~20 μas · N(N-1)/2 = 28 baselines · ALMA baselines in gold</text>
-  </svg>`;
+      <!-- Station labels (sequential reveal) -->
+      ${stations.map((s, i) => html`
+        <text key=${'lbl'+i}
+          x=${s.x + (s.isAlma ? 0 : 12)} y=${s.y - 14}
+          textAnchor=${s.isAlma ? 'middle' : 'start'}
+          fill=${s.isAlma ? '#C4A555' : '#8888b0'}
+          fontSize=${s.isAlma ? 13 : 11}
+          fontWeight=${s.isAlma ? '700' : '400'}
+          className=${'station-label-'+(i+1)}
+        >${s.name}</text>
+      `)}
+
+      <!-- Map border -->
+      <rect x="40" y="60" width="1120" height="520" fill="none" stroke="#2a2200" strokeWidth="1.5" rx="4" />
+
+      <!-- UV coverage inset (appears last) -->
+      <g className="uv-inset">
+        <rect x="900" y="386" width="256" height="184" fill="rgba(4,5,18,0.97)" stroke="#C4A555" strokeWidth="1" rx="4" />
+        <text x="1028" y="408" textAnchor="middle" fill="#C4A555" fontSize="12" fontWeight="600">UV Coverage</text>
+        <ellipse cx="1028" cy="480" rx="88" ry="48" fill="none" stroke="#C4A555" strokeWidth="1.2" strokeOpacity="0.7" strokeDasharray="3 2" />
+        <ellipse cx="1028" cy="480" rx="60" ry="34" fill="none" stroke="#C4A555" strokeWidth="0.9" strokeOpacity="0.5" transform="rotate(25, 1028, 480)" strokeDasharray="3 2" />
+        <ellipse cx="1028" cy="480" rx="40" ry="22" fill="none" stroke="#C4A555" strokeWidth="0.8" strokeOpacity="0.4" transform="rotate(-20, 1028, 480)" strokeDasharray="3 2" />
+      </g>
+
+      <!-- Footer -->
+      <text x="600" y="636" textAnchor="middle" fill="#8888b0" fontSize="14">Max baseline: 10,900 km  ·  θ_synth ≈ 20 μas  ·  28 baselines</text>
+    </svg>
+  `;
 }
 
+// ── d05: From Noise to Image (CLEAN scrubber) ─────────────────────────────────
+// Dirty image panel (left) and CLEAN image panel (right).
+// Dark overlay on CLEAN panel slides away to reveal it.
+function d05() {
+  const dCx = 280, dCy = 330;
+  const cCx = 920, cCy = 330;
+
+  return html`
+    <svg viewBox="0 0 1200 700" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1200" height="700" fill="#010103" />
+
+      <!-- ─── LEFT: Dirty image panel ─── -->
+      <rect x="70" y="116" width="420" height="424" fill="rgba(4,5,18,0.95)" stroke="#ff6b6b" strokeWidth="1.5" rx="6" />
+      <text x="280" y="104" textAnchor="middle" fill="#ff6b6b" fontSize="17" fontWeight="700">Dirty Image</text>
+
+      <!-- Sidelobe rings (artifacts) -->
+      <circle cx=${dCx} cy=${dCy} r="158" fill="none" stroke="#555585" strokeWidth="0.5" strokeOpacity="0.15" />
+      <circle cx=${dCx} cy=${dCy} r="128" fill="none" stroke="#8888b0" strokeWidth="0.6" strokeOpacity="0.22" />
+      <circle cx=${dCx} cy=${dCy} r="98"  fill="none" stroke="#8888b0" strokeWidth="0.8" strokeOpacity="0.3" />
+      <circle cx=${dCx} cy=${dCy} r="68"  fill="none" stroke="#C4A555" strokeWidth="1"   strokeOpacity="0.42" />
+      <!-- True ring (faint under sidelobes) -->
+      <circle cx=${dCx} cy=${dCy} r="38"  fill="none" stroke="#FFD700" strokeWidth="2.5" strokeOpacity="0.6" />
+      <!-- Shadow center -->
+      <circle cx=${dCx} cy=${dCy} r="18" fill="#020408" />
+      <!-- Artifact blobs -->
+      <circle cx="170" cy="234" r="12" fill="none" stroke="#8888b0" strokeWidth="1" strokeOpacity="0.3" />
+      <circle cx="390" cy="424" r="9"  fill="none" stroke="#8888b0" strokeWidth="0.8" strokeOpacity="0.25" />
+      <circle cx="178" cy="432" r="8"  fill="none" stroke="#555585" strokeWidth="0.8" strokeOpacity="0.2" />
+      <text x="348" y="454" fill="#8888b0" fontSize="12" fontStyle="italic">sidelobes</text>
+
+      <!-- ─── RIGHT: CLEAN image panel ─── -->
+      <rect x="710" y="116" width="420" height="424" fill="rgba(4,5,18,0.95)" stroke="#4ecdc4" strokeWidth="1.5" rx="6" />
+      <text x="920" y="104" textAnchor="middle" fill="#4ecdc4" fontSize="17" fontWeight="700">CLEAN Image</text>
+
+      <!-- Clean ring (no sidelobes) -->
+      <circle cx=${cCx} cy=${cCy} r="38" fill="rgba(255,215,0,0.07)" stroke="#FFD700" strokeWidth="4" strokeOpacity="0.9" />
+      <!-- Shadow -->
+      <circle cx=${cCx} cy=${cCy} r="18" fill="#010206" />
+      <!-- Clean beam ellipse -->
+      <ellipse cx="1082" cy="494" rx="14" ry="10" stroke="#4ecdc4" strokeWidth="1.5" fill="rgba(78,205,196,0.1)" />
+      <text x="1082" y="524" textAnchor="middle" fill="#4ecdc4" fontSize="11">restore beam</text>
+
+      <!-- Scrubber: dark overlay slides right to reveal CLEAN panel -->
+      <rect x="710" y="114" width="422" height="428" fill="#010103" className="scrubber-reveal" />
+      <!-- Scrubber leading line -->
+      <line x1="710" y1="114" x2="710" y2="542" stroke="#FFD700" strokeWidth="3" strokeOpacity="0.9" className="scrubber-reveal" />
+
+      <!-- Center arrow -->
+      <text x="600" y="340" textAnchor="middle" fill="#555570" fontSize="28">→</text>
+
+      <!-- CLEAN equation at bottom -->
+      <text x="600" y="592" textAnchor="middle" fill="#FFD700" fontSize="17" fontFamily="'Courier New', monospace">r ← r − γ · r_max · B^D(l − l₀)</text>
+      <text x="600" y="620" textAnchor="middle" fill="#8888b0" fontSize="13">loop gain γ = 0.1  ·  stop at 3σ_noise</text>
+    </svg>
+  `;
+}
+
+// ── d06: First Light (real EHT image) ────────────────────────────────────────
+// Real EHT M87* image fills the left portion.
+// Text overlay is positioned right by TourCard (.text-right class on overlay).
 function d06() {
-  const minLog = Math.log10(94);
-  const maxLog = Math.log10(14000);
-  const data = [
-    { name: 'ALMA',  sefd: 94,    color: G,         isBhex: false },
-    { name: 'LMT',   sefd: 560,   color: GN,        isBhex: false },
-    { name: 'NOEMA', sefd: 700,   color: BL,        isBhex: false },
-    { name: 'IRAM',  sefd: 1900,  color: BL,        isBhex: false },
-    { name: 'SMA',   sefd: 4900,  color: DIM,       isBhex: false },
-    { name: 'APEX',  sefd: 5200,  color: DIM,       isBhex: false },
-    { name: 'BHEX',  sefd: 10000, color: OR,        isBhex: true  },
-    { name: 'SMT',   sefd: 11900, color: '#555585', isBhex: false },
-    { name: 'SPT',   sefd: 13200, color: '#555585', isBhex: false },
-  ];
-  return html`<svg viewBox="0 0 700 500" width="100%" height="100%">
-    <rect width="700" height="500" fill=${BG} />
-    <text x="350" y="35" textAnchor="middle" style=${{ fontSize: '13px', fontWeight: '700', fill: TX }}>Station Sensitivity at 230 GHz</text>
+  return html`
+    <svg viewBox="0 0 1200 700" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1200" height="700" fill="#010103" />
 
-    ${data.map((d, i) => {
-      const rowY = 52 + i * 44;
-      const frac = (Math.log10(d.sefd) - minLog) / (maxLog - minLog);
-      const w = Math.round(frac * 480) + 20;
-      const label = d.isBhex ? '★ BHEX' : d.name;
-      return html`<g key=${d.name}>
-        <text x="114" y=${rowY + 21} textAnchor="end" style=${{ fontSize: '11px', fill: d.isBhex ? OR : TX }}>${label}</text>
-        <rect x="120" y=${rowY} width=${w} height="30" fill=${d.color} fillOpacity="0.7" rx="3" />
-        <text x=${120 + w + 7} y=${rowY + 20} style=${{ fontSize: '10px', fill: DIM }}>${d.sefd.toLocaleString()} Jy</text>
-      </g>`;
-    })}
+      <!-- Real EHT image, left-center -->
+      <image
+        href="../assets/eht-m87-2019.jpg"
+        x="60" y="55"
+        width="660" height="600"
+        preserveAspectRatio="xMidYMid meet"
+        className="eht-image-reveal"
+      />
 
-    <text x="120" y="460" style=${{ fontSize: '9px', fill: DIM }}>100</text>
-    <text x="232" y="460" style=${{ fontSize: '9px', fill: DIM }}>1,000</text>
-    <text x="490" y="460" style=${{ fontSize: '9px', fill: DIM }}>10,000</text>
+      <!-- Radial vignette blending image edges -->
+      <defs>
+        <radialGradient id="vig06" cx="38%" cy="50%" r="52%">
+          <stop offset="52%" stopColor="transparent" />
+          <stop offset="100%" stopColor="#010103" />
+        </radialGradient>
+      </defs>
+      <rect width="1200" height="700" fill="url(#vig06)" />
 
-    <rect x="50" y="464" width="600" height="28" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="4" />
-    <text x="350" y="480" textAnchor="middle" style=${{ fontSize: '10px', fill: G }}>σᵢⱼ = √(SEFDᵢ · SEFDⱼ) / √(2 · Δν · Δt)</text>
-  </svg>`;
+      <!-- Scale bar -->
+      <line x1="62" y1="618" x2="162" y2="618" stroke="#C4A555" strokeWidth="2" />
+      <line x1="62" y1="611" x2="62" y2="625" stroke="#C4A555" strokeWidth="2" />
+      <line x1="162" y1="611" x2="162" y2="625" stroke="#C4A555" strokeWidth="2" />
+      <text x="112" y="642" textAnchor="middle" fill="#C4A555" fontSize="13">42 μas</text>
+
+      <!-- Caption labels -->
+      <text x="390" y="42" textAnchor="middle" fill="#FFD700" fontSize="15" fontWeight="600">M87*   ·   April 10, 2019</text>
+      <text x="390" y="672" textAnchor="middle" fill="#8888b0" fontSize="12" fontStyle="italic">EHT Collaboration 2019  ·  ApJL 875, L1</text>
+    </svg>
+  `;
 }
 
+// ── d07: Beyond Earth — BHEX ─────────────────────────────────────────────────
+// Earth small at center, BHEX orbit, ground-space baselines, comparison panels.
 function d07() {
-  return html`<svg viewBox="0 0 700 500" width="100%" height="100%">
-    <rect width="700" height="500" fill=${BG} />
-    <text x="350" y="35" textAnchor="middle" style=${{ fontSize: '13px', fontWeight: '700', fill: TX }}>Dirty Image Formation</text>
+  return html`
+    <svg viewBox="0 0 1200 700" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1200" height="700" fill="#010103" />
 
-    <rect x="55" y="62" width="170" height="200" fill="rgba(8,10,25,0.92)" stroke="#2d2200" strokeWidth="1" rx="4" />
-    <line x1="55" y1="162" x2="225" y2="162" stroke="#1a1a38" strokeWidth="0.5" />
-    <line x1="140" y1="62" x2="140" y2="262" stroke="#1a1a38" strokeWidth="0.5" />
-    <path d="M 75,112 Q 140,90 205,112 Q 192,162 205,212 Q 140,234 75,212 Q 88,162 75,112" fill="none" stroke=${G} strokeWidth="2" />
-    <path d="M 88,100 Q 140,82 192,100 Q 180,162 192,224 Q 140,242 88,224 Q 100,162 88,100" fill="none" stroke=${G} strokeWidth="1.5" strokeOpacity="0.5" />
-    <path d="M 98,124 Q 140,110 182,124" fill="none" stroke=${G} strokeWidth="1.2" strokeOpacity="0.6" />
-    <path d="M 98,200 Q 140,214 182,200" fill="none" stroke=${G} strokeWidth="1.2" strokeOpacity="0.3" />
+      <!-- Decorative stars -->
+      <circle cx="80"  cy="90"  r="1.5" fill="#f0f0f8" fillOpacity="0.4" />
+      <circle cx="250" cy="180" r="1"   fill="#f0f0f8" fillOpacity="0.3" />
+      <circle cx="1100" cy="120" r="1.5" fill="#f0f0f8" fillOpacity="0.35" />
+      <circle cx="1050" cy="580" r="1"   fill="#f0f0f8" fillOpacity="0.3" />
+      <circle cx="150" cy="520"  r="1.5" fill="#f0f0f8" fillOpacity="0.25" />
+      <circle cx="900" cy="200"  r="1"   fill="#f0f0f8" fillOpacity="0.4" />
+      <circle cx="440" cy="80"   r="1"   fill="#f0f0f8" fillOpacity="0.3" />
+      <circle cx="760" cy="620"  r="1.5" fill="#f0f0f8" fillOpacity="0.25" />
 
-    <text x="235" y="158" textAnchor="middle" style=${{ fontSize: '26px', fill: DIM }}>⊛</text>
-    <text x="235" y="178" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>convolve</text>
+      <!-- Earth (center) -->
+      <circle cx="600" cy="380" r="94" fill="none" stroke="rgba(78,205,196,0.12)" strokeWidth="14" />
+      <circle cx="600" cy="380" r="78" fill="rgba(14,28,85,0.75)" stroke="#4ecdc4" strokeWidth="2.5" />
 
-    <rect x="265" y="62" width="170" height="200" fill="rgba(8,10,25,0.92)" stroke="#2d2200" strokeWidth="1" rx="4" />
-    <circle cx="350" cy="162" r="3" fill=${G} />
-    <circle cx="350" cy="162" r="10" fill="none" stroke=${G} strokeWidth="2" strokeOpacity="0.9" />
-    <circle cx="350" cy="162" r="18" fill="none" stroke=${G} strokeWidth="1.5" strokeOpacity="0.6" />
-    <circle cx="350" cy="162" r="28" fill="none" stroke=${G} strokeWidth="1" strokeOpacity="0.35" />
-    <circle cx="350" cy="162" r="42" fill="none" stroke=${G} strokeWidth="1" strokeOpacity="0.2" />
-    <circle cx="350" cy="162" r="58" fill="none" stroke=${DIM} strokeWidth="0.8" strokeOpacity="0.15" />
-    <circle cx="350" cy="162" r="75" fill="none" stroke=${DIM} strokeWidth="0.6" strokeOpacity="0.1" />
-    <text x="390" y="215" style=${{ fontSize: '8px', fill: DIM }}>sidelobes</text>
+      <!-- Ground stations on Earth surface -->
+      <circle cx="547" cy="427" r="7" fill="#C4A555" />
+      <text x="530" y="450" fill="#C4A555" fontSize="11" fontWeight="700">ALMA</text>
+      <circle cx="572" cy="308" r="5" fill="#8888b0" />
+      <text x="540" y="300" fill="#8888b0" fontSize="10">IRAM</text>
+      <circle cx="612" cy="457" r="5" fill="#8888b0" />
+      <text x="620" y="472" fill="#8888b0" fontSize="10">SPT</text>
 
-    <text x="447" y="158" textAnchor="middle" style=${{ fontSize: '24px', fill: DIM }}>=</text>
+      <!-- BHEX orbit ellipse (inclined 22°) -->
+      <ellipse cx="600" cy="380" rx="420" ry="172"
+        fill="none" stroke="#C4A555" strokeWidth="1.8"
+        strokeDasharray="8 5" strokeOpacity="0.45"
+        transform="rotate(-22, 600, 380)" />
 
-    <rect x="475" y="62" width="170" height="200" fill="rgba(8,10,25,0.92)" stroke="#2d2200" strokeWidth="1" rx="4" />
-    <circle cx="560" cy="162" r="5" fill=${G} fillOpacity="0.8" />
-    <circle cx="560" cy="162" r="13" fill="none" stroke=${G} strokeWidth="1.6" strokeOpacity="0.6" />
-    <circle cx="560" cy="162" r="24" fill="none" stroke=${PH} strokeWidth="3" strokeOpacity="0.7" />
-    <circle cx="560" cy="162" r="34" fill="none" stroke=${OR} strokeWidth="1.5" strokeOpacity="0.3" />
-    <circle cx="560" cy="162" r="48" fill="none" stroke=${G} strokeWidth="0.8" strokeOpacity="0.2" />
-    <circle cx="560" cy="162" r="64" fill="none" stroke=${G} strokeWidth="0.6" strokeOpacity="0.15" />
-    <circle cx="560" cy="162" r="80" fill="none" stroke=${G} strokeWidth="0.4" strokeOpacity="0.1" />
+      <!-- Ground-space baselines (to BHEX at ~x=1008, y=246) -->
+      <line x1="1004" y1="252" x2="551" y2="423" stroke="#C4A555" strokeWidth="2" strokeDasharray="9 5" strokeOpacity="0.72" />
+      <line x1="1004" y1="250" x2="574" y2="312" stroke="#8888b0" strokeWidth="1.2" strokeDasharray="9 5" strokeOpacity="0.45" />
+      <line x1="1005" y1="255" x2="614" y2="453" stroke="#8888b0" strokeWidth="1" strokeDasharray="9 5" strokeOpacity="0.36" />
 
-    <text x="140" y="279" textAnchor="middle" style=${{ fontSize: '11px', fill: DIM }}>UV Sampling S(u,v)</text>
-    <text x="350" y="279" textAnchor="middle" style=${{ fontSize: '11px', fill: DIM }}>Dirty Beam B^D</text>
-    <text x="560" y="279" textAnchor="middle" style=${{ fontSize: '11px', fill: DIM }}>Dirty Image I^D</text>
+      <!-- Baseline length label -->
+      <text x="790" y="316" textAnchor="middle" fill="#C4A555" fontSize="13" transform="rotate(-18, 790, 316)">~32,900 km</text>
 
-    <rect x="55" y="296" width="590" height="30" fill="rgba(0,0,0,0.4)" rx="3" />
-    <text x="350" y="316" textAnchor="middle" style=${{ fontSize: '12px', fill: TX }}>I^D(l,m) = I_true(l,m) ⊛ B^D(l,m)</text>
+      <!-- BHEX satellite body -->
+      <rect x="995" y="240" width="22" height="14" rx="2" fill="#ff9f43" stroke="#FFD700" strokeWidth="1.5" />
+      <!-- Solar panels -->
+      <rect x="972" y="244" width="22" height="6" rx="1" fill="#ff9f43" fillOpacity="0.6" />
+      <rect x="1018" y="244" width="22" height="6" rx="1" fill="#ff9f43" fillOpacity="0.6" />
+      <text x="1006" y="228" textAnchor="middle" fill="#ff9f43" fontSize="12" fontWeight="700">BHEX</text>
 
-    <rect x="55" y="340" width="590" height="56" fill="rgba(196,165,85,0.08)" stroke=${G} strokeWidth="1" rx="4" />
-    <text x="350" y="362" textAnchor="middle" style=${{ fontSize: '11px', fill: G }}>Peak sidelobes reach 30–50% of main beam intensity</text>
-    <text x="350" y="381" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>A 1 Jy/beam source generates ~0.5 Jy/beam ghost emission</text>
+      <!-- ─── Comparison panels ─── -->
+      <!-- Left: EHT Ground -->
+      <rect x="28" y="44" width="236" height="152" fill="rgba(2,2,12,0.94)" stroke="#222245" strokeWidth="1.5" rx="5" />
+      <text x="146" y="72" textAnchor="middle" fill="#8888b0" fontSize="14" fontWeight="700">EHT Ground</text>
+      <rect x="48" y="86" width="96" height="22" fill="#4488cc" fillOpacity="0.7" rx="3" />
+      <text x="152" y="102" fill="#4ecdc4" fontSize="12">~20 μas beam</text>
+      <rect x="48" y="116" width="196" height="22" fill="#C4A555" fillOpacity="0.45" rx="3" />
+      <text x="252" y="132" textAnchor="end" fill="#C4A555" fontSize="12">42 μas shadow</text>
+      <text x="146" y="178" textAnchor="middle" fill="#8888b0" fontSize="11" fontStyle="italic">resolves shadow</text>
 
-    <text x="350" y="420" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>CLEAN deconvolution removes these artifacts</text>
-    <text x="350" y="440" textAnchor="middle" style=${{ fontSize: '16px', fill: G }}>→</text>
-  </svg>`;
+      <!-- Right: BHEX -->
+      <rect x="936" y="44" width="236" height="152" fill="rgba(2,2,12,0.94)" stroke="#C4A555" strokeWidth="1.5" rx="5" />
+      <text x="1054" y="72" textAnchor="middle" fill="#ff9f43" fontSize="14" fontWeight="700">EHT + BHEX</text>
+      <rect x="956" y="86" width="30" height="22" fill="#ff9f43" fillOpacity="0.8" rx="3" />
+      <text x="994" y="102" fill="#ff9f43" fontSize="12">~6 μas beam</text>
+      <rect x="956" y="116" width="196" height="22" fill="#C4A555" fillOpacity="0.45" rx="3" />
+      <text x="1158" y="132" textAnchor="end" fill="#C4A555" fontSize="12">42 μas shadow</text>
+      <text x="1054" y="160" textAnchor="middle" fill="#FFD700" fontSize="12" fontWeight="700">3.3× finer resolution</text>
+      <text x="1054" y="178" textAnchor="middle" fill="#8888b0" fontSize="11" fontStyle="italic">resolves photon ring</text>
+
+      <!-- Formula box at bottom -->
+      <rect x="190" y="584" width="820" height="84" fill="rgba(6,8,22,0.96)" stroke="#1e1800" strokeWidth="1" rx="6" />
+      <text x="600" y="612" textAnchor="middle" fill="#C4A555" fontSize="15">B_max = R_Earth + h_orbit = 6,371 + 26,562 = 32,933 km</text>
+      <text x="600" y="640" textAnchor="middle" fill="#8888b0" fontSize="13">θ = λ / B_max = 1.0 mm / 32,933 km ≈ 6.3 μas at 300 GHz</text>
+    </svg>
+  `;
 }
 
+// ── d08: The Simulator (product showcase) ────────────────────────────────────
+// Two contour map panels (EHT 2017 vs ngEHT Ph.1), FITS terminal, metrics.
 function d08() {
-  return html`<svg viewBox="0 0 700 500" width="100%" height="100%">
-    <rect width="700" height="500" fill=${BG} />
-    <text x="350" y="38" textAnchor="middle" style=${{ fontSize: '13px', fontWeight: '700', fill: TX }}>CLEAN Algorithm (Högbom 1974)</text>
+  const lCx = 280, lCy = 310;
+  const rCx = 880, rCy = 310;
 
-    <g className="clean-step-1">
-      <rect x="60" y="52" width="580" height="84" fill="rgba(196,165,85,0.10)" stroke=${G} strokeWidth="1.5" rx="6" />
-      <text x="85" y="76" style=${{ fontSize: '13px', fontWeight: '700', fill: G }}>1. Find brightest peak</text>
-      <text x="85" y="96" style=${{ fontSize: '11px', fill: DIM }}>Locate maximum of residual |r(l,m)|</text>
-      <text x="85" y="114" style=${{ fontSize: '11px', fill: DIM }}>→ position (l_max, m_max), amplitude r_max</text>
-    </g>
+  return html`
+    <svg viewBox="0 0 1200 700" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1200" height="700" fill="#010103" />
 
-    <g className="clean-step-2">
-      <rect x="60" y="152" width="580" height="84" fill="rgba(255,159,67,0.10)" stroke=${OR} strokeWidth="1.5" rx="6" />
-      <text x="85" y="176" style=${{ fontSize: '13px', fontWeight: '700', fill: OR }}>2. Subtract scaled dirty beam</text>
-      <text x="85" y="196" style=${{ fontSize: '11px', fill: DIM }}>r(l,m) ← r(l,m) − γ · r_max · B^D(l − l_max, m − m_max)</text>
-      <text x="85" y="214" style=${{ fontSize: '11px', fill: DIM }}>Loop gain γ = 0.1 — conservative subtraction for stability</text>
-    </g>
+      <!-- ─── LEFT panel: EHT 2017 ─── -->
+      <rect x="28" y="72" width="504" height="440" fill="rgba(4,5,18,0.97)" stroke="#1e2040" strokeWidth="1.5" rx="6" />
+      <text x="280" y="54" textAnchor="middle" fill="#8888b0" fontSize="15" fontWeight="700">EHT 2017</text>
+      <text x="280" y="70" textAnchor="middle" fill="#555570" fontSize="12">8 stations · 28 baselines</text>
 
-    <g className="clean-step-3">
-      <rect x="60" y="252" width="580" height="84" fill="rgba(68,136,204,0.10)" stroke=${BL} strokeWidth="1.5" rx="6" />
-      <text x="85" y="276" style=${{ fontSize: '13px', fontWeight: '700', fill: BL }}>3. Save clean component</text>
-      <text x="85" y="296" style=${{ fontSize: '11px', fill: DIM }}>Add δ-function of flux γ · r_max at (l_max, m_max) to model</text>
-      <text x="85" y="314" style=${{ fontSize: '11px', fill: DIM }}>Model M(l,m) accumulates point sources across iterations</text>
-    </g>
+      <!-- Map background -->
+      <rect x="36" y="84" width="488" height="296" fill="#080615" rx="4" />
 
-    <g className="clean-step-4">
-      <rect x="60" y="352" width="580" height="84" fill="rgba(68,187,136,0.10)" stroke=${GN} strokeWidth="1.5" rx="6" />
-      <text x="85" y="376" style=${{ fontSize: '13px', fontWeight: '700', fill: GN }}>4. Repeat until convergence, then restore</text>
-      <text x="85" y="396" style=${{ fontSize: '11px', fill: DIM }}>Stop when max|r| ${'<'} 3σ_noise (MAD border estimator)</text>
-      <text x="85" y="414" style=${{ fontSize: '11px', fill: DIM }}>Convolve model with clean beam G; add residual: I^C = M⊛G + r_final</text>
-    </g>
+      <!-- EHT 2017 contour rings (fewer, less sharp) -->
+      <circle cx=${lCx} cy=${lCy} r="52" fill="none" stroke="#FFD700" strokeWidth="2.5" strokeOpacity="0.85" />
+      <circle cx=${lCx} cy=${lCy} r="78" fill="none" stroke="#C4A555" strokeWidth="1.5" strokeOpacity="0.55" />
+      <circle cx=${lCx} cy=${lCy} r="26" fill="rgba(255,215,0,0.07)" />
+      <circle cx=${lCx} cy=${lCy} r="18" fill="#020408" />
 
-    <text x="350" y="470" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>Högbom (1974) · loop gain γ ≈ 0.1 · used in every radio image since 1974</text>
-  </svg>`;
-}
+      <!-- EHT beam ellipse (less circular) -->
+      <ellipse cx="478" cy="354" rx="22" ry="16" stroke="#4ecdc4" strokeWidth="1.5" fill="rgba(78,205,196,0.1)" transform="rotate(15, 478, 354)" />
+      <text x="478" y="376" textAnchor="middle" fill="#4ecdc4" fontSize="10">beam</text>
 
-function d09() {
-  return html`<svg viewBox="0 0 700 500" width="100%" height="100%">
-    <rect width="700" height="500" fill="#020208" />
-    <text x="350" y="30" textAnchor="middle" style=${{ fontSize: '13px', fontWeight: '700', fill: TX }}>M87* Shadow and Photon Ring</text>
+      <!-- LEFT metrics -->
+      <text x="280" y="418" textAnchor="middle" fill="#C4A555" fontSize="13">DR ≈ 50:1</text>
+      <text x="280" y="438" textAnchor="middle" fill="#8888b0" fontSize="11">beam FWHM ~24 μas</text>
+      <text x="280" y="458" textAnchor="middle" fill="#8888b0" fontSize="11">UV fill 0.8%</text>
 
-    <circle cx="350" cy="270" r="200" fill="none" stroke="rgba(255,80,0,0.05)"  strokeWidth="30" />
-    <circle cx="350" cy="270" r="175" fill="none" stroke="rgba(255,100,0,0.08)" strokeWidth="22" />
-    <circle cx="350" cy="270" r="155" fill="none" stroke="rgba(255,130,0,0.12)" strokeWidth="18" />
-    <circle cx="350" cy="270" r="138" fill="none" stroke="rgba(255,160,0,0.18)" strokeWidth="12" />
-    <circle cx="350" cy="270" r="124" fill="none" stroke="rgba(255,190,30,0.25)" strokeWidth="8" />
-    <circle cx="350" cy="270" r="112" fill="none" stroke="rgba(255,210,40,0.32)" strokeWidth="5" />
+      <!-- ─── RIGHT panel: ngEHT Phase 1 ─── -->
+      <rect x="668" y="72" width="504" height="440" fill="rgba(4,5,18,0.97)" stroke="#C4A555" strokeWidth="1.5" rx="6" />
+      <text x="920" y="54" textAnchor="middle" fill="#C4A555" fontSize="15" fontWeight="700">ngEHT Phase 1</text>
+      <text x="920" y="70" textAnchor="middle" fill="#9E7E38" fontSize="12">17 stations · 136 baselines</text>
 
-    <circle cx="350" cy="270" r="99" fill="none" stroke=${PH} strokeWidth="4.5" />
-    <circle cx="350" cy="270" r="94" fill="none" stroke=${PH} strokeWidth="1" strokeOpacity="0.4" />
+      <!-- Map background -->
+      <rect x="676" y="84" width="488" height="296" fill="#080615" rx="4" />
 
-    <circle cx="350" cy="270" r="86" fill="#010104" />
-    <circle cx="350" cy="270" r="72" fill="#010103" />
-    <circle cx="350" cy="270" r="52" fill="#000001" />
+      <!-- ngEHT contour rings (more, sharper) -->
+      <circle cx=${rCx} cy=${rCy} r="52" fill="none" stroke="#FFD700" strokeWidth="3" strokeOpacity="0.95" />
+      <circle cx=${rCx} cy=${rCy} r="78" fill="none" stroke="#FFD700" strokeWidth="2" strokeOpacity="0.72" />
+      <circle cx=${rCx} cy=${rCy} r="104" fill="none" stroke="#C4A555" strokeWidth="1.4" strokeOpacity="0.48" />
+      <circle cx=${rCx} cy=${rCy} r="26" fill="rgba(255,215,0,0.09)" />
+      <circle cx=${rCx} cy=${rCy} r="18" fill="#010206" />
+      <!-- Hint of jet structure -->
+      <path d="M ${rCx},${rCy-24} L ${rCx+58},${rCy-78}" stroke="#C4A555" strokeWidth="1.2" strokeOpacity="0.4" />
 
-    <path d="M 215,110 C 268,148 308,194 304,270 C 300,346 326,380 345,440" fill="none" stroke="rgba(255,215,0,0.55)" strokeWidth="1.8" />
-    <path d="M 485,95 C 434,148 394,194 396,270 C 398,346 372,382 355,445" fill="none" stroke="rgba(255,215,0,0.45)" strokeWidth="1.8" />
-    <path d="M 168,300 C 212,282 258,272 280,270" fill="none" stroke="rgba(255,215,0,0.3)" strokeWidth="1.5" strokeDasharray="4 2" />
+      <!-- ngEHT beam ellipse (smaller, more circular) -->
+      <ellipse cx="1118" cy="354" rx="13" ry="11" stroke="#4ecdc4" strokeWidth="1.5" fill="rgba(78,205,196,0.1)" />
+      <text x="1118" y="376" textAnchor="middle" fill="#4ecdc4" fontSize="10">beam</text>
 
-    <rect x="490" y="48" width="194" height="116" fill="rgba(1,1,8,0.9)" stroke="#2d2200" strokeWidth="1" rx="5" />
-    <text x="587" y="70" textAnchor="middle" style=${{ fontSize: '11px', fontWeight: '700', fill: TX }}>Scale Comparison</text>
-    <circle cx="524" cy="100" r="18" fill="none" stroke=${PH} strokeWidth="2.5" />
-    <text x="550" y="104" style=${{ fontSize: '10px', fill: TX }}>42 μas shadow</text>
-    <circle cx="524" cy="100" r="9" fill="none" stroke=${G} strokeWidth="1.5" />
-    <text x="548" y="88" style=${{ fontSize: '10px', fill: G }}>~20 μas beam</text>
-    <text x="550" y="138" style=${{ fontSize: '9px', fill: PH }}>photon ring</text>
-    <line x1="549" y1="130" x2="537" y2="112" stroke=${PH} strokeWidth="0.8" strokeOpacity="0.6" />
+      <!-- RIGHT metrics -->
+      <text x="920" y="418" textAnchor="middle" fill="#C4A555" fontSize="13">DR ≈ 200:1</text>
+      <text x="920" y="438" textAnchor="middle" fill="#8888b0" fontSize="11">beam FWHM ~14 μas</text>
+      <text x="920" y="458" textAnchor="middle" fill="#8888b0" fontSize="11">UV fill 3.2%</text>
 
-    <rect x="18" y="48" width="180" height="110" fill="rgba(1,1,8,0.9)" stroke="#2d2200" strokeWidth="1" rx="4" />
-    <text x="108" y="68" textAnchor="middle" style=${{ fontSize: '11px', fontWeight: '700', fill: TX }}>M87* Black Hole</text>
-    <text x="28" y="88"  style=${{ fontSize: '10px', fill: DIM }}>Mass: 6.5 × 10⁹ M_⊙</text>
-    <text x="28" y="106" style=${{ fontSize: '10px', fill: DIM }}>Distance: 55 Mly</text>
-    <text x="28" y="124" style=${{ fontSize: '10px', fill: G }}>Shadow: 42 μas</text>
-    <text x="28" y="142" style=${{ fontSize: '9px',  fill: DIM }}>Imaged: April 10, 2019</text>
+      <!-- ─── Animated floating panels ─── -->
 
-    <rect x="60" y="436" width="580" height="46" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="4" />
-    <text x="350" y="457" textAnchor="middle" style=${{ fontSize: '12px', fill: G }}>θ_shadow = 3√3 · GM / (c² · D_L)  ≈  42 μas</text>
-    <text x="350" y="474" textAnchor="middle" style=${{ fontSize: '9px',  fill: DIM }}>Schwarzschild shadow radius — confirmed by GR to within measurement uncertainty</text>
-  </svg>`;
-}
+      <!-- FITS terminal (bottom-left) -->
+      <g className="fits-reveal">
+        <rect x="28" y="530" width="250" height="118" fill="rgba(2,2,12,0.97)" stroke="#1e2040" strokeWidth="1" rx="4" />
+        <text x="42" y="554" fill="#4ecdc4" fontSize="9" fontFamily="'Courier New', monospace">CRVAL1 = 187.7059308</text>
+        <text x="42" y="572" fill="#C4A555" fontSize="9" fontFamily="'Courier New', monospace">BMAJ   = 5.56E-09</text>
+        <text x="42" y="590" fill="#8888b0" fontSize="9" fontFamily="'Courier New', monospace">BUNIT  = 'JY/BEAM'</text>
+        <text x="42" y="608" fill="#4ecdc4" fontSize="9" fontFamily="'Courier New', monospace">NAXIS1 = 512</text>
+        <text x="42" y="626" fill="#555570" fontSize="9" fontFamily="'Courier New', monospace">END</text>
+        <text x="42" y="640" fill="#555570" fontSize="8" fontFamily="'Courier New', monospace" fontStyle="italic">valid FITS · WCS · CASA/Astropy/ds9</text>
+      </g>
 
-function d10() {
-  return html`<svg viewBox="0 0 700 500" width="100%" height="100%">
-    <rect width="700" height="500" fill=${BG} />
-    <text x="350" y="32" textAnchor="middle" style=${{ fontSize: '13px', fontWeight: '700', fill: TX }}>EHT 2017 vs ngEHT Phase 1</text>
+      <!-- Metrics panel (bottom-right) -->
+      <g className="metrics-reveal">
+        <rect x="922" y="530" width="250" height="118" fill="rgba(4,5,18,0.97)" stroke="#1e2040" strokeWidth="1" rx="4" />
+        <text x="936" y="556" fill="#8888b0" fontSize="10">Beam FWHM</text>
+        <text x="1164" y="556" textAnchor="end" fill="#C4A555" fontSize="10">~20 μas</text>
+        <text x="936" y="576" fill="#8888b0" fontSize="10">Dynamic Range</text>
+        <text x="1164" y="576" textAnchor="end" fill="#C4A555" fontSize="10">~50:1</text>
+        <text x="936" y="596" fill="#8888b0" fontSize="10">UV Fill</text>
+        <text x="1164" y="596" textAnchor="end" fill="#C4A555" fontSize="10">0.8%</text>
+        <text x="936" y="616" fill="#8888b0" fontSize="10">Baselines</text>
+        <text x="1164" y="616" textAnchor="end" fill="#C4A555" fontSize="10">28</text>
+        <text x="936" y="636" fill="#8888b0" fontSize="10">Max baseline</text>
+        <text x="1164" y="636" textAnchor="end" fill="#C4A555" fontSize="10">10,900 km</text>
+      </g>
 
-    <rect x="18" y="48" width="322" height="330" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="4" />
-    <text x="179" y="68" textAnchor="middle" style=${{ fontSize: '12px', fontWeight: '700', fill: TX }}>EHT 2017</text>
-    <text x="179" y="84" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>8 stations · 28 baselines</text>
-    <line x1="22"  y1="213" x2="336" y2="213" stroke="#1a1a38" strokeWidth="0.5" />
-    <line x1="179" y1="52"  x2="179" y2="374" stroke="#1a1a38" strokeWidth="0.5" />
-
-    <path d="M 52,213 A 127,82 0 0 0 306,213" fill="none" stroke=${G} strokeWidth="2.0" strokeOpacity="0.75" />
-    <path d="M 52,213 A 127,82 0 0 1 306,213" fill="none" stroke=${G} strokeWidth="2.0" strokeOpacity="0.35" />
-
-    <g transform="rotate(30, 179, 213)">
-      <path d="M 71,213 A 108,70 0 0 0 287,213" fill="none" stroke=${G} strokeWidth="1.6" strokeOpacity="0.65" />
-      <path d="M 71,213 A 108,70 0 0 1 287,213" fill="none" stroke=${G} strokeWidth="1.4" strokeOpacity="0.28" />
-    </g>
-
-    <g transform="rotate(58, 179, 213)">
-      <path d="M 97,213 A 82,52 0 0 0 261,213" fill="none" stroke=${G} strokeWidth="1.4" strokeOpacity="0.55" />
-      <path d="M 97,213 A 82,52 0 0 1 261,213" fill="none" stroke=${G} strokeWidth="1.2" strokeOpacity="0.22" />
-    </g>
-
-    <text x="179" y="392" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>UV fill: ~0.8%  ·  DR: ~50:1</text>
-
-    <rect x="360" y="48" width="322" height="330" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="4" />
-    <text x="521" y="68" textAnchor="middle" style=${{ fontSize: '12px', fontWeight: '700', fill: G }}>ngEHT Phase 1</text>
-    <text x="521" y="84" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>17 stations · 136 baselines</text>
-    <line x1="364" y1="213" x2="678" y2="213" stroke="#1a1a38" strokeWidth="0.5" />
-    <line x1="521" y1="52"  x2="521" y2="374" stroke="#1a1a38" strokeWidth="0.5" />
-
-    <path d="M 394,213 A 127,82 0 0 0 648,213" fill="none" stroke=${G} strokeWidth="2.0" strokeOpacity="0.75" />
-    <path d="M 394,213 A 127,82 0 0 1 648,213" fill="none" stroke=${G} strokeWidth="2.0" strokeOpacity="0.35" />
-
-    <g transform="rotate(20, 521, 213)">
-      <path d="M 403,213 A 118,76 0 0 0 639,213" fill="none" stroke=${G} strokeWidth="1.7" strokeOpacity="0.68" />
-      <path d="M 403,213 A 118,76 0 0 1 639,213" fill="none" stroke=${G} strokeWidth="1.5" strokeOpacity="0.3" />
-    </g>
-
-    <g transform="rotate(42, 521, 213)">
-      <path d="M 413,213 A 108,70 0 0 0 629,213" fill="none" stroke=${G} strokeWidth="1.6" strokeOpacity="0.62" />
-      <path d="M 413,213 A 108,70 0 0 1 629,213" fill="none" stroke=${G} strokeWidth="1.4" strokeOpacity="0.27" />
-    </g>
-
-    <g transform="rotate(-18, 521, 213)">
-      <path d="M 421,213 A 100,64 0 0 0 621,213" fill="none" stroke=${G} strokeWidth="1.5" strokeOpacity="0.56" />
-      <path d="M 421,213 A 100,64 0 0 1 621,213" fill="none" stroke=${G} strokeWidth="1.3" strokeOpacity="0.24" />
-    </g>
-
-    <g transform="rotate(62, 521, 213)">
-      <path d="M 433,213 A 88,56 0 0 0 609,213" fill="none" stroke=${G} strokeWidth="1.3" strokeOpacity="0.50" />
-      <path d="M 433,213 A 88,56 0 0 1 609,213" fill="none" stroke=${G} strokeWidth="1.1" strokeOpacity="0.21" />
-    </g>
-
-    <g transform="rotate(-40, 521, 213)">
-      <path d="M 445,213 A 76,48 0 0 0 597,213" fill="none" stroke=${G} strokeWidth="1.2" strokeOpacity="0.44" />
-      <path d="M 445,213 A 76,48 0 0 1 597,213" fill="none" stroke=${G} strokeWidth="1.0" strokeOpacity="0.18" />
-    </g>
-
-    <g transform="rotate(10, 521, 213)">
-      <path d="M 466,213 A 55,35 0 0 0 576,213" fill="none" stroke=${G} strokeWidth="1.0" strokeOpacity="0.38" />
-      <path d="M 466,213 A 55,35 0 0 1 576,213" fill="none" stroke=${G} strokeWidth="0.9" strokeOpacity="0.16" />
-    </g>
-
-    <g transform="rotate(50, 521, 213)">
-      <path d="M 473,213 A 48,30 0 0 0 569,213" fill="none" stroke=${G} strokeWidth="0.9" strokeOpacity="0.33" />
-      <path d="M 473,213 A 48,30 0 0 1 569,213" fill="none" stroke=${G} strokeWidth="0.8" strokeOpacity="0.14" />
-    </g>
-
-    <text x="521" y="392" textAnchor="middle" style=${{ fontSize: '10px', fill: G }}>UV fill: ~3.5%  ·  DR: ~200:1</text>
-
-    <rect x="100" y="410" width="500" height="28" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="4" />
-    <text x="350" y="428" textAnchor="middle" style=${{ fontSize: '11px', fill: G }}>N(N-1)/2: 8 stations → 28, 17 stations → 136 baselines</text>
-
-    <text x="350" y="468" textAnchor="middle" style=${{ fontSize: '9px', fill: DIM }}>ngEHT targets movie-mode imaging of Sgr A* — minute-scale structural changes</text>
-  </svg>`;
-}
-
-function d11() {
-  return html`<svg viewBox="0 0 700 500" width="100%" height="100%">
-    <rect width="700" height="500" fill="#020208" />
-    <text x="350" y="30" textAnchor="middle" style=${{ fontSize: '13px', fontWeight: '700', fill: TX }}>BHEX Space VLBI</text>
-
-    <ellipse cx="350" cy="280" rx="280" ry="115" fill="none" stroke="#2a2a66" strokeWidth="1.5" strokeDasharray="6 3" transform="rotate(-22, 350, 280)" />
-
-    <circle cx="350" cy="280" r="80" fill="rgba(20,50,120,0.4)" stroke=${BL} strokeWidth="2.5" />
-    <text x="350" y="284" textAnchor="middle" style=${{ fontSize: '12px', fill: BL }}>Earth</text>
-
-    <circle cx="295" cy="262" r="7" fill=${G} stroke="#020208" strokeWidth="1.5" />
-    <text x="282" y="278" style=${{ fontSize: '9px', fill: DIM }}>ALMA</text>
-    <circle cx="350" cy="225" r="5" fill=${BL} />
-    <text x="357" y="222" style=${{ fontSize: '9px', fill: DIM }}>IRAM</text>
-    <circle cx="405" cy="250" r="5" fill=${BL} />
-    <text x="412" y="248" style=${{ fontSize: '9px', fill: DIM }}>JCMT</text>
-    <circle cx="350" cy="358" r="5" fill=${BL} />
-    <text x="357" y="370" style=${{ fontSize: '9px', fill: DIM }}>SPT</text>
-
-    <circle cx="588" cy="185" r="11" fill=${OR} stroke=${G} strokeWidth="2.5" />
-    <rect x="580" y="178" width="5" height="14" fill=${OR} fillOpacity="0.6" />
-    <rect x="582" y="178" width="16" height="5" fill=${OR} fillOpacity="0.4" />
-    <text x="606" y="178" style=${{ fontSize: '11px', fill: OR }}>BHEX</text>
-
-    <line x1="582" y1="189" x2="300" y2="264" stroke=${G}   strokeWidth="1.8" strokeDasharray="5 3" strokeOpacity="0.7" />
-    <line x1="582" y1="187" x2="352" y2="228" stroke=${BL}  strokeWidth="1.2" strokeDasharray="5 3" strokeOpacity="0.5" />
-    <line x1="582" y1="189" x2="352" y2="354" stroke=${DIM} strokeWidth="1"   strokeDasharray="5 3" strokeOpacity="0.4" />
-
-    <line x1="350" y1="280" x2="588" y2="185" stroke=${G} strokeWidth="1" strokeOpacity="0.5" strokeDasharray="3 3" />
-    <text x="490" y="218" textAnchor="middle" style=${{ fontSize: '9px', fill: G }}>~33,000 km / ~33 Gλ</text>
-
-    <rect x="15" y="45" width="210" height="130" fill="rgba(2,2,12,0.9)" stroke="#2d2200" strokeWidth="1" rx="5" />
-    <text x="120" y="68" textAnchor="middle" style=${{ fontSize: '12px', fontWeight: '700', fill: TX }}>Angular Resolution</text>
-    <line x1="20" y1="76" x2="220" y2="76" stroke="#2d2200" strokeWidth="1" />
-    <rect x="25" y="83"  width="80" height="22" fill=${BL} fillOpacity="0.6" rx="2" />
-    <text x="112" y="98" style=${{ fontSize: '10px', fill: TX }}>EHT: ~20 μas</text>
-    <rect x="25" y="113" width="24" height="22" fill=${OR} fillOpacity="0.7" rx="2" />
-    <text x="56"  y="128" style=${{ fontSize: '10px', fill: OR }}>BHEX: ~6 μas</text>
-    <text x="25"  y="156" style=${{ fontSize: '10px', fill: G }}>3.3× finer resolution</text>
-
-    <rect x="475" y="45" width="210" height="100" fill="rgba(2,2,12,0.9)" stroke="#2d2200" strokeWidth="1" rx="5" />
-    <text x="580" y="68" textAnchor="middle" style=${{ fontSize: '12px', fontWeight: '700', fill: TX }}>Max Baseline</text>
-    <text x="488" y="90"  style=${{ fontSize: '10px', fill: DIM }}>EHT:  ~10,900 km / 8.1 Gλ</text>
-    <text x="488" y="112" style=${{ fontSize: '10px', fill: OR }}>BHEX: ~32,900 km / 33 Gλ</text>
-    <text x="580" y="134" textAnchor="middle" style=${{ fontSize: '10px', fill: G }}>At 300 GHz: θ ≈ 6 μas</text>
-
-    <rect x="60" y="435" width="580" height="48" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="4" />
-    <text x="350" y="455" textAnchor="middle" style=${{ fontSize: '11px', fill: G }}>B_max = R_Earth + h_orbit = 6,371 + 26,562 = 32,933 km</text>
-    <text x="350" y="473" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>θ = λ / B_max = 1.0 mm / 32,933 km ≈ 6.3 μas at 300 GHz</text>
-  </svg>`;
-}
-
-function d12() {
-  return html`<svg viewBox="0 0 700 500" width="100%" height="100%">
-    <rect width="700" height="500" fill=${BG} />
-    <text x="350" y="30" textAnchor="middle" style=${{ fontSize: '13px', fontWeight: '700', fill: TX }}>From Visibilities to Science</text>
-
-    <rect x="18" y="48" width="320" height="190" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="5" />
-    <text x="178" y="68" textAnchor="middle" style=${{ fontSize: '11px', fontWeight: '700', fill: G }}>UV Coverage</text>
-    <line x1="24" y1="145" x2="332" y2="145" stroke="#1a1a38" strokeWidth="0.5" />
-    <line x1="178" y1="54" x2="178" y2="232" stroke="#1a1a38" strokeWidth="0.5" />
-    <path d="M 50,100 Q 178,68 306,100 Q 284,145 306,190 Q 178,222 50,190 Q 72,145 50,100" fill="none" stroke=${G} strokeWidth="2" />
-    <path d="M 72,90 Q 178,62 284,90 Q 266,145 284,200 Q 178,228 72,200 Q 90,145 72,90" fill="none" stroke=${G} strokeWidth="1.5" strokeOpacity="0.45" />
-    <path d="M 98,108 Q 178,90 258,108" fill="none" stroke=${G} strokeWidth="1.2" strokeOpacity="0.6" />
-    <text x="306" y="158" style=${{ fontSize: '9px', fill: DIM }}>Gλ</text>
-
-    <rect x="362" y="48" width="320" height="190" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="5" />
-    <text x="522" y="68" textAnchor="middle" style=${{ fontSize: '11px', fontWeight: '700', fill: G }}>Image Metrics</text>
-    <text x="372" y="90"  style=${{ fontSize: '10px', fill: TX }}>Beam FWHM (major)</text>
-    <text x="672" y="90"  textAnchor="end" style=${{ fontSize: '10px', fill: G }}>~25 μas</text>
-    <line x1="372" y1="98" x2="672" y2="98" stroke="#1a1a38" strokeWidth="0.3" />
-    <text x="372" y="112" style=${{ fontSize: '10px', fill: TX }}>Beam FWHM (minor)</text>
-    <text x="672" y="112" textAnchor="end" style=${{ fontSize: '10px', fill: G }}>~18 μas</text>
-    <line x1="372" y1="120" x2="672" y2="120" stroke="#1a1a38" strokeWidth="0.3" />
-    <text x="372" y="134" style=${{ fontSize: '10px', fill: TX }}>Dynamic Range</text>
-    <text x="672" y="134" textAnchor="end" style=${{ fontSize: '10px', fill: G }}>~50:1</text>
-    <line x1="372" y1="142" x2="672" y2="142" stroke="#1a1a38" strokeWidth="0.3" />
-    <text x="372" y="156" style=${{ fontSize: '10px', fill: TX }}>UV Fill %</text>
-    <text x="672" y="156" textAnchor="end" style=${{ fontSize: '10px', fill: G }}>0.8%</text>
-    <line x1="372" y1="164" x2="672" y2="164" stroke="#1a1a38" strokeWidth="0.3" />
-    <text x="372" y="178" style=${{ fontSize: '10px', fill: TX }}>UV Samples</text>
-    <text x="672" y="178" textAnchor="end" style=${{ fontSize: '10px', fill: G }}>11,000+</text>
-    <line x1="372" y1="186" x2="672" y2="186" stroke="#1a1a38" strokeWidth="0.3" />
-    <text x="372" y="200" style=${{ fontSize: '10px', fill: TX }}>Max baseline</text>
-    <text x="672" y="200" textAnchor="end" style=${{ fontSize: '10px', fill: G }}>10,900 km</text>
-
-    <rect x="18" y="256" width="320" height="190" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="5" />
-    <text x="178" y="276" textAnchor="middle" style=${{ fontSize: '11px', fontWeight: '700', fill: G }}>FITS Export (WCS Headers)</text>
-    <text x="28" y="296" style=${{ fontSize: '9px', fill: DIM,  fontFamily: 'monospace' }}>SIMPLE  = T</text>
-    <text x="28" y="312" style=${{ fontSize: '9px', fill: DIM,  fontFamily: 'monospace' }}>NAXIS   = 2</text>
-    <text x="28" y="328" style=${{ fontSize: '9px', fill: TX,   fontFamily: 'monospace' }}>CRVAL1  = 187.7059</text>
-    <text x="28" y="344" style=${{ fontSize: '9px', fill: TX,   fontFamily: 'monospace' }}>CRVAL2  =  12.3911</text>
-    <text x="28" y="360" style=${{ fontSize: '9px', fill: TX,   fontFamily: 'monospace' }}>CDELT1  = -1.94E-09</text>
-    <text x="28" y="376" style=${{ fontSize: '9px', fill: G,    fontFamily: 'monospace' }}>BMAJ    = 5.56E-09</text>
-    <text x="28" y="392" style=${{ fontSize: '9px', fill: DIM,  fontFamily: 'monospace' }}>BUNIT   = 'JY/BEAM'</text>
-    <text x="28" y="408" style=${{ fontSize: '9px', fill: DIM,  fontFamily: 'monospace' }}>END</text>
-    <text x="178" y="430" textAnchor="middle" style=${{ fontSize: '9px', fill: DIM }}>Compatible: CASA · Astropy · ds9</text>
-
-    <rect x="362" y="256" width="320" height="190" fill="rgba(8,10,25,0.9)" stroke="#2d2200" strokeWidth="1" rx="5" />
-    <text x="522" y="276" textAnchor="middle" style=${{ fontSize: '11px', fontWeight: '700', fill: G }}>Dynamic Range</text>
-    <text x="372" y="305" style=${{ fontSize: '10px', fill: DIM }}>EHT 2017</text>
-    <rect x="372" y="310" width="56"  height="24" fill=${G} fillOpacity="0.6" rx="3" />
-    <text x="434" y="326" style=${{ fontSize: '9px', fill: G }}>~50:1</text>
-    <text x="372" y="344" style=${{ fontSize: '10px', fill: DIM }}>EHT 2022</text>
-    <rect x="372" y="349" width="112" height="24" fill=${G} fillOpacity="0.65" rx="3" />
-    <text x="490" y="365" style=${{ fontSize: '9px', fill: G }}>~100:1</text>
-    <text x="372" y="383" style=${{ fontSize: '10px', fill: DIM }}>ngEHT Ph.1</text>
-    <rect x="372" y="388" width="224" height="24" fill=${G} fillOpacity="0.8" rx="3" />
-    <text x="602" y="404" style=${{ fontSize: '9px', fill: G }}>~200:1</text>
-    <text x="372" y="428" style=${{ fontSize: '8px', fill: DIM }}>DR = S_peak / (1.4826 · median|border − median|)</text>
-
-    <text x="350" y="476" textAnchor="middle" style=${{ fontSize: '10px', fill: DIM }}>VLBI pipeline: calibration → imaging → deconvolution → science</text>
-  </svg>`;
+      <!-- Call to action -->
+      <text x="600" y="664" textAnchor="middle" className="cta-text" fill="#FFD700" fontSize="22" fontWeight="800">Place your first telescope.</text>
+    </svg>
+  `;
 }
