@@ -291,12 +291,12 @@ IMPLICATION: Whenever adding state managed by timers in a component that respond
 
 ### SVG filter IDs in TourDiagram.js must be diagram-scoped
 DATE: 2026-04-26
+UPDATED: 2026-04-28 — OBSOLETE for TourDiagram.js (now Canvas 2D). Still applies if SVG diagrams are introduced elsewhere.
 CATEGORY: pattern
-APPLIES_TO: vlbi-react/js/TourDiagram.js — all d0N() SVG <defs>
+APPLIES_TO: vlbi-react/js/ — any inline SVG rendered in the tour or elsewhere
 
-LEARNING: Each diagram's `<filter>` and gradient IDs must include the diagram number (e.g. `bloom-d01`, `earthGrad-d03`). Inline SVG filters are scoped to the HTML document, not the SVG element — if two SVGs share an ID, the browser uses the first defs block in DOM order. React may keep prior-act SVGs in the DOM during transitions, so shared IDs would cross-contaminate filters.
-EVIDENCE: Architectural decision made during tour art pass (2026-04-26, commit 614932a).
-IMPLICATION: When adding new SVG diagrams to TourDiagram.js, always suffix all filter and gradient IDs with the diagram number. Apply as `filter="url(#bloom-d01)"` not via style object.
+LEARNING: Each diagram's `<filter>` and gradient IDs must include the diagram number. Inline SVG filters are scoped to the HTML document — shared IDs resolve to the first defs block in DOM order.
+IMPLICATION: TourDiagram.js is now Canvas 2D (no SVG, no filters). Pattern remains relevant for any other inline SVG in the codebase.
 
 ---
 
@@ -311,7 +311,30 @@ IMPLICATION: Any new CSS animation class targeting an SVG element that uses tran
 
 ---
 
+### TourDiagram.js: Canvas 2D is the right technology; SVG was the wrong tool
+DATE: 2026-04-28
+CATEGORY: pattern
+APPLIES_TO: vlbi-react/js/TourDiagram.js
+
+LEARNING: SVG/CSS cannot achieve additive blending, multi-pass glow, organic bezier terrain, or per-pixel chromatic aberration. The Smithsonian Art Pass quality bar required Canvas 2D with `requestAnimationFrame`. The rewrite (bed2d45) confirmed: ~1280 lines of Canvas 2D produces visually richer results than any SVG filter chain.
+EVIDENCE: Three sessions of iterative SVG art passes culminated in Canvas 2D rewrite — the quality ceiling was SVG's fundamental limitation, not the art direction.
+IMPLICATION: Any future diagram requiring bloom, terrain, or cinematic animation should use Canvas 2D from the start, not SVG. SVG is appropriate for static or simple animated diagrams only.
+
+---
+
+### Canvas 2D RAF components: hooks require component invocation, not plain function calls
+DATE: 2026-04-28
+CATEGORY: pattern
+APPLIES_TO: vlbi-react/js/TourDiagram.js — TourDiagram export
+
+LEARNING: d01–d08 use `useRef`/`useEffect` — React hooks. They MUST be rendered as React components (`html\`<${Comp}/>\``), not called as plain functions (`Comp({ props })`). The export uses a `comps[diagramId]` array and renders the selected component. Calling as a plain function breaks Rules of Hooks silently or with cryptic errors.
+EVIDENCE: Architectural requirement discovered during Canvas 2D rewrite (2026-04-28).
+IMPLICATION: Any future Canvas 2D diagram added to TourDiagram.js must follow the same component pattern.
+
+---
+
 ## Last Updated
+2026-04-28 — Canvas 2D rewrite: TourDiagram SVG pattern updated to obsolete, Canvas 2D patterns added
 2026-04-26 — Tour Art Pass: SVG filter scoping pattern, transform-box pattern added
 2026-04-26 — Tour Cinematic Rewrite: animPhase pattern, stale "12 act" references corrected to 8 acts
 2026-04-24 — P1/P2/P3 complete: SVG-in-htm camelCase pattern, tour.css separation pattern

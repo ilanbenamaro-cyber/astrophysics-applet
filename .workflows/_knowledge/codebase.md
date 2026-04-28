@@ -92,7 +92,7 @@ App.js                        — global UI only: compareMode, infoKey, a11y, to
 ├── InfoTooltip.js            — hover tooltip on ? icons
 ├── Tour.js                   — 8-act cinematic tour; animPhase state machine (visual→text→ready); chapter title cards before Ch II (act 3) / Ch III (act 6); keyboard nav (← → Esc); autoActions per act
 │   ├── TourCard.js           — cinematic layout: full-viewport .tour-hero SVG bg + .tour-text-overlay (right 32%); visibleCount state drives 1/800ms paragraph reveal; .text-right for Act 6 (EHT image left, text right)
-│   └── TourDiagram.js        — 8 SVG functions d01()–d08(), viewBox="0 0 1200 700", #010103 bg; color consts (BG/GOLD/AM/TEAL/DIM/TX/GLOW/RED/BLUE) + STARS[180] at module top; per-diagram bloom/softglow/hardblur SVG filter defs (IDs scoped bloom-d01..d08 etc. to prevent DOM collisions); metallic dish parabolas, volumetric beam cone in d01; painted Earth sphere (radialGradient+night shadow) in d03/d07; continent outlines + 9 stations (added GLT) in d04; d05 = single-canvas sidelobe→photon-ring transformation (5 sl-ring-* fade, photon-ring-emerge, shadow-emerge, label-dirty→label-clean); BHEX data beam (.data-beam pulse) in d07; luminous gold CTA (fontSize=36, bloom) in d08; real EHT M87* JPEG in d06 (../assets/eht-m87-2019.jpg); no canvas, no ctx
+│   └── TourDiagram.js        — Canvas 2D cinematic diagrams. d01–d08 are React components (useRef+useEffect+RAF). Export renders as html`<${Comp}/>` — NEVER call d0N() as plain function (breaks React hooks). Color consts (BG/GOLD/AM/TEAL/DIM/GLOW/RED/BLUE). Shared utilities: makeStars, drawStars (twinkle+diffraction spikes), drawNebulae, drawMilkyWay, drawAtacama (bezier terrain), glow3, drawDish (parabola ∪-bowl clip+panel grid), drawBeam, drawBlurry (chromatic aberration bloom), drawSharp (6-spike diffraction), drawBaseline (traveling pulse), drawDivider, drawEarth. Left = magenta/crimson nebulae + RED beam (problem); right = cobalt/cyan nebulae + TEAL beam (solution). reducedMotion: draws T=999 static frame, no RAF. D03 Earth rotation in JS (T×2π/10), not CSS. D06 loads ../assets/eht-m87-2019.jpg via Image(). tour.css adds `.tour-visual canvas { width:100%;height:100%;display:block }`.
 ├── A11yPanel.js              — accessibility settings panel
 ├── PhysicsNotesModal.js      — static modal: UV formula, CLEAN/MEM algorithms, EHT sources
 └── CitationModal.js          — BibTeX + APA citation generator from live sim state
@@ -309,6 +309,12 @@ GitHub Pages from `main` branch root. Push to `main` = live within ~60 seconds.
 ---
 
 ## Last Updated
+
+2026-04-28 — Canvas 2D cinematic rewrite complete (bed2d45):
+  TourDiagram.js completely rewritten from SVG/htm to Canvas 2D requestAnimationFrame loops.
+  d01–d08 are now React components with useRef+useEffect+RAF. Shared utilities (makeStars, drawStars,
+  drawNebulae, drawMilkyWay, drawAtacama, glow3, drawDish, drawBeam, drawBlurry, drawSharp,
+  drawBaseline, drawDivider, drawEarth). tour.css adds `.tour-visual canvas` rule.
 
 2026-04-26 — Tour Art Pass complete:
   614932a: TourDiagram.js full art rewrite — bloom/softglow/hardblur SVG filter system (diagram-scoped IDs), painted Earth spheres, continent outlines, 9 stations in d04 (+GLT), d05 sidelobe→photon-ring transformation, BHEX data beam, luminous CTA, 14 new CSS keyframes in tour.css, earth-group-cinema transform-origin updated to 290×350.

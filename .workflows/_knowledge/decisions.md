@@ -448,7 +448,7 @@ TRIGGERS_REVIEW_IF: Array preset selection needs a confirmation step (e.g. "this
 DATE: 2026-04-26
 LAST_VERIFIED: 2026-04-26
 EXPIRES: NEVER
-STATUS: ACTIVE
+STATUS: SUPERSEDED — see "TourDiagram.js: Canvas 2D rewrite" below (2026-04-28). TourDiagram.js no longer uses SVG or filters. Pattern still applies if SVG diagrams are ever re-introduced elsewhere.
 
 DECISION: Each d0N() diagram in TourDiagram.js defines its own `<defs>` block with filter IDs scoped to that diagram: `bloom-d01` through `bloom-d08`, `softglow-d01..d08`, `hardblur-d01`, `hardblur-d05`, `starblur-d04`, `starblur-d07`, gradient IDs likewise scoped (e.g. `earthGrad-d03`, `beamGlow1-d01`). Applied via `filter="url(#bloom-d01)"` not via style.
 RATIONALE: React may keep prior act SVGs in the DOM during transitions. Shared filter IDs (`bloom`, `softglow`) across multiple inline SVGs would reference whichever `<filter>` the browser encounters first — visually wrong. Diagram-scoped IDs guarantee each SVG references its own filter definition. `filter` is an SVG attribute string, not a style property — must not be placed in a camelCase style object.
@@ -480,6 +480,20 @@ DECISION: Each tour act in TourDiagram.js is governed by three design laws: (1) 
 RATIONALE: Smithsonian Art Pass (2026-04-27). Previous tour animations were decorative — multiple concurrent motions competed for attention and didn't teach the physics. Documentary pacing (slow-start-graceful-settle easing, one focal motion per act) matches how science films and planetarium shows present concepts. Class name changes for d05/d08 align with the new single-motion architecture and separate animated from non-animated elements cleanly.
 ALTERNATIVES_REJECTED: Multiple concurrent animations — visually distracting; linear easing — feels mechanical, not cinematic; scrubber wipe for d05 — geometry-coupled, fragile, doesn't convey deconvolution physics.
 TRIGGERS_REVIEW_IF: A new tour act is added (must define exactly one teaching motion); an act's animation is found to be unclear in user testing (replace with different single motion, not additional motion).
+
+---
+
+### TourDiagram.js: Canvas 2D with requestAnimationFrame (replacing SVG/CSS)
+DATE: 2026-04-28
+LAST_VERIFIED: 2026-04-28
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: TourDiagram.js fully rewritten from SVG/htm template literals to Canvas 2D `requestAnimationFrame` loops. d01–d08 are React components rendered via `html\`<${Comp} reducedMotion=${reducedMotion}/>\`` — never called as plain functions. Each uses `useRef` + `useEffect` with mandatory `cancelAnimationFrame` cleanup. `reducedMotion=true` draws T=999 static frame without starting RAF.
+RATIONALE: SVG filters cannot achieve additive blending (`ctx.globalCompositeOperation='screen'`), multi-pass glow rendering, organic bezier terrain, or per-pixel diffraction spikes. Canvas 2D can. The design requires: three-pass glow system, chromatic aberration bloom for unresolved sources, 6-spike diffraction for resolved sources, animated star field with twinkle and diffraction spikes for bright stars, Atacama terrain with organic bezier curves. None of these are achievable at quality in SVG without heavy filter chains that break in Safari and fight the browser compositor.
+CRITICAL CONSTRAINT: d01–d08 MUST be rendered as `<${d01}/>` (React component invocation), never `d01()` (plain function call). They use `useRef`/`useEffect` — calling as plain functions breaks React's Rules of Hooks. The TourDiagram export uses `comps[diagramId]` array and renders `html\`<${Comp}/>\``.
+ALTERNATIVES_REJECTED: SVG with filters — cannot achieve additive blending; Three.js — overkill for 2D diagrams; WebGL — too low-level for the drawing operations needed; keeping SVG — confirmed wrong tool after Smithsonian Art Pass quality bar was set.
+TRIGGERS_REVIEW_IF: WebGPU becomes available and the additive blending requirement grows; or a diagram needs 3D rendering that only Three.js can provide (at which point that specific diagram could use a Three.js canvas while others remain Canvas 2D).
 
 ---
 

@@ -58,7 +58,12 @@
 > `2c9f59b`: tour diagram fixes — elliptic UV arcs (SVG A arc syntax), equirectangular grid world map, CLEAN animation fix
 > `d3b13b0`: cinematic 8-act tour full rewrite — animPhase state machine (visual→text→ready); chapter title cards before Ch II (act 3) and Ch III (act 6); 1200×700 viewBox; deep-space visual language (#010103 bg, gold equations, teal data); real EHT M87* image Act 6 (assets/eht-m87-2019.jpg 36KB JPEG); Tour contract (App.js wiring + exported function signature + autoAction types) unchanged
 
-**ALL PLANNED SESSIONS COMPLETE — S1 through P3 + Tour Cinematic Rewrite + Tour Art Pass + Smithsonian Art Pass**
+**Canvas 2D Cinematic Rewrite: COMPLETE** — committed 2026-04-28 as `bed2d45`
+> feat(vlbi-react): tour — canvas 2D cinematic rewrite
+> TourDiagram.js fully rewritten from SVG/htm to Canvas 2D requestAnimationFrame loops.
+> d01–d08 are now React components (useRef+useEffect+RAF). Shared utilities: makeStars, drawStars, drawNebulae, drawMilkyWay, drawAtacama (organic bezier terrain), glow3, drawDish (parabola+clip), drawBeam, drawBlurry (chromatic aberration), drawSharp (6-spike diffraction), drawBaseline (traveling pulse), drawDivider, drawEarth. D03 Earth rotation in JS. D06 loads real EHT photo. D08 panel-rise + CTA bloom. tour.css: `.tour-visual canvas` rule added.
+
+**ALL PLANNED SESSIONS COMPLETE — S1 through P3 + Tour Cinematic Rewrite + Tour Art Passes + Canvas 2D Rewrite**
 
 ---
 
@@ -150,6 +155,7 @@ All S1–S12 + P1/P2/P3 are complete. The simulator is feature-complete for the 
 ## LAST SIGNIFICANT COMMITS
 
 ```
+bed2d45  feat(vlbi-react): tour — canvas 2D cinematic rewrite
 467b979  feat(vlbi-react): tour art pass — Smithsonian quality (documentary animation, one motion per act, museum pacing)
 42e3b67  chore: sync knowledge files post-session 2026-04-26
 614932a  feat(vlbi-react): tour art pass — bloom filters, star fields, painted Earth, sidelobe→photon transformation, BHEX data beam, luminous CTA
@@ -169,7 +175,7 @@ Files modified in Tour Cinematic Rewrite (d3b13b0):
 - `vlbi-react/css/tour.css` — full rewrite: .tour-cinematic full-viewport, .tour-hero SVG bg, .tour-text-overlay (right 32%), animPhase CSS; @keyframes: waveSweepCinema, earthRotateCinema, drawArc, stationReveal, lineReveal, scrubberMove, cleanHighlight, imageReveal, panelSlideIn, chapterReveal; .uv-draw-1/2/3 stroke-dashoffset; .station-dot-1..8 sequential stagger; .scrubber-reveal translateX(422px); full reduced-motion suppression
 - `vlbi-react/js/Tour.js` — full rewrite: 8-act TOUR_ACTS; animPhase state machine (visual→text→ready); CHAPTER_CARDS at actIndex 2 and 5; setChapterCard(false) guard at top of animPhase effect; 3 timer refs (animTimerRef, textTimerRef, chapterTimerRef); ranAutoRef autoAction dedup
 - `vlbi-react/js/TourCard.js` — full rewrite: visibleCount single useEffect; .tour-hero SVG + .tour-text-overlay layout; .text-right for act.diagramId===6; chapter badge; progress bar width=(actIndex/(totalActs-1))*100%
-- `vlbi-react/js/TourDiagram.js` — full rewrite: 8 SVG functions d01()–d08(), viewBox="0 0 1200 700", #010103 bg; d06 uses ../assets/eht-m87-2019.jpg
+- `vlbi-react/js/TourDiagram.js` — Canvas 2D rewrite (bed2d45): d01–d08 React components with RAF. Supersedes all prior SVG/CSS versions.
 
 ---
 
@@ -202,6 +208,7 @@ constants.js ─ IMAGE_SIZE=512, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD, 
 
 ## LAST UPDATED
 
+2026-04-28 — Canvas 2D cinematic rewrite complete (bed2d45): TourDiagram.js fully rewritten from SVG/htm to Canvas 2D RAF loops. d01–d08 React components. Shared Canvas 2D utilities. tour.css canvas rule. decisions.md SVG bloom filter decision marked SUPERSEDED. gotchas.md 3 new Canvas 2D entries. MEMORY.md updated. SESSION-CONTINUITY updated.
 2026-04-27 — Smithsonian Art Pass complete (documentary-paced animation, one motion per act, new CSS class names for d05/d08, BG color update, 10 new keyframes + 19 new classes); WHERE WE ARE, commits, LAST UPDATED all updated
 2026-04-26 — Tour Art Pass complete (bloom filters, star fields, painted Earth, sidelobe→photon transformation, BHEX data beam, CTA); WHERE WE ARE, commits, LAST UPDATED all updated
 2026-04-26 — Tour Cinematic Rewrite complete (8-act, animPhase machine, chapter cards, real EHT image); WHERE WE ARE, component map, commits, what to do next all updated

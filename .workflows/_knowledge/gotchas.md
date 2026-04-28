@@ -441,6 +441,69 @@ RESOLVED: YES — corrected to translateX(422px) (2026-04-26).
 
 ---
 
+### TourDiagram d01–d08 must be React components, never plain function calls
+DATE_DISCOVERED: 2026-04-28
+AREA: vlbi-react/js/TourDiagram.js — TourDiagram export
+SEVERITY: HIGH
+
+WHAT HAPPENED: Each d0N function uses `useRef` and `useEffect`. If called as a plain function (`d01(props)` inside a switch), React's Rules of Hooks are violated — hooks can only be called inside React function components or custom hooks. The result is a cryptic "hooks called in wrong order" error or silent misbehavior.
+
+ROOT CAUSE: Canvas 2D RAF loop requires useRef (canvas DOM node + RAF id). These are hooks. Plain function calls bypass React's hook tracking.
+
+HOW TO AVOID: The TourDiagram export must render via component syntax:
+```js
+const comps = [null, d01, d02, d03, d04, d05, d06, d07, d08];
+const Comp = comps[diagramId];
+return html`<${Comp} reducedMotion=${reducedMotion}/>`;
+```
+Never use `case 1: return d01({ reducedMotion })` or any direct call pattern.
+
+DETECTION: "Invalid hook call" React error; or hooks work in isolation but fire wrong in tour navigation.
+
+RESOLVED: YES — TourDiagram export uses component array + html`<${Comp}/>` (2026-04-28, commit bed2d45).
+
+---
+
+### Canvas 2D dish panel grid: arc direction must be counterclockwise (upper semicircle)
+DATE_DISCOVERED: 2026-04-28
+AREA: vlbi-react/js/TourDiagram.js — drawDish()
+SEVERITY: MEDIUM
+
+WHAT HAPPENED: Panel grid arcs inside the dish bowl were drawing on the BACK of the dish (lower semicircle, outside the bowl) instead of the face (upper semicircle, inside the bowl). The clip path looked correct but the arcs were invisible because they fell outside the clipped region.
+
+ROOT CAUSE: `g.arc(cx, groundY-42*sc, f*68*sc, Math.PI, Math.PI*2)` — clockwise from π to 2π = lower semicircle (ground-side, outside the bowl). The dish parabola opens upward (vertex at bottom, rim at top). The interior face is the UPPER region (y < groundY-42). The correct call is counterclockwise 0 to π: `g.arc(cx, groundY-42*sc, f*68*sc, 0, Math.PI, true)`.
+
+HOW TO AVOID: In screen coordinates (y increases downward), "upper semicircle" = the top half = counterclockwise from 0 to π (anticlockwise flag = true). "Lower semicircle" = clockwise from 0 to π or clockwise from π to 2π.
+
+DETECTION: Panel grid concentric arcs invisible, or clip produces empty region instead of dish face.
+
+RESOLVED: YES — changed to `g.arc(..., 0, Math.PI, true)` in drawDish (2026-04-28, commit bed2d45).
+
+---
+
+### Canvas 2D: g.filter must be reset to 'none' after every blur effect
+DATE_DISCOVERED: 2026-04-28
+AREA: vlbi-react/js/TourDiagram.js — d05 artifact blobs, d07 star layers, d08 CTA
+SEVERITY: HIGH
+
+WHAT HAPPENED: If `g.filter='blur(Npx)'` is set and not subsequently reset to `'none'`, every subsequent canvas draw operation in that frame also renders blurred — including text, lines, and shapes that should be crisp.
+
+ROOT CAUSE: Canvas 2D filter state persists until changed. Unlike `g.globalAlpha` which is commonly reset, `g.filter` is easy to forget.
+
+HOW TO AVOID: Always reset immediately after the blurred draw:
+```js
+g.save(); g.filter='blur(8px)';
+// ... draw blurred content ...
+g.filter='none'; g.restore();  // or just g.filter='none' if not using save/restore
+```
+`g.restore()` alone is insufficient — the filter is part of save/restore state, but inside the save block the filter change applies. Reset explicitly before drawing crisp content.
+
+DETECTION: Text or lines appear soft/blurry when they should be sharp, especially following a blur effect earlier in the frame's draw function.
+
+RESOLVED: YES — all three blur sites in TourDiagram.js have explicit `g.filter='none'` resets (2026-04-28, commit bed2d45).
+
+---
+
 ## Pattern: Things To Always Check
 
 □ After any change to telescope naming logic — verify EHT preset + manual click produces T(n+1) not T1
@@ -461,3 +524,6 @@ RESOLVED: YES — corrected to translateX(422px) (2026-04-26).
 □ Tour d05 scrubberMove translateX must equal the CLEAN panel width in d05() SVG geometry. If d05 panel layout changes, update CSS keyframe and both reduced-motion overrides to match.
 □ SVG filter IDs in TourDiagram.js must be diagram-scoped (bloom-d01..d08, not "bloom"). Multiple inline SVGs in one document share the same filter ID namespace — a shared ID resolves to the first defs block in DOM order.
 □ CSS-animated SVG elements using translateX/Y/rotate must have `transform-box: fill-box; transform-origin: center` — otherwise % transform-origin values resolve to SVG viewport, not element bounding box.
+□ TourDiagram d01–d08 are React components — always render via `html\`<${Comp}/>\``, never call as plain functions. Rules of Hooks apply.
+□ Canvas 2D: `g.filter` must be reset to `'none'` after every blur effect — it persists across draw calls unlike globalAlpha (which at least gets reset at frame end).
+□ Canvas 2D dish arc direction: counterclockwise (anticlockwise=true) for upper semicircle (inside bowl face). `g.arc(cx,y,r, 0,Math.PI, true)` = upper; `g.arc(cx,y,r, Math.PI,2*Math.PI)` = lower (outside bowl).
