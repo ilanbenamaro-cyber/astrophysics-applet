@@ -50,12 +50,15 @@
 > Bloom/softglow/hardblur SVG filter system (per-diagram scoped IDs bloom-d01..d08); metallic dish parabolas; volumetric beam cone (radialGradient polygon); painted Earth spheres (radialGradient + night shadow overlay); STARS[180] deterministic star field; continent outlines in d04; d04 expanded to 9 stations (added GLT at -68.703°, 76.535°); d05 replaced scrubber-wipe with single-canvas sidelobe→photon-ring transformation (5 sl-ring-* staggered fade, photon-ring-emerge, shadow-emerge, label-dirty→label-clean); BHEX data beam (.data-beam pulse) in d07; 280-star 3-depth-layer field in d07; luminous gold CTA (fontSize=36, fontWeight=900, bloom) in d08; 14 new CSS keyframes + 10 new animation classes; earth-group-cinema transform-origin updated 330×370→290×350; station-dot-9/label-9 rules added; uv-draw-* arc lengths recalculated (693/548/427); transform-box: fill-box on .baseline-pulse; full reduced-motion coverage.
 > `f12d196`: Tour layout fix — visual area top 68vh, text panel bottom 32vh, zero overlap.
 
+**Smithsonian Art Pass: COMPLETE** — committed 2026-04-27 as `467b979`
+> Complete rewrite of d01–d08 with documentary-paced animation (one motion per act, every element teaches something). New: two-halves d01 (single dish vs interferometry — left blurry smear, right baseline draws + gold dot appears); descending wavefront d02 (loops) with sequential tick marks + τ_g label + UV point pulse; Earth center cx=290→310 d03 + CSS transform-origin updated; 3-ring sidelobe→photon d05 with new CSS class names (.photon-ring, .bh-shadow, .lbl-dirty, .lbl-clean); panel-rise d08 with new class names (.panel-left, .panel-right, .fits-panel, .metrics-panel-tour, .cta-reveal). BG #010103→#08080f (deep space warm), DRK=#0d0d1a constant added. 10 new CSS keyframes (beamFadeIn, baselineDraw, dotAppear, wavefrontDescend, tickAppear, uvPointPulse, panelRise, slideFromLeft, slideFromRight, ctaReveal) + 19 new animation classes. All use cubic-bezier(0.25,0.46,0.45,0.94) easing (documentary pacing). Full reduced-motion coverage for all new classes.
+
 **Tour Cinematic Rewrite: COMPLETE** — committed 2026-04-25/26
 > `8eb63cb`: tour diagram upgrade — richer SVG, more math, 700×500 viewBox, 12 acts with 3 paragraphs each
 > `2c9f59b`: tour diagram fixes — elliptic UV arcs (SVG A arc syntax), equirectangular grid world map, CLEAN animation fix
 > `d3b13b0`: cinematic 8-act tour full rewrite — animPhase state machine (visual→text→ready); chapter title cards before Ch II (act 3) and Ch III (act 6); 1200×700 viewBox; deep-space visual language (#010103 bg, gold equations, teal data); real EHT M87* image Act 6 (assets/eht-m87-2019.jpg 36KB JPEG); Tour contract (App.js wiring + exported function signature + autoAction types) unchanged
 
-**ALL PLANNED SESSIONS COMPLETE — S1 through P3 + Tour Cinematic Rewrite + Tour Art Pass**
+**ALL PLANNED SESSIONS COMPLETE — S1 through P3 + Tour Cinematic Rewrite + Tour Art Pass + Smithsonian Art Pass**
 
 ---
 
@@ -147,14 +150,14 @@ All S1–S12 + P1/P2/P3 are complete. The simulator is feature-complete for the 
 ## LAST SIGNIFICANT COMMITS
 
 ```
+467b979  feat(vlbi-react): tour art pass — Smithsonian quality (documentary animation, one motion per act, museum pacing)
+42e3b67  chore: sync knowledge files post-session 2026-04-26
 614932a  feat(vlbi-react): tour art pass — bloom filters, star fields, painted Earth, sidelobe→photon transformation, BHEX data beam, luminous CTA
 f12d196  fix(vlbi-react): tour layout — visual top 68vh, text panel bottom, zero overlap
 bb81ed1  chore: sync knowledge files post-session 2026-04-26
 d3b13b0  feat(vlbi-react): cinematic 8-act tour — full rewrite
 2c9f59b  fix(vlbi-react): tour diagram fixes — elliptic UV arcs, grid world map, CLEAN animation
 8eb63cb  feat(vlbi-react): tour diagram upgrade — richer SVG, more math, 700×500 viewBox, no text overlaps
-be577e3  chore: sync knowledge files post-session 2026-04-24
-24ae8b6  feat(vlbi-react): P3 — full-screen 12-act tour with SVG diagrams
 ```
 
 Files modified in Tour Art Pass (614932a):
@@ -199,6 +202,7 @@ constants.js ─ IMAGE_SIZE=512, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD, 
 
 ## LAST UPDATED
 
+2026-04-27 — Smithsonian Art Pass complete (documentary-paced animation, one motion per act, new CSS class names for d05/d08, BG color update, 10 new keyframes + 19 new classes); WHERE WE ARE, commits, LAST UPDATED all updated
 2026-04-26 — Tour Art Pass complete (bloom filters, star fields, painted Earth, sidelobe→photon transformation, BHEX data beam, CTA); WHERE WE ARE, commits, LAST UPDATED all updated
 2026-04-26 — Tour Cinematic Rewrite complete (8-act, animPhase machine, chapter cards, real EHT image); WHERE WE ARE, component map, commits, what to do next all updated
 2026-04-24 — P1/P2/P3 complete (UI polish + tour rework); component map, commits, what to do next all updated

@@ -470,6 +470,19 @@ TRIGGERS_REVIEW_IF: A more physically accurate deconvolution animation is develo
 
 ---
 
+### Tour animation: one motion per act, documentary pacing
+DATE: 2026-04-27
+LAST_VERIFIED: 2026-04-27
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: Each tour act in TourDiagram.js is governed by three design laws: (1) THE LAW — one motion per act; every animated element must teach something or it is cut; (2) EASING LAW — all animations use `cubic-bezier(0.25, 0.46, 0.45, 0.94)` throughout — no linear, no bounce; (3) FILTER LAW — SVG filter IDs must be diagram-scoped (`bloom-d01`..`bloom-d08`). CSS class names for d05 photon ring/shadow/labels are `.photon-ring`, `.bh-shadow`, `.lbl-dirty`, `.lbl-clean` (not the older `.photon-ring-emerge` etc.). CSS class names for d08 panels are `.panel-left`, `.panel-right`, `.fits-panel`, `.metrics-panel-tour`, `.cta-reveal`.
+RATIONALE: Smithsonian Art Pass (2026-04-27). Previous tour animations were decorative — multiple concurrent motions competed for attention and didn't teach the physics. Documentary pacing (slow-start-graceful-settle easing, one focal motion per act) matches how science films and planetarium shows present concepts. Class name changes for d05/d08 align with the new single-motion architecture and separate animated from non-animated elements cleanly.
+ALTERNATIVES_REJECTED: Multiple concurrent animations — visually distracting; linear easing — feels mechanical, not cinematic; scrubber wipe for d05 — geometry-coupled, fragile, doesn't convey deconvolution physics.
+TRIGGERS_REVIEW_IF: A new tour act is added (must define exactly one teaching motion); an act's animation is found to be unclear in user testing (replace with different single motion, not additional motion).
+
+---
+
 ## Contradiction Scanner
 
 Claude runs this check when adding a new decision:
