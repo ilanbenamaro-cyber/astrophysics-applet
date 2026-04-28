@@ -1,786 +1,1283 @@
-// TourDiagram.js — 8 SVG hero diagrams for the cinematic VLBI tour.
-// All diagrams: viewBox="0 0 1200 700", background #08080f.
-// CSS animations via className — see tour.css. Filter IDs are diagram-scoped.
-// htm safety: NEVER use bare < or > in SVG text content.
-import { html } from './core.js';
+// TourDiagram.js — Canvas 2D cinematic diagrams for the VLBI tour.
+// Each d01–d08 is a React component with useRef/useEffect + RAF loop.
+import { html, useRef, useEffect } from './core.js';
 
-const BG   = '#08080f';  // deep space, slightly warm
-const DRK  = '#0d0d1a';  // panel backgrounds
-const GOLD = '#FFD700';
+// ── Color palette ─────────────────────────────────────────────────────────────
+const BG   = '#02020a';
+const GOLD = '#ffd166';
 const AM   = '#C4A555';
-const TEAL = '#4ecdc4';
-const DIM  = '#8888b0';
-const TX   = '#f0f0f8';
+const TEAL = '#06d6a0';
+const BLUE = '#4cc9f0';
 const GLOW = '#ff9f43';
-const RED  = '#ff6b6b';
-const BLUE = '#4488cc';
+const RED  = '#ff3311';
+const DIM  = '#8888b0';
 
-// Pre-computed star positions: 20 cols × 9 rows = 180 stars, deterministic
-// x_i = min((i%20)*62 + (i*17%43), 1195), y_i = min(floor(i/20)*82 + (i*13%37), 695)
-const STARS = Array.from({ length: 180 }, (_, i) => ({
-  x: Math.min((i % 20) * 62 + ((i * 17) % 43), 1195),
-  y: Math.min(Math.floor(i / 20) * 82 + ((i * 13) % 37), 695),
-  r: i < 60 ? 1.2 : i < 140 ? 0.8 : 0.5,
-  op: i < 60 ? 0.8 : i < 140 ? 0.45 : 0.25,
-}));
-
-export function TourDiagram({ diagramId }) {
-  switch (diagramId) {
-    case 1: return d01();
-    case 2: return d02();
-    case 3: return d03();
-    case 4: return d04();
-    case 5: return d05();
-    case 6: return d06();
-    case 7: return d07();
-    case 8: return d08();
-    default: return null;
-  }
+// ── Math helpers ──────────────────────────────────────────────────────────────
+function prog(T, start, dur) { return Math.max(0, Math.min(1, (T - start) / dur)); }
+function ease(t) { return t < .5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2; }
+function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+function lerp(a, b, t) { return a + (b - a) * t; }
+function rgba(hex, a) {
+  const r = parseInt(hex.slice(1,3),16), gv = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${gv},${b},${a.toFixed(3)})`;
 }
 
-// ── d01: The Resolution Problem ──────────────────────────────────────────────
-function d01() {
-  return html`
-    <svg viewBox="0 0 1200 700" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <filter id="bloom-d01" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-        <filter id="hardblur-d01" x="-80%" y="-80%" width="260%" height="260%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="24" />
-        </filter>
-        <radialGradient id="beamGrad1-d01" cx="50%" cy="100%" r="70%" gradientUnits="userSpaceOnUse" fx="240" fy="490">
-          <stop offset="0%"   stopColor=${AM} stopOpacity="0.18" />
-          <stop offset="100%" stopColor=${AM} stopOpacity="0" />
-        </radialGradient>
-        <radialGradient id="beamGrad2-d01" cx="50%" cy="100%" r="70%" gradientUnits="userSpaceOnUse" fx="900" fy="490">
-          <stop offset="0%"   stopColor=${TEAL} stopOpacity="0.10" />
-          <stop offset="100%" stopColor=${TEAL} stopOpacity="0" />
-        </radialGradient>
-      </defs>
-
-      <rect width="1200" height="700" fill=${BG} />
-
-      <!-- Star field -->
-      ${STARS.map((s, i) => html`<circle key=${'s'+i} cx=${s.x} cy=${s.y} r=${s.r} fill=${TX} fillOpacity=${s.op} />`)}
-
-      <!-- Divider -->
-      <line x1="600" y1="40" x2="600" y2="660" stroke="#1a1a2e" strokeWidth="1" />
-
-      <!-- ── LEFT: single dish — 70,000× too blurry ── -->
-      <!-- Blurry M87* smear at top (not a circle — soft blur) -->
-      <circle cx="240" cy="52" r="50" fill=${GLOW} fillOpacity="0.08" filter="url(#hardblur-d01)" className="beam-left" />
-      <circle cx="240" cy="52" r="32" fill=${GLOW} fillOpacity="0.15" filter="url(#hardblur-d01)" className="beam-left" />
-      <circle cx="240" cy="52" r="18" fill=${GOLD} fillOpacity="0.18" filter="url(#hardblur-d01)" className="beam-left" />
-
-      <!-- Beam cone (volumetric) -->
-      <polygon points="240,490 60,60 420,60" fill="url(#beamGrad1-d01)" className="beam-left" />
-
-      <!-- θ inside cone -->
-      <text x="240" y="240" textAnchor="middle" fill=${DIM} fontSize="17" className="beam-left">θ ≈ 2.7 arcsec</text>
-
-      <!-- Dish parabola — 3-stroke metallic technique -->
-      <path d="M 80,490 Q 240,360 400,490" stroke="#12122a" strokeWidth="10" fill="none" strokeOpacity="0.9" className="beam-left" />
-      <path d="M 82,490 Q 240,362 398,490" stroke="#3a3a60" strokeWidth="5"  fill="none" strokeOpacity="0.85" className="beam-left" />
-      <path d="M 88,492 Q 240,368 392,492" stroke=${AM}     strokeWidth="1.8" fill="none" strokeOpacity="0.6" className="beam-left" />
-      <line x1="240" y1="362" x2="240" y2="490" stroke=${AM} strokeWidth="2" className="beam-left" />
-      <circle cx="240" cy="358" r="6" fill=${AM} className="beam-left" />
-
-      <!-- Failure label -->
-      <text x="240" y="560" textAnchor="middle" fill=${RED} fontSize="22" fontWeight="600" className="beam-left">70,000× too blurry</text>
-      <text x="240" y="610" textAnchor="middle" fill=${DIM} fontSize="14" className="beam-left">100 m dish</text>
-
-      <!-- ── RIGHT: interferometry — two dishes + baseline ── -->
-      <!-- M87* as sharp gold point -->
-      <circle cx="905" cy="50" r="5" fill=${GOLD} filter="url(#bloom-d01)" className="gold-dot" style=${{ transformBox:'fill-box', transformOrigin:'center' }} />
-
-      <!-- θ label right -->
-      <text x="905" y="130" textAnchor="middle" fill=${TEAL} fontSize="22" fontWeight="600" className="beam-right">θ ≈ 20 μas</text>
-
-      <!-- Left dish (cx=760) -->
-      <path d="M 640,490 Q 760,360 880,490" stroke="#12122a" strokeWidth="10" fill="none" strokeOpacity="0.9" className="beam-right" />
-      <path d="M 642,490 Q 760,362 878,490" stroke="#3a3a60" strokeWidth="5"  fill="none" strokeOpacity="0.85" className="beam-right" />
-      <path d="M 648,492 Q 760,368 872,492" stroke=${AM}     strokeWidth="1.8" fill="none" strokeOpacity="0.6" className="beam-right" />
-      <line x1="760" y1="362" x2="760" y2="490" stroke=${AM} strokeWidth="2" className="beam-right" />
-      <circle cx="760" cy="358" r="6" fill=${AM} className="beam-right" />
-
-      <!-- Right dish (cx=1040) -->
-      <path d="M 920,490 Q 1040,360 1160,490" stroke="#12122a" strokeWidth="10" fill="none" strokeOpacity="0.9" className="beam-right" />
-      <path d="M 922,490 Q 1040,362 1158,490" stroke="#3a3a60" strokeWidth="5"  fill="none" strokeOpacity="0.85" className="beam-right" />
-      <path d="M 928,492 Q 1040,368 1152,492" stroke=${AM}     strokeWidth="1.8" fill="none" strokeOpacity="0.6" className="beam-right" />
-      <line x1="1040" y1="362" x2="1040" y2="490" stroke=${AM} strokeWidth="2" className="beam-right" />
-      <circle cx="1040" cy="358" r="6" fill=${AM} className="beam-right" />
-
-      <!-- Beam cone (narrow, razor-thin lines to source) -->
-      <line x1="758" y1="358" x2="896" y2="55" stroke=${TEAL} strokeWidth="1.2" strokeOpacity="0.7" className="beam-right" />
-      <line x1="762" y1="358" x2="906" y2="55" stroke=${TEAL} strokeWidth="1.2" strokeOpacity="0.7" className="beam-right" />
-      <line x1="1038" y1="358" x2="906" y2="55" stroke=${TEAL} strokeWidth="1.2" strokeOpacity="0.7" className="beam-right" />
-      <line x1="1042" y1="358" x2="916" y2="55" stroke=${TEAL} strokeWidth="1.2" strokeOpacity="0.7" className="beam-right" />
-
-      <!-- Baseline (draws itself) -->
-      <line x1="760" y1="380" x2="1040" y2="380" stroke=${TEAL} strokeWidth="6" strokeOpacity="0.15" className="beam-right" />
-      <line x1="760" y1="380" x2="1040" y2="380" stroke=${AM} strokeWidth="1.5" className="beam-right bl-draw" />
-
-      <!-- Triumph label -->
-      <text x="900" y="560" textAnchor="middle" fill=${TEAL} fontSize="22" fontWeight="600" className="beam-right">Resolves 42 μas shadow</text>
-
-      <!-- Bottom equation — always visible -->
-      <text x="600" y="660" textAnchor="middle" fill=${GOLD} fontSize="30" fontWeight="700">θ = 1.22 λ/D</text>
-    </svg>
-  `;
+// ── Star field ────────────────────────────────────────────────────────────────
+function makeStars(W, H, count, x0=0, x1=1) {
+  const COLS = ['#ffffff','#ffe8d6','#d0e8ff','#ffd0ff','#d0fff8','#fff8d0'];
+  return Array.from({length: count}, () => ({
+    x:   lerp(W*x0, W*x1, Math.random()),
+    y:   Math.random() * H * 0.82,
+    r:   Math.random() * 1.9 + 0.12,
+    a:   Math.random() * 0.9 + 0.08,
+    tw:  Math.random() * Math.PI * 2,
+    sp:  Math.random() * 0.022 + 0.004,
+    col: COLS[Math.floor(Math.random() * COLS.length)],
+  }));
 }
 
-// ── d02: The Baseline ─────────────────────────────────────────────────────────
-function d02() {
-  return html`
-    <svg viewBox="0 0 1200 700" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <filter id="bloom-d02" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-      </defs>
-
-      <rect width="1200" height="700" fill=${BG} />
-
-      <!-- Stars in upper zone -->
-      ${STARS.filter(s => s.y < 420).map((s, i) => html`<circle key=${'s'+i} cx=${s.x} cy=${s.y} r=${s.r} fill=${TX} fillOpacity=${s.op} />`)}
-
-      <!-- M87* source point -->
-      <circle cx="600" cy="42" r="5" fill=${GOLD} filter="url(#bloom-d02)" />
-      <text x="600" y="30" textAnchor="middle" fill=${GOLD} fontSize="13">M87*</text>
-
-      <!-- Static wavefront ghost lines (phase context) -->
-      <line x1="80" y1="172" x2="1120" y2="172" stroke="#1e1e38" strokeWidth="1" />
-      <line x1="80" y1="186" x2="1120" y2="186" stroke="#1e1e38" strokeWidth="1" />
-      <line x1="80" y1="200" x2="1120" y2="200" stroke="#1e1e38" strokeWidth="1" />
-
-      <!-- Animated wavefront (descends, loops) -->
-      <line x1="80" y1="185" x2="1120" y2="185" stroke=${AM} strokeWidth="1.8" strokeOpacity="0.7" className="wf-line" />
-
-      <!-- Left dish (ALMA, cx=180) — 3-stroke metallic -->
-      <path d="M 60,360 Q 180,268 300,360" stroke="#12122a" strokeWidth="8"  fill="none" strokeOpacity="0.8" />
-      <path d="M 62,360 Q 180,270 298,360" stroke="#3a3a60" strokeWidth="5"  fill="none" strokeOpacity="0.85" />
-      <path d="M 68,362 Q 180,276 292,362" stroke=${AM}     strokeWidth="1.8" fill="none" strokeOpacity="0.6" />
-      <line x1="180" y1="270" x2="180" y2="360" stroke=${AM} strokeWidth="2" />
-      <circle cx="180" cy="264" r="6" fill=${AM} filter="url(#bloom-d02)" />
-      <text x="180" y="408" textAnchor="middle" fill=${TX}  fontSize="15" fontWeight="600">Telescope 1</text>
-      <text x="180" y="428" textAnchor="middle" fill=${DIM} fontSize="12">ALMA · Chile</text>
-
-      <!-- Right dish (JCMT, cx=1020) — 3-stroke metallic -->
-      <path d="M 900,360 Q 1020,268 1140,360" stroke="#12122a" strokeWidth="8"  fill="none" strokeOpacity="0.8" />
-      <path d="M 902,360 Q 1020,270 1138,360" stroke="#3a3a60" strokeWidth="5"  fill="none" strokeOpacity="0.85" />
-      <path d="M 908,362 Q 1020,276 1132,362" stroke=${AM}     strokeWidth="1.8" fill="none" strokeOpacity="0.6" />
-      <line x1="1020" y1="270" x2="1020" y2="360" stroke=${AM} strokeWidth="2" />
-      <circle cx="1020" cy="264" r="6" fill=${AM} filter="url(#bloom-d02)" />
-      <text x="1020" y="408" textAnchor="middle" fill=${TX}  fontSize="15" fontWeight="600">Telescope 2</text>
-      <text x="1020" y="428" textAnchor="middle" fill=${DIM} fontSize="12">JCMT · Hawaii</text>
-
-      <!-- Phase tick marks (appear in sequence) -->
-      <line x1="180" y1="160" x2="180" y2="190" stroke=${GOLD} strokeWidth="2.5" className="tick-1" style=${{ transformBox:'fill-box', transformOrigin:'left center' }} />
-      <line x1="1020" y1="175" x2="1020" y2="205" stroke=${GOLD} strokeWidth="2.5" className="tick-2" style=${{ transformBox:'fill-box', transformOrigin:'left center' }} />
-
-      <!-- τ_g annotation (brace + label) -->
-      <path d="M 185,168 C 600,120 600,120 1015,183" fill="none" stroke=${GLOW} strokeWidth="1.2" strokeDasharray="4 3" className="tau-label" />
-      <text x="600" y="108" textAnchor="middle" fill=${GLOW} fontSize="28" fontWeight="700" className="tau-label">τ_g</text>
-      <text x="600" y="136" textAnchor="middle" fill=${GLOW} fontSize="16" className="tau-label">= B·ŝ/c</text>
-
-      <!-- Baseline measurement bar -->
-      <line x1="188" y1="458" x2="1012" y2="458" stroke=${AM} strokeWidth="1.2" />
-      <line x1="188" y1="452" x2="188" y2="464" stroke=${AM} strokeWidth="1.2" />
-      <line x1="1012" y1="452" x2="1012" y2="464" stroke=${AM} strokeWidth="1.2" />
-      <text x="600" y="480" textAnchor="middle" fill=${AM} fontSize="15">B = 10,900 km  →  u = B/λ = 8.4 Gλ</text>
-
-      <!-- UV plane panel (bottom) -->
-      <rect x="60" y="500" width="1080" height="180" fill=${DRK} stroke=${AM} strokeWidth="0.8" strokeOpacity="0.4" rx="6" />
-      <text x="110" y="522" fill=${AM} fontSize="13" fontWeight="600">UV Plane</text>
-
-      <!-- UV axes -->
-      <line x1="70" y1="590" x2="1130" y2="590" stroke="#222245" strokeWidth="0.8" />
-      <line x1="600" y1="508" x2="600" y2="672" stroke="#222245" strokeWidth="0.8" />
-      <text x="1118" y="605" fill=${DIM} fontSize="12">u</text>
-      <text x="608" y="518" fill=${DIM} fontSize="12">v</text>
-
-      <!-- Conjugate UV point (appears after main) -->
-      <circle cx="490" cy="630" r="4" fill=${AM} fillOpacity="0.35" className="uv-pt-conj" />
-      <text x="468" y="635" fill=${DIM} fontSize="11" className="uv-pt-conj">(-u,-v)</text>
-
-      <!-- Main UV point with pulse -->
-      <circle cx="710" cy="550" r="6" fill=${AM} filter="url(#bloom-d02)" className="uv-pt-main" style=${{ transformBox:'fill-box', transformOrigin:'center' }} />
-      <text x="728" y="548" fill=${TX} fontSize="11" className="uv-pt-main">(u,v)</text>
-
-      <text x="600" y="668" textAnchor="middle" fill=${DIM} fontSize="12">One baseline = one Fourier component of the sky</text>
-    </svg>
-  `;
-}
-
-// ── d03: Earth Rotation Synthesis ────────────────────────────────────────────
-function d03() {
-  return html`
-    <svg viewBox="0 0 1200 700" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <filter id="bloom-d03" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-        <filter id="softglow-d03" x="-60%" y="-60%" width="220%" height="220%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="14" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-        <radialGradient id="earthGrad-d03" cx="38%" cy="32%" r="65%">
-          <stop offset="0%"   stopColor="#1e4a8a" />
-          <stop offset="42%"  stopColor="#0d1f3d" />
-          <stop offset="100%" stopColor="#04080e" />
-        </radialGradient>
-        <radialGradient id="nightSide-d03" cx="76%" cy="50%" r="58%">
-          <stop offset="0%"   stopColor="#000000" stopOpacity="0.65" />
-          <stop offset="58%"  stopColor="#000000" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-
-      <rect width="1200" height="700" fill=${BG} />
-
-      <!-- ── LEFT: Rotating Earth (cx=310 cy=350) ── -->
-      <!-- Atmosphere layers (earned — Earth rotation is the story) -->
-      <circle cx="310" cy="350" r="234" fill="none" stroke=${TEAL} strokeWidth="30" strokeOpacity="0.04" filter="url(#softglow-d03)" />
-      <circle cx="310" cy="350" r="220" fill="none" stroke=${TEAL} strokeWidth="14" strokeOpacity="0.08" filter="url(#bloom-d03)" />
-      <circle cx="310" cy="350" r="210" fill="none" stroke=${TEAL} strokeWidth="5"  strokeOpacity="0.16" />
-
-      <!-- Earth body + night shadow -->
-      <circle cx="310" cy="350" r="196" fill="url(#earthGrad-d03)" />
-      <circle cx="310" cy="350" r="196" fill="url(#nightSide-d03)" />
-
-      <!-- Rotating group (CSS transform-origin: 310px 350px) -->
-      <g className="earth-group-cinema">
-        <line x1="310" y1="163" x2="310" y2="537" stroke=${TEAL} strokeWidth="7" strokeOpacity="0.18" filter="url(#softglow-d03)" />
-        <line x1="310" y1="163" x2="310" y2="537" stroke=${TX}   strokeWidth="1.2" strokeOpacity="0.75" />
-        <circle cx="310" cy="154" r="9" fill=${AM} filter="url(#bloom-d03)" />
-        <circle cx="310" cy="546" r="9" fill=${AM} filter="url(#bloom-d03)" />
-      </g>
-
-      <!-- Labels below Earth -->
-      <text x="310" y="600" textAnchor="middle" fill=${TEAL} fontSize="15">H = −6h → +6h</text>
-      <text x="310" y="622" textAnchor="middle" fill=${DIM}  fontSize="13">12 hour observation</text>
-
-      <!-- Divider arrow -->
-      <text x="575" y="358" textAnchor="middle" fill="#2a2a50" fontSize="32">→</text>
-
-      <!-- ── RIGHT: UV plane (cx=915 cy=350) ── -->
-      <rect x="630" y="50" width="550" height="600" fill=${DRK} stroke=${AM} strokeWidth="0.8" strokeOpacity="0.3" rx="6" />
-
-      <!-- Axes -->
-      <line x1="638" y1="350" x2="1172" y2="350" stroke="#222245" strokeWidth="0.8" />
-      <line x1="915" y1="58"  x2="915"  y2="642" stroke="#222245" strokeWidth="0.8" />
-      <text x="1158" y="365" fill=${DIM} fontSize="12">u (Gλ)</text>
-      <text x="923"  y="72"  fill=${DIM} fontSize="12">v (Gλ)</text>
-
-      <!-- Scale circles -->
-      <circle cx="915" cy="350" r="90"  fill="none" stroke="#1a1a38" strokeWidth="0.5" />
-      <circle cx="915" cy="350" r="180" fill="none" stroke="#1a1a38" strokeWidth="0.5" />
-      <circle cx="915" cy="350" r="270" fill="none" stroke="#1a1a38" strokeWidth="0.5" />
-
-      <!-- Arc family 1 (rx=240 ry=150, unrotated) -->
-      <path d="M 675,350 A 240,150 0 0 0 1155,350" stroke=${AM} strokeWidth="6" strokeOpacity="0.18" fill="none" filter="url(#bloom-d03)" className="uv-draw-1" />
-      <path d="M 675,350 A 240,150 0 0 0 1155,350" stroke=${AM} strokeWidth="2" strokeOpacity="0.9"  fill="none" className="uv-draw-1" />
-      <path d="M 675,350 A 240,150 0 0 1 1155,350" stroke=${AM} strokeWidth="1" strokeOpacity="0.3"  fill="none" className="uv-draw-1-conj" />
-
-      <!-- Arc family 2 (rx=190 ry=118, rotated 28°) -->
-      <g transform="rotate(28, 915, 350)">
-        <path d="M 725,350 A 190,118 0 0 0 1105,350" stroke=${AM} strokeWidth="4" strokeOpacity="0.14" fill="none" filter="url(#bloom-d03)" className="uv-draw-2" />
-        <path d="M 725,350 A 190,118 0 0 0 1105,350" stroke=${AM} strokeWidth="1.8" strokeOpacity="0.8" fill="none" className="uv-draw-2" />
-        <path d="M 725,350 A 190,118 0 0 1 1105,350" stroke=${AM} strokeWidth="1"   strokeOpacity="0.28" fill="none" className="uv-draw-2-conj" />
-      </g>
-
-      <!-- Arc family 3 (rx=148 ry=92, rotated -22°) -->
-      <g transform="rotate(-22, 915, 350)">
-        <path d="M 767,350 A 148,92 0 0 0 1063,350" stroke=${AM} strokeWidth="3" strokeOpacity="0.12" fill="none" filter="url(#bloom-d03)" className="uv-draw-3" />
-        <path d="M 767,350 A 148,92 0 0 0 1063,350" stroke=${AM} strokeWidth="1.6" strokeOpacity="0.75" fill="none" className="uv-draw-3" />
-        <path d="M 767,350 A 148,92 0 0 1 1063,350" stroke=${AM} strokeWidth="0.9" strokeOpacity="0.24" fill="none" className="uv-draw-3-conj" />
-      </g>
-
-      <text x="915" y="668" textAnchor="middle" fill=${AM}  fontSize="14">One baseline → one elliptical arc</text>
-      <text x="915" y="686" textAnchor="middle" fill=${DIM} fontSize="12">28 baselines × 12h → 11,000+ UV samples per night</text>
-    </svg>
-  `;
-}
-
-// ── d04: The Event Horizon Telescope ─────────────────────────────────────────
-function d04() {
-  const proj = (lon, lat) => ({
-    x: Math.round(40 + (lon + 180) / 360 * 1120),
-    y: Math.round(Math.min(60 + (80 - lat) / 150 * 520, 575)),
-  });
-
-  const stations = [
-    { ...proj(-67.755, -23.029),           name: 'ALMA', isAlma: true },
-    { ...proj(-67.759, -23.006), dx:5,dy:-4, name: 'APEX', isAlma: true },
-    { ...proj(-155.478, 19.823),           name: 'SMA',  isAlma: false },
-    { ...proj(-155.472, 19.824), dx:5,dy:-5, name: 'JCMT', isAlma: false },
-    { ...proj(-97.314,  18.986),           name: 'LMT',  isAlma: false },
-    { ...proj(-3.392,   37.066),           name: 'IRAM', isAlma: false },
-    { ...proj(-109.891, 32.701),           name: 'SMT',  isAlma: false },
-    { ...proj(-44.65,  -89.991),           name: 'SPT',  isAlma: false },
-    { ...proj(-68.703,  76.535),           name: 'GLT',  isAlma: false },
-  ].map(s => ({ ...s, x: s.x + (s.dx || 0), y: s.y + (s.dy || 0) }));
-
-  const baselines = [];
-  for (let i = 0; i < stations.length; i++) {
-    for (let j = i + 1; j < stations.length; j++) {
-      baselines.push({
-        x1: stations[i].x, y1: stations[i].y,
-        x2: stations[j].x, y2: stations[j].y,
-        isAlma: stations[i].isAlma || stations[j].isAlma,
+function drawStars(g, stars, T, alpha) {
+  if (alpha <= 0) return;
+  stars.forEach(s => {
+    const tw = 0.72 + 0.28 * Math.sin(s.tw + T * s.sp * 10);
+    const ea = s.a * alpha * tw;
+    if (ea <= 0.01) return;
+    if (s.r > 1.4 && ea > 0.5) {
+      [0, Math.PI/2].forEach(ang => {
+        g.save(); g.translate(s.x, s.y); g.rotate(ang);
+        const sg = g.createLinearGradient(-s.r*5.5, 0, s.r*5.5, 0);
+        sg.addColorStop(0, 'rgba(255,255,255,0)');
+        sg.addColorStop(0.5, s.col);
+        sg.addColorStop(1, 'rgba(255,255,255,0)');
+        g.globalAlpha = ea;
+        g.beginPath(); g.moveTo(-s.r*5.5, 0); g.lineTo(s.r*5.5, 0);
+        g.strokeStyle = sg; g.lineWidth = 0.6; g.stroke();
+        g.restore();
       });
     }
+    g.globalAlpha = ea;
+    g.beginPath(); g.arc(s.x, s.y, s.r, 0, Math.PI*2);
+    g.fillStyle = s.col; g.fill();
+  });
+  g.globalAlpha = 1;
+}
+
+// ── Nebulae ───────────────────────────────────────────────────────────────────
+function drawNebulae(g, W, H, side, alpha) {
+  if (alpha <= 0) return;
+  const clouds = side === 'left' ? [
+    [W*.13, H*.18, 235, 138, '#cc00ff', 0.33, -0.3],
+    [W*.27, H*.36, 198, 112, '#ff0066', 0.27,  0.2],
+    [W*.07, H*.50, 172,  98, '#6600ee', 0.25, -0.1],
+    [W*.05, H*.27, 122,  70, '#aa00ff', 0.23,  0.15],
+    [W*.21, H*.10, 152,  86, '#ff2299', 0.20,  0.4],
+    [W*.32, H*.55, 130,  75, '#ff0044', 0.15, -0.25],
+  ] : [
+    [W*.74, H*.22, 228, 128, '#0044ff', 0.31,  0.2],
+    [W*.84, H*.44, 182, 106, '#00ddcc', 0.27, -0.15],
+    [W*.66, H*.48, 162,  92, '#0088ff', 0.25,  0.3],
+    [W*.88, H*.24, 132,  76, '#00ffee', 0.21, -0.2],
+    [W*.70, H*.08, 118,  68, '#4400ff', 0.23,  0.1],
+  ];
+  clouds.forEach(([x, y, rx, ry, col, op, rot]) => {
+    g.save(); g.translate(x, y); g.rotate(rot);
+    const maxR = Math.max(rx, ry);
+    const gr = g.createRadialGradient(0,0,0, 0,0,maxR);
+    gr.addColorStop(0,    rgba(col, op*alpha*1.35));
+    gr.addColorStop(0.3,  rgba(col, op*alpha*0.72));
+    gr.addColorStop(0.68, rgba(col, op*alpha*0.18));
+    gr.addColorStop(1,    'rgba(0,0,0,0)');
+    g.scale(rx/maxR, ry/maxR);
+    g.beginPath(); g.arc(0,0,maxR,0,Math.PI*2); g.fillStyle = gr; g.fill();
+    g.restore();
+  });
+}
+
+function drawMilkyWay(g, W, H, alpha) {
+  if (alpha <= 0) return;
+  g.save(); g.globalAlpha = alpha * 0.30;
+  const grad = g.createLinearGradient(W*.04, H*.04, W*.44, H*.90);
+  grad.addColorStop(0,    'rgba(190,150,255,0)');
+  grad.addColorStop(0.20, 'rgba(212,172,255,0.78)');
+  grad.addColorStop(0.44, 'rgba(232,202,255,1)');
+  grad.addColorStop(0.70, 'rgba(202,167,255,0.72)');
+  grad.addColorStop(1,    'rgba(170,140,255,0)');
+  g.beginPath();
+  g.moveTo(0, H*.04); g.lineTo(W*.46, H*.16); g.lineTo(W*.46, H*.74); g.lineTo(0, H*.96);
+  g.closePath(); g.fillStyle = grad; g.fill();
+  g.globalAlpha = alpha * 0.10;
+  g.fillStyle = 'rgba(6,4,14,0.95)';
+  g.beginPath();
+  g.moveTo(0, H*.30);
+  g.quadraticCurveTo(W*.20, H*.39, W*.46, H*.34);
+  g.quadraticCurveTo(W*.20, H*.46, 0, H*.40);
+  g.closePath(); g.fill();
+  g.restore();
+}
+
+// ── Atacama terrain ───────────────────────────────────────────────────────────
+function drawAtacama(g, cW, H, groundY, alpha) {
+  if (alpha <= 0) return;
+  g.save(); g.globalAlpha = alpha;
+
+  const farGrad = g.createLinearGradient(0, groundY-H*.28, 0, groundY);
+  farGrad.addColorStop(0, '#0e091e'); farGrad.addColorStop(1, '#070512');
+  g.fillStyle = farGrad;
+  g.beginPath(); g.moveTo(0, groundY);
+  g.bezierCurveTo(cW*.06,groundY-H*.12, cW*.12,groundY-H*.22, cW*.18,groundY-H*.24);
+  g.bezierCurveTo(cW*.22,groundY-H*.26, cW*.26,groundY-H*.20, cW*.31,groundY-H*.23);
+  g.bezierCurveTo(cW*.36,groundY-H*.26, cW*.40,groundY-H*.28, cW*.45,groundY-H*.26);
+  g.bezierCurveTo(cW*.49,groundY-H*.24, cW*.51,groundY-H*.20, cW*.54,groundY-H*.18);
+  g.lineTo(cW, groundY); g.closePath(); g.fill();
+
+  const nearGrad = g.createLinearGradient(0, groundY-H*.20, 0, groundY);
+  nearGrad.addColorStop(0, '#050310'); nearGrad.addColorStop(1, '#030208');
+  g.fillStyle = nearGrad;
+  g.beginPath(); g.moveTo(0, groundY);
+  g.bezierCurveTo(cW*.04,groundY-H*.07, cW*.09,groundY-H*.14, cW*.14,groundY-H*.16);
+  g.bezierCurveTo(cW*.18,groundY-H*.18, cW*.21,groundY-H*.12, cW*.25,groundY-H*.15);
+  g.bezierCurveTo(cW*.29,groundY-H*.18, cW*.33,groundY-H*.20, cW*.37,groundY-H*.18);
+  g.bezierCurveTo(cW*.41,groundY-H*.16, cW*.44,groundY-H*.12, cW*.47,groundY-H*.15);
+  g.bezierCurveTo(cW*.50,groundY-H*.17, cW*.52,groundY-H*.14, cW*.55,groundY-H*.11);
+  g.lineTo(cW, groundY); g.closePath(); g.fill();
+
+  const floorGrad = g.createLinearGradient(0, groundY, 0, H);
+  floorGrad.addColorStop(0, '#0a0615'); floorGrad.addColorStop(1, '#020108');
+  g.fillStyle = floorGrad; g.fillRect(0, groundY, cW, H - groundY);
+
+  const hazeGrad = g.createLinearGradient(0, groundY-H*.06, 0, groundY);
+  hazeGrad.addColorStop(0, 'rgba(80,20,120,0)');
+  hazeGrad.addColorStop(1, 'rgba(80,20,120,0.20)');
+  g.fillStyle = hazeGrad; g.fillRect(0, groundY-H*.06, cW, H*.06);
+
+  g.globalAlpha = alpha * 0.15; g.fillStyle = '#2a1840';
+  [[cW*.08,groundY+H*.02,18,5],[cW*.19,groundY+H*.03,12,4],
+   [cW*.33,groundY+H*.015,22,6],[cW*.44,groundY+H*.025,14,4]].forEach(([ex,ey,erx,ery]) => {
+    g.beginPath(); g.ellipse(ex,ey,erx,ery,0,0,Math.PI*2); g.fill();
+  });
+
+  g.globalAlpha = alpha * 0.20; g.strokeStyle = '#1a0c2e'; g.lineWidth = 1.2;
+  [[cW*.10,groundY-2,0.45],[cW*.23,groundY-2,0.38],[cW*.41,groundY-2,0.42]].forEach(([dx,dy,dsc]) => {
+    g.beginPath(); g.arc(dx, dy-dsc*14, dsc*14, Math.PI, Math.PI*2); g.stroke();
+    g.beginPath(); g.moveTo(dx,dy); g.lineTo(dx,dy-dsc*14); g.stroke();
+  });
+
+  g.restore();
+}
+
+// ── Three-pass glow ───────────────────────────────────────────────────────────
+function glow3(g, x, y, col, r, alpha) {
+  [[r*3.5, 0.06], [r*1.8, 0.15], [r, 0.55]].forEach(([rad, op]) => {
+    const gr = g.createRadialGradient(x,y,0, x,y,rad);
+    gr.addColorStop(0, rgba(col, op*alpha));
+    gr.addColorStop(1, 'rgba(0,0,0,0)');
+    g.beginPath(); g.arc(x,y,rad,0,Math.PI*2); g.fillStyle = gr; g.fill();
+  });
+}
+
+// ── Radio telescope dish ──────────────────────────────────────────────────────
+// Returns {fx, fy} — feed horn position. Dish opens upward (∪ shape).
+function drawDish(g, cx, groundY, sc, tintGold, glowCol, alpha) {
+  const fx = cx, fy = groundY - 78*sc;
+  if (alpha <= 0) return { fx, fy };
+  g.save(); g.globalAlpha = alpha;
+
+  let gr = g.createRadialGradient(cx, groundY, 0, cx, groundY, 55*sc);
+  gr.addColorStop(0, rgba(glowCol, 0.15)); gr.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = gr; g.beginPath(); g.ellipse(cx,groundY,55*sc,11*sc,0,0,Math.PI*2); g.fill();
+
+  g.fillStyle = tintGold ? '#1a1428' : '#12141e';
+  g.strokeStyle = tintGold ? '#3a2e18' : '#1e2035'; g.lineWidth = 0.8;
+  g.beginPath();
+  g.moveTo(cx-14*sc, groundY); g.lineTo(cx+14*sc, groundY);
+  g.lineTo(cx+10*sc, groundY-10*sc); g.lineTo(cx-10*sc, groundY-10*sc);
+  g.closePath(); g.fill(); g.stroke();
+
+  g.fillStyle = tintGold ? '#221c30' : '#181828';
+  g.fillRect(cx-5*sc, groundY-36*sc, 10*sc, 26*sc);
+  g.fillStyle = 'rgba(255,255,255,0.05)';
+  g.fillRect(cx+1*sc, groundY-36*sc, 2*sc, 26*sc);
+
+  const azGrad = g.createLinearGradient(cx-12*sc,0, cx+12*sc,0);
+  azGrad.addColorStop(0,'#101020'); azGrad.addColorStop(0.5,'#202040'); azGrad.addColorStop(1,'#101020');
+  g.fillStyle = azGrad;
+  g.beginPath(); g.ellipse(cx,groundY-36*sc,12*sc,3*sc,0,0,Math.PI*2); g.fill();
+  g.strokeStyle = '#303050'; g.lineWidth = 0.5;
+  g.beginPath(); g.ellipse(cx,groundY-36*sc,12*sc,3*sc,0,0,Math.PI*2); g.stroke();
+
+  g.strokeStyle = tintGold ? '#2e2414' : '#1e2030';
+  g.lineWidth = 3.5*sc; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(cx,groundY-36*sc);
+  g.quadraticCurveTo(cx-28*sc,groundY-38*sc, cx-40*sc,groundY-42*sc); g.stroke();
+  g.beginPath(); g.moveTo(cx,groundY-36*sc);
+  g.quadraticCurveTo(cx+28*sc,groundY-38*sc, cx+40*sc,groundY-42*sc); g.stroke();
+  g.lineCap = 'butt';
+
+  // Parabola: vertex at bottom (groundY-42), rim at top (groundY-74)
+  const pts = [];
+  for (let i = 0; i <= 80; i++) {
+    const t = (i/80)*2 - 1;
+    pts.push([cx + t*68*sc, groundY - 42*sc - t*t*32*sc]);
   }
 
-  const latLines = [-60, -30, 0, 30, 60].map(lat => ({
-    y: Math.round(60 + (80 - lat) / 150 * 520),
-    isEquator: lat === 0,
-  }));
-  const lonLines = [-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150].map(lon => ({
-    x: Math.round(40 + (lon + 180) / 360 * 1120),
-  }));
+  g.strokeStyle = 'rgba(180,180,200,0.12)'; g.lineWidth = 0.6;
+  for (let i = 0; i < 7; i++) {
+    const t2 = (i/6)*2 - 1;
+    g.beginPath(); g.moveTo(cx, groundY-42*sc);
+    g.lineTo(cx+t2*68*sc, groundY-42*sc-t2*t2*32*sc); g.stroke();
+  }
 
-  const alma = stations[0];
+  g.save();
+  // Clip to dish interior (∪ bowl: parabola path + horizontal close at rim level)
+  g.beginPath(); g.moveTo(pts[0][0], pts[0][1]);
+  pts.slice(1).forEach(([px,py]) => g.lineTo(px,py));
+  g.closePath(); g.clip();
+  const dishGrad = g.createRadialGradient(cx-5*sc, groundY-64*sc, 0, cx, groundY-58*sc, 70*sc);
+  dishGrad.addColorStop(0, tintGold ? '#2e2a18' : '#18182e');
+  dishGrad.addColorStop(0.6, tintGold ? '#1a1610' : '#10101e');
+  dishGrad.addColorStop(1, tintGold ? '#0e0c08' : '#08080e');
+  g.fillStyle = dishGrad; g.fillRect(cx-80*sc, groundY-78*sc, 160*sc, 40*sc);
+  g.strokeStyle = 'rgba(255,255,255,0.07)'; g.lineWidth = 0.5;
+  [0.3, 0.6, 0.9].forEach(f => {
+    // Upper-semicircle arcs (above vertex = inside bowl face)
+    g.beginPath(); g.arc(cx, groundY-42*sc, f*68*sc, 0, Math.PI, true); g.stroke();
+  });
+  for (let i = 1; i < 8; i++) {
+    const ang = (i/8)*Math.PI, t2 = Math.cos(Math.PI - ang);
+    g.beginPath(); g.moveTo(cx, groundY-42*sc);
+    g.lineTo(cx+t2*68*sc, groundY-42*sc-t2*t2*32*sc); g.stroke();
+  }
+  g.restore();
 
-  return html`
-    <svg viewBox="0 0 1200 700" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <filter id="bloom-d04" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-        <filter id="softglow-d04" x="-100%" y="-100%" width="300%" height="300%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="18" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-      </defs>
+  g.strokeStyle = 'rgba(255,255,255,0.55)'; g.lineWidth = 1.2;
+  g.beginPath(); g.moveTo(pts[0][0], pts[0][1]);
+  pts.slice(1).forEach(([px,py]) => g.lineTo(px,py)); g.stroke();
 
-      <rect width="1200" height="700" fill=${BG} />
+  g.strokeStyle = 'rgba(200,200,220,0.38)'; g.lineWidth = 0.9;
+  [[-54,-63],[-34,-50],[34,-50],[54,-63]].forEach(([dx,dy]) => {
+    g.beginPath(); g.moveTo(cx+dx*sc, groundY+dy*sc); g.lineTo(fx, fy); g.stroke();
+  });
 
-      <!-- Map background -->
-      <rect x="40" y="60" width="1120" height="520" fill=${DRK} rx="4" />
+  g.fillStyle = tintGold ? '#3a2e18' : '#202030';
+  g.strokeStyle = 'rgba(255,255,255,0.25)'; g.lineWidth = 0.7;
+  g.fillRect(fx-4*sc, fy-3*sc, 8*sc, 6*sc);
+  g.strokeRect(fx-4*sc, fy-3*sc, 8*sc, 6*sc);
+  glow3(g, fx, fy, glowCol, 12*sc, 1.0);
 
-      <!-- Continent outlines (equirectangular, dark navy fill) -->
-      <path d="M 95,68 L 185,45 L 248,58 L 285,95 L 295,145 L 268,195 L 238,225 L 212,248 L 188,272 L 165,285 L 142,268 L 118,235 L 96,198 L 78,162 L 72,125 L 80,90 Z" fill="#0d1a30" stroke="#1a2a4a" strokeWidth="1" />
-      <path d="M 188,272 L 218,255 L 248,278 L 278,308 L 292,355 L 298,415 L 285,468 L 262,510 L 238,528 L 212,515 L 195,478 L 182,428 L 178,375 L 182,318 Z" fill="#0d1a30" stroke="#1a2a4a" strokeWidth="1" />
-      <path d="M 488,68 L 545,55 L 578,68 L 592,88 L 575,108 L 548,118 L 522,128 L 505,115 L 492,95 Z" fill="#0d1a30" stroke="#1a2a4a" strokeWidth="1" />
-      <path d="M 492,95 L 548,118 L 582,145 L 605,185 L 618,245 L 612,308 L 592,365 L 562,408 L 528,428 L 495,415 L 468,378 L 452,328 L 448,268 L 455,215 L 468,168 L 478,128 Z" fill="#0d1a30" stroke="#1a2a4a" strokeWidth="1" />
-      <path d="M 578,68 L 688,42 L 798,38 L 885,52 L 945,72 L 978,105 L 962,138 L 915,155 L 868,162 L 815,148 L 762,145 L 715,132 L 672,118 L 625,108 L 592,88 Z" fill="#0d1a30" stroke="#1a2a4a" strokeWidth="1" />
-      <path d="M 878,345 L 945,332 L 995,355 L 1012,398 L 1005,445 L 972,468 L 928,472 L 892,448 L 872,408 L 868,368 Z" fill="#0d1a30" stroke="#1a2a4a" strokeWidth="1" />
-      <rect x="40" y="630" width="1120" height="20" fill="#0a1525" fillOpacity="0.6" />
-
-      <!-- Lat grid -->
-      ${latLines.map((l, i) => html`
-        <line key=${'lat'+i} x1="40" y1=${l.y} x2="1160" y2=${l.y}
-          stroke=${l.isEquator ? '#1c1c3a' : '#12122a'}
-          strokeWidth=${l.isEquator ? 1 : 0.5}
-          strokeOpacity=${l.isEquator ? 0.9 : 0.6} />
-      `)}
-
-      <!-- Lon grid -->
-      ${lonLines.map((l, i) => html`
-        <line key=${'lon'+i} x1=${l.x} y1="60" x2=${l.x} y2="580"
-          stroke="#12122a" strokeWidth="0.5" strokeOpacity="0.5" />
-      `)}
-
-      <!-- Non-ALMA baselines (subtle, appear after ALMA) -->
-      ${baselines.filter(b => !b.isAlma).map((b, i) => html`
-        <line key=${'obl'+i}
-          x1=${b.x1} y1=${b.y1} x2=${b.x2} y2=${b.y2}
-          className="other-baseline"
-          stroke=${BLUE} strokeWidth="0.6" strokeOpacity="0.15" />
-      `)}
-
-      <!-- ALMA baselines — glow + animated flow -->
-      ${baselines.filter(b => b.isAlma).map((b, i) => html`
-        <line key=${'agl'+i}
-          x1=${b.x1} y1=${b.y1} x2=${b.x2} y2=${b.y2}
-          className="alma-baseline"
-          stroke=${AM} strokeWidth="3" strokeOpacity="0.2"
-          filter="url(#softglow-d04)" />
-      `)}
-      ${baselines.filter(b => b.isAlma).map((b, i) => html`
-        <line key=${'abl'+i}
-          x1=${b.x1} y1=${b.y1} x2=${b.x2} y2=${b.y2}
-          className="alma-baseline baseline-flow"
-          stroke=${AM} strokeWidth="1.5" strokeOpacity="0.7" />
-      `)}
-
-      <!-- Station bloom auras -->
-      ${stations.map((s, i) => html`
-        <circle key=${'aura'+i}
-          cx=${s.x} cy=${s.y} r="18"
-          fill=${AM} fillOpacity="0.15"
-          filter="url(#softglow-d04)"
-          className=${'station-dot-'+(i+1)} />
-      `)}
-
-      <!-- Station dots -->
-      ${stations.map((s, i) => html`
-        <circle key=${'dot'+i}
-          cx=${s.x} cy=${s.y} r=${s.isAlma ? 10 : 7}
-          fill=${s.isAlma ? GOLD : TEAL}
-          filter="url(#bloom-d04)"
-          className=${'station-dot-'+(i+1)} />
-      `)}
-
-      <!-- Station labels -->
-      ${stations.map((s, i) => html`
-        <text key=${'lbl'+i}
-          x=${s.x + (s.isAlma ? 0 : 12)} y=${s.y - 16}
-          textAnchor=${s.isAlma ? 'middle' : 'start'}
-          fill=${s.isAlma ? GOLD : TX}
-          fontSize=${s.isAlma ? 13 : 11}
-          fontWeight=${s.isAlma ? '700' : '400'}
-          className=${'station-label-'+(i+1)}
-        >${s.name}</text>
-      `)}
-
-      <!-- ALMA callout -->
-      <rect x="15" y=${alma.y - 12} width="155" height="38" fill="rgba(196,165,85,0.08)" stroke=${AM} strokeWidth="0.8" rx="4" className="alma-baseline" />
-      <text x="25" y=${alma.y + 5}  fill=${AM}  fontSize="10" className="alma-baseline">SEFD: 94 Jy</text>
-      <text x="25" y=${alma.y + 20} fill=${DIM} fontSize="9"  fontStyle="italic" className="alma-baseline">Most sensitive</text>
-
-      <!-- Map border -->
-      <rect x="40" y="60" width="1120" height="520" fill="none" stroke="#2a2200" strokeWidth="1.5" rx="4" />
-
-      <!-- UV inset (bottom-right, appears last) -->
-      <g className="uv-inset">
-        <rect x="850" y="490" width="330" height="190" fill=${DRK} stroke=${AM} strokeWidth="1" rx="6" />
-        <text x="1015" y="514" textAnchor="middle" fill=${AM} fontSize="13" fontWeight="600">UV Coverage</text>
-        <path d="M 895,600 A 120,72 0 0 0 1135,600" stroke=${AM} strokeWidth="1.8" fill="none" strokeOpacity="0.8" />
-        <path d="M 895,600 A 120,72 0 0 1 1135,600" stroke=${AM} strokeWidth="1"   fill="none" strokeOpacity="0.3" />
-        <g transform="rotate(28, 1015, 600)">
-          <path d="M 930,600 A 85,52 0 0 0 1100,600" stroke=${AM} strokeWidth="1.4" fill="none" strokeOpacity="0.6" />
-          <path d="M 930,600 A 85,52 0 0 1 1100,600" stroke=${AM} strokeWidth="0.8" fill="none" strokeOpacity="0.25" />
-        </g>
-        <g transform="rotate(-22, 1015, 600)">
-          <path d="M 960,600 A 55,34 0 0 0 1070,600" stroke=${AM} strokeWidth="1"   fill="none" strokeOpacity="0.45" />
-          <path d="M 960,600 A 55,34 0 0 1 1070,600" stroke=${AM} strokeWidth="0.6" fill="none" strokeOpacity="0.2" />
-        </g>
-      </g>
-
-      <!-- Footer -->
-      <text x="600" y="650" textAnchor="middle" fill=${DIM} fontSize="14">Max baseline: 10,900 km  ·  θ_synth ≈ 20 μas  ·  28 baselines</text>
-    </svg>
-  `;
+  g.restore();
+  return { fx, fy };
 }
 
-// ── d05: From Noise to Image (sidelobe → photon ring transformation) ──────────
-function d05() {
-  const cx = 600, cy = 320;
-  return html`
-    <svg viewBox="0 0 1200 700" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <filter id="bloom-d05" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-        <filter id="hardblur-d05" x="-80%" y="-80%" width="260%" height="260%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="22" />
-        </filter>
-      </defs>
-
-      <rect width="1200" height="700" fill=${BG} />
-
-      <!-- Sparse star field -->
-      ${STARS.filter((_, i) => i < 80).map((s, i) => html`<circle key=${'s'+i} cx=${s.x} cy=${s.y} r=${s.r} fill=${TX} fillOpacity=${s.op * 0.6} />`)}
-
-      <!-- Sidelobe rings (3 rings, start visible, fade in sequence) -->
-      <circle cx=${cx} cy=${cy} r="285" fill="none" stroke="#4a4a70" strokeWidth="0.7" strokeOpacity="0.6" className="sl-ring-3" />
-      <circle cx=${cx} cy=${cy} r="285" fill="none" stroke="#4a4a70" strokeWidth="4"   strokeOpacity="0.2" filter="url(#bloom-d05)" className="sl-ring-3" />
-      <circle cx=${cx} cy=${cy} r="225" fill="none" stroke="#5a5a88" strokeWidth="1"   strokeOpacity="0.65" className="sl-ring-2" />
-      <circle cx=${cx} cy=${cy} r="225" fill="none" stroke="#5a5a88" strokeWidth="5"   strokeOpacity="0.18" filter="url(#bloom-d05)" className="sl-ring-2" />
-      <circle cx=${cx} cy=${cy} r="165" fill="none" stroke="#7070a0" strokeWidth="1.4" strokeOpacity="0.7" className="sl-ring-1" />
-      <circle cx=${cx} cy=${cy} r="165" fill="none" stroke="#7070a0" strokeWidth="6"   strokeOpacity="0.15" filter="url(#bloom-d05)" className="sl-ring-1" />
-
-      <!-- Artifact blobs (fade with sidelobes) -->
-      <circle cx="420" cy="220" r="18" fill=${GLOW} fillOpacity="0.12" filter="url(#hardblur-d05)" className="sl-ring-2" />
-      <circle cx="780" cy="420" r="14" fill=${GLOW} fillOpacity="0.10" filter="url(#hardblur-d05)" className="sl-ring-3" />
-      <circle cx="390" cy="430" r="12" fill=${GLOW} fillOpacity="0.08" filter="url(#hardblur-d05)" className="sl-ring-2" />
-
-      <!-- Sidelobe annotation (fades with rings) -->
-      <text x="840" y="185" fill=${DIM} fontSize="13" fontStyle="italic" className="sl-ring-2">sidelobe artifacts</text>
-      <line x1="830" y1="192" x2="778" y2="230" stroke=${DIM} strokeWidth="0.8" className="sl-ring-2" />
-
-      <!-- Accretion disk glow (emerges as sidelobes fade) — new class name -->
-      <circle cx=${cx} cy=${cy} r="118" fill="none" stroke="rgba(255,110,0,0.06)"  strokeWidth="28" className="photon-ring" />
-      <circle cx=${cx} cy=${cy} r="108" fill="none" stroke="rgba(255,145,0,0.10)"  strokeWidth="18" className="photon-ring" />
-      <circle cx=${cx} cy=${cy} r="99"  fill="none" stroke="rgba(255,182,30,0.16)" strokeWidth="11" className="photon-ring" />
-      <circle cx=${cx} cy=${cy} r="91"  fill="none" stroke="rgba(255,208,40,0.22)" strokeWidth="6"  className="photon-ring" />
-
-      <!-- Photon ring core -->
-      <circle cx=${cx} cy=${cy} r="83" fill="none" stroke=${GOLD} strokeWidth="4.5" filter="url(#bloom-d05)" className="photon-ring" />
-      <circle cx=${cx} cy=${cy} r="79" fill="none" stroke=${GOLD} strokeWidth="1"   strokeOpacity="0.35" className="photon-ring" />
-
-      <!-- Shadow interior (event horizon) — new class name -->
-      <circle cx=${cx} cy=${cy} r="71" fill="#040408" className="bh-shadow" />
-      <circle cx=${cx} cy=${cy} r="60" fill="#020204" className="bh-shadow" />
-
-      <!-- Label: Dirty Image → CLEAN Image (new class names) -->
-      <text x="600" y="570" textAnchor="middle" fill=${RED}  fontSize="22" fontWeight="600" className="lbl-dirty">Dirty Image</text>
-      <text x="600" y="570" textAnchor="middle" fill=${TEAL} fontSize="22" fontWeight="600" className="lbl-clean">CLEAN Image</text>
-
-      <!-- CLEAN equation (appears with clean label) -->
-      <text x="600" y="618" textAnchor="middle" fill=${GOLD} fontSize="18" fontFamily="'Courier New', monospace" className="lbl-clean">I^C = (M ⊛ G) + r_final</text>
-      <text x="600" y="644" textAnchor="middle" fill=${DIM}  fontSize="12" className="lbl-clean">model convolved with restore beam, plus residuals</text>
-    </svg>
-  `;
+// ── Beam cone ─────────────────────────────────────────────────────────────────
+function drawBeam(g, fx, fy, topY, hw, col, alpha) {
+  if (alpha <= 0) return;
+  [[hw*1.7,0.03],[hw,0.14],[hw*0.55,0.25],[hw*0.28,0.12]].forEach(([hwm,op]) => {
+    const grad = g.createLinearGradient(fx,fy, fx,topY);
+    grad.addColorStop(0, rgba(col, op*alpha));
+    grad.addColorStop(0.4, rgba(col, op*alpha*0.36));
+    grad.addColorStop(1, rgba(col, 0));
+    g.beginPath(); g.moveTo(fx-7,fy); g.lineTo(fx-hwm,topY);
+    g.lineTo(fx+hwm,topY); g.lineTo(fx+7,fy); g.closePath();
+    g.fillStyle = grad; g.fill();
+  });
 }
 
-// ── d06: First Light (real EHT image) ────────────────────────────────────────
-function d06() {
-  return html`
-    <svg viewBox="0 0 1200 700" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <filter id="bloom-d06" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-        <radialGradient id="vig-d06" cx="35%" cy="50%" r="55%">
-          <stop offset="50%" stopColor="transparent" />
-          <stop offset="100%" stopColor=${BG} stopOpacity="0.88" />
-        </radialGradient>
-      </defs>
-
-      <rect width="1200" height="700" fill=${BG} />
-
-      <!-- Real EHT M87* image, large centered-left -->
-      <image
-        href="../assets/eht-m87-2019.jpg"
-        x="20" y="15"
-        width="840" height="670"
-        preserveAspectRatio="xMidYMid meet"
-        className="eht-image-reveal"
-      />
-
-      <!-- Dramatic vignette -->
-      <rect width="1200" height="700" fill="url(#vig-d06)" />
-
-      <!-- Scale bar -->
-      <line x1="48" y1="648" x2="168" y2="648" stroke=${AM} strokeWidth="2" />
-      <line x1="48" y1="642" x2="48"  y2="654" stroke=${AM} strokeWidth="2" />
-      <line x1="168" y1="642" x2="168" y2="654" stroke=${AM} strokeWidth="2" />
-      <text x="108" y="668" textAnchor="middle" fill=${AM} fontSize="14">42 μas</text>
-
-      <!-- Title watermark -->
-      <text x="60" y="52" fill=${GOLD} fontSize="18" fontWeight="700" filter="url(#bloom-d06)">M87*  ·  April 10, 2019</text>
-
-      <!-- Citation -->
-      <text x="600" y="688" textAnchor="middle" fill=${DIM} fontSize="13" fontStyle="italic">EHT Collaboration 2019  ·  ApJL 875, L1</text>
-    </svg>
-  `;
+// ── Blurry source (unresolved M87*) ──────────────────────────────────────────
+function drawBlurry(g, x, y, alpha) {
+  if (alpha <= 0) return;
+  [[95,0.02,'#ff2200'],[72,0.04,'#ff4400'],[52,0.07,'#ff6600'],
+   [38,0.12,'#ff8800'],[28,0.20,'#ffaa22'],[18,0.38,'#ffcc55'],
+   [10,0.65,'#fff5aa'],[4,0.85,'#ffffff'],[2.2,1.0,'#ffffff']].forEach(([r,op,col]) => {
+    const gr = g.createRadialGradient(x,y,0, x,y,r);
+    gr.addColorStop(0, rgba(col, op*alpha));
+    gr.addColorStop(0.6, rgba(col, op*alpha*0.3));
+    gr.addColorStop(1, 'rgba(0,0,0,0)');
+    g.beginPath(); g.arc(x,y,r,0,Math.PI*2); g.fillStyle = gr; g.fill();
+  });
+  [['#ff00aa',62,0.08],['#0055ff',55,0.07]].forEach(([col,r,op]) => {
+    const gr = g.createRadialGradient(x,y,r*0.6, x,y,r);
+    gr.addColorStop(0,'rgba(0,0,0,0)'); gr.addColorStop(1, rgba(col,op*alpha));
+    g.beginPath(); g.arc(x,y,r,0,Math.PI*2); g.fillStyle = gr; g.fill();
+  });
 }
 
-// ── d07: Beyond Earth — BHEX ─────────────────────────────────────────────────
-function d07() {
-  // Larger star field with 3 depth layers (280 stars) using STARS array + extra pass
-  const stars280 = Array.from({ length: 280 }, (_, i) => ({
-    x: Math.min((i % 20) * 62 + ((i * 47) % 31), 1195),
-    y: Math.min(Math.floor(i / 20) * 26 + ((i * 23) % 19), 695),
-    layer: i < 120 ? 0 : i < 220 ? 1 : 2,
-  }));
-
-  return html`
-    <svg viewBox="0 0 1200 700" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <filter id="bloom-d07" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-        <filter id="softglow-d07" x="-100%" y="-100%" width="300%" height="300%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="18" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-        <filter id="starblur-d07" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" />
-        </filter>
-        <radialGradient id="earthGrad-d07" cx="38%" cy="32%" r="60%">
-          <stop offset="0%"   stopColor="#1e4a90" />
-          <stop offset="40%"  stopColor="#0d1f3d" />
-          <stop offset="100%" stopColor="#030810" />
-        </radialGradient>
-        <radialGradient id="nightSide-d07" cx="78%" cy="50%" r="60%">
-          <stop offset="0%"   stopColor="#000000" stopOpacity="0.7" />
-          <stop offset="55%"  stopColor="#000000" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-
-      <rect width="1200" height="700" fill=${BG} />
-
-      <!-- Background stars (blurred) -->
-      <g filter="url(#starblur-d07)">
-        ${stars280.filter(s => s.layer === 0).map((s, i) => html`<circle key=${'sb'+i} cx=${s.x} cy=${s.y} r="0.6" fill=${TX} fillOpacity="0.3" />`)}
-      </g>
-      <!-- Mid-field stars -->
-      ${stars280.filter(s => s.layer === 1).map((s, i) => html`<circle key=${'sm'+i} cx=${s.x} cy=${s.y} r="1.0" fill=${TX} fillOpacity="0.5" />`)}
-      <!-- Foreground stars -->
-      ${stars280.filter(s => s.layer === 2).map((s, i) => html`<circle key=${'sf'+i} cx=${s.x} cy=${s.y} r="1.5" fill=${TX} fillOpacity="0.8" />`)}
-
-      <!-- Earth atmosphere (cx=450 cy=380 r=140) -->
-      <circle cx="450" cy="380" r="192" fill="none" stroke=${TEAL} strokeWidth="36" strokeOpacity="0.05" filter="url(#softglow-d07)" />
-      <circle cx="450" cy="380" r="178" fill="none" stroke=${TEAL} strokeWidth="18" strokeOpacity="0.10" filter="url(#bloom-d07)" />
-      <circle cx="450" cy="380" r="165" fill="none" stroke=${TEAL} strokeWidth="8"  strokeOpacity="0.18" />
-      <circle cx="450" cy="380" r="140" fill="url(#earthGrad-d07)" />
-      <circle cx="450" cy="380" r="140" fill="url(#nightSide-d07)" />
-
-      <!-- Ground stations -->
-      <circle cx="395" cy="405" r="7" fill=${AM}   filter="url(#bloom-d07)" />
-      <text x="370" y="425" fill=${AM}   fontSize="10" fontWeight="700">ALMA</text>
-      <circle cx="468" cy="345" r="5" fill=${BLUE}  filter="url(#bloom-d07)" />
-      <text x="476" y="340" fill=${DIM}  fontSize="10">IRAM</text>
-      <circle cx="452" cy="518" r="5" fill=${BLUE}  filter="url(#bloom-d07)" />
-      <text x="460" y="533" fill=${DIM}  fontSize="10">SPT</text>
-
-      <!-- BHEX orbit (inclined, large) -->
-      <ellipse cx="450" cy="380" rx="500" ry="200" fill="none" stroke=${AM} strokeWidth="6" strokeOpacity="0.15" transform="rotate(-22, 450, 380)" filter="url(#softglow-d07)" />
-      <ellipse cx="450" cy="380" rx="500" ry="200" fill="none" stroke=${AM} strokeWidth="1.2" strokeOpacity="0.6" transform="rotate(-22, 450, 380)" />
-
-      <!-- BHEX satellite (at ascending node ~920,220) -->
-      <circle cx="920" cy="220" r="18" fill=${GLOW} fillOpacity="0.4" filter="url(#softglow-d07)" />
-      <circle cx="920" cy="220" r="9"  fill=${GLOW} stroke=${GOLD} strokeWidth="2" filter="url(#bloom-d07)" />
-      <!-- Solar panels -->
-      <rect x="897" y="217" width="8"  height="6" rx="1" fill=${GLOW} fillOpacity="0.7" />
-      <rect x="934" y="217" width="8"  height="6" rx="1" fill=${GLOW} fillOpacity="0.7" />
-      <rect x="905" y="210" width="30" height="4" rx="1" fill=${GLOW} fillOpacity="0.4" />
-      <text x="938" y="214" fill=${GLOW} fontSize="14" fontWeight="700" filter="url(#bloom-d07)">BHEX</text>
-
-      <!-- Data beam: ALMA → BHEX (glow + pulsing core) -->
-      <line x1="395" y1="405" x2="920" y2="220" stroke=${GOLD} strokeWidth="6" strokeOpacity="0.12" filter="url(#softglow-d07)" />
-      <line x1="395" y1="405" x2="920" y2="220" stroke=${GOLD} strokeWidth="1.5" strokeOpacity="0.8" className="data-beam" />
-
-      <!-- Baseline annotation -->
-      <text x="658" y="300" textAnchor="middle" fill=${AM} fontSize="15" filter="url(#bloom-d07)">~32,900 km</text>
-      <text x="658" y="320" textAnchor="middle" fill=${DIM} fontSize="12">~33 Gλ at 300 GHz</text>
-
-      <!-- Left panel: EHT Ground -->
-      <rect x="15" y="25" width="260" height="165" fill=${DRK} stroke="#2d2200" strokeWidth="1" rx="6" />
-      <text x="145" y="50" textAnchor="middle" fill=${TX}   fontSize="14" fontWeight="700">EHT Ground</text>
-      <rect x="30" y="65" width="120" height="20" fill=${BLUE} fillOpacity="0.7" rx="3" />
-      <text x="158" y="80" fill=${TEAL} fontSize="12">~20 μas beam</text>
-      <rect x="30" y="95" width="220" height="20" fill=${AM} fillOpacity="0.5" rx="3" />
-      <text x="258" y="110" textAnchor="end" fill=${AM} fontSize="12">42 μas shadow</text>
-      <text x="145" y="140" textAnchor="middle" fill=${DIM} fontSize="11" fontStyle="italic">resolves shadow</text>
-      <text x="145" y="160" textAnchor="middle" fill=${RED} fontSize="11" fontStyle="italic">cannot resolve ring</text>
-
-      <!-- Right panel: BHEX -->
-      <rect x="925" y="25" width="260" height="165" fill=${DRK} stroke=${AM} strokeWidth="1" rx="6" />
-      <text x="1055" y="50" textAnchor="middle" fill=${GLOW} fontSize="14" fontWeight="700" filter="url(#bloom-d07)">EHT + BHEX</text>
-      <rect x="940" y="65" width="36" height="20" fill=${GLOW} fillOpacity="0.8" rx="3" filter="url(#bloom-d07)" />
-      <text x="984" y="80" fill=${GLOW} fontSize="12">~6 μas beam</text>
-      <rect x="940" y="95" width="220" height="20" fill=${AM} fillOpacity="0.5" rx="3" />
-      <text x="1168" y="110" textAnchor="end" fill=${AM} fontSize="12">42 μas shadow</text>
-      <text x="1055" y="140" textAnchor="middle" fill=${DIM}  fontSize="11" fontStyle="italic">resolves shadow</text>
-      <text x="1055" y="160" textAnchor="middle" fill=${TEAL} fontSize="11" fontStyle="italic" filter="url(#bloom-d07)">resolves photon ring</text>
-    </svg>
-  `;
+// ── Sharp source (resolved, 6-spike diffraction) ─────────────────────────────
+function drawSharp(g, x, y, alpha) {
+  if (alpha <= 0) return;
+  const spikeL = [48,31,48,31,48,31];
+  for (let i = 0; i < 6; i++) {
+    const ang = (i/6)*Math.PI*2, len = spikeL[i];
+    const sg = g.createLinearGradient(x,y, x+Math.cos(ang)*len, y+Math.sin(ang)*len);
+    sg.addColorStop(0, rgba(TEAL,0.65*alpha));
+    sg.addColorStop(0.4, rgba(TEAL,0.22*alpha));
+    sg.addColorStop(1,'rgba(0,0,0,0)');
+    g.beginPath(); g.moveTo(x,y); g.lineTo(x+Math.cos(ang)*len, y+Math.sin(ang)*len);
+    g.strokeStyle = sg; g.lineWidth = i%2===0 ? 1.6 : 1.1; g.stroke();
+  }
+  [[42,0.06,'#4cc9f0'],[34,0.10,'#4cc9f0'],[27,0.18,'#70d4f5'],
+   [20,0.28,'#90e0ff'],[14,0.45,'#b0eeff'],[8,0.68,'#d0f6ff'],
+   [3,0.90,'#e8fcff'],[1.8,1.0,'#ffffff']].forEach(([r,op,col]) => {
+    const gr = g.createRadialGradient(x,y,0, x,y,r);
+    gr.addColorStop(0, rgba(col,op*alpha)); gr.addColorStop(1,'rgba(0,0,0,0)');
+    g.beginPath(); g.arc(x,y,r,0,Math.PI*2); g.fillStyle = gr; g.fill();
+  });
+  g.fillStyle = `rgba(255,255,255,${alpha})`;
+  g.beginPath(); g.arc(x,y,1.8,0,Math.PI*2); g.fill();
 }
 
-// ── d08: The Simulator (product showcase) ────────────────────────────────────
-function d08() {
-  const lCx = 290, lCy = 310;
-  const rCx = 910, rCy = 310;
+// ── Glowing baseline with traveling pulse ─────────────────────────────────────
+function drawBaseline(g, x1, y1, x2, y2, T, alpha) {
+  if (alpha <= 0) return;
+  g.globalAlpha = alpha*0.14; g.strokeStyle = TEAL; g.lineWidth = 9;
+  g.beginPath(); g.moveTo(x1,y1); g.lineTo(x2,y2); g.stroke();
+  g.globalAlpha = alpha;
+  const lg = g.createLinearGradient(x1,y1,x2,y2);
+  lg.addColorStop(0, rgba(TEAL,0.65)); lg.addColorStop(0.5, rgba(TEAL,0.85)); lg.addColorStop(1, rgba(TEAL,0.65));
+  g.strokeStyle = lg; g.lineWidth = 2.2;
+  g.beginPath(); g.moveTo(x1,y1); g.lineTo(x2,y2); g.stroke();
+  const pt = (T%3.0)/3.0, px = lerp(x1,x2,pt), py = lerp(y1,y2,pt);
+  const pg = g.createRadialGradient(px,py,0, px,py,14);
+  pg.addColorStop(0, rgba(TEAL,0.9*alpha)); pg.addColorStop(0.5, rgba(TEAL,0.35*alpha)); pg.addColorStop(1,'rgba(0,0,0,0)');
+  g.fillStyle = pg; g.beginPath(); g.arc(px,py,14,0,Math.PI*2); g.fill();
+  [[x1,y1],[x2,y2]].forEach(([ex,ey]) => {
+    glow3(g,ex,ey,TEAL,8,0.7*alpha);
+    g.fillStyle = TEAL; g.beginPath(); g.arc(ex,ey,3,0,Math.PI*2); g.fill();
+  });
+  g.globalAlpha = 1;
+}
 
-  return html`
-    <svg viewBox="0 0 1200 700" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <filter id="bloom-d08" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-        <filter id="softglow-d08" x="-100%" y="-100%" width="300%" height="300%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="18" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-      </defs>
+// ── VS divider ────────────────────────────────────────────────────────────────
+function drawDivider(g, x, H, alpha) {
+  if (alpha <= 0) return;
+  const cg = g.createLinearGradient(x-30,0,x+30,0);
+  cg.addColorStop(0,'rgba(255,209,102,0)');
+  cg.addColorStop(0.5,`rgba(255,209,102,${(0.06*alpha).toFixed(3)})`);
+  cg.addColorStop(1,'rgba(255,209,102,0)');
+  g.fillStyle = cg; g.fillRect(x-30,0,60,H);
+  g.strokeStyle = rgba(GOLD,0.25*alpha); g.lineWidth = 5;
+  g.beginPath(); g.moveTo(x,0); g.lineTo(x,H); g.stroke();
+  g.strokeStyle = rgba(GOLD,0.88*alpha); g.lineWidth = 1.2;
+  g.beginPath(); g.moveTo(x,0); g.lineTo(x,H); g.stroke();
+  for (let i=0.05; i<1; i+=0.08) {
+    g.strokeStyle = rgba(GOLD,0.35*alpha); g.lineWidth = 1;
+    g.beginPath(); g.moveTo(x-4,H*i); g.lineTo(x+4,H*i); g.stroke();
+  }
+  const by = H*0.5, br = 22;
+  g.fillStyle = rgba(GOLD,0.9*alpha);
+  g.beginPath(); g.arc(x,by,br,0,Math.PI*2); g.fill();
+  g.strokeStyle = rgba(GOLD,0.3*alpha); g.lineWidth = 2;
+  g.beginPath(); g.arc(x,by,br+4,0,Math.PI*2); g.stroke();
+  g.fillStyle = BG;
+  g.font = `bold ${Math.round(br*0.9)}px "Inter","Helvetica Neue",sans-serif`;
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText('VS', x, by);
+}
 
-      <rect width="1200" height="700" fill=${BG} />
+// ── Earth sphere ──────────────────────────────────────────────────────────────
+function drawEarth(g, cx, cy, r) {
+  const bg = g.createRadialGradient(cx-r*.3,cy-r*.25,0, cx,cy,r);
+  bg.addColorStop(0,'#2a7cc0'); bg.addColorStop(0.5,'#1e4a90'); bg.addColorStop(1,'#04080e');
+  g.beginPath(); g.arc(cx,cy,r,0,Math.PI*2); g.fillStyle = bg; g.fill();
+  const sh = g.createRadialGradient(cx+r*.6,cy,r*.3, cx+r*.3,cy,r*1.2);
+  sh.addColorStop(0,'rgba(2,2,10,0.82)'); sh.addColorStop(0.7,'rgba(2,2,10,0.30)'); sh.addColorStop(1,'rgba(2,2,10,0)');
+  g.beginPath(); g.arc(cx,cy,r,0,Math.PI*2); g.fillStyle = sh; g.fill();
+  [[r+60,36,0.04],[r+42,18,0.09],[r+24,7,0.18]].forEach(([ar,lw,op]) => {
+    g.strokeStyle = rgba(TEAL,op); g.lineWidth = lw;
+    g.beginPath(); g.arc(cx,cy,ar,0,Math.PI*2); g.stroke();
+  });
+}
 
-      <!-- Sparse background stars -->
-      ${STARS.filter((_, i) => i % 3 === 0).map((s, i) => html`<circle key=${'s'+i} cx=${s.x} cy=${s.y} r=${s.r * 0.7} fill=${TX} fillOpacity=${s.op * 0.4} />`)}
+// ── D01: The Resolution Problem ───────────────────────────────────────────────
+function d01({ reducedMotion }) {
+  const canvasRef = useRef(null);
+  const rafRef    = useRef(null);
+  useEffect(() => {
+    const cv = canvasRef.current;
+    if (!cv) return;
+    const W = cv.offsetWidth, H = cv.offsetHeight;
+    if (!W || !H) return;
+    const dpr = window.devicePixelRatio || 1;
+    cv.width = W*dpr; cv.height = H*dpr;
+    const g = cv.getContext('2d');
+    g.scale(dpr, dpr);
+    const GY = H * 0.855;
 
-      <!-- ── LEFT panel: EHT 2017 ── -->
-      <rect x="30" y="60" width="520" height="500" fill=${DRK} stroke="#2d2200" strokeWidth="1.5" rx="8" className="panel-left" />
-      <text x="290" y="44" textAnchor="middle" fill=${DIM} fontSize="16" fontWeight="700" className="panel-left">EHT 2017</text>
-      <text x="290" y="60" textAnchor="middle" fill="#555585" fontSize="12" className="panel-left">8 stations · 28 baselines</text>
+    const lStars = makeStars(W, H, 280, 0, 0.47);
+    const rStars = makeStars(W, H, 100, 0.53, 1.0);
 
-      <!-- Map bg -->
-      <rect x="50" y="130" width="480" height="340" fill="#050818" rx="4" className="panel-left" />
+    const TL = {
+      cosmos: [0,   2.5], milky:  [0.3, 2.0],
+      lstars: [0,   2.0], rstars: [0,   2.0],
+      div:    [0.5, 1.2], latmo:  [0.8, 1.8],
+      ldish:  [1.0, 2.2], lbeam:  [2.5, 1.4],
+      lsrc:   [3.1, 1.2], rdish:  [3.8, 2.0],
+      rbase:  [5.0, 1.2], rbeam:  [5.2, 1.2],
+      rsrc:   [5.8, 1.2],
+    };
 
-      <!-- Ring structure (EHT quality) -->
-      <circle cx=${lCx} cy=${lCy} r="90" fill="none" stroke="rgba(255,120,0,0.06)" strokeWidth="20" className="panel-left" />
-      <circle cx=${lCx} cy=${lCy} r="82" fill="none" stroke="rgba(255,160,0,0.10)" strokeWidth="14" className="panel-left" />
-      <circle cx=${lCx} cy=${lCy} r="75" fill="none" stroke="rgba(255,195,30,0.16)" strokeWidth="8" className="panel-left" />
-      <circle cx=${lCx} cy=${lCy} r="68" fill="none" stroke=${GOLD} strokeWidth="3.5" filter="url(#bloom-d08)" className="panel-left" />
-      <circle cx=${lCx} cy=${lCy} r="58" fill="#020510" className="panel-left" />
+    const draw = T => {
+      const pa = k => ease(prog(T, TL[k][0], TL[k][1]));
+      g.fillStyle = BG; g.fillRect(0,0,W,H);
 
-      <!-- Contour levels -->
-      <circle cx=${lCx} cy=${lCy} r="90"  fill="none" stroke=${GOLD} strokeWidth="1.5" strokeOpacity="0.7" className="panel-left" />
-      <circle cx=${lCx} cy=${lCy} r="115" fill="none" stroke=${AM}   strokeWidth="1"   strokeOpacity="0.45" className="panel-left" />
+      const nebA = pa('cosmos');
+      g.save(); g.beginPath(); g.rect(0,0,W/2,H); g.clip();
+      drawNebulae(g,W,H,'left',nebA); drawMilkyWay(g,W,H,pa('milky'));
+      g.restore();
+      g.save(); g.beginPath(); g.rect(W/2,0,W/2,H); g.clip();
+      drawNebulae(g,W,H,'right',nebA);
+      g.restore();
 
-      <!-- Beam ellipse -->
-      <ellipse cx="488" cy="448" rx="22" ry="16" transform="rotate(15, 488, 448)" stroke=${TEAL} strokeWidth="1.5" fill="rgba(78,205,196,0.1)" className="panel-left" />
+      drawStars(g, lStars, T, pa('lstars'));
+      drawStars(g, rStars, T, pa('rstars'));
+      drawDivider(g, W/2, H, pa('div'));
 
-      <!-- Left stats -->
-      <text x="290" y="505" textAnchor="middle" fill=${DIM} fontSize="12" className="panel-left">DR ≈ 50:1  ·  beam FWHM ~24 μas  ·  UV fill 0.8%</text>
+      g.save(); g.beginPath(); g.rect(0,0,W/2,H); g.clip();
+      drawAtacama(g, W/2, H, GY, pa('latmo'));
+      g.restore();
 
-      <!-- ── RIGHT panel: ngEHT Phase 1 ── -->
-      <rect x="650" y="60" width="520" height="500" fill=${DRK} stroke=${AM} strokeWidth="1.5" rx="8" filter="url(#bloom-d08)" className="panel-right" />
-      <text x="910" y="44" textAnchor="middle" fill=${AM}  fontSize="16" fontWeight="700" filter="url(#bloom-d08)" className="panel-right">ngEHT Phase 1</text>
-      <text x="910" y="60" textAnchor="middle" fill="#9E7E38" fontSize="12" className="panel-right">17 stations · 136 baselines</text>
+      const lda = pa('ldish');
+      const { fx: lfx, fy: lfy } = drawDish(g, W*.265, GY, 1.0, true, GLOW, lda);
+      drawBeam(g, lfx, lfy, H*.10+40, 178, RED, pa('lbeam'));
+      drawBlurry(g, W*.265, H*.10, pa('lsrc'));
 
-      <!-- Map bg -->
-      <rect x="670" y="130" width="480" height="340" fill="#050818" rx="4" className="panel-right" />
+      const rda = pa('rdish');
+      const { fx: r1fx, fy: r1fy } = drawDish(g, W*.610, GY, 0.78, false, TEAL, rda);
+      const { fx: r2fx, fy: r2fy } = drawDish(g, W*.855, GY, 0.72, false, TEAL, rda);
 
-      <!-- Ring structure (ngEHT — sharper) -->
-      <circle cx=${rCx} cy=${rCy} r="90" fill="none" stroke="rgba(255,120,0,0.08)" strokeWidth="20" className="panel-right" />
-      <circle cx=${rCx} cy=${rCy} r="82" fill="none" stroke="rgba(255,160,0,0.14)" strokeWidth="14" className="panel-right" />
-      <circle cx=${rCx} cy=${rCy} r="75" fill="none" stroke="rgba(255,200,40,0.22)" strokeWidth="8" className="panel-right" />
-      <circle cx=${rCx} cy=${rCy} r="68" fill="none" stroke=${GOLD} strokeWidth="5" filter="url(#bloom-d08)" className="panel-right" />
-      <circle cx=${rCx} cy=${rCy} r="65" fill="none" stroke=${GOLD} strokeWidth="1" strokeOpacity="0.3" className="panel-right" />
-      <circle cx=${rCx} cy=${rCy} r="58" fill="#020510" className="panel-right" />
+      drawBaseline(g, r1fx, GY, r2fx, GY, T, pa('rbase'));
 
-      <!-- Contour levels -->
-      <circle cx=${rCx} cy=${rCy} r="90"  fill="none" stroke=${GOLD} strokeWidth="2"   strokeOpacity="0.9" className="panel-right" />
-      <circle cx=${rCx} cy=${rCy} r="118" fill="none" stroke=${GOLD} strokeWidth="1.5" strokeOpacity="0.65" className="panel-right" />
-      <circle cx=${rCx} cy=${rCy} r="145" fill="none" stroke=${AM}   strokeWidth="1"   strokeOpacity="0.4" className="panel-right" />
+      const rbA = pa('rbeam');
+      if (rbA > 0) {
+        const SRCX = W*.735, SRCY = H*.10;
+        [[r1fx,r1fy],[r2fx,r2fy]].forEach(([bfx,bfy]) => {
+          const glg = g.createLinearGradient(bfx,bfy,SRCX,SRCY);
+          glg.addColorStop(0, rgba(TEAL,0.15*rbA)); glg.addColorStop(1,'rgba(0,0,0,0)');
+          g.strokeStyle=glg; g.lineWidth=8;
+          g.beginPath(); g.moveTo(bfx,bfy); g.lineTo(SRCX,SRCY); g.stroke();
+          const clg = g.createLinearGradient(bfx,bfy,SRCX,SRCY);
+          clg.addColorStop(0, rgba(TEAL,0.72*rbA)); clg.addColorStop(1,'rgba(0,0,0,0)');
+          g.strokeStyle=clg; g.lineWidth=2.2;
+          g.beginPath(); g.moveTo(bfx,bfy); g.lineTo(SRCX,SRCY); g.stroke();
+        });
+      }
+      drawSharp(g, W*.735, H*.10, pa('rsrc'));
+    };
 
-      <!-- Jet hint -->
-      <line x1=${rCx} y1=${rCy - 24} x2=${rCx + 58} y2=${rCy - 78} stroke=${AM} strokeWidth="1.2" strokeOpacity="0.4" className="panel-right" />
+    if (reducedMotion) { draw(999); return; }
+    let T = 0;
+    const frame = () => { rafRef.current = requestAnimationFrame(frame); T += 1/60; draw(T); };
+    frame();
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [reducedMotion]);
+  return html`<canvas ref=${canvasRef} style=${{width:'100%',height:'100%',display:'block'}}/>`;
+}
 
-      <!-- Beam ellipse (smaller) -->
-      <ellipse cx="1108" cy="448" rx="15" ry="13" stroke=${TEAL} strokeWidth="1.5" fill="rgba(78,205,196,0.1)" className="panel-right" />
+// ── D02: The Baseline ─────────────────────────────────────────────────────────
+function d02({ reducedMotion }) {
+  const canvasRef = useRef(null);
+  const rafRef    = useRef(null);
+  useEffect(() => {
+    const cv = canvasRef.current;
+    if (!cv) return;
+    const W = cv.offsetWidth, H = cv.offsetHeight;
+    if (!W || !H) return;
+    const dpr = window.devicePixelRatio || 1;
+    cv.width = W*dpr; cv.height = H*dpr;
+    const g = cv.getContext('2d');
+    g.scale(dpr, dpr);
+    const GY = H*0.56;
+    const stars = makeStars(W, H, 200);
 
-      <!-- Right stats -->
-      <text x="910" y="505" textAnchor="middle" fill=${AM} fontSize="12" filter="url(#bloom-d08)" className="panel-right">DR ≈ 200:1  ·  beam FWHM ~18 μas  ·  UV fill 3.5%</text>
+    const draw = T => {
+      g.fillStyle = BG; g.fillRect(0,0,W,H);
+      drawNebulae(g,W,H,'left',0.5); drawNebulae(g,W,H,'right',0.5);
+      drawStars(g, stars, T, ease(prog(T,0,2.0)));
 
-      <!-- FITS terminal (bottom-left, slides from left) -->
-      <g className="fits-panel">
-        <rect x="30" y="582" width="220" height="100" fill="#020208" stroke="#1a1a28" strokeWidth="0.8" rx="4" />
-        <text x="42" y="602" fill=${TEAL} fontSize="9" fontFamily="'Courier New', monospace">CRVAL1 = 187.7059308</text>
-        <text x="42" y="618" fill=${AM}   fontSize="9" fontFamily="'Courier New', monospace">BMAJ   = 5.56E-09</text>
-        <text x="42" y="634" fill=${DIM}  fontSize="9" fontFamily="'Courier New', monospace">BUNIT  = 'JY/BEAM'</text>
-        <text x="42" y="650" fill="#333355" fontSize="9" fontFamily="'Courier New', monospace">END</text>
-      </g>
+      const { fx: afx, fy: afy } = drawDish(g, W*.18, GY, 0.88, true, GLOW, ease(prog(T,0.5,1.5)));
+      const { fx: jfx, fy: jfy } = drawDish(g, W*.82, GY, 0.84, false, BLUE, ease(prog(T,0.7,1.5)));
 
-      <!-- Metrics panel (bottom-right, slides from right) -->
-      <g className="metrics-panel-tour">
-        <rect x="950" y="582" width="220" height="100" fill="#020208" stroke="#1a1a28" strokeWidth="0.8" rx="4" />
-        <text x="962" y="602" fill=${DIM} fontSize="9">Beam FWHM</text>
-        <text x="1162" y="602" textAnchor="end" fill=${AM} fontSize="9">~20 μas</text>
-        <text x="962" y="618" fill=${DIM} fontSize="9">Dynamic Range</text>
-        <text x="1162" y="618" textAnchor="end" fill=${AM} fontSize="9">~50:1</text>
-        <text x="962" y="634" fill=${DIM} fontSize="9">UV Fill</text>
-        <text x="1162" y="634" textAnchor="end" fill=${AM} fontSize="9">0.8%</text>
-        <text x="962" y="650" fill=${DIM} fontSize="9">Max baseline</text>
-        <text x="1162" y="650" textAnchor="end" fill=${AM} fontSize="9">10,900 km</text>
-      </g>
+      // Wavefront (sweeping down repeatedly)
+      const wfA = ease(prog(T,1.0,1.0));
+      if (wfA > 0) {
+        const wloopT = T < 1.0 ? 0 : T - 1.0;
+        const wy = lerp(H*.08, H*.54, (wloopT % 3.5) / 3.5);
+        // Ghost lines
+        g.strokeStyle = '#1a1a3a'; g.lineWidth = 0.7;
+        [H*.17,H*.19,H*.21].forEach(gy => {
+          g.beginPath(); g.moveTo(0,gy); g.lineTo(W,gy); g.stroke();
+        });
+        g.globalAlpha = wfA;
+        g.strokeStyle = rgba(BLUE,0.72); g.lineWidth = 2.2;
+        g.beginPath(); g.moveTo(0,wy); g.lineTo(W,wy); g.stroke();
+        // JCMT offset (geometric delay)
+        g.strokeStyle = rgba(BLUE,0.40); g.lineWidth = 1.5;
+        g.beginPath(); g.moveTo(0,wy+15); g.lineTo(W,wy+15); g.stroke();
+        g.globalAlpha = 1;
+      }
 
-      <!-- CTA — luminous, appears last -->
-      <text x="600" y="664" textAnchor="middle" className="cta-reveal" fill=${GOLD} fontSize="36" fontWeight="900" filter="url(#bloom-d08)">Place your first telescope.</text>
-    </svg>
-  `;
+      // Tick marks showing geometric delay
+      const tickA = ease(prog(T,2.2,0.8));
+      if (tickA > 0) {
+        g.globalAlpha = tickA;
+        g.strokeStyle = GOLD; g.lineWidth = 1.5;
+        g.beginPath(); g.moveTo(afx,afy-6); g.lineTo(afx,afy+6); g.stroke();
+        g.beginPath(); g.moveTo(jfx,jfy-6+15); g.lineTo(jfx,jfy+6+15); g.stroke();
+        g.beginPath(); g.moveTo(afx,afy); g.lineTo(jfx,jfy+15); g.stroke();
+        g.fillStyle = AM; g.font = '13px "Inter",sans-serif';
+        g.textAlign = 'center'; g.textBaseline = 'bottom';
+        g.fillText('τ_g', (afx+jfx)/2, afy-8);
+        g.globalAlpha = 1;
+      }
+
+      // Baseline bar
+      const bA = ease(prog(T,3.2,0.8));
+      if (bA > 0) {
+        g.globalAlpha = bA;
+        const barY = GY+30;
+        g.strokeStyle = DIM; g.lineWidth = 1;
+        g.beginPath(); g.moveTo(afx,barY); g.lineTo(jfx,barY); g.stroke();
+        g.beginPath(); g.moveTo(afx,barY-5); g.lineTo(afx,barY+5); g.stroke();
+        g.beginPath(); g.moveTo(jfx,barY-5); g.lineTo(jfx,barY+5); g.stroke();
+        g.fillStyle = DIM; g.font = '13px "Inter",sans-serif';
+        g.textAlign = 'center'; g.textBaseline = 'top';
+        g.fillText('B = 10,900 km', (afx+jfx)/2, barY+8);
+        g.globalAlpha = 1;
+      }
+
+      // UV plane panel
+      const uvA = ease(prog(T,1.5,1.0));
+      if (uvA > 0) {
+        const px=W*.08, py=H*.64, pw=W*.84, ph=H*.34;
+        g.globalAlpha = uvA;
+        g.fillStyle = 'rgba(4,6,20,0.95)';
+        g.strokeStyle = DIM; g.lineWidth = 0.8;
+        g.fillRect(px,py,pw,ph); g.strokeRect(px,py,pw,ph);
+        const ucx=px+pw*.6, ucy=py+ph*.5;
+        g.strokeStyle = '#1a1a2e'; g.lineWidth = 0.5;
+        [0.3,0.6,0.9].forEach(f => {
+          g.beginPath(); g.arc(ucx,ucy,pw*0.35*f,0,Math.PI*2); g.stroke();
+        });
+        g.strokeStyle = '#1a1a2e'; g.lineWidth = 0.7;
+        g.beginPath(); g.moveTo(px+10,ucy); g.lineTo(px+pw-10,ucy); g.stroke();
+        g.beginPath(); g.moveTo(ucx,py+10); g.lineTo(ucx,py+ph-10); g.stroke();
+        g.fillStyle = DIM; g.font = '12px "Inter",sans-serif';
+        g.textAlign = 'left'; g.textBaseline = 'middle';
+        g.fillText('u', px+pw-20, ucy-12);
+        g.fillText('v', ucx+8, py+15);
+        const ptA = ease(prog(T,3.6,0.9));
+        if (ptA > 0) {
+          const scale = lerp(1.4, 1, ease(prog(T,3.6,0.9)));
+          g.save(); g.translate(ucx+pw*.18, ucy); g.scale(scale,scale);
+          glow3(g,0,0,AM,20,ptA); g.fillStyle=AM;
+          g.beginPath(); g.arc(0,0,6,0,Math.PI*2); g.fill(); g.restore();
+        }
+        const cjA = ease(prog(T,4.2,0.7));
+        if (cjA > 0) {
+          glow3(g,ucx-pw*.18,ucy,AM,12,cjA*0.6); g.fillStyle=rgba(AM,0.6*cjA);
+          g.beginPath(); g.arc(ucx-pw*.18,ucy,4,0,Math.PI*2); g.fill();
+        }
+        g.globalAlpha = 1;
+      }
+    };
+
+    if (reducedMotion) { draw(999); return; }
+    let T = 0;
+    const frame = () => { rafRef.current = requestAnimationFrame(frame); T += 1/60; draw(T); };
+    frame();
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [reducedMotion]);
+  return html`<canvas ref=${canvasRef} style=${{width:'100%',height:'100%',display:'block'}}/>`;
+}
+
+// ── D03: Earth Rotation Synthesis ─────────────────────────────────────────────
+function d03({ reducedMotion }) {
+  const canvasRef = useRef(null);
+  const rafRef    = useRef(null);
+  useEffect(() => {
+    const cv = canvasRef.current;
+    if (!cv) return;
+    const W = cv.offsetWidth, H = cv.offsetHeight;
+    if (!W || !H) return;
+    const dpr = window.devicePixelRatio || 1;
+    cv.width = W*dpr; cv.height = H*dpr;
+    const g = cv.getContext('2d');
+    g.scale(dpr, dpr);
+    const stars = makeStars(W, H, 150);
+    const ex = W*.26, ey = H*.50, er = H*.34;
+    const uvCx = W*.76, uvCy = H*.50;
+
+    const draw = T => {
+      g.fillStyle = BG; g.fillRect(0,0,W,H);
+      drawNebulae(g,W,H,'right',0.45);
+      drawStars(g,stars,T,ease(prog(T,0,2.0)));
+      drawEarth(g,ex,ey,er);
+
+      // Rotating stations
+      const earthAngle = T * (2*Math.PI/10);
+      const s1x = ex + Math.sin(earthAngle)*er*.82;
+      const s1y = ey - Math.cos(earthAngle)*er*.35;
+      const s1vis = Math.cos(earthAngle) > -0.2;
+      const s2x = ex - Math.sin(earthAngle)*er*.82;
+      const s2y = ey + Math.cos(earthAngle)*er*.35;
+      const s2vis = Math.cos(earthAngle+Math.PI) > -0.2;
+
+      if (s1vis) { glow3(g,s1x,s1y,BLUE,10,0.8); g.fillStyle=BLUE; g.beginPath(); g.arc(s1x,s1y,4,0,Math.PI*2); g.fill(); }
+      if (s2vis) { glow3(g,s2x,s2y,AM,10,0.8); g.fillStyle=AM; g.beginPath(); g.arc(s2x,s2y,4,0,Math.PI*2); g.fill(); }
+      if (s1vis && s2vis) {
+        g.strokeStyle = rgba(TEAL,0.55); g.lineWidth=1.5;
+        g.beginPath(); g.moveTo(s1x,s1y); g.lineTo(s2x,s2y); g.stroke();
+      }
+
+      // UV panel
+      const pvx = W*.54, pvy = H*.08, pvw = W*.44, pvh = H*.84;
+      g.fillStyle = 'rgba(4,6,20,0.80)'; g.strokeStyle=DIM; g.lineWidth=0.8;
+      g.fillRect(pvx,pvy,pvw,pvh); g.strokeRect(pvx,pvy,pvw,pvh);
+
+      // Grid circles
+      g.strokeStyle = '#1a1a2e'; g.lineWidth=0.5;
+      [W*.08,W*.16,W*.20].forEach(r => { g.beginPath(); g.arc(uvCx,uvCy,r,0,Math.PI*2); g.stroke(); });
+      g.strokeStyle = '#1a1a2e'; g.lineWidth=0.8;
+      g.beginPath(); g.moveTo(pvx+10,uvCy); g.lineTo(pvx+pvw-10,uvCy); g.stroke();
+      g.beginPath(); g.moveTo(uvCx,pvy+10); g.lineTo(uvCx,pvy+pvh-10); g.stroke();
+      g.fillStyle=DIM; g.font='12px "Inter",sans-serif';
+      g.textAlign='left'; g.textBaseline='middle';
+      g.fillText('u',pvx+pvw-20,uvCy-12); g.fillText('v',uvCx+8,pvy+15);
+
+      // UV arcs with lineDash draw-in
+      const drawArc = (rx, ry, rot, startT, op) => {
+        const circ = 2*Math.PI*Math.sqrt((rx*rx+ry*ry)/2);
+        const drawn = circ * easeOut(prog(T,startT,2.0));
+        if (drawn <= 0) return;
+        g.save(); g.translate(uvCx,uvCy); g.rotate(rot);
+        // Full arc glow
+        g.setLineDash([drawn, circ*2]); g.lineDashOffset=0;
+        g.beginPath(); g.ellipse(0,0,rx,ry,0,0,Math.PI*2);
+        g.strokeStyle=rgba(AM,op*0.18); g.lineWidth=8; g.stroke();
+        // Core arc
+        g.setLineDash([drawn, circ*2]); g.lineDashOffset=0;
+        g.beginPath(); g.ellipse(0,0,rx,ry,0,0,Math.PI*2);
+        g.strokeStyle=rgba(AM,op); g.lineWidth=1.8; g.stroke();
+        // Conjugate (lower opacity, upper half)
+        g.setLineDash([drawn*.35, circ]); g.lineDashOffset=0;
+        g.beginPath(); g.ellipse(0,0,rx,ry,0,0,Math.PI,true);
+        g.strokeStyle=rgba(AM,op*0.28); g.lineWidth=1.0; g.stroke();
+        g.setLineDash([]); g.restore();
+      };
+      drawArc(W*.19,H*.21,0,           1.5,0.85);
+      drawArc(W*.16,H*.17,28*Math.PI/180, 2.0,0.70);
+      drawArc(W*.13,H*.13,-22*Math.PI/180,2.5,0.55);
+
+      g.fillStyle=AM; g.font='13px "Inter",sans-serif';
+      g.textAlign='center'; g.textBaseline='top';
+      g.globalAlpha = ease(prog(T,3.0,1.0));
+      g.fillText('One baseline → one elliptical arc', uvCx, pvy+pvh-28);
+      g.globalAlpha=1;
+    };
+
+    if (reducedMotion) { draw(999); return; }
+    let T = 0;
+    const frame = () => { rafRef.current = requestAnimationFrame(frame); T += 1/60; draw(T); };
+    frame();
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [reducedMotion]);
+  return html`<canvas ref=${canvasRef} style=${{width:'100%',height:'100%',display:'block'}}/>`;
+}
+
+// ── D04: The Event Horizon Telescope ─────────────────────────────────────────
+function d04({ reducedMotion }) {
+  const canvasRef = useRef(null);
+  const rafRef    = useRef(null);
+  useEffect(() => {
+    const cv = canvasRef.current;
+    if (!cv) return;
+    const W = cv.offsetWidth, H = cv.offsetHeight;
+    if (!W || !H) return;
+    const dpr = window.devicePixelRatio || 1;
+    cv.width = W*dpr; cv.height = H*dpr;
+    const g = cv.getContext('2d');
+    g.scale(dpr, dpr);
+
+    // Scale from 1200×700 SVG space
+    const scx = W/1200, scy = H/700;
+    const proj = (lon, lat) => ({
+      x: (40 + (lon+180)/360*1120) * scx,
+      y: Math.min((60 + (80-lat)/150*520) * scy, 575*scy),
+    });
+
+    const stations = [
+      { ...proj(-67.755,-23.029), name:'ALMA', isAlma:true  },
+      { ...proj(-67.759,-23.006), name:'APEX', isAlma:true  },
+      { ...proj(-155.478,19.823), name:'SMA',  isAlma:false },
+      { ...proj(-155.472,19.824), name:'JCMT', isAlma:false },
+      { ...proj(-97.314, 18.986), name:'LMT',  isAlma:false },
+      { ...proj(-3.392,  37.066), name:'IRAM', isAlma:false },
+      { ...proj(-109.891,32.701), name:'SMT',  isAlma:false },
+      { ...proj(-44.65, -89.991), name:'SPT',  isAlma:false },
+      { ...proj(-68.703, 76.535), name:'GLT',  isAlma:false },
+    ];
+
+    const baselines = [];
+    for (let i=0;i<stations.length;i++)
+      for (let j=i+1;j<stations.length;j++)
+        baselines.push({ x1:stations[i].x,y1:stations[i].y,x2:stations[j].x,y2:stations[j].y,
+          isAlma:stations[i].isAlma||stations[j].isAlma });
+
+    // Continent outline drawing helper
+    const cs = pts => {
+      g.beginPath();
+      pts.forEach(([x,y],i) => i===0 ? g.moveTo(x*scx,y*scy) : g.lineTo(x*scx,y*scy));
+      g.closePath(); g.fill(); g.stroke();
+    };
+
+    const draw = T => {
+      g.fillStyle = BG; g.fillRect(0,0,W,H);
+      drawNebulae(g,W,H,'left',0.25); drawNebulae(g,W,H,'right',0.25);
+
+      // Map background
+      g.fillStyle='#050a1e'; g.fillRect(40*scx,60*scy,1120*scx,520*scy);
+      g.strokeStyle='#2a2200'; g.lineWidth=1.5*Math.min(scx,scy);
+      g.strokeRect(40*scx,60*scy,1120*scx,520*scy);
+
+      // Continent outlines
+      g.fillStyle='#0d1a30'; g.strokeStyle='#1a2a4a'; g.lineWidth=0.8;
+      // North America west
+      cs([[95,68],[185,45],[248,58],[285,95],[295,145],[268,195],[238,225],[212,248],[188,272],[165,285],[142,268],[118,235],[96,198],[78,162],[72,125],[80,90]]);
+      // South America west
+      cs([[188,272],[218,255],[248,278],[278,308],[292,355],[298,415],[285,468],[262,510],[238,528],[212,515],[195,478],[182,428],[178,375],[182,318]]);
+      // Europe/Greenland
+      cs([[488,68],[545,55],[578,68],[592,88],[575,108],[548,118],[522,128],[505,115],[492,95]]);
+      // Africa/Europe/Middle East
+      cs([[492,95],[548,118],[582,145],[605,185],[618,245],[612,308],[592,365],[562,408],[528,428],[495,415],[468,378],[452,328],[448,268],[455,215],[468,168],[478,128]]);
+      // Eurasia
+      cs([[578,68],[688,42],[798,38],[885,52],[945,72],[978,105],[962,138],[915,155],[868,162],[815,148],[762,145],[715,132],[672,118],[625,108],[592,88]]);
+      // Australia
+      cs([[878,345],[945,332],[995,355],[1012,398],[1005,445],[972,468],[928,472],[892,448],[872,408],[868,368]]);
+      // Antarctica
+      g.fillStyle='#0d1a30'; g.fillRect(40*scx,618*scy,1120*scx,22*scy);
+
+      // Lat/Lon grid
+      g.strokeStyle='#12122a'; g.lineWidth=0.5;
+      [-60,-30,0,30,60].forEach(lat => {
+        const y=(60+(80-lat)/150*520)*scy;
+        g.strokeStyle = lat===0 ? '#1c1c3a' : '#12122a';
+        g.lineWidth = lat===0 ? 1 : 0.5;
+        g.beginPath(); g.moveTo(40*scx,y); g.lineTo(1160*scx,y); g.stroke();
+      });
+      g.strokeStyle='#12122a'; g.lineWidth=0.5;
+      [-150,-120,-90,-60,-30,0,30,60,90,120,150].forEach(lon => {
+        const x=(40+(lon+180)/360*1120)*scx;
+        g.beginPath(); g.moveTo(x,60*scy); g.lineTo(x,580*scy); g.stroke();
+      });
+
+      // Baselines
+      const alma = stations[0];
+      const blA = ease(prog(T,3.6,1.0));
+      if (blA > 0) {
+        baselines.filter(b=>b.isAlma).forEach(b => {
+          g.globalAlpha=blA*0.18; g.strokeStyle=AM; g.lineWidth=3;
+          g.beginPath(); g.moveTo(b.x1,b.y1); g.lineTo(b.x2,b.y2); g.stroke();
+          g.globalAlpha=blA*0.65; g.strokeStyle=AM; g.lineWidth=1.4;
+          g.beginPath(); g.moveTo(b.x1,b.y1); g.lineTo(b.x2,b.y2); g.stroke();
+        });
+        baselines.filter(b=>!b.isAlma).forEach(b => {
+          g.globalAlpha=blA*0.12; g.strokeStyle=BLUE; g.lineWidth=0.7;
+          g.beginPath(); g.moveTo(b.x1,b.y1); g.lineTo(b.x2,b.y2); g.stroke();
+        });
+        g.globalAlpha=1;
+      }
+
+      // Stations appearing one by one
+      stations.forEach((s,i) => {
+        const sA = ease(prog(T,0.8+i*0.4,0.5));
+        if (sA <= 0) return;
+        glow3(g,s.x,s.y,s.isAlma?AM:BLUE,18,sA*0.6);
+        g.globalAlpha=sA; g.fillStyle = s.isAlma?GOLD:TEAL;
+        g.beginPath(); g.arc(s.x,s.y,s.isAlma?8:5,0,Math.PI*2); g.fill();
+        g.fillStyle=s.isAlma?GOLD:'#f0f0f8';
+        g.font=`${s.isAlma?'bold ':''}`+`${s.isAlma?12:10}px "Inter",sans-serif`;
+        g.textAlign=s.isAlma?'center':'start'; g.textBaseline='bottom';
+        g.fillText(s.name, s.x+(s.isAlma?0:10), s.y-14);
+        g.globalAlpha=1;
+      });
+
+      // ALMA callout box
+      const caA = ease(prog(T,0.8,0.5));
+      if (caA > 0) {
+        g.globalAlpha=caA;
+        g.fillStyle='rgba(196,165,85,0.08)'; g.strokeStyle=AM; g.lineWidth=0.8;
+        g.fillRect(12,alma.y-12,150,38); g.strokeRect(12,alma.y-12,150,38);
+        g.fillStyle=AM; g.font='10px "Inter",sans-serif';
+        g.textAlign='left'; g.textBaseline='middle';
+        g.fillText('SEFD: 94 Jy', 22, alma.y+3);
+        g.fillStyle=DIM; g.font='italic 9px "Inter",sans-serif';
+        g.fillText('Most sensitive', 22, alma.y+18);
+        g.globalAlpha=1;
+      }
+
+      // UV inset
+      const uvA = ease(prog(T,4.5,1.0));
+      if (uvA > 0) {
+        const ix=850*scx, iy=490*scy, iw=330*scx, ih=190*scy;
+        g.globalAlpha=uvA;
+        g.fillStyle='rgba(5,5,20,0.95)'; g.strokeStyle=AM; g.lineWidth=1;
+        g.fillRect(ix,iy,iw,ih); g.strokeRect(ix,iy,iw,ih);
+        const ucx=ix+iw*.5, ucy=iy+ih*.6;
+        g.strokeStyle='#202040'; g.lineWidth=0.5;
+        [[120*scx,72*scy,0],[85*scx,52*scy,28*Math.PI/180],[55*scx,34*scy,-22*Math.PI/180]].forEach(([rx,ry,rot],fi) => {
+          const op = [0.8,0.6,0.45][fi];
+          g.save(); g.translate(ucx,ucy); g.rotate(rot);
+          g.beginPath(); g.moveTo(-rx,0); g.ellipse(0,0,rx,ry,0,Math.PI,Math.PI*2);
+          g.strokeStyle=rgba(AM,op*uvA); g.lineWidth=1.5; g.stroke();
+          g.beginPath(); g.moveTo(-rx,0); g.ellipse(0,0,rx,ry,0,0,Math.PI);
+          g.strokeStyle=rgba(AM,op*0.28*uvA); g.lineWidth=0.8; g.stroke();
+          g.restore();
+        });
+        g.fillStyle=AM; g.font=`bold ${Math.round(12*Math.min(scx,scy)*1.5)}px "Inter",sans-serif`;
+        g.textAlign='center'; g.textBaseline='top'; g.fillText('UV Coverage', ucx, iy+8);
+        g.globalAlpha=1;
+      }
+
+      // Footer
+      g.fillStyle=DIM; g.font=`${Math.round(13*scy)}px "Inter",sans-serif`;
+      g.textAlign='center'; g.textBaseline='bottom';
+      g.fillText('Max baseline: 10,900 km  ·  θ_synth ≈ 20 μas  ·  28 baselines', W*.5, H-6);
+    };
+
+    if (reducedMotion) { draw(999); return; }
+    let T = 0;
+    const frame = () => { rafRef.current = requestAnimationFrame(frame); T += 1/60; draw(T); };
+    frame();
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [reducedMotion]);
+  return html`<canvas ref=${canvasRef} style=${{width:'100%',height:'100%',display:'block'}}/>`;
+}
+
+// ── D05: From Noise to Image ───────────────────────────────────────────────────
+function d05({ reducedMotion }) {
+  const canvasRef = useRef(null);
+  const rafRef    = useRef(null);
+  useEffect(() => {
+    const cv = canvasRef.current;
+    if (!cv) return;
+    const W = cv.offsetWidth, H = cv.offsetHeight;
+    if (!W || !H) return;
+    const dpr = window.devicePixelRatio || 1;
+    cv.width = W*dpr; cv.height = H*dpr;
+    const g = cv.getContext('2d');
+    g.scale(dpr, dpr);
+    const cx = W*.50, cy = H*.48;
+    const stars = makeStars(W,H,80);
+
+    const draw = T => {
+      g.fillStyle = BG; g.fillRect(0,0,W,H);
+      drawNebulae(g,W,H,'left',0.35); drawNebulae(g,W,H,'right',0.35);
+      drawStars(g,stars,T,0.6);
+
+      // Sidelobe rings (start visible, fade sequentially)
+      const sl3 = 1 - ease(prog(T,0.5,2.7));
+      const sl2 = 1 - ease(prog(T,1.2,2.6));
+      const sl1 = 1 - ease(prog(T,2.0,2.4));
+      const rings = [
+        [H*.38,'#4a4a72',0.7,0.7,1.2,sl3],
+        [H*.30,'#5a5a88',0.8,1.0,0.65,sl2],
+        [H*.22,'#7070a0',0.9,1.2,0.7,sl1],
+      ];
+      rings.forEach(([r,col,op1,lw1,op2,alpha]) => {
+        if (alpha<=0) return;
+        g.globalAlpha=alpha*op2*0.18; g.strokeStyle=col; g.lineWidth=lw1*5;
+        g.beginPath(); g.arc(cx,cy,r,0,Math.PI*2); g.stroke();
+        g.globalAlpha=alpha*op1; g.strokeStyle=col; g.lineWidth=lw1;
+        g.beginPath(); g.arc(cx,cy,r,0,Math.PI*2); g.stroke();
+      });
+
+      // Artifact blobs (fade with sl-ring-2)
+      if (sl2 > 0) {
+        g.save(); g.filter='blur(8px)';
+        [[cx+160,cy-140,22,0.12],[cx-180,cy+120,16,0.10],[cx-140,cy-160,12,0.08]].forEach(([bx,by,br,op]) => {
+          const bgr = g.createRadialGradient(bx,by,0,bx,by,br);
+          bgr.addColorStop(0,rgba(GLOW,op*sl2)); bgr.addColorStop(1,'rgba(0,0,0,0)');
+          g.beginPath(); g.arc(bx,by,br,0,Math.PI*2); g.fillStyle=bgr; g.fill();
+        });
+        g.filter='none';
+        g.globalAlpha=sl2*0.7; g.fillStyle=DIM;
+        g.font='italic 13px "Inter",sans-serif'; g.textAlign='left'; g.textBaseline='top';
+        g.fillText('sidelobe artifacts', cx+200, cy-180);
+        g.restore();
+      }
+      g.globalAlpha=1;
+
+      // True source reveals as sidelobes fade
+      const reveal = easeOut(prog(T,1.5,3.0));
+      if (reveal > 0) {
+        // Accretion glow
+        [[H*.155,0.06,'rgba(255,110,0'],[H*.135,0.10,'rgba(255,145,0'],[H*.118,0.16,'rgba(255,182,30'],[H*.105,0.22,'rgba(255,208,40']].forEach(([r,op,col]) => {
+          g.globalAlpha=reveal; g.strokeStyle=`${col},${op})`; g.lineWidth=r*.18;
+          g.beginPath(); g.arc(cx,cy,r,0,Math.PI*2); g.stroke();
+        });
+        // Photon ring
+        glow3(g,cx,cy,GOLD,H*.108,reveal);
+        g.globalAlpha=reveal; g.strokeStyle=GOLD; g.lineWidth=4.5;
+        g.beginPath(); g.arc(cx,cy,H*.103,0,Math.PI*2); g.stroke();
+        // Shadow
+        g.fillStyle='#040408'; g.beginPath(); g.arc(cx,cy,H*.092,0,Math.PI*2); g.fill();
+        g.fillStyle='#020204'; g.beginPath(); g.arc(cx,cy,H*.078,0,Math.PI*2); g.fill();
+      }
+      g.globalAlpha=1;
+
+      // Labels
+      g.font='bold 22px "Inter",sans-serif'; g.textAlign='center'; g.textBaseline='middle';
+      const dirtyA = 1 - ease(prog(T,1.0,2.0));
+      if (dirtyA > 0) { g.globalAlpha=dirtyA; g.fillStyle=RED; g.fillText('Dirty Image',cx,cy-H*.44); }
+      const cleanA = ease(prog(T,3.0,1.0));
+      if (cleanA > 0) {
+        g.globalAlpha=cleanA; g.fillStyle=TEAL; g.fillText('CLEAN Image',cx,cy-H*.44);
+        g.font='17px "Courier New",monospace'; g.fillStyle=GOLD;
+        g.fillText('I^C = (M ⊛ G) + r_final',cx,cy+H*.44);
+      }
+      g.globalAlpha=1;
+    };
+
+    if (reducedMotion) { draw(999); return; }
+    let T = 0;
+    const frame = () => { rafRef.current = requestAnimationFrame(frame); T += 1/60; draw(T); };
+    frame();
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [reducedMotion]);
+  return html`<canvas ref=${canvasRef} style=${{width:'100%',height:'100%',display:'block'}}/>`;
+}
+
+// ── D06: First Light ───────────────────────────────────────────────────────────
+function d06({ reducedMotion }) {
+  const canvasRef = useRef(null);
+  const rafRef    = useRef(null);
+  useEffect(() => {
+    const cv = canvasRef.current;
+    if (!cv) return;
+    const W = cv.offsetWidth, H = cv.offsetHeight;
+    if (!W || !H) return;
+    const dpr = window.devicePixelRatio || 1;
+    cv.width = W*dpr; cv.height = H*dpr;
+    const g = cv.getContext('2d');
+    g.scale(dpr, dpr);
+    const img = new Image();
+    img.src = '../assets/eht-m87-2019.jpg';
+    let loaded = false;
+    img.onload = () => { loaded = true; };
+
+    const draw = T => {
+      g.fillStyle = BG; g.fillRect(0,0,W,H);
+      if (!loaded) return;
+      g.globalAlpha = reducedMotion ? 1 : ease(prog(T,0,4));
+      g.drawImage(img, 20, 15, W*.70, H*.95);
+      g.globalAlpha = 1;
+      // Vignette
+      const vg = g.createRadialGradient(W*.35,H*.5,0, W*.35,H*.5,W*.55);
+      vg.addColorStop(0.5,'rgba(2,2,10,0)'); vg.addColorStop(1,'rgba(2,2,10,0.90)');
+      g.fillStyle=vg; g.fillRect(0,0,W,H);
+      // Scale bar
+      const sbA = reducedMotion ? 1 : ease(prog(T,2.0,1.5));
+      g.globalAlpha=sbA;
+      g.strokeStyle=AM; g.lineWidth=2;
+      g.beginPath(); g.moveTo(48,H*.93); g.lineTo(168,H*.93); g.stroke();
+      g.beginPath(); g.moveTo(48,H*.93-5); g.lineTo(48,H*.93+5); g.stroke();
+      g.beginPath(); g.moveTo(168,H*.93-5); g.lineTo(168,H*.93+5); g.stroke();
+      g.fillStyle=AM; g.font='14px "Inter",sans-serif';
+      g.textAlign='center'; g.textBaseline='top';
+      g.fillText('42 μas',108,H*.93+8);
+      // Title
+      glow3(g,60+W*.08,H*.06,GOLD,80,sbA*0.4);
+      g.fillStyle=GOLD; g.font='bold 18px "Inter",sans-serif';
+      g.textAlign='left'; g.textBaseline='top';
+      g.fillText('M87*  ·  April 10, 2019',60,H*.04);
+      // Citation
+      g.fillStyle=DIM; g.font='italic 13px "Inter",sans-serif';
+      g.textAlign='center'; g.textBaseline='bottom';
+      g.fillText('EHT Collaboration 2019  ·  ApJL 875, L1',W*.5,H*.99);
+      g.globalAlpha=1;
+    };
+
+    if (reducedMotion) { if (loaded) draw(999); else { img.onload = () => { loaded=true; draw(999); }; } return; }
+    let T = 0;
+    const frame = () => { rafRef.current = requestAnimationFrame(frame); T += 1/60; draw(T); };
+    frame();
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [reducedMotion]);
+  return html`<canvas ref=${canvasRef} style=${{width:'100%',height:'100%',display:'block'}}/>`;
+}
+
+// ── D07: Beyond Earth — BHEX ──────────────────────────────────────────────────
+function d07({ reducedMotion }) {
+  const canvasRef = useRef(null);
+  const rafRef    = useRef(null);
+  useEffect(() => {
+    const cv = canvasRef.current;
+    if (!cv) return;
+    const W = cv.offsetWidth, H = cv.offsetHeight;
+    if (!W || !H) return;
+    const dpr = window.devicePixelRatio || 1;
+    cv.width = W*dpr; cv.height = H*dpr;
+    const g = cv.getContext('2d');
+    g.scale(dpr, dpr);
+    const starsBack  = makeStars(W,H,80);
+    const starsMid   = makeStars(W,H,120);
+    const starsFront = makeStars(W,H,80);
+    const ex=W*.38, ey=H*.50, er=H*.20;
+    const orx=W*.42, ory=H*.22, oRot=-22*Math.PI/180;
+    const bx = ex + orx*Math.cos(oRot);
+    const by = ey + orx*Math.sin(oRot);
+    const almaX=ex-er*.30, almaY=ey+er*.25;
+
+    const draw = T => {
+      g.fillStyle=BG; g.fillRect(0,0,W,H);
+      drawNebulae(g,W,H,'right',0.35);
+      // 3-layer stars
+      g.save(); g.filter='blur(1px)';
+      drawStars(g,starsBack,T,0.32);
+      g.filter='none'; g.restore();
+      drawStars(g,starsMid,T,0.50);
+      drawStars(g,starsFront,T,0.80);
+
+      drawEarth(g,ex,ey,er);
+
+      // Ground station markers on Earth
+      glow3(g,almaX,almaY,AM,10,0.9);
+      g.fillStyle=AM; g.beginPath(); g.arc(almaX,almaY,5,0,Math.PI*2); g.fill();
+      g.fillStyle=AM; g.font='bold 10px "Inter",sans-serif';
+      g.textAlign='right'; g.textBaseline='middle';
+      g.fillText('ALMA',almaX-8,almaY);
+
+      const iramX=ex+er*.18, iramY=ey-er*.38;
+      glow3(g,iramX,iramY,BLUE,7,0.7);
+      g.fillStyle=BLUE; g.beginPath(); g.arc(iramX,iramY,3.5,0,Math.PI*2); g.fill();
+      g.fillStyle=DIM; g.font='10px "Inter",sans-serif';
+      g.textAlign='left'; g.textBaseline='middle';
+      g.fillText('IRAM',iramX+6,iramY);
+
+      // Orbit ellipse
+      g.save(); g.translate(ex,ey); g.rotate(oRot);
+      g.strokeStyle=rgba(AM,0.58); g.lineWidth=1.3;
+      g.beginPath(); g.ellipse(0,0,orx,ory,0,0,Math.PI*2); g.stroke();
+      g.strokeStyle=rgba(AM,0.12); g.lineWidth=6;
+      g.beginPath(); g.ellipse(0,0,orx,ory,0,0,Math.PI*2); g.stroke();
+      g.restore();
+
+      // BHEX satellite
+      glow3(g,bx,by,GLOW,22,0.8);
+      g.fillStyle=GLOW; g.strokeStyle=GOLD; g.lineWidth=2;
+      g.beginPath(); g.arc(bx,by,9,0,Math.PI*2); g.fill(); g.stroke();
+      // Solar panels
+      g.fillStyle=rgba(GLOW,0.65);
+      g.fillRect(bx-23,by-3,7,5); g.fillRect(bx+16,by-3,7,5);
+      g.fillRect(bx-16,by-7,32,4);
+      g.fillStyle=GLOW; g.font='bold 14px "Inter",sans-serif';
+      g.textAlign='left'; g.textBaseline='bottom';
+      g.fillText('BHEX',bx+18,by-6);
+
+      // Data beam animation
+      const phase1 = ease(prog(T,1.5,2.0));
+      const phase2 = ease(prog(T,3.5,0.8));
+      if (phase1 > 0 && phase2 < 1) {
+        const pt = phase1;
+        const dbx=lerp(almaX,bx,pt), dby=lerp(almaY,by,pt);
+        glow3(g,dbx,dby,GOLD,16,phase1*(1-phase2));
+      }
+      if (phase2 > 0) {
+        g.globalAlpha=phase2*0.80;
+        g.strokeStyle=GOLD; g.lineWidth=1.5;
+        g.setLineDash([6,8]); g.lineDashOffset = -(T*12)%14;
+        g.beginPath(); g.moveTo(almaX,almaY); g.lineTo(bx,by); g.stroke();
+        g.setLineDash([]);
+        g.strokeStyle=rgba(GOLD,0.12); g.lineWidth=5;
+        g.beginPath(); g.moveTo(almaX,almaY); g.lineTo(bx,by); g.stroke();
+        g.globalAlpha=1;
+      }
+
+      // Baseline distance label
+      g.globalAlpha=ease(prog(T,2.5,1.0));
+      g.fillStyle=AM; g.font='15px "Inter",sans-serif';
+      g.textAlign='center'; g.textBaseline='bottom';
+      g.fillText('~32,900 km',(almaX+bx)/2,(almaY+by)/2-8);
+      g.fillStyle=DIM; g.font='12px "Inter",sans-serif';
+      g.fillText('~33 Gλ at 300 GHz',(almaX+bx)/2,(almaY+by)/2+10);
+      g.globalAlpha=1;
+
+      // Resolution comparison panels
+      const panA = ease(prog(T,0.5,1.5));
+      g.globalAlpha=panA;
+      // Left panel (EHT Ground)
+      g.fillStyle='rgba(5,5,20,0.92)'; g.strokeStyle='#2d2200'; g.lineWidth=1;
+      g.fillRect(12,22,W*.22,H*.24); g.strokeRect(12,22,W*.22,H*.24);
+      const lpc=12+W*.11, lpcy=22+H*.12;
+      // Small photon ring mockup
+      g.strokeStyle=GOLD; g.lineWidth=3; g.globalAlpha=panA*0.9;
+      g.beginPath(); g.arc(lpc,lpcy,H*.06,0,Math.PI*2); g.stroke();
+      g.fillStyle='#020204'; g.beginPath(); g.arc(lpc,lpcy,H*.05,0,Math.PI*2); g.fill();
+      g.globalAlpha=panA;
+      g.fillStyle='#f0f0f8'; g.font='bold 13px "Inter",sans-serif'; g.textAlign='center'; g.textBaseline='top';
+      g.fillText('EHT Ground',lpc,26);
+      g.fillStyle=TEAL; g.font='11px "Inter",sans-serif';
+      g.fillText('~20 μas beam',lpc,22+H*.20);
+      // Right panel (BHEX)
+      g.fillStyle='rgba(5,5,20,0.92)'; g.strokeStyle=AM; g.lineWidth=1;
+      g.fillRect(W-W*.22-12,22,W*.22,H*.24); g.strokeRect(W-W*.22-12,22,W*.22,H*.24);
+      const rpc=W-W*.11-12, rpcy=22+H*.12;
+      g.strokeStyle=GOLD; g.lineWidth=4.5; g.globalAlpha=panA*0.9;
+      glow3(g,rpc,rpcy,GOLD,H*.07,panA*0.6);
+      g.beginPath(); g.arc(rpc,rpcy,H*.062,0,Math.PI*2); g.stroke();
+      g.fillStyle='#020204'; g.beginPath(); g.arc(rpc,rpcy,H*.052,0,Math.PI*2); g.fill();
+      g.globalAlpha=panA;
+      g.fillStyle=GLOW; g.font='bold 13px "Inter",sans-serif'; g.textAlign='center'; g.textBaseline='top';
+      g.fillText('EHT + BHEX',rpc,26);
+      g.fillStyle=TEAL; g.font='11px "Inter",sans-serif';
+      g.fillText('~6 μas beam',rpc,22+H*.20);
+      g.globalAlpha=1;
+    };
+
+    if (reducedMotion) { draw(999); return; }
+    let T = 0;
+    const frame = () => { rafRef.current = requestAnimationFrame(frame); T += 1/60; draw(T); };
+    frame();
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [reducedMotion]);
+  return html`<canvas ref=${canvasRef} style=${{width:'100%',height:'100%',display:'block'}}/>`;
+}
+
+// ── D08: The Simulator ────────────────────────────────────────────────────────
+function d08({ reducedMotion }) {
+  const canvasRef = useRef(null);
+  const rafRef    = useRef(null);
+  useEffect(() => {
+    const cv = canvasRef.current;
+    if (!cv) return;
+    const W = cv.offsetWidth, H = cv.offsetHeight;
+    if (!W || !H) return;
+    const dpr = window.devicePixelRatio || 1;
+    cv.width = W*dpr; cv.height = H*dpr;
+    const g = cv.getContext('2d');
+    g.scale(dpr, dpr);
+    const stars = makeStars(W,H,60);
+
+    const drawRingMockup = (cx, cy, quality) => {
+      [[H*.13,0.06,'rgba(255,120,0'],[H*.118,0.10,'rgba(255,160,0'],[H*.107,0.17,'rgba(255,195,30']].forEach(([r,op,col]) => {
+        g.strokeStyle=`${col},${op})`; g.lineWidth=r*.16;
+        g.beginPath(); g.arc(cx,cy,r,0,Math.PI*2); g.stroke();
+      });
+      if (quality === 'ng') { glow3(g,cx,cy,GOLD,H*.10,0.6); }
+      g.strokeStyle=GOLD; g.lineWidth=quality==='ng'?5:3.5;
+      g.beginPath(); g.arc(cx,cy,H*.098,0,Math.PI*2); g.stroke();
+      g.fillStyle='#020510'; g.beginPath(); g.arc(cx,cy,H*.084,0,Math.PI*2); g.fill();
+      // Contours
+      const nContours = quality==='ng' ? 3 : 2;
+      [[H*.098,0.8],[H*.122,0.55],[H*.148,0.35]].slice(0,nContours).forEach(([r,op]) => {
+        g.strokeStyle=rgba(GOLD,op*(quality==='ng'?0.9:0.7)); g.lineWidth=quality==='ng'?2:1.5;
+        g.beginPath(); g.arc(cx,cy,r,0,Math.PI*2); g.stroke();
+      });
+    };
+
+    const draw = T => {
+      g.fillStyle=BG; g.fillRect(0,0,W,H);
+      drawStars(g,stars,T,0.4);
+
+      // Panel rise animation
+      const lRise = ease(prog(T,0,1.2));
+      const rRise = ease(prog(T,0.3,1.2));
+      const lPY = H*.08 + (1-lRise)*20;
+      const rPY = H*.08 + (1-rRise)*20;
+      const panH = H*.76, lPX=W*.02, rPX=W*.52, panW=W*.46;
+
+      // Left panel (EHT 2017)
+      g.globalAlpha=lRise;
+      g.fillStyle='rgba(5,6,18,0.95)'; g.strokeStyle='#2d2200'; g.lineWidth=1.5;
+      g.fillRect(lPX,lPY,panW,panH); g.strokeRect(lPX,lPY,panW,panH);
+      g.fillStyle=DIM; g.font='bold 15px "Inter",sans-serif';
+      g.textAlign='center'; g.textBaseline='bottom';
+      g.fillText('EHT 2017', lPX+panW*.5, lPY-4);
+      g.fillStyle='#555585'; g.font='11px "Inter",sans-serif';
+      g.fillText('8 stations · 28 baselines', lPX+panW*.5, lPY-4+14);
+      // Ring inside left panel
+      g.fillStyle='#050818'; g.fillRect(lPX+20,lPY+60,panW-40,panH*.55);
+      drawRingMockup(lPX+panW*.5, lPY+panH*.40, 'eht');
+      g.fillStyle=DIM; g.font='11px "Inter",sans-serif'; g.textAlign='center'; g.textBaseline='top';
+      g.fillText('DR ≈ 50:1  ·  beam ~24 μas  ·  UV fill 0.8%', lPX+panW*.5, lPY+panH*.74);
+      g.globalAlpha=1;
+
+      // Right panel (ngEHT)
+      g.globalAlpha=rRise;
+      glow3(g,rPX+panW*.5,rPY+panH*.5,AM,panW*.4,0.04*rRise);
+      g.fillStyle='rgba(5,6,18,0.95)'; g.strokeStyle=AM; g.lineWidth=1.5;
+      g.fillRect(rPX,rPY,panW,panH); g.strokeRect(rPX,rPY,panW,panH);
+      g.fillStyle=AM; g.font='bold 15px "Inter",sans-serif';
+      g.textAlign='center'; g.textBaseline='bottom';
+      g.fillText('ngEHT Phase 1', rPX+panW*.5, rPY-4);
+      g.fillStyle='#9E7E38'; g.font='11px "Inter",sans-serif';
+      g.fillText('17 stations · 136 baselines', rPX+panW*.5, rPY-4+14);
+      g.fillStyle='#050818'; g.fillRect(rPX+20,rPY+60,panW-40,panH*.55);
+      drawRingMockup(rPX+panW*.5, rPY+panH*.40, 'ng');
+      g.fillStyle=AM; g.font='11px "Inter",sans-serif'; g.textAlign='center'; g.textBaseline='top';
+      g.fillText('DR ≈ 200:1  ·  beam ~18 μas  ·  UV fill 3.5%', rPX+panW*.5, rPY+panH*.74);
+      g.globalAlpha=1;
+
+      // FITS terminal slides from left
+      const fitsA = ease(prog(T,2.1,0.9));
+      const fitsX = lerp(-W*.22, lPX, fitsA);
+      if (fitsA > 0) {
+        g.globalAlpha=fitsA;
+        g.fillStyle='#020208'; g.strokeStyle='#1a1a28'; g.lineWidth=0.8;
+        g.fillRect(fitsX,H*.86,W*.20,H*.12); g.strokeRect(fitsX,H*.86,W*.20,H*.12);
+        const ft = H*.86+H*.025;
+        g.font='8px "Courier New",monospace'; g.textAlign='left'; g.textBaseline='top';
+        g.fillStyle=TEAL; g.fillText('CRVAL1 = 187.7059308',fitsX+8,ft);
+        g.fillStyle=AM;   g.fillText('BMAJ   = 5.56E-09',fitsX+8,ft+H*.025);
+        g.fillStyle=DIM;  g.fillText('BUNIT  = \'JY/BEAM\'',fitsX+8,ft+H*.05);
+        g.fillStyle='#333355'; g.fillText('END',fitsX+8,ft+H*.075);
+        g.globalAlpha=1;
+      }
+
+      // Metrics panel slides from right
+      const metA = ease(prog(T,2.4,0.9));
+      const metX = lerp(W, W*.76, metA);
+      if (metA > 0) {
+        g.globalAlpha=metA;
+        g.fillStyle='#020208'; g.strokeStyle='#1a1a28'; g.lineWidth=0.8;
+        g.fillRect(metX,H*.86,W*.22,H*.12); g.strokeRect(metX,H*.86,W*.22,H*.12);
+        const ml=metX+8, mr=metX+W*.22-8, mt=H*.86+H*.015;
+        const row = (label,val,n) => {
+          g.font='9px "Inter",sans-serif'; g.fillStyle=DIM;
+          g.textAlign='left'; g.textBaseline='top'; g.fillText(label,ml,mt+n*H*.025);
+          g.fillStyle=AM; g.textAlign='right'; g.fillText(val,mr,mt+n*H*.025);
+        };
+        row('Beam FWHM','~20 μas',0); row('Dynamic Range','~50:1',1);
+        row('UV Fill','0.8%',2); row('Max baseline','10,900 km',3);
+        g.globalAlpha=1;
+      }
+
+      // CTA
+      const ctaA = ease(prog(T,3.6,1.2));
+      if (ctaA > 0) {
+        const ctaY = H*.92 + (1-ctaA)*12;
+        g.save(); g.filter='blur(6px)'; g.globalAlpha=ctaA*0.45;
+        g.fillStyle=GOLD; g.font='bold 36px "Inter","Helvetica Neue",sans-serif';
+        g.textAlign='center'; g.textBaseline='middle';
+        g.fillText('Place your first telescope.',W*.5,ctaY);
+        g.filter='none'; g.globalAlpha=ctaA;
+        g.fillText('Place your first telescope.',W*.5,ctaY);
+        g.restore();
+      }
+    };
+
+    if (reducedMotion) { draw(999); return; }
+    let T = 0;
+    const frame = () => { rafRef.current = requestAnimationFrame(frame); T += 1/60; draw(T); };
+    frame();
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [reducedMotion]);
+  return html`<canvas ref=${canvasRef} style=${{width:'100%',height:'100%',display:'block'}}/>`;
+}
+
+// ── TourDiagram export ────────────────────────────────────────────────────────
+export function TourDiagram({ diagramId, reducedMotion }) {
+  const comps = [null, d01, d02, d03, d04, d05, d06, d07, d08];
+  const Comp = comps[diagramId];
+  if (!Comp) return null;
+  return html`<${Comp} reducedMotion=${reducedMotion}/>`;
 }
