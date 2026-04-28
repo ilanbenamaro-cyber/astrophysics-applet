@@ -1,10 +1,11 @@
 // TourDiagram.js — 8 SVG hero diagrams for the cinematic VLBI tour.
-// All diagrams: viewBox="0 0 1200 700", background #010103.
+// All diagrams: viewBox="0 0 1200 700", background #08080f.
 // CSS animations via className — see tour.css. Filter IDs are diagram-scoped.
 // htm safety: NEVER use bare < or > in SVG text content.
 import { html } from './core.js';
 
-const BG   = '#010103';
+const BG   = '#08080f';  // deep space, slightly warm
+const DRK  = '#0d0d1a';  // panel backgrounds
 const GOLD = '#FFD700';
 const AM   = '#C4A555';
 const TEAL = '#4ecdc4';
@@ -43,25 +44,19 @@ function d01() {
     <svg viewBox="0 0 1200 700" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <filter id="bloom-d01" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur" />
+          <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur" />
           <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
-        <filter id="softglow-d01" x="-100%" y="-100%" width="300%" height="300%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="18" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+        <filter id="hardblur-d01" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="24" />
         </filter>
-        <filter id="hardblur-d01" x="-100%" y="-100%" width="300%" height="300%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="28" />
-        </filter>
-        <radialGradient id="beamGlow1" fx="240" fy="311" cx="240" cy="80" r="60%" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor=${AM} stopOpacity="0.25" />
-          <stop offset="40%" stopColor=${AM} stopOpacity="0.08" />
+        <radialGradient id="beamGrad1-d01" cx="50%" cy="100%" r="70%" gradientUnits="userSpaceOnUse" fx="240" fy="490">
+          <stop offset="0%"   stopColor=${AM} stopOpacity="0.18" />
           <stop offset="100%" stopColor=${AM} stopOpacity="0" />
         </radialGradient>
-        <radialGradient id="earthGrad-d01" cx="42%" cy="38%" r="60%">
-          <stop offset="0%" stopColor="#1a3a6c" />
-          <stop offset="45%" stopColor="#0d1f3d" />
-          <stop offset="100%" stopColor="#050d1a" />
+        <radialGradient id="beamGrad2-d01" cx="50%" cy="100%" r="70%" gradientUnits="userSpaceOnUse" fx="900" fy="490">
+          <stop offset="0%"   stopColor=${TEAL} stopOpacity="0.10" />
+          <stop offset="100%" stopColor=${TEAL} stopOpacity="0" />
         </radialGradient>
       </defs>
 
@@ -71,61 +66,67 @@ function d01() {
       ${STARS.map((s, i) => html`<circle key=${'s'+i} cx=${s.x} cy=${s.y} r=${s.r} fill=${TX} fillOpacity=${s.op} />`)}
 
       <!-- Divider -->
-      <line x1="600" y1="20" x2="600" y2="680" stroke="#2d2200" strokeWidth="1" strokeOpacity="0.5" />
+      <line x1="600" y1="40" x2="600" y2="660" stroke="#1a1a2e" strokeWidth="1" />
 
-      <!-- ── LEFT: single dish ── -->
-      <!-- Blurry M87* source smear -->
-      <circle cx="240" cy="55" r="45" fill=${GLOW} fillOpacity="0.15" filter="url(#hardblur-d01)" />
-      <circle cx="240" cy="55" r="30" fill=${GLOW} fillOpacity="0.25" filter="url(#hardblur-d01)" />
-      <circle cx="240" cy="55" r="18" fill=${GOLD} fillOpacity="0.3"  filter="url(#hardblur-d01)" />
+      <!-- ── LEFT: single dish — 70,000× too blurry ── -->
+      <!-- Blurry M87* smear at top (not a circle — soft blur) -->
+      <circle cx="240" cy="52" r="50" fill=${GLOW} fillOpacity="0.08" filter="url(#hardblur-d01)" className="beam-left" />
+      <circle cx="240" cy="52" r="32" fill=${GLOW} fillOpacity="0.15" filter="url(#hardblur-d01)" className="beam-left" />
+      <circle cx="240" cy="52" r="18" fill=${GOLD} fillOpacity="0.18" filter="url(#hardblur-d01)" className="beam-left" />
 
-      <!-- Volumetric beam cone -->
-      <polygon points="240,311 60,80 420,80" fill="url(#beamGlow1)" />
+      <!-- Beam cone (volumetric) -->
+      <polygon points="240,490 60,60 420,60" fill="url(#beamGrad1-d01)" className="beam-left" />
 
-      <!-- Dish parabola — 4 stroke depth effect -->
-      <path d="M 80,450 Q 240,310 400,450" stroke="#1a1a2e" strokeWidth="8"  fill="none" strokeOpacity="0.8" />
-      <path d="M 82,450 Q 240,312 398,450" stroke="#3a3a5c" strokeWidth="5"  fill="none" strokeOpacity="0.9" />
-      <path d="M 85,450 Q 240,315 395,450" stroke=${AM}     strokeWidth="2.5" fill="none" strokeOpacity="0.7" />
-      <path d="M 90,453 Q 240,320 390,453" stroke=${TX}     strokeWidth="0.8" fill="none" strokeOpacity="0.4" />
-      <line x1="240" y1="315" x2="240" y2="450" stroke=${AM} strokeWidth="2" />
-      <circle cx="240" cy="311" r="6" fill=${AM} filter="url(#bloom-d01)" />
+      <!-- θ inside cone -->
+      <text x="240" y="240" textAnchor="middle" fill=${DIM} fontSize="17" className="beam-left">θ ≈ 2.7 arcsec</text>
 
-      <!-- Labels left -->
-      <text x="240" y="520" textAnchor="middle" fill=${DIM} fontSize="18">θ ≈ 2.7 arcsec</text>
-      <text x="240" y="560" textAnchor="middle" fill=${RED} fontSize="20" fontWeight="700" filter="url(#bloom-d01)">70,000× too blurry</text>
-      <text x="240" y="620" textAnchor="middle" fill=${DIM} fontSize="14">100 m dish</text>
+      <!-- Dish parabola — 3-stroke metallic technique -->
+      <path d="M 80,490 Q 240,360 400,490" stroke="#12122a" strokeWidth="10" fill="none" strokeOpacity="0.9" className="beam-left" />
+      <path d="M 82,490 Q 240,362 398,490" stroke="#3a3a60" strokeWidth="5"  fill="none" strokeOpacity="0.85" className="beam-left" />
+      <path d="M 88,492 Q 240,368 392,492" stroke=${AM}     strokeWidth="1.8" fill="none" strokeOpacity="0.6" className="beam-left" />
+      <line x1="240" y1="362" x2="240" y2="490" stroke=${AM} strokeWidth="2" className="beam-left" />
+      <circle cx="240" cy="358" r="6" fill=${AM} className="beam-left" />
 
-      <!-- ── RIGHT: Earth array ── -->
-      <!-- M87* sharp point -->
-      <circle cx="860" cy="65" r="4"  fill=${GOLD} filter="url(#bloom-d01)" />
-      <circle cx="860" cy="65" r="12" fill="none" stroke=${GOLD} strokeWidth="0.8" strokeOpacity="0.4" />
+      <!-- Failure label -->
+      <text x="240" y="560" textAnchor="middle" fill=${RED} fontSize="22" fontWeight="600" className="beam-left">70,000× too blurry</text>
+      <text x="240" y="610" textAnchor="middle" fill=${DIM} fontSize="14" className="beam-left">100 m dish</text>
 
-      <!-- Atmosphere glow -->
-      <circle cx="860" cy="380" r="158" fill="none" stroke=${TEAL} strokeWidth="16" strokeOpacity="0.06" filter="url(#softglow-d01)" />
-      <circle cx="860" cy="380" r="148" fill="none" stroke=${TEAL} strokeWidth="8"  strokeOpacity="0.10" filter="url(#bloom-d01)" />
+      <!-- ── RIGHT: interferometry — two dishes + baseline ── -->
+      <!-- M87* as sharp gold point -->
+      <circle cx="905" cy="50" r="5" fill=${GOLD} filter="url(#bloom-d01)" className="gold-dot" style=${{ transformBox:'fill-box', transformOrigin:'center' }} />
 
-      <!-- Earth body -->
-      <circle cx="860" cy="380" r="130" fill="url(#earthGrad-d01)" stroke=${TEAL} strokeWidth="1.5" strokeOpacity="0.4" />
+      <!-- θ label right -->
+      <text x="905" y="130" textAnchor="middle" fill=${TEAL} fontSize="22" fontWeight="600" className="beam-right">θ ≈ 20 μas</text>
 
-      <!-- Stations -->
-      <circle cx="760" cy="380" r="8" fill=${AM} filter="url(#bloom-d01)" />
-      <circle cx="960" cy="380" r="8" fill=${AM} filter="url(#bloom-d01)" />
+      <!-- Left dish (cx=760) -->
+      <path d="M 640,490 Q 760,360 880,490" stroke="#12122a" strokeWidth="10" fill="none" strokeOpacity="0.9" className="beam-right" />
+      <path d="M 642,490 Q 760,362 878,490" stroke="#3a3a60" strokeWidth="5"  fill="none" strokeOpacity="0.85" className="beam-right" />
+      <path d="M 648,492 Q 760,368 872,492" stroke=${AM}     strokeWidth="1.8" fill="none" strokeOpacity="0.6" className="beam-right" />
+      <line x1="760" y1="362" x2="760" y2="490" stroke=${AM} strokeWidth="2" className="beam-right" />
+      <circle cx="760" cy="358" r="6" fill=${AM} className="beam-right" />
 
-      <!-- Baseline -->
-      <line x1="768" y1="380" x2="952" y2="380" stroke=${TEAL} strokeWidth="6" strokeOpacity="0.3" filter="url(#bloom-d01)" />
-      <line x1="768" y1="380" x2="952" y2="380" stroke=${TX}   strokeWidth="1" strokeOpacity="0.9" />
+      <!-- Right dish (cx=1040) -->
+      <path d="M 920,490 Q 1040,360 1160,490" stroke="#12122a" strokeWidth="10" fill="none" strokeOpacity="0.9" className="beam-right" />
+      <path d="M 922,490 Q 1040,362 1158,490" stroke="#3a3a60" strokeWidth="5"  fill="none" strokeOpacity="0.85" className="beam-right" />
+      <path d="M 928,492 Q 1040,368 1152,492" stroke=${AM}     strokeWidth="1.8" fill="none" strokeOpacity="0.6" className="beam-right" />
+      <line x1="1040" y1="362" x2="1040" y2="490" stroke=${AM} strokeWidth="2" className="beam-right" />
+      <circle cx="1040" cy="358" r="6" fill=${AM} className="beam-right" />
 
-      <!-- Narrow beam -->
-      <line x1="858" y1="250" x2="853" y2="80" stroke=${TEAL} strokeWidth="1.5" strokeOpacity="0.7" />
-      <line x1="862" y1="250" x2="867" y2="80" stroke=${TEAL} strokeWidth="1.5" strokeOpacity="0.7" />
+      <!-- Beam cone (narrow, razor-thin lines to source) -->
+      <line x1="758" y1="358" x2="896" y2="55" stroke=${TEAL} strokeWidth="1.2" strokeOpacity="0.7" className="beam-right" />
+      <line x1="762" y1="358" x2="906" y2="55" stroke=${TEAL} strokeWidth="1.2" strokeOpacity="0.7" className="beam-right" />
+      <line x1="1038" y1="358" x2="906" y2="55" stroke=${TEAL} strokeWidth="1.2" strokeOpacity="0.7" className="beam-right" />
+      <line x1="1042" y1="358" x2="916" y2="55" stroke=${TEAL} strokeWidth="1.2" strokeOpacity="0.7" className="beam-right" />
 
-      <!-- Labels right -->
-      <text x="860" y="155" textAnchor="middle" fill=${TEAL} fontSize="24" fontWeight="700" filter="url(#bloom-d01)">θ ≈ 20 μas</text>
-      <text x="860" y="560" textAnchor="middle" fill=${TEAL} fontSize="20" fontWeight="700" filter="url(#bloom-d01)">Resolves 42 μas shadow</text>
-      <text x="860" y="620" textAnchor="middle" fill=${DIM}  fontSize="14">Earth-diameter baseline</text>
+      <!-- Baseline (draws itself) -->
+      <line x1="760" y1="380" x2="1040" y2="380" stroke=${TEAL} strokeWidth="6" strokeOpacity="0.15" className="beam-right" />
+      <line x1="760" y1="380" x2="1040" y2="380" stroke=${AM} strokeWidth="1.5" className="beam-right bl-draw" />
 
-      <!-- Bottom equation -->
-      <text x="600" y="665" textAnchor="middle" fill=${GOLD} fontSize="26" fontWeight="700" filter="url(#bloom-d01)">θ = 1.22 λ/D</text>
+      <!-- Triumph label -->
+      <text x="900" y="560" textAnchor="middle" fill=${TEAL} fontSize="22" fontWeight="600" className="beam-right">Resolves 42 μas shadow</text>
+
+      <!-- Bottom equation — always visible -->
+      <text x="600" y="660" textAnchor="middle" fill=${GOLD} fontSize="30" fontWeight="700">θ = 1.22 λ/D</text>
     </svg>
   `;
 }
@@ -136,78 +137,80 @@ function d02() {
     <svg viewBox="0 0 1200 700" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <filter id="bloom-d02" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur" />
+          <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur" />
           <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-        <filter id="softglow-d02" x="-100%" y="-100%" width="300%" height="300%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="18" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
       </defs>
 
       <rect width="1200" height="700" fill=${BG} />
 
-      <!-- Stars (top 420px band) -->
+      <!-- Stars in upper zone -->
       ${STARS.filter(s => s.y < 420).map((s, i) => html`<circle key=${'s'+i} cx=${s.x} cy=${s.y} r=${s.r} fill=${TX} fillOpacity=${s.op} />`)}
 
-      <!-- M87* source -->
-      <circle cx="600" cy="45" r="8"  fill=${GOLD} filter="url(#bloom-d02)" />
-      <text x="600" y="28" textAnchor="middle" fill=${GOLD} fontSize="14">M87*</text>
+      <!-- M87* source point -->
+      <circle cx="600" cy="42" r="5" fill=${GOLD} filter="url(#bloom-d02)" />
+      <text x="600" y="30" textAnchor="middle" fill=${GOLD} fontSize="13">M87*</text>
 
-      <!-- Wavefront lines (phase offset) -->
-      <line x1="100" y1="200" x2="580" y2="200" stroke=${GOLD} strokeWidth="1.5" strokeOpacity="0.6" />
-      <line x1="620" y1="215" x2="1100" y2="215" stroke=${GOLD} strokeWidth="1.5" strokeOpacity="0.6" />
+      <!-- Static wavefront ghost lines (phase context) -->
+      <line x1="80" y1="172" x2="1120" y2="172" stroke="#1e1e38" strokeWidth="1" />
+      <line x1="80" y1="186" x2="1120" y2="186" stroke="#1e1e38" strokeWidth="1" />
+      <line x1="80" y1="200" x2="1120" y2="200" stroke="#1e1e38" strokeWidth="1" />
 
-      <!-- Phase offset annotation -->
-      <line x1="600" y1="200" x2="600" y2="215" stroke=${GLOW} strokeWidth="2" />
-      <text x="642" y="208" fill=${GLOW} fontSize="22" fontWeight="700">τ_g</text>
-      <text x="642" y="232" fill=${GLOW} fontSize="15">= B·ŝ/c</text>
+      <!-- Animated wavefront (descends, loops) -->
+      <line x1="80" y1="185" x2="1120" y2="185" stroke=${AM} strokeWidth="1.8" strokeOpacity="0.7" className="wf-line" />
 
-      <!-- Left dish (ALMA) -->
-      <path d="M 60,340 Q 170,260 280,340" stroke="#1a1a2e" strokeWidth="8"  fill="none" strokeOpacity="0.8" />
-      <path d="M 62,340 Q 170,262 278,340" stroke="#3a3a5c" strokeWidth="5"  fill="none" strokeOpacity="0.9" />
-      <path d="M 65,340 Q 170,265 275,340" stroke=${AM}     strokeWidth="2.5" fill="none" strokeOpacity="0.7" />
-      <line x1="170" y1="265" x2="170" y2="340" stroke=${AM} strokeWidth="2" />
-      <circle cx="170" cy="261" r="6" fill=${AM} filter="url(#bloom-d02)" />
-      <text x="170" y="390" textAnchor="middle" fill=${TX}  fontSize="15" fontWeight="600">Telescope 1</text>
-      <text x="170" y="410" textAnchor="middle" fill=${DIM} fontSize="12">ALMA · Chile</text>
+      <!-- Left dish (ALMA, cx=180) — 3-stroke metallic -->
+      <path d="M 60,360 Q 180,268 300,360" stroke="#12122a" strokeWidth="8"  fill="none" strokeOpacity="0.8" />
+      <path d="M 62,360 Q 180,270 298,360" stroke="#3a3a60" strokeWidth="5"  fill="none" strokeOpacity="0.85" />
+      <path d="M 68,362 Q 180,276 292,362" stroke=${AM}     strokeWidth="1.8" fill="none" strokeOpacity="0.6" />
+      <line x1="180" y1="270" x2="180" y2="360" stroke=${AM} strokeWidth="2" />
+      <circle cx="180" cy="264" r="6" fill=${AM} filter="url(#bloom-d02)" />
+      <text x="180" y="408" textAnchor="middle" fill=${TX}  fontSize="15" fontWeight="600">Telescope 1</text>
+      <text x="180" y="428" textAnchor="middle" fill=${DIM} fontSize="12">ALMA · Chile</text>
 
-      <!-- Right dish (JCMT) -->
-      <path d="M 920,340 Q 1030,260 1140,340" stroke="#1a1a2e" strokeWidth="8"  fill="none" strokeOpacity="0.8" />
-      <path d="M 922,340 Q 1030,262 1138,340" stroke="#3a3a5c" strokeWidth="5"  fill="none" strokeOpacity="0.9" />
-      <path d="M 925,340 Q 1030,265 1135,340" stroke=${AM}     strokeWidth="2.5" fill="none" strokeOpacity="0.7" />
-      <line x1="1030" y1="265" x2="1030" y2="340" stroke=${AM} strokeWidth="2" />
-      <circle cx="1030" cy="261" r="6" fill=${AM} filter="url(#bloom-d02)" />
-      <text x="1030" y="390" textAnchor="middle" fill=${TX}  fontSize="15" fontWeight="600">Telescope 2</text>
-      <text x="1030" y="410" textAnchor="middle" fill=${DIM} fontSize="12">JCMT · Hawaii</text>
+      <!-- Right dish (JCMT, cx=1020) — 3-stroke metallic -->
+      <path d="M 900,360 Q 1020,268 1140,360" stroke="#12122a" strokeWidth="8"  fill="none" strokeOpacity="0.8" />
+      <path d="M 902,360 Q 1020,270 1138,360" stroke="#3a3a60" strokeWidth="5"  fill="none" strokeOpacity="0.85" />
+      <path d="M 908,362 Q 1020,276 1132,362" stroke=${AM}     strokeWidth="1.8" fill="none" strokeOpacity="0.6" />
+      <line x1="1020" y1="270" x2="1020" y2="360" stroke=${AM} strokeWidth="2" />
+      <circle cx="1020" cy="264" r="6" fill=${AM} filter="url(#bloom-d02)" />
+      <text x="1020" y="408" textAnchor="middle" fill=${TX}  fontSize="15" fontWeight="600">Telescope 2</text>
+      <text x="1020" y="428" textAnchor="middle" fill=${DIM} fontSize="12">JCMT · Hawaii</text>
 
-      <!-- Traveling pulse -->
-      <circle cx="170" cy="200" r="14" fill=${TEAL} fillOpacity="0.3" filter="url(#softglow-d02)" className="baseline-pulse" />
-      <circle cx="170" cy="200" r="5"  fill=${TX}   filter="url(#bloom-d02)"                       className="baseline-pulse" />
+      <!-- Phase tick marks (appear in sequence) -->
+      <line x1="180" y1="160" x2="180" y2="190" stroke=${GOLD} strokeWidth="2.5" className="tick-1" style=${{ transformBox:'fill-box', transformOrigin:'left center' }} />
+      <line x1="1020" y1="175" x2="1020" y2="205" stroke=${GOLD} strokeWidth="2.5" className="tick-2" style=${{ transformBox:'fill-box', transformOrigin:'left center' }} />
 
-      <!-- Baseline bar -->
-      <line x1="178" y1="455" x2="1022" y2="455" stroke=${AM} strokeWidth="1.5" />
-      <line x1="178" y1="449" x2="178"  y2="461" stroke=${AM} strokeWidth="1.5" />
-      <line x1="1022" y1="449" x2="1022" y2="461" stroke=${AM} strokeWidth="1.5" />
-      <text x="600" y="478" textAnchor="middle" fill=${AM} fontSize="16">B = 10,900 km  →  u = B/λ = 8.4 Gλ</text>
+      <!-- τ_g annotation (brace + label) -->
+      <path d="M 185,168 C 600,120 600,120 1015,183" fill="none" stroke=${GLOW} strokeWidth="1.2" strokeDasharray="4 3" className="tau-label" />
+      <text x="600" y="108" textAnchor="middle" fill=${GLOW} fontSize="28" fontWeight="700" className="tau-label">τ_g</text>
+      <text x="600" y="136" textAnchor="middle" fill=${GLOW} fontSize="16" className="tau-label">= B·ŝ/c</text>
+
+      <!-- Baseline measurement bar -->
+      <line x1="188" y1="458" x2="1012" y2="458" stroke=${AM} strokeWidth="1.2" />
+      <line x1="188" y1="452" x2="188" y2="464" stroke=${AM} strokeWidth="1.2" />
+      <line x1="1012" y1="452" x2="1012" y2="464" stroke=${AM} strokeWidth="1.2" />
+      <text x="600" y="480" textAnchor="middle" fill=${AM} fontSize="15">B = 10,900 km  →  u = B/λ = 8.4 Gλ</text>
 
       <!-- UV plane panel (bottom) -->
-      <rect x="100" y="500" width="1000" height="170" fill="rgba(4,6,20,0.95)" stroke=${AM} strokeWidth="1" rx="8" />
-      <text x="150" y="526" fill=${AM} fontSize="14" fontWeight="600">UV Plane</text>
+      <rect x="60" y="500" width="1080" height="180" fill=${DRK} stroke=${AM} strokeWidth="0.8" strokeOpacity="0.4" rx="6" />
+      <text x="110" y="522" fill=${AM} fontSize="13" fontWeight="600">UV Plane</text>
 
       <!-- UV axes -->
-      <line x1="110" y1="586" x2="1090" y2="586" stroke="#1a1a38" strokeWidth="1" />
-      <line x1="600" y1="508" x2="600"  y2="662" stroke="#1a1a38" strokeWidth="1" />
-      <text x="1075" y="600" fill=${DIM} fontSize="12">u</text>
-      <text x="608"  y="520" fill=${DIM} fontSize="12">v</text>
+      <line x1="70" y1="590" x2="1130" y2="590" stroke="#222245" strokeWidth="0.8" />
+      <line x1="600" y1="508" x2="600" y2="672" stroke="#222245" strokeWidth="0.8" />
+      <text x="1118" y="605" fill=${DIM} fontSize="12">u</text>
+      <text x="608" y="518" fill=${DIM} fontSize="12">v</text>
 
-      <!-- UV point pair (animated) -->
-      <circle cx="720" cy="546" r="16" fill=${AM} fillOpacity="0.3" filter="url(#softglow-d02)" className="uv-point-appear" />
-      <circle cx="720" cy="546" r="6"  fill=${AM} filter="url(#bloom-d02)"                       className="uv-point-appear" />
-      <circle cx="480" cy="626" r="4"  fill=${AM} fillOpacity="0.35" filter="url(#bloom-d02)"     className="uv-point-appear" />
-      <text x="738" y="544" fill=${TX}  fontSize="11" className="uv-point-appear">(u,v)</text>
-      <text x="448" y="630" fill=${DIM} fontSize="11" className="uv-point-appear">(-u,-v)</text>
-      <text x="600" y="652" textAnchor="middle" fill=${DIM} fontSize="13">One baseline = one Fourier component</text>
+      <!-- Conjugate UV point (appears after main) -->
+      <circle cx="490" cy="630" r="4" fill=${AM} fillOpacity="0.35" className="uv-pt-conj" />
+      <text x="468" y="635" fill=${DIM} fontSize="11" className="uv-pt-conj">(-u,-v)</text>
+
+      <!-- Main UV point with pulse -->
+      <circle cx="710" cy="550" r="6" fill=${AM} filter="url(#bloom-d02)" className="uv-pt-main" style=${{ transformBox:'fill-box', transformOrigin:'center' }} />
+      <text x="728" y="548" fill=${TX} fontSize="11" className="uv-pt-main">(u,v)</text>
+
+      <text x="600" y="668" textAnchor="middle" fill=${DIM} fontSize="12">One baseline = one Fourier component of the sky</text>
     </svg>
   `;
 }
@@ -218,83 +221,86 @@ function d03() {
     <svg viewBox="0 0 1200 700" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <filter id="bloom-d03" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur" />
+          <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur" />
           <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
-        <filter id="softglow-d03" x="-100%" y="-100%" width="300%" height="300%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="18" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+        <filter id="softglow-d03" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="14" result="blur" />
+          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
-        <radialGradient id="earthBody-d03" cx="40%" cy="35%" r="60%">
-          <stop offset="0%"   stopColor="#1e4080" />
-          <stop offset="40%"  stopColor="#0d1f3d" />
-          <stop offset="100%" stopColor="#040810" />
+        <radialGradient id="earthGrad-d03" cx="38%" cy="32%" r="65%">
+          <stop offset="0%"   stopColor="#1e4a8a" />
+          <stop offset="42%"  stopColor="#0d1f3d" />
+          <stop offset="100%" stopColor="#04080e" />
         </radialGradient>
-        <radialGradient id="nightSide-d03" cx="75%" cy="50%" r="60%">
-          <stop offset="0%"   stopColor="#000000" stopOpacity="0.6" />
-          <stop offset="60%"  stopColor="#000000" stopOpacity="0" />
+        <radialGradient id="nightSide-d03" cx="76%" cy="50%" r="58%">
+          <stop offset="0%"   stopColor="#000000" stopOpacity="0.65" />
+          <stop offset="58%"  stopColor="#000000" stopOpacity="0" />
         </radialGradient>
       </defs>
 
       <rect width="1200" height="700" fill=${BG} />
 
-      <!-- ── LEFT: Rotating Earth (cx=290 cy=350) ── -->
-      <circle cx="290" cy="350" r="224" fill="none" stroke=${TEAL} strokeWidth="28" strokeOpacity="0.04" filter="url(#softglow-d03)" />
-      <circle cx="290" cy="350" r="210" fill="none" stroke=${TEAL} strokeWidth="14" strokeOpacity="0.08" filter="url(#bloom-d03)" />
-      <circle cx="290" cy="350" r="198" fill="none" stroke=${TEAL} strokeWidth="6"  strokeOpacity="0.14" />
-      <circle cx="290" cy="350" r="190" fill="url(#earthBody-d03)" />
-      <circle cx="290" cy="350" r="190" fill="url(#nightSide-d03)" />
+      <!-- ── LEFT: Rotating Earth (cx=310 cy=350) ── -->
+      <!-- Atmosphere layers (earned — Earth rotation is the story) -->
+      <circle cx="310" cy="350" r="234" fill="none" stroke=${TEAL} strokeWidth="30" strokeOpacity="0.04" filter="url(#softglow-d03)" />
+      <circle cx="310" cy="350" r="220" fill="none" stroke=${TEAL} strokeWidth="14" strokeOpacity="0.08" filter="url(#bloom-d03)" />
+      <circle cx="310" cy="350" r="210" fill="none" stroke=${TEAL} strokeWidth="5"  strokeOpacity="0.16" />
 
-      <!-- Rotating group (transform-origin set in CSS to 290px 350px) -->
+      <!-- Earth body + night shadow -->
+      <circle cx="310" cy="350" r="196" fill="url(#earthGrad-d03)" />
+      <circle cx="310" cy="350" r="196" fill="url(#nightSide-d03)" />
+
+      <!-- Rotating group (CSS transform-origin: 310px 350px) -->
       <g className="earth-group-cinema">
-        <line x1="290" y1="170" x2="290" y2="530" stroke=${TEAL} strokeWidth="8" strokeOpacity="0.25" filter="url(#softglow-d03)" />
-        <line x1="290" y1="170" x2="290" y2="530" stroke=${TX}   strokeWidth="1.2" strokeOpacity="0.8" />
-        <circle cx="290" cy="160" r="10" fill=${AM} filter="url(#bloom-d03)" />
-        <circle cx="290" cy="540" r="10" fill=${AM} filter="url(#bloom-d03)" />
+        <line x1="310" y1="163" x2="310" y2="537" stroke=${TEAL} strokeWidth="7" strokeOpacity="0.18" filter="url(#softglow-d03)" />
+        <line x1="310" y1="163" x2="310" y2="537" stroke=${TX}   strokeWidth="1.2" strokeOpacity="0.75" />
+        <circle cx="310" cy="154" r="9" fill=${AM} filter="url(#bloom-d03)" />
+        <circle cx="310" cy="546" r="9" fill=${AM} filter="url(#bloom-d03)" />
       </g>
 
-      <text x="290" y="610" textAnchor="middle" fill=${TEAL} fontSize="16">12h observation</text>
-      <text x="290" y="635" textAnchor="middle" fill=${DIM}  fontSize="13">H = −6h → +6h</text>
+      <!-- Labels below Earth -->
+      <text x="310" y="600" textAnchor="middle" fill=${TEAL} fontSize="15">H = −6h → +6h</text>
+      <text x="310" y="622" textAnchor="middle" fill=${DIM}  fontSize="13">12 hour observation</text>
 
-      <!-- Arrow -->
-      <text x="575" y="358" textAnchor="middle" fill="#333355" fontSize="32">→</text>
+      <!-- Divider arrow -->
+      <text x="575" y="358" textAnchor="middle" fill="#2a2a50" fontSize="32">→</text>
 
-      <!-- ── RIGHT: UV plane (cx=905 cy=350) ── -->
-      <rect x="630" y="60" width="550" height="580" fill="rgba(4,6,20,0.95)" stroke=${AM} strokeWidth="1" rx="8" />
-      <text x="905" y="42" textAnchor="middle" fill=${AM} fontSize="14" fontWeight="600">UV Plane</text>
+      <!-- ── RIGHT: UV plane (cx=915 cy=350) ── -->
+      <rect x="630" y="50" width="550" height="600" fill=${DRK} stroke=${AM} strokeWidth="0.8" strokeOpacity="0.3" rx="6" />
 
       <!-- Axes -->
-      <line x1="638" y1="350" x2="1172" y2="350" stroke="#222245" strokeWidth="1" />
-      <line x1="905" y1="68"  x2="905"  y2="632" stroke="#222245" strokeWidth="1" />
-      <text x="1158" y="365" fill=${DIM} fontSize="13">u</text>
-      <text x="913"  y="80"  fill=${DIM} fontSize="13">v</text>
+      <line x1="638" y1="350" x2="1172" y2="350" stroke="#222245" strokeWidth="0.8" />
+      <line x1="915" y1="58"  x2="915"  y2="642" stroke="#222245" strokeWidth="0.8" />
+      <text x="1158" y="365" fill=${DIM} fontSize="12">u (Gλ)</text>
+      <text x="923"  y="72"  fill=${DIM} fontSize="12">v (Gλ)</text>
 
-      <!-- Grid circles -->
-      <circle cx="905" cy="350" r="80"  fill="none" stroke="#1a1a38" strokeWidth="0.5" />
-      <circle cx="905" cy="350" r="160" fill="none" stroke="#1a1a38" strokeWidth="0.5" />
-      <circle cx="905" cy="350" r="240" fill="none" stroke="#1a1a38" strokeWidth="0.5" />
+      <!-- Scale circles -->
+      <circle cx="915" cy="350" r="90"  fill="none" stroke="#1a1a38" strokeWidth="0.5" />
+      <circle cx="915" cy="350" r="180" fill="none" stroke="#1a1a38" strokeWidth="0.5" />
+      <circle cx="915" cy="350" r="270" fill="none" stroke="#1a1a38" strokeWidth="0.5" />
 
-      <!-- Arc family 1 (rx=240 ry=150, unrotated) — glow + sharp -->
-      <path d="M 665,350 A 240,150 0 0 0 1145,350" stroke=${AM} strokeWidth="6" strokeOpacity="0.2" fill="none" filter="url(#bloom-d03)" className="uv-draw-1" />
-      <path d="M 665,350 A 240,150 0 0 0 1145,350" stroke=${AM} strokeWidth="2" strokeOpacity="0.9" fill="none" className="uv-draw-1" />
-      <path d="M 665,350 A 240,150 0 0 1 1145,350" stroke=${AM} strokeWidth="1" strokeOpacity="0.35" fill="none" className="uv-draw-1-conj" />
+      <!-- Arc family 1 (rx=240 ry=150, unrotated) -->
+      <path d="M 675,350 A 240,150 0 0 0 1155,350" stroke=${AM} strokeWidth="6" strokeOpacity="0.18" fill="none" filter="url(#bloom-d03)" className="uv-draw-1" />
+      <path d="M 675,350 A 240,150 0 0 0 1155,350" stroke=${AM} strokeWidth="2" strokeOpacity="0.9"  fill="none" className="uv-draw-1" />
+      <path d="M 675,350 A 240,150 0 0 1 1155,350" stroke=${AM} strokeWidth="1" strokeOpacity="0.3"  fill="none" className="uv-draw-1-conj" />
 
       <!-- Arc family 2 (rx=190 ry=118, rotated 28°) -->
-      <g transform="rotate(28, 905, 350)">
-        <path d="M 715,350 A 190,118 0 0 0 1095,350" stroke=${AM} strokeWidth="5" strokeOpacity="0.15" fill="none" filter="url(#bloom-d03)" className="uv-draw-2" />
-        <path d="M 715,350 A 190,118 0 0 0 1095,350" stroke=${AM} strokeWidth="1.8" strokeOpacity="0.8" fill="none" className="uv-draw-2" />
-        <path d="M 715,350 A 190,118 0 0 1 1095,350" stroke=${AM} strokeWidth="1"   strokeOpacity="0.3"  fill="none" className="uv-draw-2-conj" />
+      <g transform="rotate(28, 915, 350)">
+        <path d="M 725,350 A 190,118 0 0 0 1105,350" stroke=${AM} strokeWidth="4" strokeOpacity="0.14" fill="none" filter="url(#bloom-d03)" className="uv-draw-2" />
+        <path d="M 725,350 A 190,118 0 0 0 1105,350" stroke=${AM} strokeWidth="1.8" strokeOpacity="0.8" fill="none" className="uv-draw-2" />
+        <path d="M 725,350 A 190,118 0 0 1 1105,350" stroke=${AM} strokeWidth="1"   strokeOpacity="0.28" fill="none" className="uv-draw-2-conj" />
       </g>
 
       <!-- Arc family 3 (rx=148 ry=92, rotated -22°) -->
-      <g transform="rotate(-22, 905, 350)">
-        <path d="M 757,350 A 148,92 0 0 0 1053,350" stroke=${AM} strokeWidth="4" strokeOpacity="0.12" fill="none" filter="url(#bloom-d03)" className="uv-draw-3" />
-        <path d="M 757,350 A 148,92 0 0 0 1053,350" stroke=${AM} strokeWidth="1.6" strokeOpacity="0.75" fill="none" className="uv-draw-3" />
-        <path d="M 757,350 A 148,92 0 0 1 1053,350" stroke=${AM} strokeWidth="0.9" strokeOpacity="0.28" fill="none" className="uv-draw-3-conj" />
+      <g transform="rotate(-22, 915, 350)">
+        <path d="M 767,350 A 148,92 0 0 0 1063,350" stroke=${AM} strokeWidth="3" strokeOpacity="0.12" fill="none" filter="url(#bloom-d03)" className="uv-draw-3" />
+        <path d="M 767,350 A 148,92 0 0 0 1063,350" stroke=${AM} strokeWidth="1.6" strokeOpacity="0.75" fill="none" className="uv-draw-3" />
+        <path d="M 767,350 A 148,92 0 0 1 1063,350" stroke=${AM} strokeWidth="0.9" strokeOpacity="0.24" fill="none" className="uv-draw-3-conj" />
       </g>
 
-      <text x="905" y="660" textAnchor="middle" fill=${AM}  fontSize="15">One baseline → one elliptical arc</text>
-      <text x="905" y="680" textAnchor="middle" fill=${DIM} fontSize="12">28 baselines × 12h → 11,000+ UV samples</text>
+      <text x="915" y="668" textAnchor="middle" fill=${AM}  fontSize="14">One baseline → one elliptical arc</text>
+      <text x="915" y="686" textAnchor="middle" fill=${DIM} fontSize="12">28 baselines × 12h → 11,000+ UV samples per night</text>
     </svg>
   `;
 }
@@ -355,7 +361,7 @@ function d04() {
       <rect width="1200" height="700" fill=${BG} />
 
       <!-- Map background -->
-      <rect x="40" y="60" width="1120" height="520" fill="rgba(4,6,20,0.9)" rx="4" />
+      <rect x="40" y="60" width="1120" height="520" fill=${DRK} rx="4" />
 
       <!-- Continent outlines (equirectangular, dark navy fill) -->
       <path d="M 95,68 L 185,45 L 248,58 L 285,95 L 295,145 L 268,195 L 238,225 L 212,248 L 188,272 L 165,285 L 142,268 L 118,235 L 96,198 L 78,162 L 72,125 L 80,90 Z" fill="#0d1a30" stroke="#1a2a4a" strokeWidth="1" />
@@ -443,7 +449,7 @@ function d04() {
 
       <!-- UV inset (bottom-right, appears last) -->
       <g className="uv-inset">
-        <rect x="850" y="490" width="330" height="190" fill="rgba(4,6,20,0.97)" stroke=${AM} strokeWidth="1" rx="6" />
+        <rect x="850" y="490" width="330" height="190" fill=${DRK} stroke=${AM} strokeWidth="1" rx="6" />
         <text x="1015" y="514" textAnchor="middle" fill=${AM} fontSize="13" fontWeight="600">UV Coverage</text>
         <path d="M 895,600 A 120,72 0 0 0 1135,600" stroke=${AM} strokeWidth="1.8" fill="none" strokeOpacity="0.8" />
         <path d="M 895,600 A 120,72 0 0 1 1135,600" stroke=${AM} strokeWidth="1"   fill="none" strokeOpacity="0.3" />
@@ -465,7 +471,7 @@ function d04() {
 
 // ── d05: From Noise to Image (sidelobe → photon ring transformation) ──────────
 function d05() {
-  const cx = 600, cy = 330;
+  const cx = 600, cy = 320;
   return html`
     <svg viewBox="0 0 1200 700" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -473,8 +479,8 @@ function d05() {
           <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur" />
           <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
-        <filter id="hardblur-d05" x="-100%" y="-100%" width="300%" height="300%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="28" />
+        <filter id="hardblur-d05" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="22" />
         </filter>
       </defs>
 
@@ -483,51 +489,44 @@ function d05() {
       <!-- Sparse star field -->
       ${STARS.filter((_, i) => i < 80).map((s, i) => html`<circle key=${'s'+i} cx=${s.x} cy=${s.y} r=${s.r} fill=${TX} fillOpacity=${s.op * 0.6} />`)}
 
-      <!-- Sidelobe rings (start visible → fade away) -->
-      <circle cx=${cx} cy=${cy} r="280" fill="none" stroke="#555585" strokeWidth="0.8" className="sl-ring-5" />
-      <circle cx=${cx} cy=${cy} r="230" fill="none" stroke="#6666a0" strokeWidth="1"   className="sl-ring-4" />
-      <circle cx=${cx} cy=${cy} r="185" fill="none" stroke="#7777b0" strokeWidth="1.2" className="sl-ring-3" />
-      <circle cx=${cx} cy=${cy} r="142" fill="none" stroke="#9999c0" strokeWidth="1.5" className="sl-ring-2" />
-      <circle cx=${cx} cy=${cy} r="105" fill="none" stroke=${DIM}    strokeWidth="2"   className="sl-ring-1" />
+      <!-- Sidelobe rings (3 rings, start visible, fade in sequence) -->
+      <circle cx=${cx} cy=${cy} r="285" fill="none" stroke="#4a4a70" strokeWidth="0.7" strokeOpacity="0.6" className="sl-ring-3" />
+      <circle cx=${cx} cy=${cy} r="285" fill="none" stroke="#4a4a70" strokeWidth="4"   strokeOpacity="0.2" filter="url(#bloom-d05)" className="sl-ring-3" />
+      <circle cx=${cx} cy=${cy} r="225" fill="none" stroke="#5a5a88" strokeWidth="1"   strokeOpacity="0.65" className="sl-ring-2" />
+      <circle cx=${cx} cy=${cy} r="225" fill="none" stroke="#5a5a88" strokeWidth="5"   strokeOpacity="0.18" filter="url(#bloom-d05)" className="sl-ring-2" />
+      <circle cx=${cx} cy=${cy} r="165" fill="none" stroke="#7070a0" strokeWidth="1.4" strokeOpacity="0.7" className="sl-ring-1" />
+      <circle cx=${cx} cy=${cy} r="165" fill="none" stroke="#7070a0" strokeWidth="6"   strokeOpacity="0.15" filter="url(#bloom-d05)" className="sl-ring-1" />
 
-      <!-- Sidelobe glow rings (wider blur versions) -->
-      <circle cx=${cx} cy=${cy} r="280" fill="none" stroke="#555585" strokeWidth="4" strokeOpacity="0.3" filter="url(#bloom-d05)" className="sl-ring-5" />
-      <circle cx=${cx} cy=${cy} r="185" fill="none" stroke="#7777b0" strokeWidth="5" strokeOpacity="0.25" filter="url(#bloom-d05)" className="sl-ring-3" />
-      <circle cx=${cx} cy=${cy} r="105" fill="none" stroke=${DIM}    strokeWidth="6" strokeOpacity="0.2"  filter="url(#bloom-d05)" className="sl-ring-1" />
+      <!-- Artifact blobs (fade with sidelobes) -->
+      <circle cx="420" cy="220" r="18" fill=${GLOW} fillOpacity="0.12" filter="url(#hardblur-d05)" className="sl-ring-2" />
+      <circle cx="780" cy="420" r="14" fill=${GLOW} fillOpacity="0.10" filter="url(#hardblur-d05)" className="sl-ring-3" />
+      <circle cx="390" cy="430" r="12" fill=${GLOW} fillOpacity="0.08" filter="url(#hardblur-d05)" className="sl-ring-2" />
 
-      <!-- Artifact blobs -->
-      <circle cx="420" cy="220" r="18" fill=${GLOW} fillOpacity="0.12" filter="url(#hardblur-d05)" className="sl-ring-1" />
-      <circle cx="780" cy="440" r="14" fill=${GLOW} fillOpacity="0.10" filter="url(#hardblur-d05)" className="sl-ring-2" />
-      <circle cx="390" cy="430" r="12" fill=${GLOW} fillOpacity="0.08" filter="url(#hardblur-d05)" className="sl-ring-3" />
+      <!-- Sidelobe annotation (fades with rings) -->
+      <text x="840" y="185" fill=${DIM} fontSize="13" fontStyle="italic" className="sl-ring-2">sidelobe artifacts</text>
+      <line x1="830" y1="192" x2="778" y2="230" stroke=${DIM} strokeWidth="0.8" className="sl-ring-2" />
 
-      <!-- Sidelobes label (fades with rings) -->
-      <text x="820" y="200" fill=${RED} fontSize="14" fontStyle="italic" className="sl-ring-3">ghost emission (sidelobes)</text>
-      <line x1="800" y1="205" x2="740" y2="250" stroke=${RED} strokeWidth="1" className="sl-ring-3" />
+      <!-- Accretion disk glow (emerges as sidelobes fade) — new class name -->
+      <circle cx=${cx} cy=${cy} r="118" fill="none" stroke="rgba(255,110,0,0.06)"  strokeWidth="28" className="photon-ring" />
+      <circle cx=${cx} cy=${cy} r="108" fill="none" stroke="rgba(255,145,0,0.10)"  strokeWidth="18" className="photon-ring" />
+      <circle cx=${cx} cy=${cy} r="99"  fill="none" stroke="rgba(255,182,30,0.16)" strokeWidth="11" className="photon-ring" />
+      <circle cx=${cx} cy=${cy} r="91"  fill="none" stroke="rgba(255,208,40,0.22)" strokeWidth="6"  className="photon-ring" />
 
-      <!-- Accretion disk glow layers (emerge as sidelobes fade) -->
-      <circle cx=${cx} cy=${cy} r="115" fill="none" stroke="rgba(255,120,0,0.06)" strokeWidth="28" className="photon-ring-emerge" />
-      <circle cx=${cx} cy=${cy} r="105" fill="none" stroke="rgba(255,150,0,0.10)" strokeWidth="18" className="photon-ring-emerge" />
-      <circle cx=${cx} cy=${cy} r="96"  fill="none" stroke="rgba(255,185,30,0.16)" strokeWidth="12" className="photon-ring-emerge" />
-      <circle cx=${cx} cy=${cy} r="88"  fill="none" stroke="rgba(255,210,40,0.22)" strokeWidth="7"  className="photon-ring-emerge" />
+      <!-- Photon ring core -->
+      <circle cx=${cx} cy=${cy} r="83" fill="none" stroke=${GOLD} strokeWidth="4.5" filter="url(#bloom-d05)" className="photon-ring" />
+      <circle cx=${cx} cy=${cy} r="79" fill="none" stroke=${GOLD} strokeWidth="1"   strokeOpacity="0.35" className="photon-ring" />
 
-      <!-- Photon ring -->
-      <circle cx=${cx} cy=${cy} r="80" fill="none" stroke=${GOLD} strokeWidth="5" filter="url(#bloom-d05)" className="photon-ring-emerge" />
-      <circle cx=${cx} cy=${cy} r="76" fill="none" stroke=${GOLD} strokeWidth="1.5" strokeOpacity="0.4" className="photon-ring-emerge" />
+      <!-- Shadow interior (event horizon) — new class name -->
+      <circle cx=${cx} cy=${cy} r="71" fill="#040408" className="bh-shadow" />
+      <circle cx=${cx} cy=${cy} r="60" fill="#020204" className="bh-shadow" />
 
-      <!-- True shadow (black interior, appears last) -->
-      <circle cx=${cx} cy=${cy} r="68" fill="#010103" className="shadow-emerge" />
-      <circle cx=${cx} cy=${cy} r="55" fill="#000001" className="shadow-emerge" />
+      <!-- Label: Dirty Image → CLEAN Image (new class names) -->
+      <text x="600" y="570" textAnchor="middle" fill=${RED}  fontSize="22" fontWeight="600" className="lbl-dirty">Dirty Image</text>
+      <text x="600" y="570" textAnchor="middle" fill=${TEAL} fontSize="22" fontWeight="600" className="lbl-clean">CLEAN Image</text>
 
-      <!-- Photon ring label (appears after) -->
-      <text x="750" y="130" fill=${GOLD} fontSize="14" fontWeight="700" className="photon-ring-emerge" filter="url(#bloom-d05)">photon ring</text>
-
-      <!-- Transitioning label: Dirty Image → CLEAN Image -->
-      <text x="600" y="580" textAnchor="middle" fill=${RED}  fontSize="20" fontWeight="700" className="label-dirty">Dirty Image</text>
-      <text x="600" y="580" textAnchor="middle" fill=${TEAL} fontSize="20" fontWeight="700" className="label-clean">CLEAN Image</text>
-
-      <!-- CLEAN equation -->
-      <text x="600" y="640" textAnchor="middle" fill=${GOLD} fontSize="16" fontFamily="'Courier New', monospace" className="photon-ring-emerge">r ← r − γ · r_max · B^D(l − l₀)</text>
-      <text x="600" y="665" textAnchor="middle" fill=${DIM}  fontSize="13" className="photon-ring-emerge">loop gain γ = 0.1  ·  stop at 3σ_noise</text>
+      <!-- CLEAN equation (appears with clean label) -->
+      <text x="600" y="618" textAnchor="middle" fill=${GOLD} fontSize="18" fontFamily="'Courier New', monospace" className="lbl-clean">I^C = (M ⊛ G) + r_final</text>
+      <text x="600" y="644" textAnchor="middle" fill=${DIM}  fontSize="12" className="lbl-clean">model convolved with restore beam, plus residuals</text>
     </svg>
   `;
 }
@@ -543,7 +542,7 @@ function d06() {
         </filter>
         <radialGradient id="vig-d06" cx="35%" cy="50%" r="55%">
           <stop offset="50%" stopColor="transparent" />
-          <stop offset="100%" stopColor="#010103" stopOpacity="0.85" />
+          <stop offset="100%" stopColor=${BG} stopOpacity="0.88" />
         </radialGradient>
       </defs>
 
@@ -552,8 +551,8 @@ function d06() {
       <!-- Real EHT M87* image, large centered-left -->
       <image
         href="../assets/eht-m87-2019.jpg"
-        x="30" y="20"
-        width="820" height="660"
+        x="20" y="15"
+        width="840" height="670"
         preserveAspectRatio="xMidYMid meet"
         className="eht-image-reveal"
       />
@@ -658,7 +657,7 @@ function d07() {
       <text x="658" y="320" textAnchor="middle" fill=${DIM} fontSize="12">~33 Gλ at 300 GHz</text>
 
       <!-- Left panel: EHT Ground -->
-      <rect x="15" y="25" width="260" height="165" fill="rgba(4,6,20,0.95)" stroke="#2d2200" strokeWidth="1" rx="6" />
+      <rect x="15" y="25" width="260" height="165" fill=${DRK} stroke="#2d2200" strokeWidth="1" rx="6" />
       <text x="145" y="50" textAnchor="middle" fill=${TX}   fontSize="14" fontWeight="700">EHT Ground</text>
       <rect x="30" y="65" width="120" height="20" fill=${BLUE} fillOpacity="0.7" rx="3" />
       <text x="158" y="80" fill=${TEAL} fontSize="12">~20 μas beam</text>
@@ -668,7 +667,7 @@ function d07() {
       <text x="145" y="160" textAnchor="middle" fill=${RED} fontSize="11" fontStyle="italic">cannot resolve ring</text>
 
       <!-- Right panel: BHEX -->
-      <rect x="925" y="25" width="260" height="165" fill="rgba(4,6,20,0.95)" stroke=${AM} strokeWidth="1" rx="6" />
+      <rect x="925" y="25" width="260" height="165" fill=${DRK} stroke=${AM} strokeWidth="1" rx="6" />
       <text x="1055" y="50" textAnchor="middle" fill=${GLOW} fontSize="14" fontWeight="700" filter="url(#bloom-d07)">EHT + BHEX</text>
       <rect x="940" y="65" width="36" height="20" fill=${GLOW} fillOpacity="0.8" rx="3" filter="url(#bloom-d07)" />
       <text x="984" y="80" fill=${GLOW} fontSize="12">~6 μas beam</text>
@@ -704,72 +703,72 @@ function d08() {
       ${STARS.filter((_, i) => i % 3 === 0).map((s, i) => html`<circle key=${'s'+i} cx=${s.x} cy=${s.y} r=${s.r * 0.7} fill=${TX} fillOpacity=${s.op * 0.4} />`)}
 
       <!-- ── LEFT panel: EHT 2017 ── -->
-      <rect x="30" y="60" width="520" height="500" fill="rgba(5,8,24,0.97)" stroke="#2d2200" strokeWidth="1.5" rx="8" />
-      <text x="290" y="44" textAnchor="middle" fill=${DIM} fontSize="16" fontWeight="700">EHT 2017</text>
-      <text x="290" y="60" textAnchor="middle" fill="#555585" fontSize="12">8 stations · 28 baselines</text>
+      <rect x="30" y="60" width="520" height="500" fill=${DRK} stroke="#2d2200" strokeWidth="1.5" rx="8" className="panel-left" />
+      <text x="290" y="44" textAnchor="middle" fill=${DIM} fontSize="16" fontWeight="700" className="panel-left">EHT 2017</text>
+      <text x="290" y="60" textAnchor="middle" fill="#555585" fontSize="12" className="panel-left">8 stations · 28 baselines</text>
 
       <!-- Map bg -->
-      <rect x="50" y="130" width="480" height="340" fill="#060820" rx="4" />
+      <rect x="50" y="130" width="480" height="340" fill="#050818" rx="4" className="panel-left" />
 
       <!-- Ring structure (EHT quality) -->
-      <circle cx=${lCx} cy=${lCy} r="90" fill="none" stroke="rgba(255,120,0,0.06)" strokeWidth="20" />
-      <circle cx=${lCx} cy=${lCy} r="82" fill="none" stroke="rgba(255,160,0,0.10)" strokeWidth="14" />
-      <circle cx=${lCx} cy=${lCy} r="75" fill="none" stroke="rgba(255,195,30,0.16)" strokeWidth="8" />
-      <circle cx=${lCx} cy=${lCy} r="68" fill="none" stroke=${GOLD} strokeWidth="3.5" filter="url(#bloom-d08)" />
-      <circle cx=${lCx} cy=${lCy} r="58" fill="#020510" />
+      <circle cx=${lCx} cy=${lCy} r="90" fill="none" stroke="rgba(255,120,0,0.06)" strokeWidth="20" className="panel-left" />
+      <circle cx=${lCx} cy=${lCy} r="82" fill="none" stroke="rgba(255,160,0,0.10)" strokeWidth="14" className="panel-left" />
+      <circle cx=${lCx} cy=${lCy} r="75" fill="none" stroke="rgba(255,195,30,0.16)" strokeWidth="8" className="panel-left" />
+      <circle cx=${lCx} cy=${lCy} r="68" fill="none" stroke=${GOLD} strokeWidth="3.5" filter="url(#bloom-d08)" className="panel-left" />
+      <circle cx=${lCx} cy=${lCy} r="58" fill="#020510" className="panel-left" />
 
       <!-- Contour levels -->
-      <circle cx=${lCx} cy=${lCy} r="90"  fill="none" stroke=${GOLD} strokeWidth="1.5" strokeOpacity="0.7" />
-      <circle cx=${lCx} cy=${lCy} r="115" fill="none" stroke=${AM}   strokeWidth="1"   strokeOpacity="0.45" />
+      <circle cx=${lCx} cy=${lCy} r="90"  fill="none" stroke=${GOLD} strokeWidth="1.5" strokeOpacity="0.7" className="panel-left" />
+      <circle cx=${lCx} cy=${lCy} r="115" fill="none" stroke=${AM}   strokeWidth="1"   strokeOpacity="0.45" className="panel-left" />
 
       <!-- Beam ellipse -->
-      <ellipse cx="488" cy="448" rx="22" ry="16" transform="rotate(15, 488, 448)" stroke=${TEAL} strokeWidth="1.5" fill="rgba(78,205,196,0.1)" />
+      <ellipse cx="488" cy="448" rx="22" ry="16" transform="rotate(15, 488, 448)" stroke=${TEAL} strokeWidth="1.5" fill="rgba(78,205,196,0.1)" className="panel-left" />
 
       <!-- Left stats -->
-      <text x="290" y="505" textAnchor="middle" fill=${DIM} fontSize="12">DR ≈ 50:1  ·  beam FWHM ~24 μas  ·  UV fill 0.8%</text>
+      <text x="290" y="505" textAnchor="middle" fill=${DIM} fontSize="12" className="panel-left">DR ≈ 50:1  ·  beam FWHM ~24 μas  ·  UV fill 0.8%</text>
 
       <!-- ── RIGHT panel: ngEHT Phase 1 ── -->
-      <rect x="650" y="60" width="520" height="500" fill="rgba(5,8,24,0.97)" stroke=${AM} strokeWidth="1.5" rx="8" filter="url(#bloom-d08)" />
-      <text x="910" y="44" textAnchor="middle" fill=${AM}  fontSize="16" fontWeight="700" filter="url(#bloom-d08)">ngEHT Phase 1</text>
-      <text x="910" y="60" textAnchor="middle" fill="#9E7E38" fontSize="12">17 stations · 136 baselines</text>
+      <rect x="650" y="60" width="520" height="500" fill=${DRK} stroke=${AM} strokeWidth="1.5" rx="8" filter="url(#bloom-d08)" className="panel-right" />
+      <text x="910" y="44" textAnchor="middle" fill=${AM}  fontSize="16" fontWeight="700" filter="url(#bloom-d08)" className="panel-right">ngEHT Phase 1</text>
+      <text x="910" y="60" textAnchor="middle" fill="#9E7E38" fontSize="12" className="panel-right">17 stations · 136 baselines</text>
 
       <!-- Map bg -->
-      <rect x="670" y="130" width="480" height="340" fill="#060820" rx="4" />
+      <rect x="670" y="130" width="480" height="340" fill="#050818" rx="4" className="panel-right" />
 
       <!-- Ring structure (ngEHT — sharper) -->
-      <circle cx=${rCx} cy=${rCy} r="90" fill="none" stroke="rgba(255,120,0,0.08)" strokeWidth="20" />
-      <circle cx=${rCx} cy=${rCy} r="82" fill="none" stroke="rgba(255,160,0,0.14)" strokeWidth="14" />
-      <circle cx=${rCx} cy=${rCy} r="75" fill="none" stroke="rgba(255,200,40,0.22)" strokeWidth="8" />
-      <circle cx=${rCx} cy=${rCy} r="68" fill="none" stroke=${GOLD} strokeWidth="5" filter="url(#bloom-d08)" />
-      <circle cx=${rCx} cy=${rCy} r="65" fill="none" stroke=${GOLD} strokeWidth="1" strokeOpacity="0.3" />
-      <circle cx=${rCx} cy=${rCy} r="58" fill="#020510" />
+      <circle cx=${rCx} cy=${rCy} r="90" fill="none" stroke="rgba(255,120,0,0.08)" strokeWidth="20" className="panel-right" />
+      <circle cx=${rCx} cy=${rCy} r="82" fill="none" stroke="rgba(255,160,0,0.14)" strokeWidth="14" className="panel-right" />
+      <circle cx=${rCx} cy=${rCy} r="75" fill="none" stroke="rgba(255,200,40,0.22)" strokeWidth="8" className="panel-right" />
+      <circle cx=${rCx} cy=${rCy} r="68" fill="none" stroke=${GOLD} strokeWidth="5" filter="url(#bloom-d08)" className="panel-right" />
+      <circle cx=${rCx} cy=${rCy} r="65" fill="none" stroke=${GOLD} strokeWidth="1" strokeOpacity="0.3" className="panel-right" />
+      <circle cx=${rCx} cy=${rCy} r="58" fill="#020510" className="panel-right" />
 
       <!-- Contour levels -->
-      <circle cx=${rCx} cy=${rCy} r="90"  fill="none" stroke=${GOLD} strokeWidth="2"   strokeOpacity="0.9" />
-      <circle cx=${rCx} cy=${rCy} r="118" fill="none" stroke=${GOLD} strokeWidth="1.5" strokeOpacity="0.65" />
-      <circle cx=${rCx} cy=${rCy} r="145" fill="none" stroke=${AM}   strokeWidth="1"   strokeOpacity="0.4" />
+      <circle cx=${rCx} cy=${rCy} r="90"  fill="none" stroke=${GOLD} strokeWidth="2"   strokeOpacity="0.9" className="panel-right" />
+      <circle cx=${rCx} cy=${rCy} r="118" fill="none" stroke=${GOLD} strokeWidth="1.5" strokeOpacity="0.65" className="panel-right" />
+      <circle cx=${rCx} cy=${rCy} r="145" fill="none" stroke=${AM}   strokeWidth="1"   strokeOpacity="0.4" className="panel-right" />
 
       <!-- Jet hint -->
-      <line x1=${rCx} y1=${rCy - 24} x2=${rCx + 58} y2=${rCy - 78} stroke=${AM} strokeWidth="1.2" strokeOpacity="0.4" />
+      <line x1=${rCx} y1=${rCy - 24} x2=${rCx + 58} y2=${rCy - 78} stroke=${AM} strokeWidth="1.2" strokeOpacity="0.4" className="panel-right" />
 
       <!-- Beam ellipse (smaller) -->
-      <ellipse cx="1108" cy="448" rx="15" ry="13" stroke=${TEAL} strokeWidth="1.5" fill="rgba(78,205,196,0.1)" />
+      <ellipse cx="1108" cy="448" rx="15" ry="13" stroke=${TEAL} strokeWidth="1.5" fill="rgba(78,205,196,0.1)" className="panel-right" />
 
       <!-- Right stats -->
-      <text x="910" y="505" textAnchor="middle" fill=${AM} fontSize="12" filter="url(#bloom-d08)">DR ≈ 200:1  ·  beam FWHM ~18 μas  ·  UV fill 3.5%</text>
+      <text x="910" y="505" textAnchor="middle" fill=${AM} fontSize="12" filter="url(#bloom-d08)" className="panel-right">DR ≈ 200:1  ·  beam FWHM ~18 μas  ·  UV fill 3.5%</text>
 
-      <!-- FITS terminal (bottom-left) -->
-      <g className="fits-reveal">
-        <rect x="30" y="582" width="220" height="100" fill="rgba(2,2,10,0.97)" stroke="#1a1a28" strokeWidth="1" rx="4" />
+      <!-- FITS terminal (bottom-left, slides from left) -->
+      <g className="fits-panel">
+        <rect x="30" y="582" width="220" height="100" fill="#020208" stroke="#1a1a28" strokeWidth="0.8" rx="4" />
         <text x="42" y="602" fill=${TEAL} fontSize="9" fontFamily="'Courier New', monospace">CRVAL1 = 187.7059308</text>
         <text x="42" y="618" fill=${AM}   fontSize="9" fontFamily="'Courier New', monospace">BMAJ   = 5.56E-09</text>
         <text x="42" y="634" fill=${DIM}  fontSize="9" fontFamily="'Courier New', monospace">BUNIT  = 'JY/BEAM'</text>
-        <text x="42" y="650" fill="#555585" fontSize="9" fontFamily="'Courier New', monospace">END</text>
+        <text x="42" y="650" fill="#333355" fontSize="9" fontFamily="'Courier New', monospace">END</text>
       </g>
 
-      <!-- Metrics panel (bottom-right) -->
-      <g className="metrics-reveal">
-        <rect x="950" y="582" width="220" height="100" fill="rgba(2,2,10,0.97)" stroke="#1a1a28" strokeWidth="1" rx="4" />
+      <!-- Metrics panel (bottom-right, slides from right) -->
+      <g className="metrics-panel-tour">
+        <rect x="950" y="582" width="220" height="100" fill="#020208" stroke="#1a1a28" strokeWidth="0.8" rx="4" />
         <text x="962" y="602" fill=${DIM} fontSize="9">Beam FWHM</text>
         <text x="1162" y="602" textAnchor="end" fill=${AM} fontSize="9">~20 μas</text>
         <text x="962" y="618" fill=${DIM} fontSize="9">Dynamic Range</text>
@@ -780,8 +779,8 @@ function d08() {
         <text x="1162" y="650" textAnchor="end" fill=${AM} fontSize="9">10,900 km</text>
       </g>
 
-      <!-- CTA -->
-      <text x="600" y="664" textAnchor="middle" className="cta-text" fill=${GOLD} fontSize="36" fontWeight="900" filter="url(#bloom-d08)">Place your first telescope.</text>
+      <!-- CTA — luminous, appears last -->
+      <text x="600" y="664" textAnchor="middle" className="cta-reveal" fill=${GOLD} fontSize="36" fontWeight="900" filter="url(#bloom-d08)">Place your first telescope.</text>
     </svg>
   `;
 }

@@ -317,7 +317,7 @@
 
 .earth-group-cinema {
   animation: earthRotateCinema 10s linear infinite;
-  transform-origin: 290px 350px;
+  transform-origin: 310px 350px;
 }
 
 /* UV arc drawing via stroke-dashoffset (Act 3) */
@@ -715,3 +715,132 @@
   opacity: 1 !important;
   transform: none !important;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* ── Smithsonian Art Pass — new keyframes (appended, no duplicates) ──────── */
+/* ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── d01: beam fade + baseline draw + dot appear ─────────────────────────── */
+@keyframes beamFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes baselineDraw {
+  from { stroke-dashoffset: 800; }
+  to   { stroke-dashoffset: 0; }
+}
+
+@keyframes dotAppear {
+  0%   { opacity: 1; transform: scale(1.4); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* ── d02: wavefront descent + tick appear + UV point pulse ───────────────── */
+@keyframes wavefrontDescend {
+  from { transform: translateY(-120px); opacity: 0; }
+  8%   { opacity: 1; }
+  92%  { opacity: 1; }
+  to   { transform: translateY(320px); opacity: 0; }
+}
+
+@keyframes tickAppear {
+  from { opacity: 0; transform: scaleX(0); }
+  to   { opacity: 1; transform: scaleX(1); }
+}
+
+@keyframes uvPointPulse {
+  0%   { opacity: 0; }
+  50%  { opacity: 1; transform: scale(1.4); }
+  75%  { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* ── d08: panel rise + slide + cta ──────────────────────────────────────── */
+@keyframes panelRise {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideFromLeft {
+  from { opacity: 0; transform: translateX(-30px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideFromRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes ctaReveal {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── d01 animation classes ───────────────────────────────────────────────── */
+.beam-left  { animation: beamFadeIn 2s 0.2s cubic-bezier(0.25,0.46,0.45,0.94) forwards; opacity: 0; }
+.beam-right { animation: beamFadeIn 1.5s 1.4s cubic-bezier(0.25,0.46,0.45,0.94) forwards; opacity: 0; }
+.bl-draw    { stroke-dasharray: 800; stroke-dashoffset: 800;
+              animation: baselineDraw 1.5s 2.8s cubic-bezier(0.25,0.46,0.45,0.94) forwards; }
+.gold-dot   { animation: dotAppear 0.8s 4.4s cubic-bezier(0.25,0.46,0.45,0.94) forwards;
+              opacity: 0; transform-box: fill-box; transform-origin: center; }
+
+/* ── d02 animation classes ───────────────────────────────────────────────── */
+.wf-line    { animation: wavefrontDescend 4s 0.3s cubic-bezier(0.25,0.46,0.45,0.94) infinite; }
+.tick-1     { animation: tickAppear 0.4s 2.2s cubic-bezier(0.25,0.46,0.45,0.94) forwards;
+              opacity: 0; transform-box: fill-box; transform-origin: left center; }
+.tick-2     { animation: tickAppear 0.4s 2.8s cubic-bezier(0.25,0.46,0.45,0.94) forwards;
+              opacity: 0; transform-box: fill-box; transform-origin: left center; }
+.tau-label  { animation: beamFadeIn 0.6s 3.2s cubic-bezier(0.25,0.46,0.45,0.94) forwards; opacity: 0; }
+.uv-pt-main { animation: uvPointPulse 0.9s 3.6s cubic-bezier(0.25,0.46,0.45,0.94) forwards;
+              opacity: 0; transform-box: fill-box; transform-origin: center; }
+.uv-pt-conj { animation: beamFadeIn 0.6s 4.2s cubic-bezier(0.25,0.46,0.45,0.94) forwards; opacity: 0; }
+
+/* ── d05 new class names (reuse existing keyframes, documentary easing) ─── */
+.photon-ring { animation: photonRingReveal 4.5s 0.4s cubic-bezier(0.25,0.46,0.45,0.94) forwards; opacity: 0; }
+.bh-shadow   { animation: shadowReveal 4.5s 0.4s cubic-bezier(0.25,0.46,0.45,0.94) forwards; opacity: 0; }
+.lbl-dirty   { animation: labelDirtyFade 4.5s 0.4s cubic-bezier(0.25,0.46,0.45,0.94) forwards; }
+.lbl-clean   { animation: labelCleanFade 4.5s 0.4s cubic-bezier(0.25,0.46,0.45,0.94) forwards; opacity: 0; }
+
+/* ── d08 new class names ─────────────────────────────────────────────────── */
+.panel-left         { animation: panelRise 1.2s 0.2s cubic-bezier(0.25,0.46,0.45,0.94) forwards; opacity: 0; }
+.panel-right        { animation: panelRise 1.2s 0.5s cubic-bezier(0.25,0.46,0.45,0.94) forwards; opacity: 0; }
+.fits-panel         { animation: slideFromLeft 0.9s 2.1s cubic-bezier(0.25,0.46,0.45,0.94) forwards; opacity: 0; }
+.metrics-panel-tour { animation: slideFromRight 0.9s 2.4s cubic-bezier(0.25,0.46,0.45,0.94) forwards; opacity: 0; }
+.cta-reveal         { animation: ctaReveal 1.2s 3.6s cubic-bezier(0.25,0.46,0.45,0.94) forwards; opacity: 0; }
+
+/* ── Reduced motion — new classes ────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .beam-left, .beam-right, .bl-draw, .gold-dot,
+  .wf-line, .tick-1, .tick-2, .tau-label, .uv-pt-main, .uv-pt-conj,
+  .photon-ring, .bh-shadow, .lbl-dirty, .lbl-clean,
+  .panel-left, .panel-right, .fits-panel, .metrics-panel-tour, .cta-reveal
+    { animation: none !important; opacity: 1 !important; }
+
+  .bl-draw   { stroke-dashoffset: 0 !important; }
+  .lbl-dirty { opacity: 0 !important; }
+}
+
+[data-reduced-motion] .beam-left,
+[data-reduced-motion] .beam-right,
+[data-reduced-motion] .bl-draw,
+[data-reduced-motion] .gold-dot,
+[data-reduced-motion] .wf-line,
+[data-reduced-motion] .tick-1,
+[data-reduced-motion] .tick-2,
+[data-reduced-motion] .tau-label,
+[data-reduced-motion] .uv-pt-main,
+[data-reduced-motion] .uv-pt-conj,
+[data-reduced-motion] .photon-ring,
+[data-reduced-motion] .bh-shadow,
+[data-reduced-motion] .lbl-dirty,
+[data-reduced-motion] .lbl-clean,
+[data-reduced-motion] .panel-left,
+[data-reduced-motion] .panel-right,
+[data-reduced-motion] .fits-panel,
+[data-reduced-motion] .metrics-panel-tour,
+[data-reduced-motion] .cta-reveal
+  { animation: none !important; opacity: 1 !important; }
+
+[data-reduced-motion] .bl-draw   { stroke-dashoffset: 0 !important; }
+[data-reduced-motion] .lbl-dirty { opacity: 0 !important; }
