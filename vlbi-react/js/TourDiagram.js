@@ -1,6 +1,7 @@
 // TourDiagram.js — Canvas 2D cinematic diagrams for the VLBI tour.
 // Each d01–d08 is a React component with useRef/useEffect + RAF loop.
 import { html, useRef, useEffect } from './core.js';
+import { TOUR_PHYSICS } from './tourPhysics.js';
 
 // ── Color palette ─────────────────────────────────────────────────────────────
 const BG   = '#02020a';
@@ -385,6 +386,161 @@ function drawEarth(g, cx, cy, r) {
     g.strokeStyle = rgba(TEAL,op); g.lineWidth = lw;
     g.beginPath(); g.arc(cx,cy,ar,0,Math.PI*2); g.stroke();
   });
+}
+
+// ── Overhaul utility library (depth / derivation / labelled-axis / framing) ─────
+// All numbers these render come from TOUR_PHYSICS; these helpers only typeset and
+// compose. Single key light is upper-left, so every cast shadow falls lower-right.
+
+function roundRect(g, x, y, w, h, r) {
+  g.beginPath();
+  g.moveTo(x+r, y);
+  g.arcTo(x+w, y,   x+w, y+h, r);
+  g.arcTo(x+w, y+h, x,   y+h, r);
+  g.arcTo(x,   y+h, x,   y,   r);
+  g.arcTo(x,   y,   x+w, y,   r);
+  g.closePath();
+}
+
+// Glass derivation card: symbol → substitution → result → meaning. `reveal` (0..1)
+// types the lines in as the act's motion produces the number. Returns its height.
+function drawDerivationPanel(g, x, y, w, lines, alpha, opts={}) {
+  if (alpha <= 0) return 0;
+  const pad = 16, lh = 27, titleH = opts.title ? 24 : 0;
+  const h = pad*2 + titleH + lines.length*lh - 4;
+  const reveal = opts.reveal == null ? 1 : opts.reveal;
+  g.save();
+  g.globalAlpha = alpha;
+  g.shadowColor = 'rgba(0,0,0,0.55)'; g.shadowBlur = 22; g.shadowOffsetY = 9;
+  roundRect(g, x, y, w, h, 14); g.fillStyle = 'rgba(8,10,26,0.92)'; g.fill();
+  g.shadowColor = 'transparent'; g.shadowBlur = 0; g.shadowOffsetY = 0;
+  roundRect(g, x+0.5, y+0.5, w-1, h-1, 14); g.strokeStyle = rgba(AM, 0.55); g.lineWidth = 1; g.stroke();
+  const sheen = g.createLinearGradient(x, y, x, y+h*0.5);
+  sheen.addColorStop(0, 'rgba(255,255,255,0.06)'); sheen.addColorStop(1, 'rgba(255,255,255,0)');
+  roundRect(g, x, y, w, h, 14); g.fillStyle = sheen; g.fill();
+  g.textBaseline = 'top'; g.textAlign = 'left';
+  let ty = y + pad;
+  if (opts.title) {
+    g.font = '600 12px ui-sans-serif, system-ui, sans-serif'; g.fillStyle = rgba(AM, 0.95);
+    g.fillText(opts.title.toUpperCase(), x+pad, ty); ty += titleH;
+  }
+  for (let i = 0; i < lines.length; i++) {
+    const la = Math.max(0, Math.min(1, reveal*lines.length - i));
+    if (la <= 0) break;
+    g.globalAlpha = alpha * la;
+    const ln = lines[i];
+    if      (ln.kind === 'symbol') { g.font = 'italic 21px Georgia, "Times New Roman", serif'; g.fillStyle = rgba(GOLD, 1); }
+    else if (ln.kind === 'sub')    { g.font = '15px "Courier New", monospace'; g.fillStyle = '#d8d8ec'; }
+    else if (ln.kind === 'result') { g.font = '600 16px "Courier New", monospace'; g.fillStyle = rgba(TEAL, 1); }
+    else if (ln.kind === 'note')   { g.font = 'italic 12px ui-sans-serif, sans-serif'; g.fillStyle = rgba(DIM, 1); }
+    else                           { g.font = '13px ui-sans-serif, sans-serif'; g.fillStyle = '#c9c9e0'; }
+    g.fillText(ln.text, x+pad, ty + i*lh);
+  }
+  g.restore();
+  return h;
+}
+
+// Soft contact shadow (key light upper-left ⇒ shadow offset lower-right).
+function drawContactShadow(g, cx, baseY, rx, ry, alpha=0.5) {
+  if (alpha <= 0) return;
+  const ox = cx + rx*0.15;
+  g.save();
+  g.translate(ox, baseY); g.scale(1, ry/rx); g.translate(-ox, -baseY);
+  const grad = g.createRadialGradient(ox, baseY, 0, ox, baseY, rx);
+  grad.addColorStop(0,   `rgba(0,0,0,${(0.5*alpha).toFixed(3)})`);
+  grad.addColorStop(0.6, `rgba(0,0,0,${(0.26*alpha).toFixed(3)})`);
+  grad.addColorStop(1,   'rgba(0,0,0,0)');
+  g.beginPath(); g.arc(ox, baseY, rx, 0, Math.PI*2); g.fillStyle = grad; g.fill();
+  g.restore();
+}
+
+// Ticked, labelled axes for a Fourier/sky plot occupying [x,x+w]×[y,y+h].
+function drawAxisTicks(g, x, y, w, h, opts={}) {
+  const cx = x + w/2, cy = y + h/2;
+  g.save();
+  g.strokeStyle = rgba(AM, 0.32); g.lineWidth = 1;
+  g.beginPath(); g.moveTo(x, cy); g.lineTo(x+w, cy); g.moveTo(cx, y); g.lineTo(cx, y+h); g.stroke();
+  g.strokeStyle = rgba(AM, 0.45);
+  [0.25, 0.5, 0.75, 1].forEach(t => {
+    const dx = (w/2)*t, dy = (h/2)*t;
+    [cx+dx, cx-dx].forEach(px => { g.beginPath(); g.moveTo(px, cy-4); g.lineTo(px, cy+4); g.stroke(); });
+    [cy+dy, cy-dy].forEach(py => { g.beginPath(); g.moveTo(cx-4, py); g.lineTo(cx+4, py); g.stroke(); });
+  });
+  g.fillStyle = rgba(AM, 0.92); g.font = 'italic 14px Georgia, serif'; g.textBaseline = 'alphabetic';
+  if (opts.xlabel) { g.textAlign = 'right'; g.fillText(opts.xlabel, x+w-4, cy-7); }
+  if (opts.ylabel) { g.textAlign = 'left';  g.fillText(opts.ylabel, cx+7, y+15); }
+  if (opts.units)  { g.font = '10px "Courier New", monospace'; g.fillStyle = rgba(DIM, 0.95); g.textAlign='left'; g.textBaseline='bottom'; g.fillText(opts.units, x+2, y+h-3); }
+  g.restore();
+}
+
+// Labelled scale bar with end caps.
+function drawScaleBar(g, x, y, px, label, alpha=1) {
+  if (alpha <= 0) return;
+  g.save(); g.globalAlpha = alpha; g.lineCap = 'round';
+  g.strokeStyle = '#ffffff'; g.lineWidth = 2.5;
+  g.beginPath(); g.moveTo(x, y); g.lineTo(x+px, y); g.stroke();
+  g.lineWidth = 2;
+  g.beginPath(); g.moveTo(x, y-5); g.lineTo(x, y+5); g.moveTo(x+px, y-5); g.lineTo(x+px, y+5); g.stroke();
+  g.fillStyle = '#ffffff'; g.font = '600 13px ui-sans-serif, system-ui, sans-serif';
+  g.textAlign = 'center'; g.textBaseline = 'bottom'; g.fillText(label, x+px/2, y-8);
+  g.restore();
+}
+
+// One near-plane element per act — higher contrast + slight blur to seat mid-plane back.
+function drawForegroundAccent(g, W, H, kind, alpha=1) {
+  if (alpha <= 0) return;
+  g.save(); g.globalAlpha = alpha;
+  if (kind === 'rail') {
+    g.filter = 'blur(2px)';
+    const grad = g.createLinearGradient(0, H-28, 0, H);
+    grad.addColorStop(0, 'rgba(0,0,0,0)'); grad.addColorStop(1, 'rgba(0,0,0,0.62)');
+    g.fillStyle = grad; g.fillRect(0, H-28, W, 28);
+    g.filter = 'none';
+    g.strokeStyle = rgba(AM, 0.5); g.lineWidth = 1.5;
+    g.beginPath(); g.moveTo(0, H-23); g.lineTo(W, H-23); g.stroke();
+    g.strokeStyle = rgba(AM, 0.28);
+    for (let i = 0; i <= W; i += 58) { g.beginPath(); g.moveTo(i, H-23); g.lineTo(i, H-9); g.stroke(); }
+  } else if (kind === 'rock') {
+    g.filter = 'blur(3px)';
+    g.fillStyle = 'rgba(4,3,8,0.94)';
+    g.beginPath(); g.moveTo(0, H); g.lineTo(0, H-44);
+    g.quadraticCurveTo(W*0.05, H-78, W*0.12, H-52);
+    g.quadraticCurveTo(W*0.17, H-30, W*0.23, H); g.closePath(); g.fill();
+    g.filter = 'none';
+  }
+  g.restore();
+}
+
+// Small HUD-framed concept name — keeps the act's ONE idea legible even muted.
+function drawConceptTag(g, x, y, name, alpha=1) {
+  if (alpha <= 0) return;
+  g.save(); g.globalAlpha = alpha;
+  g.font = '600 12px ui-sans-serif, system-ui, sans-serif';
+  g.textBaseline = 'middle'; g.textAlign = 'left';
+  const label = name.toUpperCase();
+  const tw = g.measureText(label).width;
+  const bx = x, by = y-11, bh = 22, bw = tw + 34;
+  g.strokeStyle = rgba(AM, 0.7); g.lineWidth = 1.5;
+  g.beginPath();
+  g.moveTo(bx, by+6); g.lineTo(bx, by); g.lineTo(bx+12, by);
+  g.moveTo(bx, by+bh-6); g.lineTo(bx, by+bh); g.lineTo(bx+12, by+bh);
+  g.moveTo(bx+bw, by+6); g.lineTo(bx+bw, by); g.lineTo(bx+bw-12, by);
+  g.moveTo(bx+bw, by+bh-6); g.lineTo(bx+bw, by+bh); g.lineTo(bx+bw-12, by+bh);
+  g.stroke();
+  g.fillStyle = rgba(TEAL, 0.95); g.beginPath(); g.arc(bx+11, y, 2.6, 0, Math.PI*2); g.fill();
+  g.fillStyle = rgba(AM, 0.95); g.fillText(label, bx+20, y+1);
+  g.restore();
+}
+
+// Thin corner brackets framing the 1200×700 composition.
+function drawHudFrame(g, W, H, alpha=1) {
+  if (alpha <= 0) return;
+  g.save(); g.globalAlpha = alpha*0.5; g.strokeStyle = rgba(AM, 0.5); g.lineWidth = 1.5;
+  const m = 18, L = 26;
+  [[m,m,1,1],[W-m,m,-1,1],[m,H-m,1,-1],[W-m,H-m,-1,-1]].forEach(([cx,cy,sx,sy]) => {
+    g.beginPath(); g.moveTo(cx, cy+sy*L); g.lineTo(cx, cy); g.lineTo(cx+sx*L, cy); g.stroke();
+  });
+  g.restore();
 }
 
 // ── D01: The Resolution Problem ───────────────────────────────────────────────
