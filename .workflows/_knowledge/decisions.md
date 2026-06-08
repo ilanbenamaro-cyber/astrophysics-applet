@@ -497,6 +497,20 @@ TRIGGERS_REVIEW_IF: WebGPU becomes available and the additive blending requireme
 
 ---
 
+### tourPhysics.js: single source of computed truth for the tour
+DATE: 2026-06-08
+LAST_VERIFIED: 2026-06-08
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: Every physics number the tour displays is computed in `vlbi-react/js/tourPhysics.js` from the same constants and formulas the live simulator uses — never hardcoded in the act draw code. `tourPhysics.js` imports `latLonToECEF` from `uvCompute.js` (NOT a copy), `ARRAY_PRESETS`/`SKY_TARGETS`/`BHEX_PRESET`/`STATION_SEFD`/`EARTH_RADIUS_KM` from `constants.js`, and exports a frozen `TOUR_PHYSICS` object with raw values + a `str` namespace of pre-formatted strings + a `fmt` helper. Convention: θ=λ/B and θ=λ/D with NO 1.22 factor (matches `useSimulation.js:224-225`); the 1.22 Rayleigh factor is footnoted only.
+RATIONALE: Pre-overhaul the tour hardcoded ~30 physics strings; several were wrong or mutually contradictory (d04 "20 μas" vs d08 "24 μas"/"20 μas" in one act; d02 "B=10,900 km" asserted). Computing from the same source the tool uses makes tour and tool incapable of disagreeing. The EHT 2017 max baseline is actually 11,406 km (IRAM↔SPT) → θ=23.6 μas (displays "24"), not the loose "25"/"20" some sources cite.
+CRITICAL CONSTRAINT: latLonToECEF is the one place coordinate drift cannot be allowed (Marrone caught a longitude sign error here, fixed in 54c855b) — import it, never replicate. BHEX figures carry `pending:true`; the characteristic baseline is presented as "B ~ R⊕ + h" (an orbital-radius simplification) with a pending-sign-off tag — NEVER as a clean equality, because the true ground-to-satellite baseline is geometry-dependent (≤ 2R⊕+h).
+ALTERNATIVES_REJECTED: Hardcoding numbers in acts (the original approach — produced the contradictions); replicating ECEF math in tourPhysics (drift risk on the one function we can least afford to drift).
+TRIGGERS_REVIEW_IF: a new array preset becomes the tour's reference array; BHEX gets expert-validated numbers (remove pending tags); the simulator's resolution convention changes (must update tourPhysics to match).
+
+---
+
 ## Contradiction Scanner
 
 Claude runs this check when adding a new decision:

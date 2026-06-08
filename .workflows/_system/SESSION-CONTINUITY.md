@@ -63,7 +63,22 @@
 > TourDiagram.js fully rewritten from SVG/htm to Canvas 2D requestAnimationFrame loops.
 > d01–d08 are now React components (useRef+useEffect+RAF). Shared utilities: makeStars, drawStars, drawNebulae, drawMilkyWay, drawAtacama (organic bezier terrain), glow3, drawDish (parabola+clip), drawBeam, drawBlurry (chromatic aberration), drawSharp (6-spike diffraction), drawBaseline (traveling pulse), drawDivider, drawEarth. D03 Earth rotation in JS. D06 loads real EHT photo. D08 panel-rise + CTA bloom. tour.css: `.tour-visual canvas` rule added.
 
-**ALL PLANNED SESSIONS COMPLETE — S1 through P3 + Tour Cinematic Rewrite + Tour Art Passes + Canvas 2D Rewrite**
+**Tour World-Class Overhaul: COMPLETE** — committed 2026-06-08 (feature/tour-world-class-overhaul)
+> New `tourPhysics.js`: single source of computed truth — every tour number derived from the same
+> constants/formulas the simulator uses (θ=λ/B no 1.22; imports canonical latLonToECEF, never copies).
+> Fixed the pre-overhaul defects: d04 "20 μas" and d08 "24 vs 20 μas" contradictions resolved (all
+> read computed θ≈24 μas); d02 "B=10,900" → computed 11,406 km; d07 BHEX figures reframed as
+> "B ~ R⊕+h … pending sign-off" (orbital-radius simplification, never a clean equality).
+> Added depth/derivation utility library to TourDiagram.js (glass derivation panels, contact shadows,
+> labelled axes, scale bars, foreground accents, concept tags, HUD frames) — appended, no act-body
+> drift. All 8 acts (d01–d08) now carry: a named concept, a derivation panel showing symbol→sub→
+> result→meaning, labelled axes/scale bars, key-light-upper-left depth, and a filled frame. Tour.js
+> prose aligned (act 1 θ≈λ/D not 1.22λ/D; act 4 24 μas/11,400 km; act 7 BHEX proposed/pending).
+> Contract unchanged (Tour signature, autoActions, diagramId→d01–d08). 5 batch commits + audit/spec
+> docs (.workflows/_system/TOUR-AUDIT.md, TOUR-SPEC.md). Verified per-act via Playwright; zero new
+> console errors; 8 RAF cleanups + 8 reduced-motion gates intact.
+
+**ALL PLANNED SESSIONS COMPLETE — S1 through P3 + Tour Cinematic Rewrite + Tour Art Passes + Canvas 2D Rewrite + Tour World-Class Overhaul**
 
 ---
 
@@ -208,6 +223,7 @@ constants.js ─ IMAGE_SIZE=512, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD, 
 
 ## LAST UPDATED
 
+2026-06-08 — Tour World-Class Overhaul complete (feature/tour-world-class-overhaul): new tourPhysics.js single-source-of-truth (every tour number computed, θ=λ/B no 1.22, imports canonical latLonToECEF); fixed all asserted/contradictory numbers (d04 20→24 μas, d08 24-vs-20 resolved, d02 B computed 11,406 km); BHEX integrity reframe (d07 "B ~ R⊕+h … pending sign-off"); depth/derivation utility library appended to TourDiagram.js; all 8 acts get derivation panels + concept tags + labelled axes + filled frames; Tour.js prose aligned; contract unchanged. decisions.md (tourPhysics decision) + gotchas.md (4 entries) + this file updated. Audit/spec in _system/TOUR-AUDIT.md + TOUR-SPEC.md.
 2026-04-28 — Canvas 2D cinematic rewrite complete (bed2d45): TourDiagram.js fully rewritten from SVG/htm to Canvas 2D RAF loops. d01–d08 React components. Shared Canvas 2D utilities. tour.css canvas rule. decisions.md SVG bloom filter decision marked SUPERSEDED. gotchas.md 3 new Canvas 2D entries. MEMORY.md updated. SESSION-CONTINUITY updated.
 2026-04-27 — Smithsonian Art Pass complete (documentary-paced animation, one motion per act, new CSS class names for d05/d08, BG color update, 10 new keyframes + 19 new classes); WHERE WE ARE, commits, LAST UPDATED all updated
 2026-04-26 — Tour Art Pass complete (bloom filters, star fields, painted Earth, sidelobe→photon transformation, BHEX data beam, CTA); WHERE WE ARE, commits, LAST UPDATED all updated
