@@ -1218,6 +1218,7 @@ function d07({ reducedMotion }) {
     const starsBack  = makeStars(W,H,80);
     const starsMid   = makeStars(W,H,120);
     const starsFront = makeStars(W,H,80);
+    const P = TOUR_PHYSICS;
     const ex=W*.38, ey=H*.50, er=H*.20;
     const orx=W*.42, ory=H*.22, oRot=-22*Math.PI/180;
     const bx = ex + orx*Math.cos(oRot);
@@ -1289,13 +1290,13 @@ function d07({ reducedMotion }) {
         g.globalAlpha=1;
       }
 
-      // Baseline distance label
+      // Characteristic baseline — an orbital-radius simplification, pending sign-off.
       g.globalAlpha=ease(prog(T,2.5,1.0));
-      g.fillStyle=AM; g.font='15px "Inter",sans-serif';
+      g.fillStyle=AM; g.font='italic 16px Georgia, serif';
       g.textAlign='center'; g.textBaseline='bottom';
-      g.fillText('~32,900 km',(almaX+bx)/2,(almaY+by)/2-8);
-      g.fillStyle=DIM; g.font='12px "Inter",sans-serif';
-      g.fillText('~33 Gλ at 300 GHz',(almaX+bx)/2,(almaY+by)/2+10);
+      g.fillText('B ~ R⊕ + h',(almaX+bx)/2,(almaY+by)/2-8);
+      g.fillStyle=DIM; g.font='11px "Inter",sans-serif';
+      g.fillText(`≈ ${P.str.bhexRadius} · pending sign-off`,(almaX+bx)/2,(almaY+by)/2+10);
       g.globalAlpha=1;
 
       // Resolution comparison panels
@@ -1313,7 +1314,7 @@ function d07({ reducedMotion }) {
       g.fillStyle='#f0f0f8'; g.font='bold 13px "Inter",sans-serif'; g.textAlign='center'; g.textBaseline='top';
       g.fillText('EHT Ground',lpc,26);
       g.fillStyle=TEAL; g.font='11px "Inter",sans-serif';
-      g.fillText('~20 μas beam',lpc,22+H*.20);
+      g.fillText(`θ ≈ ${P.str.thetaEht}`,lpc,22+H*.20);
       // Right panel (BHEX)
       g.fillStyle='rgba(5,5,20,0.92)'; g.strokeStyle=AM; g.lineWidth=1;
       g.fillRect(W-W*.22-12,22,W*.22,H*.24); g.strokeRect(W-W*.22-12,22,W*.22,H*.24);
@@ -1326,8 +1327,17 @@ function d07({ reducedMotion }) {
       g.fillStyle=GLOW; g.font='bold 13px "Inter",sans-serif'; g.textAlign='center'; g.textBaseline='top';
       g.fillText('EHT + BHEX',rpc,26);
       g.fillStyle=TEAL; g.font='11px "Inter",sans-serif';
-      g.fillText('~6 μas beam',rpc,22+H*.20);
+      g.fillText(`θ ~ ${P.str.bhexTheta} · pending`,rpc,22+H*.20);
       g.globalAlpha=1;
+
+      // The relation itself is a pedagogical simplification — flagged, never asserted.
+      drawDerivationPanel(g, W*.05, H*.72, W*.90, [
+        { kind:'symbol', text:'B_space ~ R⊕ + h   (characteristic radius)' },
+        { kind:'sub',    text:`θ ~ λ / B_space  ≈ ${P.str.bhexTheta} at 230 GHz` },
+        { kind:'note',   text:'⚠ orbital-radius simplification — the true ground–satellite baseline is geometry-dependent (≤ 2R⊕+h). Pending sign-off: Marrone / Alejandro.' },
+      ], panA, { title:'Space baseline — pending expert sign-off', reveal: panA });
+      drawConceptTag(g, W*.05, H*.62, 'Space Baseline', panA);
+      drawHudFrame(g, W, H, ease(prog(T,0.3,1.5)));
     };
 
     if (reducedMotion) { draw(999); return; }
@@ -1353,6 +1363,8 @@ function d08({ reducedMotion }) {
     const g = cv.getContext('2d');
     g.scale(dpr, dpr);
     const stars = makeStars(W,H,60);
+    const P = TOUR_PHYSICS;
+    const bmajDeg = (P.thetaEhtUas/3.6e9).toExponential(2).toUpperCase().replace(/E(-?)(\d)$/,'E$10$2');
 
     const drawRingMockup = (cx, cy, quality) => {
       [[H*.13,0.06,'rgba(255,120,0'],[H*.118,0.10,'rgba(255,160,0'],[H*.107,0.17,'rgba(255,195,30']].forEach(([r,op,col]) => {
@@ -1390,12 +1402,12 @@ function d08({ reducedMotion }) {
       g.textAlign='center'; g.textBaseline='bottom';
       g.fillText('EHT 2017', lPX+panW*.5, lPY-4);
       g.fillStyle='#555585'; g.font='11px "Inter",sans-serif';
-      g.fillText('8 stations · 28 baselines', lPX+panW*.5, lPY-4+14);
+      g.fillText(`${P.str.nStations} · ${P.str.nBaselines}`, lPX+panW*.5, lPY-4+14);
       // Ring inside left panel
       g.fillStyle='#050818'; g.fillRect(lPX+20,lPY+60,panW-40,panH*.55);
       drawRingMockup(lPX+panW*.5, lPY+panH*.40, 'eht');
       g.fillStyle=DIM; g.font='11px "Inter",sans-serif'; g.textAlign='center'; g.textBaseline='top';
-      g.fillText('DR ≈ 50:1  ·  beam ~24 μas  ·  UV fill 0.8%', lPX+panW*.5, lPY+panH*.74);
+      g.fillText(`θ ≈ ${P.str.thetaEht}  ·  DR ~50:1  ·  UV fill ~0.8%`, lPX+panW*.5, lPY+panH*.74);
       g.globalAlpha=1;
 
       // Right panel (ngEHT)
@@ -1407,11 +1419,11 @@ function d08({ reducedMotion }) {
       g.textAlign='center'; g.textBaseline='bottom';
       g.fillText('ngEHT Phase 1', rPX+panW*.5, rPY-4);
       g.fillStyle='#9E7E38'; g.font='11px "Inter",sans-serif';
-      g.fillText('17 stations · 136 baselines', rPX+panW*.5, rPY-4+14);
+      g.fillText(`${P.str.ngStations} · ${P.str.ngBaselines}`, rPX+panW*.5, rPY-4+14);
       g.fillStyle='#050818'; g.fillRect(rPX+20,rPY+60,panW-40,panH*.55);
       drawRingMockup(rPX+panW*.5, rPY+panH*.40, 'ng');
       g.fillStyle=AM; g.font='11px "Inter",sans-serif'; g.textAlign='center'; g.textBaseline='top';
-      g.fillText('DR ≈ 200:1  ·  beam ~18 μas  ·  UV fill 3.5%', rPX+panW*.5, rPY+panH*.74);
+      g.fillText(`θ ≈ ${P.str.ngTheta}  ·  DR ~200:1  ·  UV fill ~3.5%`, rPX+panW*.5, rPY+panH*.74);
       g.globalAlpha=1;
 
       // FITS terminal slides from left
@@ -1423,8 +1435,8 @@ function d08({ reducedMotion }) {
         g.fillRect(fitsX,H*.86,W*.20,H*.12); g.strokeRect(fitsX,H*.86,W*.20,H*.12);
         const ft = H*.86+H*.025;
         g.font='8px "Courier New",monospace'; g.textAlign='left'; g.textBaseline='top';
-        g.fillStyle=TEAL; g.fillText('CRVAL1 = 187.7059308',fitsX+8,ft);
-        g.fillStyle=AM;   g.fillText('BMAJ   = 5.56E-09',fitsX+8,ft+H*.025);
+        g.fillStyle=TEAL; g.fillText(`CRVAL1 = ${P.m87RaDeg}`,fitsX+8,ft);
+        g.fillStyle=AM;   g.fillText(`BMAJ   = ${bmajDeg}`,fitsX+8,ft+H*.025);
         g.fillStyle=DIM;  g.fillText('BUNIT  = \'JY/BEAM\'',fitsX+8,ft+H*.05);
         g.fillStyle='#333355'; g.fillText('END',fitsX+8,ft+H*.075);
         g.globalAlpha=1;
@@ -1443,8 +1455,8 @@ function d08({ reducedMotion }) {
           g.textAlign='left'; g.textBaseline='top'; g.fillText(label,ml,mt+n*H*.025);
           g.fillStyle=AM; g.textAlign='right'; g.fillText(val,mr,mt+n*H*.025);
         };
-        row('Beam FWHM','~20 μas',0); row('Dynamic Range','~50:1',1);
-        row('UV Fill','0.8%',2); row('Max baseline','10,900 km',3);
+        row('Beam θ ≈',P.str.thetaEht,0); row('Dynamic Range','~50:1',1);
+        row('UV Fill','~0.8%',2); row('Max baseline',P.str.ehtBaseline,3);
         g.globalAlpha=1;
       }
 
@@ -1460,6 +1472,9 @@ function d08({ reducedMotion }) {
         g.fillText('Place your first telescope.',W*.5,ctaY);
         g.restore();
       }
+
+      drawConceptTag(g, W*.02, H*.02, 'The Simulator', ease(prog(T,0.2,1.0)));
+      drawHudFrame(g, W, H, ease(prog(T,0.2,1.5)));
     };
 
     if (reducedMotion) { draw(999); return; }

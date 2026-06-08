@@ -69,6 +69,12 @@ const uMax     = uGl(ehtMaxKm, LAM);
 const improve  = (thetaDsh * 1e6) / thetaEht;     // (arcsec→μas) / μas, dimensionless ratio
 const nBase    = EHT2017.length * (EHT2017.length - 1) / 2;
 
+// ngEHT Phase 1 — for the Act 8 side-by-side comparison (geometry only).
+const NGEHT   = ARRAY_PRESETS['ngEHT Phase 1'];
+const ngMaxKm = maxBaselineKm(NGEHT);
+const ngTheta = thetaUas(ngMaxKm, LAM);
+const ngN     = NGEHT.length * (NGEHT.length - 1) / 2;
+
 // BHEX: characteristic baseline ~ orbital RADIUS. This is an oversimplification —
 // the true ground-to-satellite baseline is geometry-dependent (up to ~2R⊕+h).
 // PENDING expert sign-off (Marrone / Alejandro). Never present as a clean equality.
@@ -90,6 +96,13 @@ export const TOUR_PHYSICS = Object.freeze({
   almaSefdJy:       STATION_SEFD['ALMA'],
   m87ShadowUas:     SKY_TARGETS['M87*'].shadowUas,
   sgrAShadowUas:    SKY_TARGETS['Sgr A*'].shadowUas,
+  m87RaDeg:         SKY_TARGETS['M87*'].ra,
+  ngeht: Object.freeze({
+    stationCount:    NGEHT.length,
+    baselineCount:   ngN,
+    maxBaselineKm:   ngMaxKm,
+    thetaUas:        ngTheta,
+  }),
   bhex: Object.freeze({
     altitudeKm:   BHEX_PRESET.orbitalAltitudeKm,
     charRadiusKm: bhexCharKm,
@@ -106,6 +119,9 @@ export const TOUR_PHYSICS = Object.freeze({
     improvement:  fmt.pow(improve),                   // "1.1 × 10⁵×"
     nBaselines:   `${nBase} baselines`,               // "28 baselines"
     nStations:    `${EHT2017.length} stations`,        // "8 stations"
+    ngTheta:      fmt.uas(ngTheta),                    // ngEHT θ=λ/B
+    ngBaselines:  `${ngN} baselines`,                  // "136 baselines"
+    ngStations:   `${NGEHT.length} stations`,          // "17 stations"
     almaSefd:     `${STATION_SEFD['ALMA']} Jy`,        // "94 Jy"
     m87Shadow:    fmt.uas(SKY_TARGETS['M87*'].shadowUas),  // "42 μas"
     sgrAShadow:   fmt.uas(SKY_TARGETS['Sgr A*'].shadowUas),// "50 μas"
