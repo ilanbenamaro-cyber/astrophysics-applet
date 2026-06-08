@@ -569,7 +569,10 @@ function d01({ reducedMotion }) {
       lsrc:   [3.1, 1.2], rdish:  [3.8, 2.0],
       rbase:  [5.0, 1.2], rbeam:  [5.2, 1.2],
       rsrc:   [5.8, 1.2],
+      concept:[0.5, 1.0], hud:    [0.3, 1.5], fg: [0.9, 1.5],
+      panelL: [3.4, 1.4], panelR: [6.0, 1.6],
     };
+    const P = TOUR_PHYSICS;
 
     const draw = T => {
       const pa = k => ease(prog(T, TL[k][0], TL[k][1]));
@@ -592,11 +595,14 @@ function d01({ reducedMotion }) {
       g.restore();
 
       const lda = pa('ldish');
+      drawContactShadow(g, W*.265, GY+10, 76, 13, lda*0.85);
       const { fx: lfx, fy: lfy } = drawDish(g, W*.265, GY, 1.0, true, GLOW, lda);
       drawBeam(g, lfx, lfy, H*.10+40, 178, RED, pa('lbeam'));
       drawBlurry(g, W*.265, H*.10, pa('lsrc'));
 
       const rda = pa('rdish');
+      drawContactShadow(g, W*.610, GY+10, 58, 11, rda*0.85);
+      drawContactShadow(g, W*.855, GY+10, 54, 10, rda*0.85);
       const { fx: r1fx, fy: r1fy } = drawDish(g, W*.610, GY, 0.78, false, TEAL, rda);
       const { fx: r2fx, fy: r2fy } = drawDish(g, W*.855, GY, 0.72, false, TEAL, rda);
 
@@ -617,6 +623,24 @@ function d01({ reducedMotion }) {
         });
       }
       drawSharp(g, W*.735, H*.10, pa('rsrc'));
+
+      // Derivation — the single dish cannot resolve the shadow; the baseline can.
+      drawDerivationPanel(g, W*.045, H*.30, W*.40, [
+        { kind:'symbol', text:'θ = λ / D' },
+        { kind:'sub',    text:`= ${P.str.lambda} / ${P.dishD_m} m` },
+        { kind:'result', text:`= ${P.str.thetaDish}  — far too coarse` },
+      ], pa('panelL'), { title:'Single dish (D = 100 m)', reveal: pa('panelL') });
+
+      drawDerivationPanel(g, W*.545, H*.30, W*.41, [
+        { kind:'symbol', text:'θ = λ / B' },
+        { kind:'sub',    text:`= ${P.str.lambda} / ${P.str.ehtBaseline}` },
+        { kind:'result', text:`= ${P.str.thetaEht}  →  resolves ${P.str.m87Shadow}` },
+        { kind:'note',   text:`${P.str.improvement} sharper · (circular aperture adds ×1.22)` },
+      ], pa('panelR'), { title:'Two dishes, baseline B', reveal: pa('panelR') });
+
+      drawConceptTag(g, W*.045, H*.085, 'Angular Resolution', pa('concept'));
+      drawHudFrame(g, W, H, pa('hud'));
+      drawForegroundAccent(g, W, H, 'rail', pa('fg'));
     };
 
     if (reducedMotion) { draw(999); return; }
@@ -641,99 +665,92 @@ function d02({ reducedMotion }) {
     cv.width = W*dpr; cv.height = H*dpr;
     const g = cv.getContext('2d');
     g.scale(dpr, dpr);
-    const GY = H*0.56;
+    const GY = H*0.50;
     const stars = makeStars(W, H, 200);
+    const P = TOUR_PHYSICS;
 
     const draw = T => {
+      const pa = (s,d) => ease(prog(T,s,d));
       g.fillStyle = BG; g.fillRect(0,0,W,H);
-      drawNebulae(g,W,H,'left',0.5); drawNebulae(g,W,H,'right',0.5);
-      drawStars(g, stars, T, ease(prog(T,0,2.0)));
+      drawNebulae(g,W,H,'left',0.45); drawNebulae(g,W,H,'right',0.45);
+      drawStars(g, stars, T, pa(0,2.0));
 
-      const { fx: afx, fy: afy } = drawDish(g, W*.18, GY, 0.88, true, GLOW, ease(prog(T,0.5,1.5)));
-      const { fx: jfx, fy: jfy } = drawDish(g, W*.82, GY, 0.84, false, BLUE, ease(prog(T,0.7,1.5)));
-
-      // Wavefront (sweeping down repeatedly)
-      const wfA = ease(prog(T,1.0,1.0));
+      // One plane wavefront sweeps down; it reaches the two dishes at different
+      // times — the geometric delay τ_g that encodes one Fourier mode of the sky.
+      const sceneTop = H*0.07;
+      const wfA = pa(0.8,1.0);
       if (wfA > 0) {
-        const wloopT = T < 1.0 ? 0 : T - 1.0;
-        const wy = lerp(H*.08, H*.54, (wloopT % 3.5) / 3.5);
-        // Ghost lines
-        g.strokeStyle = '#1a1a3a'; g.lineWidth = 0.7;
-        [H*.17,H*.19,H*.21].forEach(gy => {
-          g.beginPath(); g.moveTo(0,gy); g.lineTo(W,gy); g.stroke();
-        });
+        const wl = T < 0.8 ? 0 : T - 0.8;
+        const wy = lerp(sceneTop, GY-28, (wl % 3.2)/3.2);
         g.globalAlpha = wfA;
-        g.strokeStyle = rgba(BLUE,0.72); g.lineWidth = 2.2;
+        g.strokeStyle = rgba(BLUE,0.20); g.lineWidth = 1;
+        [-15,-30].forEach(o => { g.beginPath(); g.moveTo(0,wy+o); g.lineTo(W,wy+o); g.stroke(); });
+        g.strokeStyle = rgba(BLUE,0.78); g.lineWidth = 2.4;
         g.beginPath(); g.moveTo(0,wy); g.lineTo(W,wy); g.stroke();
-        // JCMT offset (geometric delay)
-        g.strokeStyle = rgba(BLUE,0.40); g.lineWidth = 1.5;
-        g.beginPath(); g.moveTo(0,wy+15); g.lineTo(W,wy+15); g.stroke();
         g.globalAlpha = 1;
       }
 
-      // Tick marks showing geometric delay
-      const tickA = ease(prog(T,2.2,0.8));
+      // Two dishes with contact shadows.
+      const da = pa(0.5,1.4);
+      drawContactShadow(g, W*.20, GY+10, 66, 12, da*0.85);
+      drawContactShadow(g, W*.80, GY+10, 62, 11, da*0.85);
+      const { fx: afx, fy: afy } = drawDish(g, W*.20, GY, 0.86, true, GLOW, da);
+      const { fx: jfx, fy: jfy } = drawDish(g, W*.80, GY, 0.82, false, BLUE, pa(0.7,1.4));
+
+      // Geometric-delay ray between the two feeds.
+      const tickA = pa(2.0,0.8);
       if (tickA > 0) {
         g.globalAlpha = tickA;
-        g.strokeStyle = GOLD; g.lineWidth = 1.5;
-        g.beginPath(); g.moveTo(afx,afy-6); g.lineTo(afx,afy+6); g.stroke();
-        g.beginPath(); g.moveTo(jfx,jfy-6+15); g.lineTo(jfx,jfy+6+15); g.stroke();
-        g.beginPath(); g.moveTo(afx,afy); g.lineTo(jfx,jfy+15); g.stroke();
-        g.fillStyle = AM; g.font = '13px "Inter",sans-serif';
+        g.strokeStyle = rgba(GOLD,0.85); g.lineWidth = 1.6; g.setLineDash([5,4]);
+        g.beginPath(); g.moveTo(afx,afy); g.lineTo(jfx,jfy); g.stroke(); g.setLineDash([]);
+        g.fillStyle = AM; g.font = 'italic 16px Georgia, serif';
         g.textAlign = 'center'; g.textBaseline = 'bottom';
-        g.fillText('τ_g', (afx+jfx)/2, afy-8);
+        g.fillText('τ_g', (afx+jfx)/2, (afy+jfy)/2 - 7);
         g.globalAlpha = 1;
       }
 
-      // Baseline bar
-      const bA = ease(prog(T,3.2,0.8));
+      // Baseline B bar — value computed, never asserted.
+      const bA = pa(2.6,0.8);
       if (bA > 0) {
-        g.globalAlpha = bA;
-        const barY = GY+30;
+        g.globalAlpha = bA; const barY = GY+34;
         g.strokeStyle = DIM; g.lineWidth = 1;
         g.beginPath(); g.moveTo(afx,barY); g.lineTo(jfx,barY); g.stroke();
         g.beginPath(); g.moveTo(afx,barY-5); g.lineTo(afx,barY+5); g.stroke();
         g.beginPath(); g.moveTo(jfx,barY-5); g.lineTo(jfx,barY+5); g.stroke();
-        g.fillStyle = DIM; g.font = '13px "Inter",sans-serif';
+        g.fillStyle = AM; g.font = '13px "Inter",sans-serif';
         g.textAlign = 'center'; g.textBaseline = 'top';
-        g.fillText('B = 10,900 km', (afx+jfx)/2, barY+8);
+        g.fillText(`B = ${P.str.ehtBaseline}`, (afx+jfx)/2, barY+8);
         g.globalAlpha = 1;
       }
 
-      // UV plane panel
-      const uvA = ease(prog(T,1.5,1.0));
+      // ── Lower strip: the measurement (UV plane) beside the math (VCZ) ──
+      const stripY = H*.60, stripH = H*.37, uvS = stripH, uvX = W*.06;
+      const uvA = pa(3.0,1.0);
       if (uvA > 0) {
-        const px=W*.08, py=H*.64, pw=W*.84, ph=H*.34;
         g.globalAlpha = uvA;
-        g.fillStyle = 'rgba(4,6,20,0.95)';
-        g.strokeStyle = DIM; g.lineWidth = 0.8;
-        g.fillRect(px,py,pw,ph); g.strokeRect(px,py,pw,ph);
-        const ucx=px+pw*.6, ucy=py+ph*.5;
-        g.strokeStyle = '#1a1a2e'; g.lineWidth = 0.5;
-        [0.3,0.6,0.9].forEach(f => {
-          g.beginPath(); g.arc(ucx,ucy,pw*0.35*f,0,Math.PI*2); g.stroke();
-        });
-        g.strokeStyle = '#1a1a2e'; g.lineWidth = 0.7;
-        g.beginPath(); g.moveTo(px+10,ucy); g.lineTo(px+pw-10,ucy); g.stroke();
-        g.beginPath(); g.moveTo(ucx,py+10); g.lineTo(ucx,py+ph-10); g.stroke();
-        g.fillStyle = DIM; g.font = '12px "Inter",sans-serif';
-        g.textAlign = 'left'; g.textBaseline = 'middle';
-        g.fillText('u', px+pw-20, ucy-12);
-        g.fillText('v', ucx+8, py+15);
-        const ptA = ease(prog(T,3.6,0.9));
-        if (ptA > 0) {
-          const scale = lerp(1.4, 1, ease(prog(T,3.6,0.9)));
-          g.save(); g.translate(ucx+pw*.18, ucy); g.scale(scale,scale);
-          glow3(g,0,0,AM,20,ptA); g.fillStyle=AM;
-          g.beginPath(); g.arc(0,0,6,0,Math.PI*2); g.fill(); g.restore();
-        }
-        const cjA = ease(prog(T,4.2,0.7));
-        if (cjA > 0) {
-          glow3(g,ucx-pw*.18,ucy,AM,12,cjA*0.6); g.fillStyle=rgba(AM,0.6*cjA);
-          g.beginPath(); g.arc(ucx-pw*.18,ucy,4,0,Math.PI*2); g.fill();
-        }
+        g.fillStyle = 'rgba(4,6,20,0.92)'; roundRect(g, uvX, stripY, uvS, uvS, 10); g.fill();
+        g.strokeStyle = rgba(AM,0.4); g.lineWidth = 1; g.stroke();
         g.globalAlpha = 1;
+        drawAxisTicks(g, uvX, stripY, uvS, uvS, { xlabel:'u', ylabel:'v', units:'Gλ' });
+        const ucx = uvX+uvS/2, ucy = stripY+uvS/2, off = uvS*0.30;
+        const ptA = pa(3.8,0.9);
+        if (ptA > 0) {
+          glow3(g, ucx+off, ucy-uvS*0.13, AM, 16, ptA);
+          g.fillStyle = AM; g.beginPath(); g.arc(ucx+off, ucy-uvS*0.13, 5, 0, Math.PI*2); g.fill();
+          glow3(g, ucx-off, ucy+uvS*0.13, AM, 11, ptA*0.55);
+          g.fillStyle = rgba(AM,0.55*ptA); g.beginPath(); g.arc(ucx-off, ucy+uvS*0.13, 4, 0, Math.PI*2); g.fill();
+        }
       }
+      const panelX = uvX + uvS + W*.04;
+      drawDerivationPanel(g, panelX, stripY, W - panelX - W*.05, [
+        { kind:'symbol', text:'V(u,v) = ∬ I(l,m) e^(−2πi(ul+vm)) dl dm' },
+        { kind:'sub',    text:'τ_g = (B·ŝ)/c        |u| = B / λ' },
+        { kind:'sub',    text:`= ${P.str.ehtBaseline} / ${P.str.lambda}` },
+        { kind:'result', text:`= ${P.str.uMax}  — one complex visibility` },
+      ], uvA, { title:'Van Cittert–Zernike', reveal: pa(3.2,1.8) });
+
+      drawConceptTag(g, W*.045, H*.075, 'One Fourier Mode', pa(0.5,1.0));
+      drawHudFrame(g, W, H, pa(0.3,1.5));
     };
 
     if (reducedMotion) { draw(999); return; }

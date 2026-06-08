@@ -14,10 +14,10 @@ const TOUR_ACTS = [
     paragraphs: [
       '55 million light-years away, a black hole the mass of 6.5 billion suns casts a shadow 42 microarcseconds wide.',
       'A 100-meter dish — the largest steerable radio telescope on Earth — resolves 2.7 arcseconds at 230 GHz.',
-      'The shadow of M87* is 70,000 times smaller than what any single dish can see. No physically plausible telescope could image it directly.',
+      'The shadow of M87* is more than 60,000 times smaller than what any single dish can see. No physically plausible telescope could image it directly.',
     ],
-    equation: 'θ_min = 1.22 λ/D',
-    subtext: 'Rayleigh criterion · λ = 1.3 mm, D = 100 m → θ ≈ 2.7 arcsec',
+    equation: 'θ ≈ λ / D',
+    subtext: 'λ = 1.3 mm, D = 100 m → θ ≈ 2.7″ · (a circular aperture adds the Rayleigh ×1.22)',
     diagramId: 1,
     autoActions: [{ type: 'resetForTour' }, { type: 'loadEHT' }],
   },
