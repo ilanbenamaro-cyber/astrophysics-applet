@@ -2,6 +2,7 @@
 // Each d01–d08 is a React component with useRef/useEffect + RAF loop.
 import { html, useRef, useEffect } from './core.js';
 import { TOUR_PHYSICS } from './tourPhysics.js';
+import { ARRAY_PRESETS } from './constants.js';
 
 // ── Color palette ─────────────────────────────────────────────────────────────
 const BG   = '#02020a';
@@ -776,75 +777,67 @@ function d03({ reducedMotion }) {
     const g = cv.getContext('2d');
     g.scale(dpr, dpr);
     const stars = makeStars(W, H, 150);
-    const ex = W*.26, ey = H*.50, er = H*.34;
-    const uvCx = W*.76, uvCy = H*.50;
+    const P = TOUR_PHYSICS;
+    const ex = W*.25, ey = H*.38, er = H*.26;
+    const pvx = W*.52, pvy = H*.04, pvw = W*.45, pvh = H*.62;
+    const uvCx = pvx + pvw*.52, uvCy = pvy + pvh*.46;
+    const voff = pvh*0.07;   // ellipse-centre offset, v0 = B_Z cosδ/λ (illustrative)
 
     const draw = T => {
+      const pa = (s,d) => ease(prog(T,s,d));
       g.fillStyle = BG; g.fillRect(0,0,W,H);
-      drawNebulae(g,W,H,'right',0.45);
-      drawStars(g,stars,T,ease(prog(T,0,2.0)));
+      drawNebulae(g,W,H,'right',0.40); drawNebulae(g,W,H,'left',0.28);
+      drawStars(g,stars,T,pa(0,2.0));
       drawEarth(g,ex,ey,er);
 
-      // Rotating stations
+      // Rotating baseline — two stations carried by the spinning Earth.
       const earthAngle = T * (2*Math.PI/10);
-      const s1x = ex + Math.sin(earthAngle)*er*.82;
-      const s1y = ey - Math.cos(earthAngle)*er*.35;
-      const s1vis = Math.cos(earthAngle) > -0.2;
-      const s2x = ex - Math.sin(earthAngle)*er*.82;
-      const s2y = ey + Math.cos(earthAngle)*er*.35;
-      const s2vis = Math.cos(earthAngle+Math.PI) > -0.2;
-
-      if (s1vis) { glow3(g,s1x,s1y,BLUE,10,0.8); g.fillStyle=BLUE; g.beginPath(); g.arc(s1x,s1y,4,0,Math.PI*2); g.fill(); }
-      if (s2vis) { glow3(g,s2x,s2y,AM,10,0.8); g.fillStyle=AM; g.beginPath(); g.arc(s2x,s2y,4,0,Math.PI*2); g.fill(); }
-      if (s1vis && s2vis) {
-        g.strokeStyle = rgba(TEAL,0.55); g.lineWidth=1.5;
-        g.beginPath(); g.moveTo(s1x,s1y); g.lineTo(s2x,s2y); g.stroke();
-      }
+      const s1x = ex + Math.sin(earthAngle)*er*.82, s1y = ey - Math.cos(earthAngle)*er*.35;
+      const s2x = ex - Math.sin(earthAngle)*er*.82, s2y = ey + Math.cos(earthAngle)*er*.35;
+      const s1vis = Math.cos(earthAngle) > -0.2, s2vis = Math.cos(earthAngle+Math.PI) > -0.2;
+      if (s1vis) { glow3(g,s1x,s1y,BLUE,10,0.85); g.fillStyle=BLUE; g.beginPath(); g.arc(s1x,s1y,4,0,Math.PI*2); g.fill(); }
+      if (s2vis) { glow3(g,s2x,s2y,AM,10,0.85);  g.fillStyle=AM;   g.beginPath(); g.arc(s2x,s2y,4,0,Math.PI*2); g.fill(); }
+      if (s1vis && s2vis) { g.strokeStyle=rgba(TEAL,0.6); g.lineWidth=1.6; g.beginPath(); g.moveTo(s1x,s1y); g.lineTo(s2x,s2y); g.stroke(); }
 
       // UV panel
-      const pvx = W*.54, pvy = H*.08, pvw = W*.44, pvh = H*.84;
-      g.fillStyle = 'rgba(4,6,20,0.80)'; g.strokeStyle=DIM; g.lineWidth=0.8;
-      g.fillRect(pvx,pvy,pvw,pvh); g.strokeRect(pvx,pvy,pvw,pvh);
+      g.fillStyle='rgba(4,6,20,0.88)'; roundRect(g,pvx,pvy,pvw,pvh,10); g.fill();
+      g.strokeStyle=rgba(AM,0.4); g.lineWidth=1; g.stroke();
+      drawAxisTicks(g, pvx, pvy, pvw, pvh, { xlabel:'u', ylabel:'v', units:'Gλ' });
 
-      // Grid circles
-      g.strokeStyle = '#1a1a2e'; g.lineWidth=0.5;
-      [W*.08,W*.16,W*.20].forEach(r => { g.beginPath(); g.arc(uvCx,uvCy,r,0,Math.PI*2); g.stroke(); });
-      g.strokeStyle = '#1a1a2e'; g.lineWidth=0.8;
-      g.beginPath(); g.moveTo(pvx+10,uvCy); g.lineTo(pvx+pvw-10,uvCy); g.stroke();
-      g.beginPath(); g.moveTo(uvCx,pvy+10); g.lineTo(uvCx,pvy+pvh-10); g.stroke();
-      g.fillStyle=DIM; g.font='12px "Inter",sans-serif';
-      g.textAlign='left'; g.textBaseline='middle';
-      g.fillText('u',pvx+pvw-20,uvCy-12); g.fillText('v',uvCx+8,pvy+15);
+      // Ellipse-centre reference: v0 = B_Z cosδ/λ.
+      g.save(); g.setLineDash([4,4]); g.strokeStyle=rgba(TEAL,0.45); g.lineWidth=1;
+      g.beginPath(); g.moveTo(pvx+12, uvCy-voff); g.lineTo(pvx+pvw-12, uvCy-voff); g.stroke();
+      g.setLineDash([]);
+      g.fillStyle=rgba(TEAL,0.85); g.font='italic 12px Georgia, serif'; g.textAlign='left'; g.textBaseline='bottom';
+      g.fillText('v₀ = B_Z cosδ / λ', pvx+16, uvCy-voff-3);
+      g.restore();
 
-      // UV arcs with lineDash draw-in
+      // Three baselines → three ellipse arcs (centred on v0), drawn in over H.
       const drawArc = (rx, ry, rot, startT, op) => {
         const circ = 2*Math.PI*Math.sqrt((rx*rx+ry*ry)/2);
         const drawn = circ * easeOut(prog(T,startT,2.0));
         if (drawn <= 0) return;
-        g.save(); g.translate(uvCx,uvCy); g.rotate(rot);
-        // Full arc glow
-        g.setLineDash([drawn, circ*2]); g.lineDashOffset=0;
-        g.beginPath(); g.ellipse(0,0,rx,ry,0,0,Math.PI*2);
-        g.strokeStyle=rgba(AM,op*0.18); g.lineWidth=8; g.stroke();
-        // Core arc
-        g.setLineDash([drawn, circ*2]); g.lineDashOffset=0;
-        g.beginPath(); g.ellipse(0,0,rx,ry,0,0,Math.PI*2);
-        g.strokeStyle=rgba(AM,op); g.lineWidth=1.8; g.stroke();
-        // Conjugate (lower opacity, upper half)
-        g.setLineDash([drawn*.35, circ]); g.lineDashOffset=0;
-        g.beginPath(); g.ellipse(0,0,rx,ry,0,0,Math.PI,true);
-        g.strokeStyle=rgba(AM,op*0.28); g.lineWidth=1.0; g.stroke();
+        g.save(); g.translate(uvCx,uvCy-voff); g.rotate(rot);
+        g.setLineDash([drawn, circ*2]);
+        g.beginPath(); g.ellipse(0,0,rx,ry,0,0,Math.PI*2); g.strokeStyle=rgba(AM,op*0.18); g.lineWidth=8; g.stroke();
+        g.beginPath(); g.ellipse(0,0,rx,ry,0,0,Math.PI*2); g.strokeStyle=rgba(AM,op); g.lineWidth=1.8; g.stroke();
+        g.setLineDash([drawn*.35, circ]);
+        g.beginPath(); g.ellipse(0,0,rx,ry,0,0,Math.PI,true); g.strokeStyle=rgba(AM,op*0.28); g.lineWidth=1.0; g.stroke();
         g.setLineDash([]); g.restore();
       };
-      drawArc(W*.19,H*.21,0,           1.5,0.85);
-      drawArc(W*.16,H*.17,28*Math.PI/180, 2.0,0.70);
-      drawArc(W*.13,H*.13,-22*Math.PI/180,2.5,0.55);
+      drawArc(pvw*.40, pvh*.30, 0,             1.5, 0.85);
+      drawArc(pvw*.33, pvh*.24, 28*Math.PI/180, 2.0, 0.70);
+      drawArc(pvw*.27, pvh*.18, -22*Math.PI/180,2.5, 0.55);
 
-      g.fillStyle=AM; g.font='13px "Inter",sans-serif';
-      g.textAlign='center'; g.textBaseline='top';
-      g.globalAlpha = ease(prog(T,3.0,1.0));
-      g.fillText('One baseline → one elliptical arc', uvCx, pvy+pvh-28);
-      g.globalAlpha=1;
+      // Derivation strip — the exact u,v(H,δ) that produce the ellipse.
+      drawDerivationPanel(g, W*.04, H*.71, W*.92, [
+        { kind:'sub',    text:'u =  B_X sin H + B_Y cos H' },
+        { kind:'sub',    text:'v = −B_X sinδ cos H + B_Y sinδ sin H + B_Z cosδ        (each ÷ λ)' },
+        { kind:'result', text:'→ over hour angle H the (u,v) point traces an ellipse, centre v₀ = B_Z cosδ / λ' },
+      ], pa(2.8,1.6), { title:'(u,v) as the Earth turns', reveal: pa(2.8,1.8) });
+
+      drawConceptTag(g, W*.04, H*.05, 'Aperture Synthesis', pa(0.5,1.0));
+      drawHudFrame(g, W, H, pa(0.3,1.5));
     };
 
     if (reducedMotion) { draw(999); return; }
@@ -877,17 +870,13 @@ function d04({ reducedMotion }) {
       y: Math.min((60 + (80-lat)/150*520) * scy, 575*scy),
     });
 
-    const stations = [
-      { ...proj(-67.755,-23.029), name:'ALMA', isAlma:true  },
-      { ...proj(-67.759,-23.006), name:'APEX', isAlma:true  },
-      { ...proj(-155.478,19.823), name:'SMA',  isAlma:false },
-      { ...proj(-155.472,19.824), name:'JCMT', isAlma:false },
-      { ...proj(-97.314, 18.986), name:'LMT',  isAlma:false },
-      { ...proj(-3.392,  37.066), name:'IRAM', isAlma:false },
-      { ...proj(-109.891,32.701), name:'SMT',  isAlma:false },
-      { ...proj(-44.65, -89.991), name:'SPT',  isAlma:false },
-      { ...proj(-68.703, 76.535), name:'GLT',  isAlma:false },
-    ];
+    // EHT 2017 — 8 telescopes at 6 sites, read from constants.js (no invented
+    // coordinates; GLT joined in 2018 and is intentionally excluded here).
+    const P = TOUR_PHYSICS;
+    const ATACAMA = new Set(['ALMA','APEX']);   // the sensitivity anchor site
+    const stations = ARRAY_PRESETS['EHT 2017'].map(s => ({
+      ...proj(s.lon, s.lat), name: s.name, isAlma: ATACAMA.has(s.name),
+    }));
 
     const baselines = [];
     for (let i=0;i<stations.length;i++)
@@ -981,7 +970,7 @@ function d04({ reducedMotion }) {
         g.fillRect(12,alma.y-12,150,38); g.strokeRect(12,alma.y-12,150,38);
         g.fillStyle=AM; g.font='10px "Inter",sans-serif';
         g.textAlign='left'; g.textBaseline='middle';
-        g.fillText('SEFD: 94 Jy', 22, alma.y+3);
+        g.fillText(`SEFD: ${P.str.almaSefd}`, 22, alma.y+3);
         g.fillStyle=DIM; g.font='italic 9px "Inter",sans-serif';
         g.fillText('Most sensitive', 22, alma.y+18);
         g.globalAlpha=1;
@@ -1007,13 +996,19 @@ function d04({ reducedMotion }) {
         });
         g.fillStyle=AM; g.font=`bold ${Math.round(12*Math.min(scx,scy)*1.5)}px "Inter",sans-serif`;
         g.textAlign='center'; g.textBaseline='top'; g.fillText('UV Coverage', ucx, iy+8);
+        g.fillStyle=rgba(AM,0.85*uvA); g.font='italic 11px Georgia, serif';
+        g.textAlign='right'; g.textBaseline='bottom'; g.fillText('u', ix+iw-6, ucy-4);
+        g.textAlign='left'; g.fillText('v', ucx+5, iy+22);
         g.globalAlpha=1;
       }
 
-      // Footer
+      // Footer — all values computed from the EHT 2017 array (matches Act 1 & the tool).
       g.fillStyle=DIM; g.font=`${Math.round(13*scy)}px "Inter",sans-serif`;
       g.textAlign='center'; g.textBaseline='bottom';
-      g.fillText('Max baseline: 10,900 km  ·  θ_synth ≈ 20 μas  ·  28 baselines', W*.5, H-6);
+      g.fillText(`8 telescopes · 6 sites  ·  max baseline ${P.str.ehtBaseline}  ·  θ = λ/B = ${P.str.thetaEht}  ·  ${P.str.nBaselines}`, W*.5, H-7);
+
+      drawConceptTag(g, W*.035, H*.05, 'Earth-Sized Aperture', ease(prog(T,0.5,1.0)));
+      drawHudFrame(g, W, H, ease(prog(T,0.3,1.5)));
     };
 
     if (reducedMotion) { draw(999); return; }
