@@ -1035,6 +1035,7 @@ function d05({ reducedMotion }) {
     g.scale(dpr, dpr);
     const cx = W*.50, cy = H*.48;
     const stars = makeStars(W,H,80);
+    const P = TOUR_PHYSICS;
 
     const draw = T => {
       g.fillStyle = BG; g.fillRect(0,0,W,H);
@@ -1103,6 +1104,24 @@ function d05({ reducedMotion }) {
         g.fillText('I^C = (M ⊛ G) + r_final',cx,cy+H*.44);
       }
       g.globalAlpha=1;
+
+      // Left panel: the dirty image is a convolution; CLEAN inverts it.
+      drawDerivationPanel(g, W*.025, H*.30, W*.30, [
+        { kind:'symbol', text:'I_D = I_sky ⊛ B_D' },
+        { kind:'sub',    text:'① peak  → ② subtract γ·B_D' },
+        { kind:'sub',    text:'③ restore with clean beam' },
+        { kind:'result', text:'stop at 3σ (MAD noise)' },
+      ], ease(prog(T,1.5,1.4)), { title:'CLEAN — Högbom 1974', reveal: ease(prog(T,1.5,1.8)) });
+
+      // Right panel: what the recovered ring physically is.
+      drawDerivationPanel(g, W*.675, H*.30, W*.30, [
+        { kind:'symbol', text:'b_c = √27 · GM/c²' },
+        { kind:'sub',    text:'shadow ≈ 2√27 · GM/(c²d)' },
+        { kind:'result', text:`≈ ${P.str.m87Shadow} for M87*` },
+      ], ease(prog(T,3.0,1.4)), { title:'Photon ring (Schwarzschild)', reveal: ease(prog(T,3.0,1.6)) });
+
+      drawConceptTag(g, W*.025, H*.075, 'Deconvolution', ease(prog(T,0.5,1.0)));
+      drawHudFrame(g, W, H, ease(prog(T,0.3,1.5)));
     };
 
     if (reducedMotion) { draw(999); return; }
@@ -1131,6 +1150,7 @@ function d06({ reducedMotion }) {
     img.src = '../assets/eht-m87-2019.jpg';
     let loaded = false;
     img.onload = () => { loaded = true; };
+    const P = TOUR_PHYSICS;
 
     const draw = T => {
       g.fillStyle = BG; g.fillRect(0,0,W,H);
@@ -1151,7 +1171,7 @@ function d06({ reducedMotion }) {
       g.beginPath(); g.moveTo(168,H*.93-5); g.lineTo(168,H*.93+5); g.stroke();
       g.fillStyle=AM; g.font='14px "Inter",sans-serif';
       g.textAlign='center'; g.textBaseline='top';
-      g.fillText('42 μas',108,H*.93+8);
+      g.fillText(P.str.m87Shadow,108,H*.93+8);
       // Title
       glow3(g,60+W*.08,H*.06,GOLD,80,sbA*0.4);
       g.fillStyle=GOLD; g.font='bold 18px "Inter",sans-serif';
@@ -1162,6 +1182,15 @@ function d06({ reducedMotion }) {
       g.textAlign='center'; g.textBaseline='bottom';
       g.fillText('EHT Collaboration 2019  ·  ApJL 875, L1',W*.5,H*.99);
       g.globalAlpha=1;
+
+      // Provenance panel — fills the right margin so the image isn't in a void.
+      drawDerivationPanel(g, W*.72, H*.30, W*.26, [
+        { kind:'result', text:`Ring ${P.m87ShadowUas} ± 3 μas` },
+        { kind:'sub',    text:'M ≈ 6.5 × 10⁹ M☉' },
+        { kind:'note',   text:'observed 2017-04' },
+        { kind:'note',   text:'released 2019-04-10' },
+      ], sbA, { title:'M87* — first image', reveal: sbA });
+      drawConceptTag(g, W*.72, H*.10, 'First Light', sbA);
     };
 
     if (reducedMotion) { if (loaded) draw(999); else { img.onload = () => { loaded=true; draw(999); }; } return; }
