@@ -636,8 +636,8 @@ function d01({ reducedMotion }) {
         { kind:'symbol', text:'θ = λ / B' },
         { kind:'sub',    text:`= ${P.str.lambda} / ${P.str.ehtBaseline}` },
         { kind:'result', text:`= ${P.str.thetaEht}  →  resolves ${P.str.m87Shadow}` },
-        { kind:'note',   text:`${P.str.improvement} sharper · (circular aperture adds ×1.22)` },
-      ], pa('panelR'), { title:'Two dishes, baseline B', reveal: pa('panelR') });
+        { kind:'note',   text:`${P.str.improvement} finer resolution than one dish · (Rayleigh ×1.22)` },
+      ], pa('panelR'), { title:'EHT 2017 · M87* · baseline B', reveal: pa('panelR') });
 
       drawConceptTag(g, W*.045, H*.085, 'Angular Resolution', pa('concept'));
       drawHudFrame(g, W, H, pa('hud'));
@@ -1005,7 +1005,7 @@ function d04({ reducedMotion }) {
       // Footer — all values computed from the EHT 2017 array (matches Act 1 & the tool).
       g.fillStyle=DIM; g.font=`${Math.round(13*scy)}px "Inter",sans-serif`;
       g.textAlign='center'; g.textBaseline='bottom';
-      g.fillText(`8 telescopes · 6 sites  ·  max baseline ${P.str.ehtBaseline}  ·  θ = λ/B = ${P.str.thetaEht}  ·  ${P.str.nBaselines}`, W*.5, H-7);
+      g.fillText(`8 telescopes · 6 sites · M87*  ·  B_max ${P.str.ehtBaseline}  ·  θ = λ/B = ${P.str.thetaEht}  ·  ${P.str.nBaselines}`, W*.5, H-7);
 
       drawConceptTag(g, W*.035, H*.05, 'Earth-Sized Aperture', ease(prog(T,0.5,1.0)));
       drawHudFrame(g, W, H, ease(prog(T,0.3,1.5)));
@@ -1115,8 +1115,8 @@ function d05({ reducedMotion }) {
 
       // Right panel: what the recovered ring physically is.
       drawDerivationPanel(g, W*.675, H*.30, W*.30, [
-        { kind:'symbol', text:'b_c = √27 · GM/c²' },
-        { kind:'sub',    text:'shadow ≈ 2√27 · GM/(c²d)' },
+        { kind:'symbol', text:`b_c = ${P.bcFormula}` },
+        { kind:'sub',    text:`shadow ≈ ${P.shadowDiamFormula}` },
         { kind:'result', text:`≈ ${P.str.m87Shadow} for M87*` },
       ], ease(prog(T,3.0,1.4)), { title:'Photon ring (Schwarzschild)', reveal: ease(prog(T,3.0,1.6)) });
 

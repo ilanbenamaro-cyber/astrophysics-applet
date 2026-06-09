@@ -3,6 +3,7 @@
 // Chapter title cards appear before acts 3 and 6 (chapter transitions).
 import { html, useState, useEffect, useRef } from './core.js';
 import { TourCard } from './TourCard.js';
+import { TOUR_PHYSICS as P } from './tourPhysics.js';
 
 // ─── Act data ─────────────────────────────────────────────────────────────────
 const TOUR_ACTS = [
@@ -14,7 +15,7 @@ const TOUR_ACTS = [
     paragraphs: [
       '55 million light-years away, a black hole the mass of 6.5 billion suns casts a shadow 42 microarcseconds wide.',
       'A 100-meter dish — the largest steerable radio telescope on Earth — resolves 2.7 arcseconds at 230 GHz.',
-      'The shadow of M87* is more than 60,000 times smaller than what any single dish can see. No physically plausible telescope could image it directly.',
+      'The shadow of M87* is ~64,000 times smaller than a single dish can resolve. No physically plausible telescope could image it directly.',
     ],
     equation: 'θ ≈ λ / D',
     subtext: 'λ = 1.3 mm, D = 100 m → θ ≈ 2.7″ · (a circular aperture adds the Rayleigh ×1.22)',
@@ -59,12 +60,12 @@ const TOUR_ACTS = [
     title: 'The Event Horizon Telescope',
     visualDuration: 4500,
     paragraphs: [
-      'Eight observatories. Six sites. One instrument — the Event Horizon Telescope. The longest baseline, about 11,400 km, approaches Earth\'s full diameter.',
+      'Eight observatories. Six sites. One instrument — the Event Horizon Telescope. Observing M87*, the longest usable baseline (Spain–Hawaii) is ~10,900 km — the South Pole station cannot see M87*.',
       'ALMA anchors the array with an SEFD of 94 Jy — over 200 times more sensitive than the South Pole Telescope. Per-baseline noise scales as √(SEFD_i × SEFD_j).',
-      'The achieved resolution of ~24 microarcseconds is sufficient to resolve a 42 μas shadow — comparable to reading a newspaper in New York from Paris.',
+      'The achieved resolution of ~25 microarcseconds is sufficient to resolve a 42 μas shadow — comparable to reading a newspaper in New York from Paris.',
     ],
-    equation: 'θ ≈ λ / B_max ≈ 24 μas',
-    subtext: 'B_max ≈ 11,400 km  ·  λ = 1.3 mm  ·  230 GHz',
+    equation: 'EHT 2017 · M87* · θ ≈ λ / B_max ≈ 25 μas',
+    subtext: 'B_max ≈ 10,900 km (Spain–Hawaii)  ·  λ = 1.3 mm  ·  230 GHz',
     diagramId: 4,
     autoActions: [{ type: 'resetForTour' }, { type: 'loadEHT' }],
   },
@@ -92,7 +93,7 @@ const TOUR_ACTS = [
       'Four independent imaging teams, using different algorithms, all recovered consistent ring structure. General Relativity confirmed to within measurement uncertainty.',
       'The shadow diameter of 42 ± 3 microarcseconds matches the prediction of the Schwarzschild metric for a 6.5 billion solar mass black hole.',
     ],
-    equation: 'θ_shadow = 3√3 · GM / (c² · D_L) ≈ 42 μas',
+    equation: `θ_shadow = ${P.shadowDiamFormula} ≈ ${P.str.m87Shadow}`,
     subtext: 'EHT Collaboration 2019 · ApJL 875, L1 · Confirmed by GR',
     diagramId: 6,
     autoActions: [{ type: 'setPreset', preset: 'blackhole' }],
@@ -102,7 +103,7 @@ const TOUR_ACTS = [
     title: 'Beyond Earth: The BHEX Mission',
     visualDuration: 4500,
     paragraphs: [
-      'Earth\'s diameter sets a hard limit on ground baselines. At 230 GHz the EHT array resolves about 24 μas — enough to see the shadow, but not its fine internal structure.',
+      'Earth\'s diameter sets a hard limit on ground baselines. At 230 GHz the EHT array resolves about 25 μas — enough to see the shadow, but not its fine internal structure.',
       'The Black Hole Explorer (BHEX) is a proposed NASA mission: a 3.4 m dish in a ~26,600 km-altitude orbit. A space–ground baseline on the order of the orbital radius (~33,000 km) would sharpen the beam further.',
       'A sharper beam could directly resolve the photon ring — the lensed image of photons orbiting the hole — the next precision test of General Relativity. The exact gain depends on observing geometry and remains a mission-design figure.',
     ],

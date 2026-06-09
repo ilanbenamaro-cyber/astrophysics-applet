@@ -38,9 +38,9 @@ export function baselineToUV(b, H, decDeg) {
   return { u, v };
 }
 
-const MIN_ELEVATION_RAD = 10 * Math.PI / 180;
+export const MIN_ELEVATION_RAD = 10 * Math.PI / 180;
 
-function computeElevation(lat_deg, ha_rad, dec_rad) {
+export function computeElevation(lat_deg, ha_rad, dec_rad) {
   const lat = lat_deg * Math.PI / 180;
   const sinEl = Math.sin(lat) * Math.sin(dec_rad)
               + Math.cos(lat) * Math.cos(dec_rad) * Math.cos(ha_rad);
