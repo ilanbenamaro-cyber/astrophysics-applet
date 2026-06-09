@@ -525,6 +525,37 @@ TRIGGERS_REVIEW_IF: Marrone revises EHT 2017 coordinates; the tour's reference s
 
 ---
 
+### DESIGN-LANGUAGE.md + tourTokens.js: the tour conforms to the site, doesn't aspire
+DATE: 2026-06-09
+LAST_VERIFIED: 2026-06-09
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: The tour's visuals are governed by a single source of visual truth —
+`.workflows/_system/DESIGN-LANGUAGE.md` (extracted verbatim from `vlbi-react/css/app.css`), the
+visual analogue of `tourPhysics.js`. `vlbi-react/js/tourTokens.js` reads the app's `:root` tokens
+at load (`getComputedStyle`, with verbatim fallbacks) and the tour draws from those, never its own
+palette. The site is a restrained warm-neutral dark theme with ONE muted-gold accent `#C4A555`
+(amber `#9E7E38`, orange `#ff9f43`), Inter + `--font-mono`, flat 1px `#2d2200` panels, 4–6px radii,
+no serif/glassy chrome. The tour's CHROME, TYPE, COLOR SYSTEM and SPACING are made indistinguishable
+from the app; only the cinematic SCENE ART is licensed to diverge — and even that derives its palette
+from the same family (MODERATE: desaturated to gold/amber/orange + neutral + one slate cool `#3a4a6a`;
+Earth keeps realistic blue, matching the app's globe).
+RATIONALE: prior passes chased an unmeasurable aspiration ("world-class") and kept landing on "better
+but not right." The site's own coherence is a checkable target: a tour panel beside an app panel
+should be indistinguishable. This fixed the "feels foreign" problem (blue-black bg, bright gold/cyan/
+teal, Georgia serif, glassy cards) by re-skinning, NOT redesigning — pass-2 composition gains
+(depth, subject scale, modeled Earth, dirty→clean, ngEHT-sharper) were preserved.
+CRITICAL CONSTRAINT: this pass changed ZERO physics (the physics check is a no-op). The tour must
+reference tokens, never re-hardcode them. The app never uses serif — Georgia/Courier are banned in
+the tour; use Inter (text) and `--font-mono` (numeric/equations).
+ALTERNATIVES_REJECTED: aspiration-driven restyling (unmeasurable, the root cause); hardcoding the
+palette in the tour (drifts from the app); a separate tour theme (the goal is one product).
+TRIGGERS_REVIEW_IF: the app's `:root` tokens change meaningfully (tourTokens fallbacks should be
+updated to match); a deliberate decision to give the tour its own identity (would supersede this).
+
+---
+
 ## Contradiction Scanner
 
 Claude runs this check when adding a new decision:

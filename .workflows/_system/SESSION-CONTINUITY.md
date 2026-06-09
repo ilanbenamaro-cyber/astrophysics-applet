@@ -94,7 +94,21 @@
 > ngEHT visibly sharper than EHT. Cards now only in Acts 1 & 5 (+ slim d07). Contract unchanged; 8 RAF
 > cleanups + 8 reduced-motion gates intact; per-act Playwright-verified; env-only console errors.
 
-**ALL PLANNED SESSIONS COMPLETE — S1 through P3 + Tour Cinematic Rewrite + Tour Art Passes + Canvas 2D Rewrite + Tour World-Class Overhaul + Tour Apple-Precision Overhaul**
+**Tour Design-Language Conformance (pass 3): COMPLETE** — committed 2026-06-09 (feature/tour-world-class-overhaul)
+> Inverted the method: instead of chasing an aspiration, make the tour LOOK LIKE IT BELONGS to the
+> site (checkable). Extracted the host app's real tokens (vlbi-react/css/app.css :root) into
+> `.workflows/_system/DESIGN-LANGUAGE.md` (single source of visual truth) — restrained warm-neutral
+> dark, ONE muted-gold accent #C4A555, Inter + --font-mono, flat #2d2200 hairline panels, 4–6px radii,
+> no serif. New `vlbi-react/js/tourTokens.js` reads app :root (getComputedStyle + verbatim fallbacks);
+> TourDiagram palette constants remapped to it. Re-skinned (NOT redesigned) all chrome + scene art to
+> the family: glassy cards → flat site panels, Georgia/Courier → Inter/--font-mono, candy nebulae →
+> warm-amber/cool-slate dust, cyan/bright-gold → accent, blue-black fills → --bg-2, concept tags →
+> app label treatment. Scene art MODERATE-desaturated; Earth keeps realistic blue (matches app globe).
+> 7 commits (docs A+B, C-1..C-5). Phase D verified: zero orphan/foreign hexes, no serif/Courier,
+> physics a NO-OP (25 μas/10,883 km/2√27 intact), 0 HUD frames, 8 RAF cleanups + 8 reduced-motion
+> gates. Tour now indistinguishable from the app in chrome/type/colour/spacing. NOT yet merged to main.
+
+**ALL PLANNED SESSIONS COMPLETE — S1 through P3 + Tour Cinematic Rewrite + Tour Art Passes + Canvas 2D Rewrite + Tour World-Class Overhaul + Tour Apple-Precision Overhaul + Tour Design-Language Conformance**
 
 ---
 
@@ -238,6 +252,8 @@ constants.js ─ IMAGE_SIZE=512, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD, 
 ---
 
 ## LAST UPDATED
+
+2026-06-09 — Tour Design-Language Conformance (pass 3) complete (feature/tour-world-class-overhaul): DESIGN-LANGUAGE.md extracted from vlbi-react/css/app.css (single source of visual truth); new tourTokens.js reads app :root tokens; whole tour re-skinned to the site (warm-neutral + muted-gold #C4A555, Inter/--font-mono, flat #2d2200 panels, no serif) — glassy cards→site panels, candy nebulae→amber/cool dust, cyan/bright-gold→accent. Scene art moderate-desaturated; Earth keeps realistic blue. 7 commits (docs + C-1..C-5). Physics a no-op; pass-2 gains preserved; 0 HUD/8 RAF/8 r-m intact. decisions.md (DESIGN-LANGUAGE/tourTokens decision) + gotchas.md (4 entries) updated. NOT merged to main.
 
 2026-06-09 — Tour Apple-Precision Overhaul (pass 2) complete (feature/tour-world-class-overhaul): Phase 0 physics — shadow-coefficient bug fixed + single-sourced (2√27 diameter); HEADLINE baseline corrected to M87*-observing max (SPT excluded via imported elevation filter → IRAM–JCMT 10,883 km/25 μas), both values exposed, "M87*" qualifier swept Acts 1/2/4/7/8, TOUR-PHYSICS-AUDIT.md written. Deference — all HUD frames removed, glass cards cut to Acts 1&5 (+slim d07), tags quieted. Depth — new drawPlanet modeled Earth (d03/d07), subject-scale enlargements, d05 dirty→clean transformation, d08 ngEHT-sharper, d04 recognizable continents + label dodging, d06 hero photo. 6 commits (Phase 0,1,2a–2d) + this sync. decisions.md (M87*-baseline+deference decision) + gotchas.md (updated baseline/shadow/deference/drawPlanet entries). Contract unchanged. NOT yet merged to main.
 2026-06-08 — Tour World-Class Overhaul complete (feature/tour-world-class-overhaul): new tourPhysics.js single-source-of-truth (every tour number computed, θ=λ/B no 1.22, imports canonical latLonToECEF); fixed all asserted/contradictory numbers (d04 20→24 μas, d08 24-vs-20 resolved, d02 B computed 11,406 km); BHEX integrity reframe (d07 "B ~ R⊕+h … pending sign-off"); depth/derivation utility library appended to TourDiagram.js; all 8 acts get derivation panels + concept tags + labelled axes + filled frames; Tour.js prose aligned; contract unchanged. decisions.md (tourPhysics decision) + gotchas.md (4 entries) + this file updated. Audit/spec in _system/TOUR-AUDIT.md + TOUR-SPEC.md.
