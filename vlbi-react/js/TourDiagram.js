@@ -512,35 +512,16 @@ function drawForegroundAccent(g, W, H, kind, alpha=1) {
   g.restore();
 }
 
-// Small HUD-framed concept name — keeps the act's ONE idea legible even muted.
+// Quiet chapter marker — one small low-opacity line, top-left. NOT chrome: it
+// names the act's single idea without competing with the subject (deference).
 function drawConceptTag(g, x, y, name, alpha=1) {
   if (alpha <= 0) return;
-  g.save(); g.globalAlpha = alpha;
-  g.font = '600 12px ui-sans-serif, system-ui, sans-serif';
+  g.save();
+  g.globalAlpha = alpha * 0.62;
+  g.font = '600 11px ui-sans-serif, system-ui, sans-serif';
   g.textBaseline = 'middle'; g.textAlign = 'left';
-  const label = name.toUpperCase();
-  const tw = g.measureText(label).width;
-  const bx = x, by = y-11, bh = 22, bw = tw + 34;
-  g.strokeStyle = rgba(AM, 0.7); g.lineWidth = 1.5;
-  g.beginPath();
-  g.moveTo(bx, by+6); g.lineTo(bx, by); g.lineTo(bx+12, by);
-  g.moveTo(bx, by+bh-6); g.lineTo(bx, by+bh); g.lineTo(bx+12, by+bh);
-  g.moveTo(bx+bw, by+6); g.lineTo(bx+bw, by); g.lineTo(bx+bw-12, by);
-  g.moveTo(bx+bw, by+bh-6); g.lineTo(bx+bw, by+bh); g.lineTo(bx+bw-12, by+bh);
-  g.stroke();
-  g.fillStyle = rgba(TEAL, 0.95); g.beginPath(); g.arc(bx+11, y, 2.6, 0, Math.PI*2); g.fill();
-  g.fillStyle = rgba(AM, 0.95); g.fillText(label, bx+20, y+1);
-  g.restore();
-}
-
-// Thin corner brackets framing the 1200×700 composition.
-function drawHudFrame(g, W, H, alpha=1) {
-  if (alpha <= 0) return;
-  g.save(); g.globalAlpha = alpha*0.5; g.strokeStyle = rgba(AM, 0.5); g.lineWidth = 1.5;
-  const m = 18, L = 26;
-  [[m,m,1,1],[W-m,m,-1,1],[m,H-m,1,-1],[W-m,H-m,-1,-1]].forEach(([cx,cy,sx,sy]) => {
-    g.beginPath(); g.moveTo(cx, cy+sy*L); g.lineTo(cx, cy); g.lineTo(cx+sx*L, cy); g.stroke();
-  });
+  g.fillStyle = rgba(AM, 0.85);
+  g.fillText(name.toUpperCase(), x, y);
   g.restore();
 }
 
@@ -640,7 +621,6 @@ function d01({ reducedMotion }) {
       ], pa('panelR'), { title:'EHT 2017 · M87* · baseline B', reveal: pa('panelR') });
 
       drawConceptTag(g, W*.045, H*.085, 'Angular Resolution', pa('concept'));
-      drawHudFrame(g, W, H, pa('hud'));
       drawForegroundAccent(g, W, H, 'rail', pa('fg'));
     };
 
@@ -750,9 +730,7 @@ function d02({ reducedMotion }) {
         { kind:'result', text:`= ${P.str.uMax}  — one complex visibility` },
       ], uvA, { title:'Van Cittert–Zernike', reveal: pa(3.2,1.8) });
 
-      drawConceptTag(g, W*.045, H*.075, 'One Fourier Mode', pa(0.5,1.0));
-      drawHudFrame(g, W, H, pa(0.3,1.5));
-    };
+      drawConceptTag(g, W*.045, H*.075, 'One Fourier Mode', pa(0.5,1.0));    };
 
     if (reducedMotion) { draw(999); return; }
     let T = 0;
@@ -836,9 +814,7 @@ function d03({ reducedMotion }) {
         { kind:'result', text:'→ over hour angle H the (u,v) point traces an ellipse, centre v₀ = B_Z cosδ / λ' },
       ], pa(2.8,1.6), { title:'(u,v) as the Earth turns', reveal: pa(2.8,1.8) });
 
-      drawConceptTag(g, W*.04, H*.05, 'Aperture Synthesis', pa(0.5,1.0));
-      drawHudFrame(g, W, H, pa(0.3,1.5));
-    };
+      drawConceptTag(g, W*.04, H*.05, 'Aperture Synthesis', pa(0.5,1.0));    };
 
     if (reducedMotion) { draw(999); return; }
     let T = 0;
@@ -1007,9 +983,7 @@ function d04({ reducedMotion }) {
       g.textAlign='center'; g.textBaseline='bottom';
       g.fillText(`8 telescopes · 6 sites · M87*  ·  B_max ${P.str.ehtBaseline}  ·  θ = λ/B = ${P.str.thetaEht}  ·  ${P.str.nBaselines}`, W*.5, H-7);
 
-      drawConceptTag(g, W*.035, H*.05, 'Earth-Sized Aperture', ease(prog(T,0.5,1.0)));
-      drawHudFrame(g, W, H, ease(prog(T,0.3,1.5)));
-    };
+      drawConceptTag(g, W*.035, H*.05, 'Earth-Sized Aperture', ease(prog(T,0.5,1.0)));    };
 
     if (reducedMotion) { draw(999); return; }
     let T = 0;
@@ -1120,9 +1094,7 @@ function d05({ reducedMotion }) {
         { kind:'result', text:`≈ ${P.str.m87Shadow} for M87*` },
       ], ease(prog(T,3.0,1.4)), { title:'Photon ring (Schwarzschild)', reveal: ease(prog(T,3.0,1.6)) });
 
-      drawConceptTag(g, W*.025, H*.075, 'Deconvolution', ease(prog(T,0.5,1.0)));
-      drawHudFrame(g, W, H, ease(prog(T,0.3,1.5)));
-    };
+      drawConceptTag(g, W*.025, H*.075, 'Deconvolution', ease(prog(T,0.5,1.0)));    };
 
     if (reducedMotion) { draw(999); return; }
     let T = 0;
@@ -1336,9 +1308,7 @@ function d07({ reducedMotion }) {
         { kind:'sub',    text:`θ ~ λ / B_space  ≈ ${P.str.bhexTheta} at 230 GHz` },
         { kind:'note',   text:'⚠ orbital-radius simplification — the true ground–satellite baseline is geometry-dependent (≤ 2R⊕+h). Pending sign-off: Marrone / Alejandro.' },
       ], panA, { title:'Space baseline — pending expert sign-off', reveal: panA });
-      drawConceptTag(g, W*.05, H*.62, 'Space Baseline', panA);
-      drawHudFrame(g, W, H, ease(prog(T,0.3,1.5)));
-    };
+      drawConceptTag(g, W*.05, H*.62, 'Space Baseline', panA);    };
 
     if (reducedMotion) { draw(999); return; }
     let T = 0;
@@ -1473,9 +1443,7 @@ function d08({ reducedMotion }) {
         g.restore();
       }
 
-      drawConceptTag(g, W*.02, H*.02, 'The Simulator', ease(prog(T,0.2,1.0)));
-      drawHudFrame(g, W, H, ease(prog(T,0.2,1.5)));
-    };
+      drawConceptTag(g, W*.02, H*.02, 'The Simulator', ease(prog(T,0.2,1.0)));    };
 
     if (reducedMotion) { draw(999); return; }
     let T = 0;
