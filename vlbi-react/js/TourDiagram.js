@@ -389,6 +389,53 @@ function drawEarth(g, cx, cy, r) {
   });
 }
 
+// Deterministic land masses (lat/lon in radians) for the modeled planet.
+const PLANET_BLOBS = [
+  { lon:-1.4, lat: 0.6, size:0.42 }, { lon:-1.1, lat:-0.3, size:0.50 },
+  { lon: 0.2, lat: 0.7, size:0.30 }, { lon: 0.5, lat: 0.05,size:0.55 },
+  { lon: 0.45,lat:-0.6, size:0.32 }, { lon: 1.9, lat: 0.2, size:0.46 },
+  { lon: 2.6, lat:-0.35,size:0.30 }, { lon:-2.4, lat: 0.15,size:0.34 },
+];
+
+// A planet that reads as a planet: lit from upper-left (the tour's single key
+// light), day/night terminator, rotating surface land masses, lit limb + limb
+// atmosphere. `opts.rot` (radians) spins the surface; `opts.glow` tints the rim.
+function drawPlanet(g, cx, cy, r, opts={}) {
+  const rot = opts.rot || 0;
+  g.save();
+  g.beginPath(); g.arc(cx,cy,r,0,Math.PI*2); g.clip();
+  // Ocean base, lit upper-left.
+  const base = g.createRadialGradient(cx-r*0.38, cy-r*0.38, r*0.08, cx, cy, r*1.15);
+  base.addColorStop(0,'#2f74b0'); base.addColorStop(0.55,'#184674'); base.addColorStop(1,'#081d33');
+  g.fillStyle = base; g.fillRect(cx-r, cy-r, 2*r, 2*r);
+  // Rotating land masses (front hemisphere only, perspective-scaled).
+  for (const b of PLANET_BLOBS) {
+    const lon = b.lon + rot;
+    const z = Math.cos(b.lat) * Math.cos(lon);
+    if (z <= 0.04) continue;                       // back hemisphere → skip
+    const x = cx + r * Math.cos(b.lat) * Math.sin(lon);
+    const y = cy - r * Math.sin(b.lat);
+    const rr = r * b.size * (0.45 + 0.55 * z);
+    const gr = g.createRadialGradient(x, y, 0, x, y, rr);
+    gr.addColorStop(0, rgba('#3c6e42', 0.62 * z)); gr.addColorStop(0.7, rgba('#2c5536', 0.30 * z)); gr.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = gr; g.beginPath(); g.arc(x, y, rr, 0, Math.PI*2); g.fill();
+  }
+  // Day/night terminator — night side falls to the lower-right of the key light.
+  const sh = g.createRadialGradient(cx-r*0.5, cy-r*0.5, r*0.15, cx+r*0.35, cy+r*0.35, r*1.45);
+  sh.addColorStop(0,'rgba(2,4,10,0)'); sh.addColorStop(0.48,'rgba(2,4,10,0.12)');
+  sh.addColorStop(0.78,'rgba(2,4,10,0.66)'); sh.addColorStop(1,'rgba(1,2,6,0.93)');
+  g.fillStyle = sh; g.fillRect(cx-r, cy-r, 2*r, 2*r);
+  g.restore();
+  // Lit limb (upper-left rim catches the light).
+  const limb = g.createLinearGradient(cx-r, cy-r, cx+r, cy+r);
+  limb.addColorStop(0, rgba(BLUE,0.75)); limb.addColorStop(0.5, rgba(BLUE,0.10)); limb.addColorStop(1,'rgba(0,0,0,0)');
+  g.strokeStyle = limb; g.lineWidth = 2.4; g.beginPath(); g.arc(cx, cy, r-1, 0, Math.PI*2); g.stroke();
+  // Limb atmosphere glow.
+  [[r+20,7,0.10],[r+11,5,0.18],[r+4,3,0.30]].forEach(([ar,lw,op]) => {
+    g.strokeStyle = rgba(BLUE,op); g.lineWidth = lw; g.beginPath(); g.arc(cx,cy,ar,0,Math.PI*2); g.stroke();
+  });
+}
+
 // ── Overhaul utility library (depth / derivation / labelled-axis / framing) ─────
 // All numbers these render come from TOUR_PHYSICS; these helpers only typeset and
 // compose. Single key light is upper-left, so every cast shadow falls lower-right.
@@ -782,16 +829,20 @@ function d03({ reducedMotion }) {
       g.fillStyle = BG; g.fillRect(0,0,W,H);
       drawNebulae(g,W,H,'right',0.40); drawNebulae(g,W,H,'left',0.28);
       drawStars(g,stars,T,pa(0,2.0));
-      drawEarth(g,ex,ey,er);
 
-      // Rotating baseline — two stations carried by the spinning Earth.
+      // Rotating, modeled planet (terminator + surface + limb) — the rotation IS the
+      // mechanism that sweeps the baseline through the (u,v) plane.
       const earthAngle = T * (2*Math.PI/10);
+      drawPlanet(g, ex, ey, er, { rot: earthAngle });
+
+      // Station pair carried by the spin; the baseline is drawn TEAL so it can be
+      // colour-matched to the teal ellipse it traces in (u,v).
       const s1x = ex + Math.sin(earthAngle)*er*.82, s1y = ey - Math.cos(earthAngle)*er*.35;
       const s2x = ex - Math.sin(earthAngle)*er*.82, s2y = ey + Math.cos(earthAngle)*er*.35;
       const s1vis = Math.cos(earthAngle) > -0.2, s2vis = Math.cos(earthAngle+Math.PI) > -0.2;
-      if (s1vis) { glow3(g,s1x,s1y,BLUE,10,0.85); g.fillStyle=BLUE; g.beginPath(); g.arc(s1x,s1y,4,0,Math.PI*2); g.fill(); }
-      if (s2vis) { glow3(g,s2x,s2y,AM,10,0.85);  g.fillStyle=AM;   g.beginPath(); g.arc(s2x,s2y,4,0,Math.PI*2); g.fill(); }
-      if (s1vis && s2vis) { g.strokeStyle=rgba(TEAL,0.6); g.lineWidth=1.6; g.beginPath(); g.moveTo(s1x,s1y); g.lineTo(s2x,s2y); g.stroke(); }
+      if (s1vis && s2vis) { glow3(g,(s1x+s2x)/2,(s1y+s2y)/2,TEAL,8,0.4); g.strokeStyle=rgba(TEAL,0.85); g.lineWidth=2; g.beginPath(); g.moveTo(s1x,s1y); g.lineTo(s2x,s2y); g.stroke(); }
+      if (s1vis) { glow3(g,s1x,s1y,TEAL,11,0.9); g.fillStyle='#bdfff0'; g.beginPath(); g.arc(s1x,s1y,4,0,Math.PI*2); g.fill(); }
+      if (s2vis) { glow3(g,s2x,s2y,TEAL,11,0.9); g.fillStyle='#bdfff0'; g.beginPath(); g.arc(s2x,s2y,4,0,Math.PI*2); g.fill(); }
 
       // UV panel
       g.fillStyle='rgba(4,6,20,0.88)'; roundRect(g,pvx,pvy,pvw,pvh,10); g.fill();
@@ -807,30 +858,37 @@ function d03({ reducedMotion }) {
       g.restore();
 
       // Three baselines → three ellipse arcs (centred on v0), drawn in over H.
-      const drawArc = (rx, ry, rot, startT, op) => {
+      // The primary arc is TEAL — colour-matched to the baseline drawn on the globe.
+      const drawArc = (rx, ry, rot, startT, op, col) => {
         const circ = 2*Math.PI*Math.sqrt((rx*rx+ry*ry)/2);
         const drawn = circ * easeOut(prog(T,startT,2.0));
         if (drawn <= 0) return;
         g.save(); g.translate(uvCx,uvCy-voff); g.rotate(rot);
         g.setLineDash([drawn, circ*2]);
-        g.beginPath(); g.ellipse(0,0,rx,ry,0,0,Math.PI*2); g.strokeStyle=rgba(AM,op*0.18); g.lineWidth=8; g.stroke();
-        g.beginPath(); g.ellipse(0,0,rx,ry,0,0,Math.PI*2); g.strokeStyle=rgba(AM,op); g.lineWidth=1.8; g.stroke();
+        g.beginPath(); g.ellipse(0,0,rx,ry,0,0,Math.PI*2); g.strokeStyle=rgba(col,op*0.18); g.lineWidth=8; g.stroke();
+        g.beginPath(); g.ellipse(0,0,rx,ry,0,0,Math.PI*2); g.strokeStyle=rgba(col,op); g.lineWidth=1.8; g.stroke();
         g.setLineDash([drawn*.35, circ]);
-        g.beginPath(); g.ellipse(0,0,rx,ry,0,0,Math.PI,true); g.strokeStyle=rgba(AM,op*0.28); g.lineWidth=1.0; g.stroke();
+        g.beginPath(); g.ellipse(0,0,rx,ry,0,0,Math.PI,true); g.strokeStyle=rgba(col,op*0.28); g.lineWidth=1.0; g.stroke();
         g.setLineDash([]); g.restore();
       };
-      drawArc(pvw*.40, pvh*.30, 0,             1.5, 0.85);
-      drawArc(pvw*.33, pvh*.24, 28*Math.PI/180, 2.0, 0.70);
-      drawArc(pvw*.27, pvh*.18, -22*Math.PI/180,2.5, 0.55);
+      drawArc(pvw*.40, pvh*.30, 0,             1.5, 0.90, TEAL);   // ← the baseline above
+      drawArc(pvw*.33, pvh*.24, 28*Math.PI/180, 2.0, 0.62, AM);
+      drawArc(pvw*.27, pvh*.18, -22*Math.PI/180,2.5, 0.48, AM);
 
-      // Derivation strip — the exact u,v(H,δ) that produce the ellipse.
-      drawDerivationPanel(g, W*.04, H*.71, W*.92, [
-        { kind:'sub',    text:'u =  B_X sin H + B_Y cos H' },
-        { kind:'sub',    text:'v = −B_X sinδ cos H + B_Y sinδ sin H + B_Z cosδ        (each ÷ λ)' },
-        { kind:'result', text:'→ over hour angle H the (u,v) point traces an ellipse, centre v₀ = B_Z cosδ / λ' },
-      ], pa(2.8,1.6), { title:'(u,v) as the Earth turns', reveal: pa(2.8,1.8) });
+      // Quiet annotation (no glass card) — the exact u,v(H,δ) that trace the ellipse.
+      const ay = H*0.74, axx = W*0.06, anA = pa(2.6,1.6);
+      g.save(); g.globalAlpha = anA; g.textAlign='left'; g.textBaseline='top';
+      g.fillStyle=rgba(TEAL,0.92); g.font='600 12px ui-sans-serif,system-ui,sans-serif';
+      g.fillText('ONE BASELINE → ONE ELLIPSE  ·  colour-matched above', axx, ay);
+      g.fillStyle='#cfcfe6'; g.font='14px "Courier New",monospace';
+      g.fillText('u =  B_X sin H + B_Y cos H', axx, ay+22);
+      g.fillText('v = −B_X sinδ cos H + B_Y sinδ sin H + B_Z cosδ        (each ÷ λ)', axx, ay+44);
+      g.fillStyle=rgba(DIM,0.95); g.font='italic 12px ui-sans-serif,system-ui,sans-serif';
+      g.fillText('→ over hour angle H the (u,v) point traces an ellipse centred at v₀ = B_Z cosδ / λ', axx, ay+68);
+      g.restore();
 
-      drawConceptTag(g, W*.04, H*.05, 'Aperture Synthesis', pa(0.5,1.0));    };
+      drawConceptTag(g, W*.04, H*.05, 'Aperture Synthesis', pa(0.5,1.0));
+    };
 
     if (reducedMotion) { draw(999); return; }
     let T = 0;
@@ -1233,7 +1291,7 @@ function d07({ reducedMotion }) {
       drawStars(g,starsMid,T,0.50);
       drawStars(g,starsFront,T,0.80);
 
-      drawEarth(g,ex,ey,er);
+      drawPlanet(g, ex, ey, er, { rot: T*0.18 });
 
       // Ground station markers on Earth
       glow3(g,almaX,almaY,AM,10,0.9);
@@ -1304,11 +1362,12 @@ function d07({ reducedMotion }) {
       g.fillStyle='rgba(5,5,20,0.92)'; g.strokeStyle='#2d2200'; g.lineWidth=1;
       g.fillRect(12,22,W*.22,H*.24); g.strokeRect(12,22,W*.22,H*.24);
       const lpc=12+W*.11, lpcy=22+H*.12;
-      // Small photon ring mockup
-      g.strokeStyle=GOLD; g.lineWidth=3; g.globalAlpha=panA*0.9;
-      g.beginPath(); g.arc(lpc,lpcy,H*.06,0,Math.PI*2); g.stroke();
-      g.fillStyle='#020204'; g.beginPath(); g.arc(lpc,lpcy,H*.05,0,Math.PI*2); g.fill();
-      g.globalAlpha=panA;
+      // EHT-Ground: a FUZZY, thick ring — Earth-limited resolution can't sharpen it.
+      g.save(); g.filter='blur(3.5px)'; g.globalAlpha=panA*0.85;
+      g.strokeStyle=GOLD; g.lineWidth=H*.045;
+      g.beginPath(); g.arc(lpc,lpcy,H*.058,0,Math.PI*2); g.stroke();
+      g.filter='none'; g.restore();
+      g.globalAlpha=panA; g.fillStyle='#050308'; g.beginPath(); g.arc(lpc,lpcy,H*.040,0,Math.PI*2); g.fill();
       g.fillStyle='#f0f0f8'; g.font='bold 13px "Inter",sans-serif'; g.textAlign='center'; g.textBaseline='top';
       g.fillText('EHT Ground',lpc,26);
       g.fillStyle=TEAL; g.font='11px "Inter",sans-serif';
@@ -1317,24 +1376,30 @@ function d07({ reducedMotion }) {
       g.fillStyle='rgba(5,5,20,0.92)'; g.strokeStyle=AM; g.lineWidth=1;
       g.fillRect(W-W*.22-12,22,W*.22,H*.24); g.strokeRect(W-W*.22-12,22,W*.22,H*.24);
       const rpc=W-W*.11-12, rpcy=22+H*.12;
-      g.strokeStyle=GOLD; g.lineWidth=4.5; g.globalAlpha=panA*0.9;
-      glow3(g,rpc,rpcy,GOLD,H*.07,panA*0.6);
+      // EHT+BHEX: a SHARP, thin ring with finer photon-ring substructure — the
+      // longer space baseline resolves detail the ground array cannot.
+      glow3(g,rpc,rpcy,GOLD,H*.075,panA*0.55);
+      g.globalAlpha=panA; g.strokeStyle=GOLD; g.lineWidth=2.2;
       g.beginPath(); g.arc(rpc,rpcy,H*.062,0,Math.PI*2); g.stroke();
-      g.fillStyle='#020204'; g.beginPath(); g.arc(rpc,rpcy,H*.052,0,Math.PI*2); g.fill();
-      g.globalAlpha=panA;
+      g.strokeStyle=rgba('#fff0c0',0.9); g.lineWidth=1;
+      g.beginPath(); g.arc(rpc,rpcy,H*.058,0,Math.PI*2); g.stroke();
+      g.fillStyle='#ffe9a8';
+      for (let a=0;a<6;a++){ const an=a*Math.PI/3 - 0.4; g.beginPath(); g.arc(rpc+Math.cos(an)*H*.062, rpcy+Math.sin(an)*H*.062, 1.4, 0, Math.PI*2); g.fill(); }
+      g.fillStyle='#020204'; g.beginPath(); g.arc(rpc,rpcy,H*.050,0,Math.PI*2); g.fill();
       g.fillStyle=GLOW; g.font='bold 13px "Inter",sans-serif'; g.textAlign='center'; g.textBaseline='top';
       g.fillText('EHT + BHEX',rpc,26);
       g.fillStyle=TEAL; g.font='11px "Inter",sans-serif';
       g.fillText(`θ ~ ${P.str.bhexTheta} · pending`,rpc,22+H*.20);
       g.globalAlpha=1;
 
-      // The relation itself is a pedagogical simplification — flagged, never asserted.
-      drawDerivationPanel(g, W*.05, H*.72, W*.90, [
-        { kind:'symbol', text:'B_space ~ R⊕ + h   (characteristic radius)' },
-        { kind:'sub',    text:`θ ~ λ / B_space  ≈ ${P.str.bhexTheta} at 230 GHz` },
-        { kind:'note',   text:'⚠ orbital-radius simplification — the true ground–satellite baseline is geometry-dependent (≤ 2R⊕+h). Pending sign-off: Marrone / Alejandro.' },
-      ], panA, { title:'Space baseline — pending expert sign-off', reveal: panA });
-      drawConceptTag(g, W*.05, H*.62, 'Space Baseline', panA);    };
+      // Integrity relation — slimmed to two lines + the pending tag (the LAW-1 card
+      // exception). Never presented as a clean equality; every ⚠/pending marker kept.
+      drawDerivationPanel(g, W*.05, H*.80, W*.66, [
+        { kind:'symbol', text:'B_space ~ R⊕ + h   ·   θ ~ λ / B_space' },
+        { kind:'note',   text:`⚠ orbital-radius simplification · ≈ ${P.str.bhexTheta} · pending sign-off (Marrone / Alejandro)` },
+      ], panA, { reveal: panA });
+      drawConceptTag(g, W*.05, H*.745, 'Space Baseline', panA);
+    };
 
     if (reducedMotion) { draw(999); return; }
     let T = 0;
