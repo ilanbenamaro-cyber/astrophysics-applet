@@ -78,7 +78,23 @@
 > docs (.workflows/_system/TOUR-AUDIT.md, TOUR-SPEC.md). Verified per-act via Playwright; zero new
 > console errors; 8 RAF cleanups + 8 reduced-motion gates intact.
 
-**ALL PLANNED SESSIONS COMPLETE — S1 through P3 + Tour Cinematic Rewrite + Tour Art Passes + Canvas 2D Rewrite + Tour World-Class Overhaul**
+**Tour Apple-Precision Overhaul (pass 2): COMPLETE** — committed 2026-06-09 (feature/tour-world-class-overhaul)
+> Pass 2, against Apple's 3 HI principles (deference/clarity/depth) after a reviewer called pass 1
+> "cookie-cutter." Phase 0 physics: fixed the shadow-coefficient bug (single-sourced bcFormula=√27
+> radius / shadowDiamFormula=2√27 diameter so d05 & First Light can't diverge); corrected the
+> HEADLINE baseline to the M87*-observing max (SPT can't see M87*; tourPhysics.maxBaselineKmVisible
+> reuses the tool's imported elevation filter → IRAM–JCMT 10,883 km → θ≈25 μas, matches published EHT
+> + live tool); both values exposed (M87* headline + geometric 11,406 for reference); mandatory "M87*"
+> qualifier swept across Acts 1/2/4/7/8; TOUR-PHYSICS-AUDIT.md written (flags coords for Marrone).
+> Phase 1 deference: deleted all HUD corner frames + the util; quieted concept tags. Phase 2 depth (4
+> batches): new drawPlanet (modeled rotating Earth — terminator/limb/land) in d03+d07; d06 hero photo +
+> annotation column; d01 RESOLVED source + full-width terrain; d03 baseline colour-matched to its
+> ellipse; d07 fuzzy-vs-sharp BHEX insets + slim integrity panel; d04 recognizable continents + label
+> dodging + filled map; d02 enlarged dishes/UV + VCZ caption; d05 dirty→clean transformation; d08
+> ngEHT visibly sharper than EHT. Cards now only in Acts 1 & 5 (+ slim d07). Contract unchanged; 8 RAF
+> cleanups + 8 reduced-motion gates intact; per-act Playwright-verified; env-only console errors.
+
+**ALL PLANNED SESSIONS COMPLETE — S1 through P3 + Tour Cinematic Rewrite + Tour Art Passes + Canvas 2D Rewrite + Tour World-Class Overhaul + Tour Apple-Precision Overhaul**
 
 ---
 
@@ -223,6 +239,7 @@ constants.js ─ IMAGE_SIZE=512, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD, 
 
 ## LAST UPDATED
 
+2026-06-09 — Tour Apple-Precision Overhaul (pass 2) complete (feature/tour-world-class-overhaul): Phase 0 physics — shadow-coefficient bug fixed + single-sourced (2√27 diameter); HEADLINE baseline corrected to M87*-observing max (SPT excluded via imported elevation filter → IRAM–JCMT 10,883 km/25 μas), both values exposed, "M87*" qualifier swept Acts 1/2/4/7/8, TOUR-PHYSICS-AUDIT.md written. Deference — all HUD frames removed, glass cards cut to Acts 1&5 (+slim d07), tags quieted. Depth — new drawPlanet modeled Earth (d03/d07), subject-scale enlargements, d05 dirty→clean transformation, d08 ngEHT-sharper, d04 recognizable continents + label dodging, d06 hero photo. 6 commits (Phase 0,1,2a–2d) + this sync. decisions.md (M87*-baseline+deference decision) + gotchas.md (updated baseline/shadow/deference/drawPlanet entries). Contract unchanged. NOT yet merged to main.
 2026-06-08 — Tour World-Class Overhaul complete (feature/tour-world-class-overhaul): new tourPhysics.js single-source-of-truth (every tour number computed, θ=λ/B no 1.22, imports canonical latLonToECEF); fixed all asserted/contradictory numbers (d04 20→24 μas, d08 24-vs-20 resolved, d02 B computed 11,406 km); BHEX integrity reframe (d07 "B ~ R⊕+h … pending sign-off"); depth/derivation utility library appended to TourDiagram.js; all 8 acts get derivation panels + concept tags + labelled axes + filled frames; Tour.js prose aligned; contract unchanged. decisions.md (tourPhysics decision) + gotchas.md (4 entries) + this file updated. Audit/spec in _system/TOUR-AUDIT.md + TOUR-SPEC.md.
 2026-04-28 — Canvas 2D cinematic rewrite complete (bed2d45): TourDiagram.js fully rewritten from SVG/htm to Canvas 2D RAF loops. d01–d08 React components. Shared Canvas 2D utilities. tour.css canvas rule. decisions.md SVG bloom filter decision marked SUPERSEDED. gotchas.md 3 new Canvas 2D entries. MEMORY.md updated. SESSION-CONTINUITY updated.
 2026-04-27 — Smithsonian Art Pass complete (documentary-paced animation, one motion per act, new CSS class names for d05/d08, BG color update, 10 new keyframes + 19 new classes); WHERE WE ARE, commits, LAST UPDATED all updated

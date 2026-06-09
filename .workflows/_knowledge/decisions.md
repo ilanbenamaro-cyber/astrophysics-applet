@@ -511,6 +511,20 @@ TRIGGERS_REVIEW_IF: a new array preset becomes the tour's reference array; BHEX 
 
 ---
 
+### Tour headline baseline = M87*-observing max (SPT excluded), + Apple-precision deference
+DATE: 2026-06-09
+LAST_VERIFIED: 2026-06-09
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION (refines the tourPhysics decision above): the tour headlines the M87*-OBSERVING max baseline, not the geometric array max. SPT (South Pole) cannot observe M87* (dec +12°), so `tourPhysics.maxBaselineKmVisible` filters stations through the simulator's OWN elevation filter (`computeElevation`+`MIN_ELEVATION_RAD`, now exported from uvCompute.js and imported — never re-implemented) and takes the pairwise max among simultaneously-visible pairs → IRAM–JCMT 10,883 km → θ≈25 μas. Both values are exposed: `ehtMaxBaselineM87Km` (headline) and `ehtArrayMaxBaselineKm` (11,406, geometric, never shown as resolution). Every act labels it with the mandatory "M87*" qualifier. Also fixed a real physics bug: the shadow coefficient is now single-sourced (`bcFormula` radius √27, `shadowDiamFormula` diameter 2√27) so d05/Act6 can't pair the radius coeff with the 42 μas diameter again.
+RATIONALE: a reviewer found the prior pass "cookie-cutter, lacking depth/clarity"; an EHT scientist would also balk at 24 μas headlined off a station pair (IRAM–SPT) that never co-observed M87*. 25 μas / Spain–Hawaii matches the published EHT figure and the live tool. The deference half of this pass REMOVED chrome (all HUD corner frames deleted; glass cards cut from 6 acts to just Acts 1 & 5 + a slim integrity panel in d07; concept tags quieted) and built per-act depth (modeled rotating Earth via new `drawPlanet`; subject-owns-frame scale; dirty→clean transformation in d05; visibly-different rings in d07/d08) — the opposite of pass 1's "fix blankness by adding chrome," which was the source of the templated feel.
+CRITICAL CONSTRAINT: coordinate set is Marrone-owned — `TOUR-PHYSICS-AUDIT.md` flags the 10,883 vs 11,406 distinction and the coordinate set for sign-off. The elevation/visibility filter must stay imported from uvCompute.js, never copied (same rule as latLonToECEF).
+ALTERNATIVES_REJECTED: headlining the geometric array max (11,406/24 μas — misleads, pairs non-co-observing stations); hardcoding 10,883 (would not track coordinate revisions); keeping uniform per-act chrome (the cookie-cutter cause).
+TRIGGERS_REVIEW_IF: Marrone revises EHT 2017 coordinates; the tour's reference source changes from M87*; BHEX figures get validated.
+
+---
+
 ## Contradiction Scanner
 
 Claude runs this check when adding a new decision:
