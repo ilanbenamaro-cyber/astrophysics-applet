@@ -572,15 +572,22 @@ function d01({ reducedMotion }) {
       drawStars(g, rStars, T, pa('rstars'));
       drawDivider(g, W/2, H, pa('div'));
 
-      g.save(); g.beginPath(); g.rect(0,0,W/2,H); g.clip();
-      drawAtacama(g, W/2, H, GY, pa('latmo'));
-      g.restore();
+      // Terrain spans the full frame so the right (interferometer) side has the
+      // same ground/depth as the left — closes the old right-side dead band.
+      drawAtacama(g, W, H, GY, pa('latmo'));
 
       const lda = pa('ldish');
       drawContactShadow(g, W*.265, GY+10, 76, 13, lda*0.85);
       const { fx: lfx, fy: lfy } = drawDish(g, W*.265, GY, 1.0, true, GLOW, lda);
       drawBeam(g, lfx, lfy, H*.10+40, 178, RED, pa('lbeam'));
       drawBlurry(g, W*.265, H*.10, pa('lsrc'));
+      if (pa('lsrc') > 0) {
+        g.save(); g.globalAlpha = pa('lsrc');
+        g.fillStyle = rgba(RED, 0.92); g.font = '600 13px ui-sans-serif, system-ui, sans-serif';
+        g.textAlign = 'center'; g.textBaseline = 'top';
+        g.fillText('UNRESOLVED', W*.265, H*.185);
+        g.restore();
+      }
 
       const rda = pa('rdish');
       drawContactShadow(g, W*.610, GY+10, 58, 11, rda*0.85);
@@ -604,7 +611,16 @@ function d01({ reducedMotion }) {
           g.beginPath(); g.moveTo(bfx,bfy); g.lineTo(SRCX,SRCY); g.stroke();
         });
       }
-      drawSharp(g, W*.735, H*.10, pa('rsrc'));
+      const rsA = pa('rsrc');
+      if (rsA > 0) glow3(g, W*.735, H*.10, BLUE, 28, rsA*0.85);
+      drawSharp(g, W*.735, H*.10, rsA);
+      if (rsA > 0) {
+        g.save(); g.globalAlpha = rsA;
+        g.fillStyle = rgba(TEAL, 0.97); g.font = '600 13px ui-sans-serif, system-ui, sans-serif';
+        g.textAlign = 'center'; g.textBaseline = 'top';
+        g.fillText('RESOLVED', W*.735, H*.185);
+        g.restore();
+      }
 
       // Derivation — the single dish cannot resolve the shadow; the baseline can.
       drawDerivationPanel(g, W*.045, H*.30, W*.40, [
@@ -1127,42 +1143,52 @@ function d06({ reducedMotion }) {
     const draw = T => {
       g.fillStyle = BG; g.fillRect(0,0,W,H);
       if (!loaded) return;
-      g.globalAlpha = reducedMotion ? 1 : ease(prog(T,0,4));
-      g.drawImage(img, 20, 15, W*.70, H*.95);
+      // Hero photo — large square (undistorted), left-anchored. The image owns the frame.
+      const s = H*0.92, ix = W*0.035, iy = H*0.04, icx = ix+s/2, icy = iy+s/2;
+      g.globalAlpha = reducedMotion ? 1 : ease(prog(T,0,3.5));
+      g.drawImage(img, ix, iy, s, s);
       g.globalAlpha = 1;
-      // Vignette
-      const vg = g.createRadialGradient(W*.35,H*.5,0, W*.35,H*.5,W*.55);
-      vg.addColorStop(0.5,'rgba(2,2,10,0)'); vg.addColorStop(1,'rgba(2,2,10,0.90)');
-      g.fillStyle=vg; g.fillRect(0,0,W,H);
-      // Scale bar
-      const sbA = reducedMotion ? 1 : ease(prog(T,2.0,1.5));
-      g.globalAlpha=sbA;
-      g.strokeStyle=AM; g.lineWidth=2;
-      g.beginPath(); g.moveTo(48,H*.93); g.lineTo(168,H*.93); g.stroke();
-      g.beginPath(); g.moveTo(48,H*.93-5); g.lineTo(48,H*.93+5); g.stroke();
-      g.beginPath(); g.moveTo(168,H*.93-5); g.lineTo(168,H*.93+5); g.stroke();
-      g.fillStyle=AM; g.font='14px "Inter",sans-serif';
-      g.textAlign='center'; g.textBaseline='top';
-      g.fillText(P.str.m87Shadow,108,H*.93+8);
-      // Title
-      glow3(g,60+W*.08,H*.06,GOLD,80,sbA*0.4);
-      g.fillStyle=GOLD; g.font='bold 18px "Inter",sans-serif';
-      g.textAlign='left'; g.textBaseline='top';
-      g.fillText('M87*  ·  April 10, 2019',60,H*.04);
-      // Citation
-      g.fillStyle=DIM; g.font='italic 13px "Inter",sans-serif';
-      g.textAlign='center'; g.textBaseline='bottom';
-      g.fillText('EHT Collaboration 2019  ·  ApJL 875, L1',W*.5,H*.99);
-      g.globalAlpha=1;
+      // Vignette centred on the ring.
+      const vg = g.createRadialGradient(icx,icy,s*0.16, icx,icy,s*0.62);
+      vg.addColorStop(0,'rgba(2,2,10,0)'); vg.addColorStop(1,'rgba(2,2,10,0.82)');
+      g.fillStyle=vg; g.fillRect(ix-12, iy-12, s+24, s+24);
 
-      // Provenance panel — fills the right margin so the image isn't in a void.
-      drawDerivationPanel(g, W*.72, H*.30, W*.26, [
-        { kind:'result', text:`Ring ${P.m87ShadowUas} ± 3 μas` },
-        { kind:'sub',    text:'M ≈ 6.5 × 10⁹ M☉' },
-        { kind:'note',   text:'observed 2017-04' },
-        { kind:'note',   text:'released 2019-04-10' },
-      ], sbA, { title:'M87* — first image', reveal: sbA });
-      drawConceptTag(g, W*.72, H*.10, 'First Light', sbA);
+      // Scale bar on the image (bottom-left) — the angular size the ring subtends.
+      const sbA = reducedMotion ? 1 : ease(prog(T,2.0,1.5));
+      const sbx = ix+26, sby = iy+s-30, sbw = 120;
+      g.save(); g.globalAlpha=sbA; g.lineCap='round';
+      g.strokeStyle='#fff'; g.lineWidth=2.5;
+      g.beginPath(); g.moveTo(sbx,sby); g.lineTo(sbx+sbw,sby); g.stroke();
+      g.lineWidth=2; g.beginPath(); g.moveTo(sbx,sby-5); g.lineTo(sbx,sby+5); g.moveTo(sbx+sbw,sby-5); g.lineTo(sbx+sbw,sby+5); g.stroke();
+      g.fillStyle='#fff'; g.font='600 13px ui-sans-serif,system-ui,sans-serif'; g.textAlign='center'; g.textBaseline='bottom';
+      g.fillText(P.str.m87Shadow, sbx+sbw/2, sby-8);
+      g.restore();
+
+      // Quiet annotation column in the right margin — purposeful content, not a glass box.
+      const cx = ix + s + W*0.045;
+      const colA = reducedMotion ? 1 : ease(prog(T,1.4,1.6));
+      g.save(); g.globalAlpha=colA; g.textAlign='left';
+      drawConceptTag(g, cx, iy+12, 'First Light', colA);
+      g.fillStyle=GOLD; g.font='bold 23px ui-sans-serif,system-ui,sans-serif'; g.textBaseline='top';
+      g.fillText('M87*', cx, iy+30);
+      g.fillStyle=rgba(AM,0.9); g.font='13px ui-sans-serif,system-ui,sans-serif';
+      g.fillText('April 10, 2019', cx, iy+64);
+      const facts = [
+        ['RING DIAMETER',    `${P.m87ShadowUas} ± 3 μas`],
+        ['BLACK-HOLE MASS',  '≈ 6.5 × 10⁹ M☉'],
+        ['OBSERVED',         '2017 April'],
+        ['RELEASED',         '2019-04-10'],
+      ];
+      let fy = iy+108;
+      facts.forEach(([k,v]) => {
+        g.fillStyle=rgba(DIM,0.95); g.font='11px ui-sans-serif,system-ui,sans-serif'; g.textBaseline='top'; g.fillText(k, cx, fy);
+        g.fillStyle='#e8e8f4'; g.font='600 15px "Courier New",monospace'; g.fillText(v, cx, fy+15);
+        fy += 48;
+      });
+      g.fillStyle=rgba(DIM,0.85); g.font='italic 11px ui-sans-serif,system-ui,sans-serif';
+      g.fillText('EHT Collaboration 2019', cx, iy+s-32);
+      g.fillText('ApJL 875, L1 · confirmed by GR', cx, iy+s-16);
+      g.restore();
     };
 
     if (reducedMotion) { if (loaded) draw(999); else { img.onload = () => { loaded=true; draw(999); }; } return; }
