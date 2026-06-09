@@ -78,19 +78,21 @@ function drawStars(g, stars, T, alpha) {
 // ── Nebulae ───────────────────────────────────────────────────────────────────
 function drawNebulae(g, W, H, side, alpha) {
   if (alpha <= 0) return;
+  // Moderate (DESIGN-LANGUAGE Phase B): cosmic dust desaturated to the site family —
+  // warm amber/bronze on the left, the licensed cool slate on the right. No candy hues.
   const clouds = side === 'left' ? [
-    [W*.13, H*.18, 235, 138, '#cc00ff', 0.33, -0.3],
-    [W*.27, H*.36, 198, 112, '#ff0066', 0.27,  0.2],
-    [W*.07, H*.50, 172,  98, '#6600ee', 0.25, -0.1],
-    [W*.05, H*.27, 122,  70, '#aa00ff', 0.23,  0.15],
-    [W*.21, H*.10, 152,  86, '#ff2299', 0.20,  0.4],
-    [W*.32, H*.55, 130,  75, '#ff0044', 0.15, -0.25],
+    [W*.13, H*.18, 235, 138, '#6e5430', 0.30, -0.3],
+    [W*.27, H*.36, 198, 112, '#7a5a38', 0.24,  0.2],
+    [W*.07, H*.50, 172,  98, '#5a4628', 0.22, -0.1],
+    [W*.05, H*.27, 122,  70, '#6a5030', 0.20,  0.15],
+    [W*.21, H*.10, 152,  86, '#7c5a3a', 0.17,  0.4],
+    [W*.32, H*.55, 130,  75, '#5a4024', 0.13, -0.25],
   ] : [
-    [W*.74, H*.22, 228, 128, '#0044ff', 0.31,  0.2],
-    [W*.84, H*.44, 182, 106, '#00ddcc', 0.27, -0.15],
-    [W*.66, H*.48, 162,  92, '#0088ff', 0.25,  0.3],
-    [W*.88, H*.24, 132,  76, '#00ffee', 0.21, -0.2],
-    [W*.70, H*.08, 118,  68, '#4400ff', 0.23,  0.1],
+    [W*.74, H*.22, 228, 128, '#3a4a6a', 0.28,  0.2],
+    [W*.84, H*.44, 182, 106, '#34506a', 0.24, -0.15],
+    [W*.66, H*.48, 162,  92, '#2e4058', 0.22,  0.3],
+    [W*.88, H*.24, 132,  76, '#3a4a6a', 0.18, -0.2],
+    [W*.70, H*.08, 118,  68, '#324460', 0.20,  0.1],
   ];
   clouds.forEach(([x, y, rx, ry, col, op, rot]) => {
     g.save(); g.translate(x, y); g.rotate(rot);
@@ -110,11 +112,11 @@ function drawMilkyWay(g, W, H, alpha) {
   if (alpha <= 0) return;
   g.save(); g.globalAlpha = alpha * 0.30;
   const grad = g.createLinearGradient(W*.04, H*.04, W*.44, H*.90);
-  grad.addColorStop(0,    'rgba(190,150,255,0)');
-  grad.addColorStop(0.20, 'rgba(212,172,255,0.78)');
-  grad.addColorStop(0.44, 'rgba(232,202,255,1)');
-  grad.addColorStop(0.70, 'rgba(202,167,255,0.72)');
-  grad.addColorStop(1,    'rgba(170,140,255,0)');
+  grad.addColorStop(0,    'rgba(140,130,110,0)');
+  grad.addColorStop(0.20, 'rgba(150,140,118,0.72)');
+  grad.addColorStop(0.44, 'rgba(170,158,132,0.95)');
+  grad.addColorStop(0.70, 'rgba(150,140,118,0.66)');
+  grad.addColorStop(1,    'rgba(140,130,110,0)');
   g.beginPath();
   g.moveTo(0, H*.04); g.lineTo(W*.46, H*.16); g.lineTo(W*.46, H*.74); g.lineTo(0, H*.96);
   g.closePath(); g.fillStyle = grad; g.fill();
@@ -134,7 +136,7 @@ function drawAtacama(g, cW, H, groundY, alpha) {
   g.save(); g.globalAlpha = alpha;
 
   const farGrad = g.createLinearGradient(0, groundY-H*.28, 0, groundY);
-  farGrad.addColorStop(0, '#0e091e'); farGrad.addColorStop(1, '#070512');
+  farGrad.addColorStop(0, '#16110a'); farGrad.addColorStop(1, '#0c0905');
   g.fillStyle = farGrad;
   g.beginPath(); g.moveTo(0, groundY);
   g.bezierCurveTo(cW*.06,groundY-H*.12, cW*.12,groundY-H*.22, cW*.18,groundY-H*.24);
@@ -144,7 +146,7 @@ function drawAtacama(g, cW, H, groundY, alpha) {
   g.lineTo(cW, groundY); g.closePath(); g.fill();
 
   const nearGrad = g.createLinearGradient(0, groundY-H*.20, 0, groundY);
-  nearGrad.addColorStop(0, '#050310'); nearGrad.addColorStop(1, '#030208');
+  nearGrad.addColorStop(0, '#0e0a06'); nearGrad.addColorStop(1, '#070503');
   g.fillStyle = nearGrad;
   g.beginPath(); g.moveTo(0, groundY);
   g.bezierCurveTo(cW*.04,groundY-H*.07, cW*.09,groundY-H*.14, cW*.14,groundY-H*.16);
@@ -155,21 +157,21 @@ function drawAtacama(g, cW, H, groundY, alpha) {
   g.lineTo(cW, groundY); g.closePath(); g.fill();
 
   const floorGrad = g.createLinearGradient(0, groundY, 0, H);
-  floorGrad.addColorStop(0, '#0a0615'); floorGrad.addColorStop(1, '#020108');
+  floorGrad.addColorStop(0, '#0a0805'); floorGrad.addColorStop(1, '#030202');
   g.fillStyle = floorGrad; g.fillRect(0, groundY, cW, H - groundY);
 
   const hazeGrad = g.createLinearGradient(0, groundY-H*.06, 0, groundY);
-  hazeGrad.addColorStop(0, 'rgba(80,20,120,0)');
-  hazeGrad.addColorStop(1, 'rgba(80,20,120,0.20)');
+  hazeGrad.addColorStop(0, 'rgba(150,110,50,0)');
+  hazeGrad.addColorStop(1, 'rgba(150,110,50,0.18)');
   g.fillStyle = hazeGrad; g.fillRect(0, groundY-H*.06, cW, H*.06);
 
-  g.globalAlpha = alpha * 0.15; g.fillStyle = '#2a1840';
+  g.globalAlpha = alpha * 0.15; g.fillStyle = '#241c10';
   [[cW*.08,groundY+H*.02,18,5],[cW*.19,groundY+H*.03,12,4],
    [cW*.33,groundY+H*.015,22,6],[cW*.44,groundY+H*.025,14,4]].forEach(([ex,ey,erx,ery]) => {
     g.beginPath(); g.ellipse(ex,ey,erx,ery,0,0,Math.PI*2); g.fill();
   });
 
-  g.globalAlpha = alpha * 0.20; g.strokeStyle = '#1a0c2e'; g.lineWidth = 1.2;
+  g.globalAlpha = alpha * 0.20; g.strokeStyle = '#1a140a'; g.lineWidth = 1.2;
   [[cW*.10,groundY-2,0.45],[cW*.23,groundY-2,0.38],[cW*.41,groundY-2,0.42]].forEach(([dx,dy,dsc]) => {
     g.beginPath(); g.arc(dx, dy-dsc*14, dsc*14, Math.PI, Math.PI*2); g.stroke();
     g.beginPath(); g.moveTo(dx,dy); g.lineTo(dx,dy-dsc*14); g.stroke();
@@ -307,7 +309,7 @@ function drawBlurry(g, x, y, alpha) {
     gr.addColorStop(1, 'rgba(0,0,0,0)');
     g.beginPath(); g.arc(x,y,r,0,Math.PI*2); g.fillStyle = gr; g.fill();
   });
-  [['#ff00aa',62,0.08],['#0055ff',55,0.07]].forEach(([col,r,op]) => {
+  [['#9E7E38',62,0.08],['#3a4a6a',55,0.07]].forEach(([col,r,op]) => {
     const gr = g.createRadialGradient(x,y,r*0.6, x,y,r);
     gr.addColorStop(0,'rgba(0,0,0,0)'); gr.addColorStop(1, rgba(col,op*alpha));
     g.beginPath(); g.arc(x,y,r,0,Math.PI*2); g.fillStyle = gr; g.fill();
@@ -327,9 +329,9 @@ function drawSharp(g, x, y, alpha) {
     g.beginPath(); g.moveTo(x,y); g.lineTo(x+Math.cos(ang)*len, y+Math.sin(ang)*len);
     g.strokeStyle = sg; g.lineWidth = i%2===0 ? 1.6 : 1.1; g.stroke();
   }
-  [[42,0.06,'#4cc9f0'],[34,0.10,'#4cc9f0'],[27,0.18,'#70d4f5'],
-   [20,0.28,'#90e0ff'],[14,0.45,'#b0eeff'],[8,0.68,'#d0f6ff'],
-   [3,0.90,'#e8fcff'],[1.8,1.0,'#ffffff']].forEach(([r,op,col]) => {
+  [[42,0.06,'#C4A555'],[34,0.10,'#C4A555'],[27,0.18,'#d4b96a'],
+   [20,0.28,'#e6cf8e'],[14,0.45,'#f0e3b8'],[8,0.68,'#f8f2dc'],
+   [3,0.90,'#fefdf6'],[1.8,1.0,'#ffffff']].forEach(([r,op,col]) => {
     const gr = g.createRadialGradient(x,y,0, x,y,r);
     gr.addColorStop(0, rgba(col,op*alpha)); gr.addColorStop(1,'rgba(0,0,0,0)');
     g.beginPath(); g.arc(x,y,r,0,Math.PI*2); g.fillStyle = gr; g.fill();
@@ -641,7 +643,7 @@ function d01({ reducedMotion }) {
       drawBlurry(g, W*.265, H*.10, pa('lsrc'));
       if (pa('lsrc') > 0) {
         g.save(); g.globalAlpha = pa('lsrc');
-        g.fillStyle = rgba(RED, 0.92); g.font = '600 13px ui-sans-serif, system-ui, sans-serif';
+        g.fillStyle = rgba(RED, 0.92); g.font = `600 13px ${FONT}`;
         g.textAlign = 'center'; g.textBaseline = 'top';
         g.fillText('UNRESOLVED', W*.265, H*.185);
         g.restore();
@@ -674,7 +676,7 @@ function d01({ reducedMotion }) {
       drawSharp(g, W*.735, H*.10, rsA);
       if (rsA > 0) {
         g.save(); g.globalAlpha = rsA;
-        g.fillStyle = rgba(TEAL, 0.97); g.font = '600 13px ui-sans-serif, system-ui, sans-serif';
+        g.fillStyle = rgba(TEAL, 0.97); g.font = `600 13px ${FONT}`;
         g.textAlign = 'center'; g.textBaseline = 'top';
         g.fillText('RESOLVED', W*.735, H*.185);
         g.restore();
@@ -1249,7 +1251,7 @@ function d06({ reducedMotion }) {
       g.strokeStyle='#fff'; g.lineWidth=2.5;
       g.beginPath(); g.moveTo(sbx,sby); g.lineTo(sbx+sbw,sby); g.stroke();
       g.lineWidth=2; g.beginPath(); g.moveTo(sbx,sby-5); g.lineTo(sbx,sby+5); g.moveTo(sbx+sbw,sby-5); g.lineTo(sbx+sbw,sby+5); g.stroke();
-      g.fillStyle='#fff'; g.font='600 13px ui-sans-serif,system-ui,sans-serif'; g.textAlign='center'; g.textBaseline='bottom';
+      g.fillStyle='#fff'; g.font=`600 13px ${FONT}`; g.textAlign='center'; g.textBaseline='bottom';
       g.fillText(P.str.m87Shadow, sbx+sbw/2, sby-8);
       g.restore();
 
@@ -1258,9 +1260,9 @@ function d06({ reducedMotion }) {
       const colA = reducedMotion ? 1 : ease(prog(T,1.4,1.6));
       g.save(); g.globalAlpha=colA; g.textAlign='left';
       drawConceptTag(g, cx, iy+12, 'First Light', colA);
-      g.fillStyle=GOLD; g.font='bold 23px ui-sans-serif,system-ui,sans-serif'; g.textBaseline='top';
+      g.fillStyle=GOLD; g.font=`bold 23px ${FONT}`; g.textBaseline='top';
       g.fillText('M87*', cx, iy+30);
-      g.fillStyle=rgba(AM,0.9); g.font='13px ui-sans-serif,system-ui,sans-serif';
+      g.fillStyle=rgba(AM,0.9); g.font=`13px ${FONT}`;
       g.fillText('April 10, 2019', cx, iy+64);
       const facts = [
         ['RING DIAMETER',    `${P.m87ShadowUas} ± 3 μas`],
@@ -1270,11 +1272,11 @@ function d06({ reducedMotion }) {
       ];
       let fy = iy+108;
       facts.forEach(([k,v]) => {
-        g.fillStyle=rgba(DIM,0.95); g.font='11px ui-sans-serif,system-ui,sans-serif'; g.textBaseline='top'; g.fillText(k, cx, fy);
-        g.fillStyle='#e8e8f4'; g.font='600 15px "Courier New",monospace'; g.fillText(v, cx, fy+15);
+        g.fillStyle=rgba(DIM,0.95); g.font=`11px ${FONT}`; g.textBaseline='top'; g.fillText(k, cx, fy);
+        g.fillStyle=TXT; g.font=`600 15px ${MONO}`; g.fillText(v, cx, fy+15);
         fy += 48;
       });
-      g.fillStyle=rgba(DIM,0.85); g.font='italic 11px ui-sans-serif,system-ui,sans-serif';
+      g.fillStyle=rgba(DIM,0.85); g.font=`11px ${FONT}`;
       g.fillText('EHT Collaboration 2019', cx, iy+s-32);
       g.fillText('ApJL 875, L1 · confirmed by GR', cx, iy+s-16);
       g.restore();
