@@ -1111,72 +1111,65 @@ function d05({ reducedMotion }) {
     const cx = W*.50, cy = H*.48;
     const stars = makeStars(W,H,80);
     const P = TOUR_PHYSICS;
+    // Deterministic dirty-beam structure: sidelobe rays + speckle (the noise the
+    // sparse (u,v) sampling produces, which CLEAN must remove).
+    const RAYS  = Array.from({length:18}, (_,i) => ({ ang: i*Math.PI/9 + (i%3)*0.18, len: 0.75 + ((i*37)%50)/100 }));
+    const SPECK = Array.from({length:70}, (_,i) => { const a=i*2.39996, r=Math.sqrt(((i*53)%100)/100); return { x:Math.cos(a)*r, y:Math.sin(a)*r, b:((i*17)%100)/100 }; });
 
     const draw = T => {
       g.fillStyle = BG; g.fillRect(0,0,W,H);
       drawNebulae(g,W,H,'left',0.35); drawNebulae(g,W,H,'right',0.35);
       drawStars(g,stars,T,0.6);
 
-      // Sidelobe rings (start visible, fade sequentially)
-      const sl3 = 1 - ease(prog(T,0.5,2.7));
-      const sl2 = 1 - ease(prog(T,1.2,2.6));
-      const sl1 = 1 - ease(prog(T,2.0,2.4));
-      const rings = [
-        [H*.38,'#4a4a72',0.7,0.7,1.2,sl3],
-        [H*.30,'#5a5a88',0.8,1.0,0.65,sl2],
-        [H*.22,'#7070a0',0.9,1.2,0.7,sl1],
-      ];
-      rings.forEach(([r,col,op1,lw1,op2,alpha]) => {
-        if (alpha<=0) return;
-        g.globalAlpha=alpha*op2*0.18; g.strokeStyle=col; g.lineWidth=lw1*5;
-        g.beginPath(); g.arc(cx,cy,r,0,Math.PI*2); g.stroke();
-        g.globalAlpha=alpha*op1; g.strokeStyle=col; g.lineWidth=lw1;
-        g.beginPath(); g.arc(cx,cy,r,0,Math.PI*2); g.stroke();
-      });
-
-      // Artifact blobs (fade with sl-ring-2)
-      if (sl2 > 0) {
-        g.save(); g.filter='blur(8px)';
-        [[cx+160,cy-140,22,0.12],[cx-180,cy+120,16,0.10],[cx-140,cy-160,12,0.08]].forEach(([bx,by,br,op]) => {
-          const bgr = g.createRadialGradient(bx,by,0,bx,by,br);
-          bgr.addColorStop(0,rgba(GLOW,op*sl2)); bgr.addColorStop(1,'rgba(0,0,0,0)');
-          g.beginPath(); g.arc(bx,by,br,0,Math.PI*2); g.fillStyle=bgr; g.fill();
+      const RR = H*0.145;                                  // photon-ring radius (enlarged)
+      // ── The DIRTY image: a sidelobe-riddled smear that dissolves as CLEAN runs ──
+      const dirtyA = 1 - easeOut(prog(T,1.2,2.8));
+      if (dirtyA > 0) {
+        g.save();
+        const Rd = RR*1.15;
+        // smeared central source
+        const bg = g.createRadialGradient(cx,cy,0,cx,cy,Rd*1.4);
+        bg.addColorStop(0, rgba(GLOW,0.55*dirtyA)); bg.addColorStop(0.5, rgba(GLOW,0.16*dirtyA)); bg.addColorStop(1,'rgba(0,0,0,0)');
+        g.fillStyle=bg; g.beginPath(); g.arc(cx,cy,Rd*1.4,0,Math.PI*2); g.fill();
+        // sidelobe rays (the dirty beam's response)
+        RAYS.forEach(ry => {
+          const ex2 = cx+Math.cos(ry.ang)*Rd*2.3*ry.len, ey2 = cy+Math.sin(ry.ang)*Rd*2.3*ry.len;
+          const grad = g.createLinearGradient(cx,cy,ex2,ey2);
+          grad.addColorStop(0,'rgba(120,120,190,0)'); grad.addColorStop(0.35, rgba('#7a7ac8',0.5*dirtyA)); grad.addColorStop(1,'rgba(0,0,0,0)');
+          g.strokeStyle=grad; g.lineWidth=2; g.beginPath(); g.moveTo(cx,cy); g.lineTo(ex2,ey2); g.stroke();
         });
-        g.filter='none';
-        g.globalAlpha=sl2*0.7; g.fillStyle=DIM;
-        g.font='italic 13px "Inter",sans-serif'; g.textAlign='left'; g.textBaseline='top';
-        g.fillText('sidelobe artifacts', cx+200, cy-180);
-        g.restore();
+        // concentric sidelobe rings
+        [0.55,0.85,1.15,1.5].forEach((f,i) => { g.globalAlpha=dirtyA*0.4/(i*0.5+1); g.strokeStyle='#5a5a90'; g.lineWidth=2; g.beginPath(); g.arc(cx,cy,Rd*f,0,Math.PI*2); g.stroke(); });
+        // speckle noise
+        SPECK.forEach(s => { g.globalAlpha=dirtyA*s.b*0.55; g.fillStyle='#9090c8'; g.beginPath(); g.arc(cx+s.x*Rd*1.9, cy+s.y*Rd*1.9, 1.3,0,Math.PI*2); g.fill(); });
+        g.restore(); g.globalAlpha=1;
+        g.fillStyle=rgba(RED,0.8*dirtyA); g.font='italic 12px "Inter",sans-serif'; g.textAlign='left'; g.textBaseline='top';
+        g.fillText('sidelobe artifacts', cx+RR*1.9, cy-RR*1.6); g.globalAlpha=1;
       }
-      g.globalAlpha=1;
 
-      // True source reveals as sidelobes fade
-      const reveal = easeOut(prog(T,1.5,3.0));
+      // ── The CLEAN image emerging: accretion glow → photon ring → shadow ──
+      const reveal = easeOut(prog(T,2.0,2.8));
       if (reveal > 0) {
-        // Accretion glow
-        [[H*.155,0.06,'rgba(255,110,0'],[H*.135,0.10,'rgba(255,145,0'],[H*.118,0.16,'rgba(255,182,30'],[H*.105,0.22,'rgba(255,208,40']].forEach(([r,op,col]) => {
-          g.globalAlpha=reveal; g.strokeStyle=`${col},${op})`; g.lineWidth=r*.18;
+        [[RR*1.5,0.06,'255,110,0'],[RR*1.31,0.10,'255,145,0'],[RR*1.14,0.16,'255,182,30'],[RR*1.02,0.22,'255,208,40']].forEach(([r,op,col]) => {
+          g.globalAlpha=reveal; g.strokeStyle=`rgba(${col},${op})`; g.lineWidth=r*.18;
           g.beginPath(); g.arc(cx,cy,r,0,Math.PI*2); g.stroke();
         });
-        // Photon ring
-        glow3(g,cx,cy,GOLD,H*.108,reveal);
-        g.globalAlpha=reveal; g.strokeStyle=GOLD; g.lineWidth=4.5;
-        g.beginPath(); g.arc(cx,cy,H*.103,0,Math.PI*2); g.stroke();
-        // Shadow
-        g.fillStyle='#040408'; g.beginPath(); g.arc(cx,cy,H*.092,0,Math.PI*2); g.fill();
-        g.fillStyle='#020204'; g.beginPath(); g.arc(cx,cy,H*.078,0,Math.PI*2); g.fill();
+        glow3(g,cx,cy,GOLD,RR*1.05,reveal);
+        g.globalAlpha=reveal; g.strokeStyle=GOLD; g.lineWidth=5.5;
+        g.beginPath(); g.arc(cx,cy,RR,0,Math.PI*2); g.stroke();
+        g.fillStyle='#040408'; g.beginPath(); g.arc(cx,cy,RR*0.89,0,Math.PI*2); g.fill();
+        g.fillStyle='#020204'; g.beginPath(); g.arc(cx,cy,RR*0.76,0,Math.PI*2); g.fill();
       }
       g.globalAlpha=1;
 
-      // Labels
+      // Title morphs Dirty → CLEAN; the restore-beam identity sits under the ring.
       g.font='bold 22px "Inter",sans-serif'; g.textAlign='center'; g.textBaseline='middle';
-      const dirtyA = 1 - ease(prog(T,1.0,2.0));
-      if (dirtyA > 0) { g.globalAlpha=dirtyA; g.fillStyle=RED; g.fillText('Dirty Image',cx,cy-H*.44); }
+      if (dirtyA > 0) { g.globalAlpha=dirtyA; g.fillStyle=RED; g.fillText('Dirty Image',cx,cy-H*.40); }
       const cleanA = ease(prog(T,3.0,1.0));
       if (cleanA > 0) {
-        g.globalAlpha=cleanA; g.fillStyle=TEAL; g.fillText('CLEAN Image',cx,cy-H*.44);
-        g.font='17px "Courier New",monospace'; g.fillStyle=GOLD;
-        g.fillText('I^C = (M ⊛ G) + r_final',cx,cy+H*.44);
+        g.globalAlpha=cleanA; g.fillStyle=TEAL; g.fillText('CLEAN Image',cx,cy-H*.40);
+        g.font='15px "Courier New",monospace'; g.fillStyle=rgba(GOLD,0.95);
+        g.fillText('I^C = (M ⊛ G) + r_final', cx, cy+RR+26);
       }
       g.globalAlpha=1;
 
@@ -1454,21 +1447,29 @@ function d08({ reducedMotion }) {
     const P = TOUR_PHYSICS;
     const bmajDeg = (P.thetaEhtUas/3.6e9).toExponential(2).toUpperCase().replace(/E(-?)(\d)$/,'E$10$2');
 
-    const drawRingMockup = (cx, cy, quality) => {
-      [[H*.13,0.06,'rgba(255,120,0'],[H*.118,0.10,'rgba(255,160,0'],[H*.107,0.17,'rgba(255,195,30']].forEach(([r,op,col]) => {
-        g.strokeStyle=`${col},${op})`; g.lineWidth=r*.16;
-        g.beginPath(); g.arc(cx,cy,r,0,Math.PI*2); g.stroke();
-      });
-      if (quality === 'ng') { glow3(g,cx,cy,GOLD,H*.10,0.6); }
-      g.strokeStyle=GOLD; g.lineWidth=quality==='ng'?5:3.5;
-      g.beginPath(); g.arc(cx,cy,H*.098,0,Math.PI*2); g.stroke();
-      g.fillStyle='#020510'; g.beginPath(); g.arc(cx,cy,H*.084,0,Math.PI*2); g.fill();
-      // Contours
-      const nContours = quality==='ng' ? 3 : 2;
-      [[H*.098,0.8],[H*.122,0.55],[H*.148,0.35]].slice(0,nContours).forEach(([r,op]) => {
-        g.strokeStyle=rgba(GOLD,op*(quality==='ng'?0.9:0.7)); g.lineWidth=quality==='ng'?2:1.5;
-        g.beginPath(); g.arc(cx,cy,r,0,Math.PI*2); g.stroke();
-      });
+    // `sharp` makes the ngEHT ring visibly crisper + higher-DR than the EHT-2017
+    // one — the entire point of the comparison must be SEEN, not just printed.
+    const drawRingMockup = (ccx, ccy, sharp) => {
+      const R = H*0.135;
+      // Faint extended emission fills the panel interior.
+      const halo = g.createRadialGradient(ccx,ccy,R*0.6,ccx,ccy,R*2.0);
+      halo.addColorStop(0, sharp ? 'rgba(255,185,50,0.12)' : 'rgba(255,160,40,0.06)');
+      halo.addColorStop(1,'rgba(0,0,0,0)');
+      g.fillStyle=halo; g.beginPath(); g.arc(ccx,ccy,R*2.0,0,Math.PI*2); g.fill();
+      if (sharp) {
+        glow3(g,ccx,ccy,GOLD,R*1.05,0.55);
+        [[R*1.20,0.10],[R*1.06,0.17]].forEach(([r,op]) => { g.strokeStyle=`rgba(255,205,70,${op})`; g.lineWidth=r*.12; g.beginPath(); g.arc(ccx,ccy,r,0,Math.PI*2); g.stroke(); });
+        g.strokeStyle=GOLD; g.lineWidth=3.4; g.beginPath(); g.arc(ccx,ccy,R,0,Math.PI*2); g.stroke();
+        g.strokeStyle='rgba(255,242,205,0.92)'; g.lineWidth=1.2; g.beginPath(); g.arc(ccx,ccy,R*0.94,0,Math.PI*2); g.stroke();
+        g.fillStyle='#fff0c8'; for (let a=0;a<8;a++){ const an=a*Math.PI/4+0.3; g.beginPath(); g.arc(ccx+Math.cos(an)*R, ccy+Math.sin(an)*R, 1.6,0,Math.PI*2); g.fill(); }
+        g.fillStyle='#02040c'; g.beginPath(); g.arc(ccx,ccy,R*0.80,0,Math.PI*2); g.fill();
+      } else {
+        g.save(); g.filter='blur(5px)';
+        [[R*1.28,0.10],[R*1.05,0.18]].forEach(([r,op]) => { g.strokeStyle=`rgba(255,170,45,${op})`; g.lineWidth=r*.30; g.beginPath(); g.arc(ccx,ccy,r,0,Math.PI*2); g.stroke(); });
+        g.strokeStyle=rgba(GOLD,0.8); g.lineWidth=R*0.22; g.beginPath(); g.arc(ccx,ccy,R,0,Math.PI*2); g.stroke();
+        g.filter='none'; g.restore();
+        g.fillStyle='#04060f'; g.beginPath(); g.arc(ccx,ccy,R*0.60,0,Math.PI*2); g.fill();
+      }
     };
 
     const draw = T => {
@@ -1493,7 +1494,7 @@ function d08({ reducedMotion }) {
       g.fillText(`${P.str.nStations} · ${P.str.nBaselines}`, lPX+panW*.5, lPY-4+14);
       // Ring inside left panel
       g.fillStyle='#050818'; g.fillRect(lPX+20,lPY+60,panW-40,panH*.55);
-      drawRingMockup(lPX+panW*.5, lPY+panH*.40, 'eht');
+      drawRingMockup(lPX+panW*.5, lPY+panH*.40, false);
       g.fillStyle=DIM; g.font='11px "Inter",sans-serif'; g.textAlign='center'; g.textBaseline='top';
       g.fillText(`θ ≈ ${P.str.thetaEht}  ·  DR ~50:1  ·  UV fill ~0.8%`, lPX+panW*.5, lPY+panH*.74);
       g.globalAlpha=1;
@@ -1509,7 +1510,7 @@ function d08({ reducedMotion }) {
       g.fillStyle='#9E7E38'; g.font='11px "Inter",sans-serif';
       g.fillText(`${P.str.ngStations} · ${P.str.ngBaselines}`, rPX+panW*.5, rPY-4+14);
       g.fillStyle='#050818'; g.fillRect(rPX+20,rPY+60,panW-40,panH*.55);
-      drawRingMockup(rPX+panW*.5, rPY+panH*.40, 'ng');
+      drawRingMockup(rPX+panW*.5, rPY+panH*.40, true);
       g.fillStyle=AM; g.font='11px "Inter",sans-serif'; g.textAlign='center'; g.textBaseline='top';
       g.fillText(`θ ≈ ${P.str.ngTheta}  ·  DR ~200:1  ·  UV fill ~3.5%`, rPX+panW*.5, rPY+panH*.74);
       g.globalAlpha=1;
