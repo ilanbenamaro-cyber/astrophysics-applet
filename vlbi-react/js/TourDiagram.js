@@ -734,12 +734,12 @@ function d02({ reducedMotion }) {
         g.globalAlpha = 1;
       }
 
-      // Two dishes with contact shadows.
+      // Two large dishes with contact shadows — the baseline geometry dominates.
       const da = pa(0.5,1.4);
-      drawContactShadow(g, W*.20, GY+10, 66, 12, da*0.85);
-      drawContactShadow(g, W*.80, GY+10, 62, 11, da*0.85);
-      const { fx: afx, fy: afy } = drawDish(g, W*.20, GY, 0.86, true, GLOW, da);
-      const { fx: jfx, fy: jfy } = drawDish(g, W*.80, GY, 0.82, false, BLUE, pa(0.7,1.4));
+      drawContactShadow(g, W*.205, GY+12, 90, 15, da*0.85);
+      drawContactShadow(g, W*.795, GY+12, 84, 14, da*0.85);
+      const { fx: afx, fy: afy } = drawDish(g, W*.205, GY, 1.18, true, GLOW, da);
+      const { fx: jfx, fy: jfy } = drawDish(g, W*.795, GY, 1.10, false, BLUE, pa(0.7,1.4));
 
       // Geometric-delay ray between the two feeds.
       const tickA = pa(2.0,0.8);
@@ -763,12 +763,12 @@ function d02({ reducedMotion }) {
         g.beginPath(); g.moveTo(jfx,barY-5); g.lineTo(jfx,barY+5); g.stroke();
         g.fillStyle = AM; g.font = '13px "Inter",sans-serif';
         g.textAlign = 'center'; g.textBaseline = 'top';
-        g.fillText(`B = ${P.str.ehtBaseline}`, (afx+jfx)/2, barY+8);
+        g.fillText(`B = ${P.str.ehtBaseline} (M87*)   ·   |u| = B/λ ≈ ${P.str.uMax}`, (afx+jfx)/2, barY+8);
         g.globalAlpha = 1;
       }
 
-      // ── Lower strip: the measurement (UV plane) beside the math (VCZ) ──
-      const stripY = H*.60, stripH = H*.37, uvS = stripH, uvX = W*.06;
+      // ── Lower strip: the measurement (enlarged UV plane) beside the math (caption) ──
+      const stripY = H*.555, uvS = H*.40, uvX = W*.055;
       const uvA = pa(3.0,1.0);
       if (uvA > 0) {
         g.globalAlpha = uvA;
@@ -779,21 +779,31 @@ function d02({ reducedMotion }) {
         const ucx = uvX+uvS/2, ucy = stripY+uvS/2, off = uvS*0.30;
         const ptA = pa(3.8,0.9);
         if (ptA > 0) {
-          glow3(g, ucx+off, ucy-uvS*0.13, AM, 16, ptA);
-          g.fillStyle = AM; g.beginPath(); g.arc(ucx+off, ucy-uvS*0.13, 5, 0, Math.PI*2); g.fill();
-          glow3(g, ucx-off, ucy+uvS*0.13, AM, 11, ptA*0.55);
-          g.fillStyle = rgba(AM,0.55*ptA); g.beginPath(); g.arc(ucx-off, ucy+uvS*0.13, 4, 0, Math.PI*2); g.fill();
+          glow3(g, ucx+off, ucy-uvS*0.13, AM, 18, ptA);
+          g.fillStyle = AM; g.beginPath(); g.arc(ucx+off, ucy-uvS*0.13, 5.5, 0, Math.PI*2); g.fill();
+          glow3(g, ucx-off, ucy+uvS*0.13, AM, 12, ptA*0.55);
+          g.fillStyle = rgba(AM,0.55*ptA); g.beginPath(); g.arc(ucx-off, ucy+uvS*0.13, 4.5, 0, Math.PI*2); g.fill();
+          g.globalAlpha=ptA; g.fillStyle=rgba(AM,0.9); g.font='italic 11px Georgia,serif';
+          g.textAlign='left'; g.textBaseline='bottom'; g.fillText('one (u,v) sample + conjugate', ucx+off+9, ucy-uvS*0.13-6);
+          g.globalAlpha=1;
         }
       }
-      const panelX = uvX + uvS + W*.04;
-      drawDerivationPanel(g, panelX, stripY, W - panelX - W*.05, [
-        { kind:'symbol', text:'V(u,v) = ∬ I(l,m) e^(−2πi(ul+vm)) dl dm' },
-        { kind:'sub',    text:'τ_g = (B·ŝ)/c        |u| = B / λ' },
-        { kind:'sub',    text:`= ${P.str.ehtBaseline} / ${P.str.lambda}` },
-        { kind:'result', text:`= ${P.str.uMax}  — one complex visibility` },
-      ], uvA, { title:'Van Cittert–Zernike', reveal: pa(3.2,1.8) });
+      // Van Cittert–Zernike as a quiet caption beside the plane — no glass card (LAW 1).
+      const cxx = uvX + uvS + W*0.05;
+      const capA = pa(3.2,1.6);
+      g.save(); g.globalAlpha = capA; g.textAlign='left'; g.textBaseline='top';
+      g.fillStyle=rgba(AM,0.95); g.font='600 12px ui-sans-serif,system-ui,sans-serif';
+      g.fillText('VAN CITTERT–ZERNIKE', cxx, stripY+24);
+      g.fillStyle=GOLD; g.font='italic 21px Georgia, serif';
+      g.fillText('V(u,v) = ∬ I(l,m) e^(−2πi(ul+vm)) dl dm', cxx, stripY+46);
+      g.fillStyle='#cfcfe6'; g.font='14px "Courier New",monospace';
+      g.fillText('one baseline → one complex visibility', cxx, stripY+84);
+      g.fillStyle=rgba(TEAL,0.95); g.font='600 14px "Courier New",monospace';
+      g.fillText('= a single Fourier mode of the sky', cxx, stripY+106);
+      g.restore();
 
-      drawConceptTag(g, W*.045, H*.075, 'One Fourier Mode', pa(0.5,1.0));    };
+      drawConceptTag(g, W*.045, H*.075, 'One Fourier Mode', pa(0.5,1.0));
+    };
 
     if (reducedMotion) { draw(999); return; }
     let T = 0;
@@ -913,11 +923,12 @@ function d04({ reducedMotion }) {
     const g = cv.getContext('2d');
     g.scale(dpr, dpr);
 
-    // Scale from 1200×700 SVG space
+    // Equirectangular map. Bounds in 1200×700 space; tall enough to fill the frame.
     const scx = W/1200, scy = H/700;
+    const MX0 = 40*scx, MY0 = 44*scy, MW = 1120*scx, MH = 602*scy;
     const proj = (lon, lat) => ({
-      x: (40 + (lon+180)/360*1120) * scx,
-      y: Math.min((60 + (80-lat)/150*520) * scy, 575*scy),
+      x: MX0 + (lon+180)/360*MW,
+      y: MY0 + Math.min(Math.max((84-lat)/162, 0), 1) * MH,
     });
 
     // EHT 2017 — 8 telescopes at 6 sites, read from constants.js (no invented
@@ -934,10 +945,11 @@ function d04({ reducedMotion }) {
         baselines.push({ x1:stations[i].x,y1:stations[i].y,x2:stations[j].x,y2:stations[j].y,
           isAlma:stations[i].isAlma||stations[j].isAlma });
 
-    // Continent outline drawing helper
-    const cs = pts => {
+    // Landmass helper — takes [lon,lat] vertices and projects them, so the shapes
+    // are recognizable continents rather than arbitrary screen-space blobs.
+    const land = lonlat => {
       g.beginPath();
-      pts.forEach(([x,y],i) => i===0 ? g.moveTo(x*scx,y*scy) : g.lineTo(x*scx,y*scy));
+      lonlat.forEach(([lon,lat],i) => { const p = proj(lon,lat); i===0 ? g.moveTo(p.x,p.y) : g.lineTo(p.x,p.y); });
       g.closePath(); g.fill(); g.stroke();
     };
 
@@ -945,41 +957,39 @@ function d04({ reducedMotion }) {
       g.fillStyle = BG; g.fillRect(0,0,W,H);
       drawNebulae(g,W,H,'left',0.25); drawNebulae(g,W,H,'right',0.25);
 
-      // Map background
-      g.fillStyle='#050a1e'; g.fillRect(40*scx,60*scy,1120*scx,520*scy);
-      g.strokeStyle='#2a2200'; g.lineWidth=1.5*Math.min(scx,scy);
-      g.strokeRect(40*scx,60*scy,1120*scx,520*scy);
+      // Map background — ocean gradient (lit faintly upper-left) fills the frame.
+      const oc = g.createLinearGradient(MX0, MY0, MX0+MW, MY0+MH);
+      oc.addColorStop(0,'#0a1a30'); oc.addColorStop(0.5,'#071426'); oc.addColorStop(1,'#040d1c');
+      g.fillStyle=oc; g.fillRect(MX0, MY0, MW, MH);
+      g.strokeStyle=rgba(AM,0.28); g.lineWidth=1; g.strokeRect(MX0, MY0, MW, MH);
 
-      // Continent outlines
-      g.fillStyle='#0d1a30'; g.strokeStyle='#1a2a4a'; g.lineWidth=0.8;
-      // North America west
-      cs([[95,68],[185,45],[248,58],[285,95],[295,145],[268,195],[238,225],[212,248],[188,272],[165,285],[142,268],[118,235],[96,198],[78,162],[72,125],[80,90]]);
-      // South America west
-      cs([[188,272],[218,255],[248,278],[278,308],[292,355],[298,415],[285,468],[262,510],[238,528],[212,515],[195,478],[182,428],[178,375],[182,318]]);
-      // Europe/Greenland
-      cs([[488,68],[545,55],[578,68],[592,88],[575,108],[548,118],[522,128],[505,115],[492,95]]);
-      // Africa/Europe/Middle East
-      cs([[492,95],[548,118],[582,145],[605,185],[618,245],[612,308],[592,365],[562,408],[528,428],[495,415],[468,378],[452,328],[448,268],[455,215],[468,168],[478,128]]);
-      // Eurasia
-      cs([[578,68],[688,42],[798,38],[885,52],[945,72],[978,105],[962,138],[915,155],[868,162],[815,148],[762,145],[715,132],[672,118],[625,108],[592,88]]);
-      // Australia
-      cs([[878,345],[945,332],[995,355],[1012,398],[1005,445],[972,468],[928,472],[892,448],[872,408],[868,368]]);
-      // Antarctica
-      g.fillStyle='#0d1a30'; g.fillRect(40*scx,618*scy,1120*scx,22*scy);
-
-      // Lat/Lon grid
-      g.strokeStyle='#12122a'; g.lineWidth=0.5;
+      // Lat/Lon grid (subtle, behind continents).
+      g.lineWidth=0.5;
       [-60,-30,0,30,60].forEach(lat => {
-        const y=(60+(80-lat)/150*520)*scy;
-        g.strokeStyle = lat===0 ? '#1c1c3a' : '#12122a';
-        g.lineWidth = lat===0 ? 1 : 0.5;
-        g.beginPath(); g.moveTo(40*scx,y); g.lineTo(1160*scx,y); g.stroke();
+        const p = proj(-180,lat);
+        g.strokeStyle = lat===0 ? '#1c2c46' : '#101a30';
+        g.beginPath(); g.moveTo(MX0,p.y); g.lineTo(MX0+MW,p.y); g.stroke();
       });
-      g.strokeStyle='#12122a'; g.lineWidth=0.5;
-      [-150,-120,-90,-60,-30,0,30,60,90,120,150].forEach(lon => {
-        const x=(40+(lon+180)/360*1120)*scx;
-        g.beginPath(); g.moveTo(x,60*scy); g.lineTo(x,580*scy); g.stroke();
+      g.strokeStyle='#101a30';
+      [-120,-60,0,60,120].forEach(lon => {
+        const p = proj(lon,84); g.beginPath(); g.moveTo(p.x,MY0); g.lineTo(p.x,MY0+MH); g.stroke();
       });
+
+      // Recognizable continents (clipped to the map rect).
+      g.save(); g.beginPath(); g.rect(MX0,MY0,MW,MH); g.clip();
+      g.fillStyle='#15273f'; g.strokeStyle=rgba('#3a5478',0.7); g.lineWidth=1;
+      land([[-168,66],[-150,71],[-120,72],[-95,73],[-80,68],[-60,60],[-52,47],[-66,44],[-72,41],[-76,34],[-81,25],[-90,29],[-97,21],[-105,23],[-115,31],[-124,40],[-126,48],[-140,58],[-155,60]]); // N. America
+      land([[-50,60],[-42,68],[-28,72],[-20,70],[-24,62],[-40,59]]);                                              // Greenland
+      land([[-80,9],[-66,11],[-50,0],[-44,-3],[-40,-22],[-50,-26],[-60,-38],[-70,-50],[-74,-52],[-72,-40],[-70,-30],[-77,-15],[-81,-4]]); // S. America
+      land([[-16,15],[-10,28],[0,33],[11,37],[24,32],[33,31],[43,12],[51,11],[49,0],[40,-12],[33,-26],[24,-34],[18,-35],[11,-18],[8,4],[-8,5]]); // Africa
+      land([[-9,44],[-2,49],[5,52],[10,56],[22,60],[30,59],[40,52],[30,46],[18,45],[10,40],[0,42]]);              // Europe
+      land([[34,48],[45,56],[60,62],[85,70],[110,73],[140,72],[165,68],[178,66],[160,56],[142,52],[140,40],[122,30],[120,22],[105,18],[95,22],[82,8],[74,18],[60,26],[48,38],[38,42]]); // Asia
+      land([[114,-22],[124,-16],[136,-12],[145,-16],[150,-25],[148,-38],[138,-37],[128,-32],[116,-34]]);          // Australia
+      // Antarctica — wavy band across the bottom.
+      g.beginPath();
+      for (let lon=-180; lon<=180; lon+=20) { const p=proj(lon, -68 + 4*Math.sin(lon/30)); lon===-180?g.moveTo(p.x,p.y):g.lineTo(p.x,p.y); }
+      g.lineTo(MX0+MW, MY0+MH); g.lineTo(MX0, MY0+MH); g.closePath(); g.fill(); g.stroke();
+      g.restore();
 
       // Baselines
       const alma = stations[0];
@@ -998,17 +1008,34 @@ function d04({ reducedMotion }) {
         g.globalAlpha=1;
       }
 
-      // Stations appearing one by one
+      // Station dots (appear one by one).
       stations.forEach((s,i) => {
         const sA = ease(prog(T,0.8+i*0.4,0.5));
         if (sA <= 0) return;
-        glow3(g,s.x,s.y,s.isAlma?AM:BLUE,18,sA*0.6);
+        glow3(g,s.x,s.y,s.isAlma?GOLD:TEAL,16,sA*0.6);
         g.globalAlpha=sA; g.fillStyle = s.isAlma?GOLD:TEAL;
-        g.beginPath(); g.arc(s.x,s.y,s.isAlma?8:5,0,Math.PI*2); g.fill();
-        g.fillStyle=s.isAlma?GOLD:'#f0f0f8';
-        g.font=`${s.isAlma?'bold ':''}`+`${s.isAlma?12:10}px "Inter",sans-serif`;
-        g.textAlign=s.isAlma?'center':'start'; g.textBaseline='bottom';
-        g.fillText(s.name, s.x+(s.isAlma?0:10), s.y-14);
+        g.beginPath(); g.arc(s.x,s.y,s.isAlma?7:4.5,0,Math.PI*2); g.fill();
+        g.globalAlpha=1;
+      });
+      // Dodged labels — co-located sites (ALMA+APEX, SMA+JCMT) share ONE label, so
+      // nothing overprints. Each label sits clear of its dot with a short leader.
+      const SITES = [];
+      stations.forEach((s,i) => {
+        const G = SITES.find(g0 => Math.hypot(g0.x-s.x, g0.y-s.y) < 16);
+        if (G) { G.names.push(s.name); G.appear = Math.max(G.appear, 0.8+i*0.4); }
+        else SITES.push({ x:s.x, y:s.y, names:[s.name], isAlma:s.isAlma, appear:0.8+i*0.4 });
+      });
+      SITES.forEach(G => {
+        const a = ease(prog(T, G.appear, 0.5));
+        if (a<=0) return;
+        const dy = (G.y < MY0+24) ? 16 : -13;     // dodge below only near the top edge
+        g.globalAlpha=a;
+        g.strokeStyle=rgba(G.isAlma?GOLD:TEAL,0.5); g.lineWidth=0.8;
+        g.beginPath(); g.moveTo(G.x, G.y); g.lineTo(G.x, G.y+dy*0.55); g.stroke();
+        g.fillStyle = G.isAlma ? GOLD : '#eef0f8';
+        g.font = `${G.isAlma?'bold ':''}11px "Inter",sans-serif`;
+        g.textAlign='center'; g.textBaseline = dy<0 ? 'bottom' : 'top';
+        g.fillText(G.names.join('·'), G.x, G.y+dy);
         g.globalAlpha=1;
       });
 
