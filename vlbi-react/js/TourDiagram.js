@@ -1150,15 +1150,15 @@ function d05({ reducedMotion }) {
         RAYS.forEach(ry => {
           const ex2 = cx+Math.cos(ry.ang)*Rd*2.3*ry.len, ey2 = cy+Math.sin(ry.ang)*Rd*2.3*ry.len;
           const grad = g.createLinearGradient(cx,cy,ex2,ey2);
-          grad.addColorStop(0,'rgba(120,120,190,0)'); grad.addColorStop(0.35, rgba('#7a7ac8',0.5*dirtyA)); grad.addColorStop(1,'rgba(0,0,0,0)');
+          grad.addColorStop(0,'rgba(130,128,120,0)'); grad.addColorStop(0.35, rgba('#8a877c',0.5*dirtyA)); grad.addColorStop(1,'rgba(0,0,0,0)');
           g.strokeStyle=grad; g.lineWidth=2; g.beginPath(); g.moveTo(cx,cy); g.lineTo(ex2,ey2); g.stroke();
         });
-        // concentric sidelobe rings
-        [0.55,0.85,1.15,1.5].forEach((f,i) => { g.globalAlpha=dirtyA*0.4/(i*0.5+1); g.strokeStyle='#5a5a90'; g.lineWidth=2; g.beginPath(); g.arc(cx,cy,Rd*f,0,Math.PI*2); g.stroke(); });
+        // concentric sidelobe rings (neutral grey noise)
+        [0.55,0.85,1.15,1.5].forEach((f,i) => { g.globalAlpha=dirtyA*0.4/(i*0.5+1); g.strokeStyle='#6a685e'; g.lineWidth=2; g.beginPath(); g.arc(cx,cy,Rd*f,0,Math.PI*2); g.stroke(); });
         // speckle noise
-        SPECK.forEach(s => { g.globalAlpha=dirtyA*s.b*0.55; g.fillStyle='#9090c8'; g.beginPath(); g.arc(cx+s.x*Rd*1.9, cy+s.y*Rd*1.9, 1.3,0,Math.PI*2); g.fill(); });
+        SPECK.forEach(s => { g.globalAlpha=dirtyA*s.b*0.55; g.fillStyle='#9a978c'; g.beginPath(); g.arc(cx+s.x*Rd*1.9, cy+s.y*Rd*1.9, 1.3,0,Math.PI*2); g.fill(); });
         g.restore(); g.globalAlpha=1;
-        g.fillStyle=rgba(RED,0.8*dirtyA); g.font='italic 12px "Inter",sans-serif'; g.textAlign='left'; g.textBaseline='top';
+        g.fillStyle=rgba(RED,0.8*dirtyA); g.font=`12px ${FONT}`; g.textAlign='left'; g.textBaseline='top';
         g.fillText('sidelobe artifacts', cx+RR*1.9, cy-RR*1.6); g.globalAlpha=1;
       }
 
@@ -1183,7 +1183,7 @@ function d05({ reducedMotion }) {
       const cleanA = ease(prog(T,3.0,1.0));
       if (cleanA > 0) {
         g.globalAlpha=cleanA; g.fillStyle=TEAL; g.fillText('CLEAN Image',cx,cy-H*.40);
-        g.font='15px "Courier New",monospace'; g.fillStyle=rgba(GOLD,0.95);
+        g.font=`15px ${MONO}`; g.fillStyle=rgba(GOLD,0.95);
         g.fillText('I^C = (M ⊛ G) + r_final', cx, cy+RR+26);
       }
       g.globalAlpha=1;
@@ -1500,15 +1500,15 @@ function d08({ reducedMotion }) {
 
       // Left panel (EHT 2017)
       g.globalAlpha=lRise;
-      g.fillStyle='rgba(5,6,18,0.95)'; g.strokeStyle='#2d2200'; g.lineWidth=1.5;
+      g.fillStyle=rgba(BG2,0.95); g.strokeStyle=BORDER; g.lineWidth=1.5;
       g.fillRect(lPX,lPY,panW,panH); g.strokeRect(lPX,lPY,panW,panH);
       g.fillStyle=DIM; g.font='bold 15px "Inter",sans-serif';
       g.textAlign='center'; g.textBaseline='bottom';
       g.fillText('EHT 2017', lPX+panW*.5, lPY-4);
-      g.fillStyle='#555585'; g.font='11px "Inter",sans-serif';
+      g.fillStyle=DIM; g.font='11px "Inter",sans-serif';
       g.fillText(`${P.str.nStations} · ${P.str.nBaselines}`, lPX+panW*.5, lPY-4+14);
       // Ring inside left panel
-      g.fillStyle='#050818'; g.fillRect(lPX+20,lPY+60,panW-40,panH*.55);
+      g.fillStyle='#070708'; g.fillRect(lPX+20,lPY+60,panW-40,panH*.55);
       drawRingMockup(lPX+panW*.5, lPY+panH*.40, false);
       g.fillStyle=DIM; g.font='11px "Inter",sans-serif'; g.textAlign='center'; g.textBaseline='top';
       g.fillText(`θ ≈ ${P.str.thetaEht}  ·  DR ~50:1  ·  UV fill ~0.8%`, lPX+panW*.5, lPY+panH*.74);
@@ -1517,14 +1517,14 @@ function d08({ reducedMotion }) {
       // Right panel (ngEHT)
       g.globalAlpha=rRise;
       glow3(g,rPX+panW*.5,rPY+panH*.5,AM,panW*.4,0.04*rRise);
-      g.fillStyle='rgba(5,6,18,0.95)'; g.strokeStyle=AM; g.lineWidth=1.5;
+      g.fillStyle=rgba(BG2,0.95); g.strokeStyle=AM; g.lineWidth=1.5;
       g.fillRect(rPX,rPY,panW,panH); g.strokeRect(rPX,rPY,panW,panH);
       g.fillStyle=AM; g.font='bold 15px "Inter",sans-serif';
       g.textAlign='center'; g.textBaseline='bottom';
       g.fillText('ngEHT Phase 1', rPX+panW*.5, rPY-4);
       g.fillStyle='#9E7E38'; g.font='11px "Inter",sans-serif';
       g.fillText(`${P.str.ngStations} · ${P.str.ngBaselines}`, rPX+panW*.5, rPY-4+14);
-      g.fillStyle='#050818'; g.fillRect(rPX+20,rPY+60,panW-40,panH*.55);
+      g.fillStyle='#070708'; g.fillRect(rPX+20,rPY+60,panW-40,panH*.55);
       drawRingMockup(rPX+panW*.5, rPY+panH*.40, true);
       g.fillStyle=AM; g.font='11px "Inter",sans-serif'; g.textAlign='center'; g.textBaseline='top';
       g.fillText(`θ ≈ ${P.str.ngTheta}  ·  DR ~200:1  ·  UV fill ~3.5%`, rPX+panW*.5, rPY+panH*.74);
@@ -1535,14 +1535,14 @@ function d08({ reducedMotion }) {
       const fitsX = lerp(-W*.22, lPX, fitsA);
       if (fitsA > 0) {
         g.globalAlpha=fitsA;
-        g.fillStyle='#020208'; g.strokeStyle='#1a1a28'; g.lineWidth=0.8;
+        g.fillStyle='#020208'; g.strokeStyle=BORDER; g.lineWidth=0.8;
         g.fillRect(fitsX,H*.86,W*.20,H*.12); g.strokeRect(fitsX,H*.86,W*.20,H*.12);
         const ft = H*.86+H*.025;
-        g.font='8px "Courier New",monospace'; g.textAlign='left'; g.textBaseline='top';
+        g.font=`8px ${MONO}`; g.textAlign='left'; g.textBaseline='top';
         g.fillStyle=TEAL; g.fillText(`CRVAL1 = ${P.m87RaDeg}`,fitsX+8,ft);
         g.fillStyle=AM;   g.fillText(`BMAJ   = ${bmajDeg}`,fitsX+8,ft+H*.025);
         g.fillStyle=DIM;  g.fillText('BUNIT  = \'JY/BEAM\'',fitsX+8,ft+H*.05);
-        g.fillStyle='#333355'; g.fillText('END',fitsX+8,ft+H*.075);
+        g.fillStyle=rgba(DIM,0.55); g.fillText('END',fitsX+8,ft+H*.075);
         g.globalAlpha=1;
       }
 
@@ -1551,7 +1551,7 @@ function d08({ reducedMotion }) {
       const metX = lerp(W, W*.76, metA);
       if (metA > 0) {
         g.globalAlpha=metA;
-        g.fillStyle='#020208'; g.strokeStyle='#1a1a28'; g.lineWidth=0.8;
+        g.fillStyle='#020208'; g.strokeStyle=BORDER; g.lineWidth=0.8;
         g.fillRect(metX,H*.86,W*.22,H*.12); g.strokeRect(metX,H*.86,W*.22,H*.12);
         const ml=metX+8, mr=metX+W*.22-8, mt=H*.86+H*.015;
         const row = (label,val,n) => {
