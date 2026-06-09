@@ -3,16 +3,27 @@
 import { html, useRef, useEffect } from './core.js';
 import { TOUR_PHYSICS } from './tourPhysics.js';
 import { ARRAY_PRESETS } from './constants.js';
+import { TOKENS as TK } from './tourTokens.js';
 
-// ── Color palette ─────────────────────────────────────────────────────────────
-const BG   = '#02020a';
-const GOLD = '#ffd166';
-const AM   = '#C4A555';
-const TEAL = '#06d6a0';
-const BLUE = '#4cc9f0';
-const GLOW = '#ff9f43';
-const RED  = '#ff3311';
-const DIM  = '#8888b0';
+// ── Color palette — all from the site's design tokens (see tourTokens.js /
+//    DESIGN-LANGUAGE.md). The legacy constant names are kept and remapped to the
+//    site family so per-act draw code needs no renames; saturated tour-only hues
+//    (bright gold/teal/cyan) collapse onto the one accent + amber + cool. ─────────
+const BG   = TK.bg1;            // neutral near-black canvas backdrop
+const GOLD = TK.accent;         // the one muted-gold accent (#C4A555)
+const AM   = TK.accent;
+const TEAL = TK.accent;         // structural "teal" → accent (differentiate via amber/cool)
+const BLUE = TK.cool;           // licensed cinematic cool (space / Earth night)
+const GLOW = TK.orange;         // warm highlight
+const RED  = TK.danger;         // softened danger
+const DIM  = TK.textSecondary;
+const TXT  = TK.textPrimary;    // primary text
+const AMBER  = TK.amber;        // secondary in-family differentiation
+const BG2    = TK.bg2;
+const BG3    = TK.bg3;
+const BORDER = TK.border;
+const FONT   = TK.font;
+const MONO   = TK.fontMono;
 
 // ── Math helpers ──────────────────────────────────────────────────────────────
 function prog(T, start, dur) { return Math.max(0, Math.min(1, (T - start) / dur)); }
@@ -454,34 +465,33 @@ function roundRect(g, x, y, w, h, r) {
 // types the lines in as the act's motion produces the number. Returns its height.
 function drawDerivationPanel(g, x, y, w, lines, alpha, opts={}) {
   if (alpha <= 0) return 0;
-  const pad = 16, lh = 27, titleH = opts.title ? 24 : 0;
-  const h = pad*2 + titleH + lines.length*lh - 4;
+  const pad = 14, lh = 25, titleH = opts.title ? 22 : 0;
+  const h = pad*2 + titleH + lines.length*lh - 3;
   const reveal = opts.reveal == null ? 1 : opts.reveal;
   g.save();
   g.globalAlpha = alpha;
-  g.shadowColor = 'rgba(0,0,0,0.55)'; g.shadowBlur = 22; g.shadowOffsetY = 9;
-  roundRect(g, x, y, w, h, 14); g.fillStyle = 'rgba(8,10,26,0.92)'; g.fill();
-  g.shadowColor = 'transparent'; g.shadowBlur = 0; g.shadowOffsetY = 0;
-  roundRect(g, x+0.5, y+0.5, w-1, h-1, 14); g.strokeStyle = rgba(AM, 0.55); g.lineWidth = 1; g.stroke();
-  const sheen = g.createLinearGradient(x, y, x, y+h*0.5);
-  sheen.addColorStop(0, 'rgba(255,255,255,0.06)'); sheen.addColorStop(1, 'rgba(255,255,255,0)');
-  roundRect(g, x, y, w, h, 14); g.fillStyle = sheen; g.fill();
+  // Flat site panel — --bg-2 fill, 1px --border, small radius, NO shadow/sheen/glow.
+  roundRect(g, x, y, w, h, 6); g.fillStyle = rgba(BG2, 0.96); g.fill();
+  roundRect(g, x+0.5, y+0.5, w-1, h-1, 6); g.strokeStyle = BORDER; g.lineWidth = 1; g.stroke();
   g.textBaseline = 'top'; g.textAlign = 'left';
   let ty = y + pad;
   if (opts.title) {
-    g.font = '600 12px ui-sans-serif, system-ui, sans-serif'; g.fillStyle = rgba(AM, 0.95);
-    g.fillText(opts.title.toUpperCase(), x+pad, ty); ty += titleH;
+    g.font = `600 11px ${FONT}`; g.fillStyle = DIM;        // app label treatment
+    try { g.letterSpacing = '0.6px'; } catch (_) {}
+    g.fillText(opts.title.toUpperCase(), x+pad, ty);
+    try { g.letterSpacing = '0px'; } catch (_) {}
+    ty += titleH;
   }
   for (let i = 0; i < lines.length; i++) {
     const la = Math.max(0, Math.min(1, reveal*lines.length - i));
     if (la <= 0) break;
     g.globalAlpha = alpha * la;
     const ln = lines[i];
-    if      (ln.kind === 'symbol') { g.font = 'italic 21px Georgia, "Times New Roman", serif'; g.fillStyle = rgba(GOLD, 1); }
-    else if (ln.kind === 'sub')    { g.font = '15px "Courier New", monospace'; g.fillStyle = '#d8d8ec'; }
-    else if (ln.kind === 'result') { g.font = '600 16px "Courier New", monospace'; g.fillStyle = rgba(TEAL, 1); }
-    else if (ln.kind === 'note')   { g.font = 'italic 12px ui-sans-serif, sans-serif'; g.fillStyle = rgba(DIM, 1); }
-    else                           { g.font = '13px ui-sans-serif, sans-serif'; g.fillStyle = '#c9c9e0'; }
+    if      (ln.kind === 'symbol') { g.font = `500 17px ${MONO}`; g.fillStyle = TXT; }
+    else if (ln.kind === 'sub')    { g.font = `13px ${MONO}`;     g.fillStyle = DIM; }
+    else if (ln.kind === 'result') { g.font = `600 14px ${MONO}`; g.fillStyle = AM; }
+    else if (ln.kind === 'note')   { g.font = `11px ${FONT}`;     g.fillStyle = DIM; }
+    else                           { g.font = `12px ${FONT}`;     g.fillStyle = TXT; }
     g.fillText(ln.text, x+pad, ty + i*lh);
   }
   g.restore();
@@ -514,10 +524,10 @@ function drawAxisTicks(g, x, y, w, h, opts={}) {
     [cx+dx, cx-dx].forEach(px => { g.beginPath(); g.moveTo(px, cy-4); g.lineTo(px, cy+4); g.stroke(); });
     [cy+dy, cy-dy].forEach(py => { g.beginPath(); g.moveTo(cx-4, py); g.lineTo(cx+4, py); g.stroke(); });
   });
-  g.fillStyle = rgba(AM, 0.92); g.font = 'italic 14px Georgia, serif'; g.textBaseline = 'alphabetic';
+  g.fillStyle = rgba(AM, 0.92); g.font = `600 13px ${MONO}`; g.textBaseline = 'alphabetic';
   if (opts.xlabel) { g.textAlign = 'right'; g.fillText(opts.xlabel, x+w-4, cy-7); }
   if (opts.ylabel) { g.textAlign = 'left';  g.fillText(opts.ylabel, cx+7, y+15); }
-  if (opts.units)  { g.font = '10px "Courier New", monospace'; g.fillStyle = rgba(DIM, 0.95); g.textAlign='left'; g.textBaseline='bottom'; g.fillText(opts.units, x+2, y+h-3); }
+  if (opts.units)  { g.font = `10px ${MONO}`; g.fillStyle = rgba(DIM, 0.95); g.textAlign='left'; g.textBaseline='bottom'; g.fillText(opts.units, x+2, y+h-3); }
   g.restore();
 }
 
@@ -529,7 +539,7 @@ function drawScaleBar(g, x, y, px, label, alpha=1) {
   g.beginPath(); g.moveTo(x, y); g.lineTo(x+px, y); g.stroke();
   g.lineWidth = 2;
   g.beginPath(); g.moveTo(x, y-5); g.lineTo(x, y+5); g.moveTo(x+px, y-5); g.lineTo(x+px, y+5); g.stroke();
-  g.fillStyle = '#ffffff'; g.font = '600 13px ui-sans-serif, system-ui, sans-serif';
+  g.fillStyle = '#ffffff'; g.font = `600 13px ${FONT}`;
   g.textAlign = 'center'; g.textBaseline = 'bottom'; g.fillText(label, x+px/2, y-8);
   g.restore();
 }
@@ -564,10 +574,11 @@ function drawForegroundAccent(g, W, H, kind, alpha=1) {
 function drawConceptTag(g, x, y, name, alpha=1) {
   if (alpha <= 0) return;
   g.save();
-  g.globalAlpha = alpha * 0.62;
-  g.font = '600 11px ui-sans-serif, system-ui, sans-serif';
+  g.globalAlpha = alpha * 0.9;
+  g.font = `600 11px ${FONT}`;                 // app label treatment: uppercase, spaced, secondary
+  try { g.letterSpacing = '0.9px'; } catch (_) {}
   g.textBaseline = 'middle'; g.textAlign = 'left';
-  g.fillStyle = rgba(AM, 0.85);
+  g.fillStyle = DIM;
   g.fillText(name.toUpperCase(), x, y);
   g.restore();
 }
