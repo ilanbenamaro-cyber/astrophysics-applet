@@ -760,7 +760,7 @@ function d02({ reducedMotion }) {
         g.globalAlpha = tickA;
         g.strokeStyle = rgba(GOLD,0.85); g.lineWidth = 1.6; g.setLineDash([5,4]);
         g.beginPath(); g.moveTo(afx,afy); g.lineTo(jfx,jfy); g.stroke(); g.setLineDash([]);
-        g.fillStyle = AM; g.font = 'italic 16px Georgia, serif';
+        g.fillStyle = AM; g.font = `15px ${MONO}`;
         g.textAlign = 'center'; g.textBaseline = 'bottom';
         g.fillText('τ_g', (afx+jfx)/2, (afy+jfy)/2 - 7);
         g.globalAlpha = 1;
@@ -785,7 +785,7 @@ function d02({ reducedMotion }) {
       const uvA = pa(3.0,1.0);
       if (uvA > 0) {
         g.globalAlpha = uvA;
-        g.fillStyle = 'rgba(4,6,20,0.92)'; roundRect(g, uvX, stripY, uvS, uvS, 10); g.fill();
+        g.fillStyle = rgba(BG2,0.92); roundRect(g, uvX, stripY, uvS, uvS, 10); g.fill();
         g.strokeStyle = rgba(AM,0.4); g.lineWidth = 1; g.stroke();
         g.globalAlpha = 1;
         drawAxisTicks(g, uvX, stripY, uvS, uvS, { xlabel:'u', ylabel:'v', units:'Gλ' });
@@ -796,7 +796,7 @@ function d02({ reducedMotion }) {
           g.fillStyle = AM; g.beginPath(); g.arc(ucx+off, ucy-uvS*0.13, 5.5, 0, Math.PI*2); g.fill();
           glow3(g, ucx-off, ucy+uvS*0.13, AM, 12, ptA*0.55);
           g.fillStyle = rgba(AM,0.55*ptA); g.beginPath(); g.arc(ucx-off, ucy+uvS*0.13, 4.5, 0, Math.PI*2); g.fill();
-          g.globalAlpha=ptA; g.fillStyle=rgba(AM,0.9); g.font='italic 11px Georgia,serif';
+          g.globalAlpha=ptA; g.fillStyle=rgba(AM,0.9); g.font=`11px ${FONT}`;
           g.textAlign='left'; g.textBaseline='bottom'; g.fillText('one (u,v) sample + conjugate', ucx+off+9, ucy-uvS*0.13-6);
           g.globalAlpha=1;
         }
@@ -805,13 +805,15 @@ function d02({ reducedMotion }) {
       const cxx = uvX + uvS + W*0.05;
       const capA = pa(3.2,1.6);
       g.save(); g.globalAlpha = capA; g.textAlign='left'; g.textBaseline='top';
-      g.fillStyle=rgba(AM,0.95); g.font='600 12px ui-sans-serif,system-ui,sans-serif';
+      g.fillStyle=DIM; g.font=`600 11px ${FONT}`;
+      try { g.letterSpacing='0.9px'; } catch(_){}
       g.fillText('VAN CITTERT–ZERNIKE', cxx, stripY+24);
-      g.fillStyle=GOLD; g.font='italic 21px Georgia, serif';
+      try { g.letterSpacing='0px'; } catch(_){}
+      g.fillStyle=GOLD; g.font=`19px ${MONO}`;
       g.fillText('V(u,v) = ∬ I(l,m) e^(−2πi(ul+vm)) dl dm', cxx, stripY+46);
-      g.fillStyle='#cfcfe6'; g.font='14px "Courier New",monospace';
+      g.fillStyle=TXT; g.font=`14px ${FONT}`;
       g.fillText('one baseline → one complex visibility', cxx, stripY+84);
-      g.fillStyle=rgba(TEAL,0.95); g.font='600 14px "Courier New",monospace';
+      g.fillStyle=rgba(AM,0.95); g.font=`600 14px ${FONT}`;
       g.fillText('= a single Fourier mode of the sky', cxx, stripY+106);
       g.restore();
 
@@ -1061,7 +1063,7 @@ function d04({ reducedMotion }) {
         g.fillStyle=AM; g.font='10px "Inter",sans-serif';
         g.textAlign='left'; g.textBaseline='middle';
         g.fillText(`SEFD: ${P.str.almaSefd}`, 22, alma.y+3);
-        g.fillStyle=DIM; g.font='italic 9px "Inter",sans-serif';
+        g.fillStyle=DIM; g.font=`9px ${FONT}`;
         g.fillText('Most sensitive', 22, alma.y+18);
         g.globalAlpha=1;
       }
@@ -1071,10 +1073,10 @@ function d04({ reducedMotion }) {
       if (uvA > 0) {
         const ix=850*scx, iy=490*scy, iw=330*scx, ih=190*scy;
         g.globalAlpha=uvA;
-        g.fillStyle='rgba(5,5,20,0.95)'; g.strokeStyle=AM; g.lineWidth=1;
+        g.fillStyle=rgba(BG2,0.95); g.strokeStyle=AM; g.lineWidth=1;
         g.fillRect(ix,iy,iw,ih); g.strokeRect(ix,iy,iw,ih);
         const ucx=ix+iw*.5, ucy=iy+ih*.6;
-        g.strokeStyle='#202040'; g.lineWidth=0.5;
+        g.strokeStyle=rgba(BORDER,0.9); g.lineWidth=0.5;
         [[120*scx,72*scy,0],[85*scx,52*scy,28*Math.PI/180],[55*scx,34*scy,-22*Math.PI/180]].forEach(([rx,ry,rot],fi) => {
           const op = [0.8,0.6,0.45][fi];
           g.save(); g.translate(ucx,ucy); g.rotate(rot);
@@ -1086,7 +1088,7 @@ function d04({ reducedMotion }) {
         });
         g.fillStyle=AM; g.font=`bold ${Math.round(12*Math.min(scx,scy)*1.5)}px "Inter",sans-serif`;
         g.textAlign='center'; g.textBaseline='top'; g.fillText('UV Coverage', ucx, iy+8);
-        g.fillStyle=rgba(AM,0.85*uvA); g.font='italic 11px Georgia, serif';
+        g.fillStyle=rgba(AM,0.85*uvA); g.font=`11px ${MONO}`;
         g.textAlign='right'; g.textBaseline='bottom'; g.fillText('u', ix+iw-6, ucy-4);
         g.textAlign='left'; g.fillText('v', ucx+5, iy+22);
         g.globalAlpha=1;
