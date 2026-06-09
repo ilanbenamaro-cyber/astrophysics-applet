@@ -864,11 +864,11 @@ function d03({ reducedMotion }) {
       const s2x = ex - Math.sin(earthAngle)*er*.82, s2y = ey + Math.cos(earthAngle)*er*.35;
       const s1vis = Math.cos(earthAngle) > -0.2, s2vis = Math.cos(earthAngle+Math.PI) > -0.2;
       if (s1vis && s2vis) { glow3(g,(s1x+s2x)/2,(s1y+s2y)/2,TEAL,8,0.4); g.strokeStyle=rgba(TEAL,0.85); g.lineWidth=2; g.beginPath(); g.moveTo(s1x,s1y); g.lineTo(s2x,s2y); g.stroke(); }
-      if (s1vis) { glow3(g,s1x,s1y,TEAL,11,0.9); g.fillStyle='#bdfff0'; g.beginPath(); g.arc(s1x,s1y,4,0,Math.PI*2); g.fill(); }
-      if (s2vis) { glow3(g,s2x,s2y,TEAL,11,0.9); g.fillStyle='#bdfff0'; g.beginPath(); g.arc(s2x,s2y,4,0,Math.PI*2); g.fill(); }
+      if (s1vis) { glow3(g,s1x,s1y,TEAL,11,0.9); g.fillStyle='#f0e3b8'; g.beginPath(); g.arc(s1x,s1y,4,0,Math.PI*2); g.fill(); }
+      if (s2vis) { glow3(g,s2x,s2y,TEAL,11,0.9); g.fillStyle='#f0e3b8'; g.beginPath(); g.arc(s2x,s2y,4,0,Math.PI*2); g.fill(); }
 
       // UV panel
-      g.fillStyle='rgba(4,6,20,0.88)'; roundRect(g,pvx,pvy,pvw,pvh,10); g.fill();
+      g.fillStyle=rgba(BG2,0.88); roundRect(g,pvx,pvy,pvw,pvh,10); g.fill();
       g.strokeStyle=rgba(AM,0.4); g.lineWidth=1; g.stroke();
       drawAxisTicks(g, pvx, pvy, pvw, pvh, { xlabel:'u', ylabel:'v', units:'Gλ' });
 
@@ -876,7 +876,7 @@ function d03({ reducedMotion }) {
       g.save(); g.setLineDash([4,4]); g.strokeStyle=rgba(TEAL,0.45); g.lineWidth=1;
       g.beginPath(); g.moveTo(pvx+12, uvCy-voff); g.lineTo(pvx+pvw-12, uvCy-voff); g.stroke();
       g.setLineDash([]);
-      g.fillStyle=rgba(TEAL,0.85); g.font='italic 12px Georgia, serif'; g.textAlign='left'; g.textBaseline='bottom';
+      g.fillStyle=rgba(TEAL,0.9); g.font=`12px ${MONO}`; g.textAlign='left'; g.textBaseline='bottom';
       g.fillText('v₀ = B_Z cosδ / λ', pvx+16, uvCy-voff-3);
       g.restore();
 
@@ -894,19 +894,19 @@ function d03({ reducedMotion }) {
         g.beginPath(); g.ellipse(0,0,rx,ry,0,0,Math.PI,true); g.strokeStyle=rgba(col,op*0.28); g.lineWidth=1.0; g.stroke();
         g.setLineDash([]); g.restore();
       };
-      drawArc(pvw*.40, pvh*.30, 0,             1.5, 0.90, TEAL);   // ← the baseline above
-      drawArc(pvw*.33, pvh*.24, 28*Math.PI/180, 2.0, 0.62, AM);
-      drawArc(pvw*.27, pvh*.18, -22*Math.PI/180,2.5, 0.48, AM);
+      drawArc(pvw*.40, pvh*.30, 0,             1.5, 0.90, TEAL);    // ← matches the accent baseline
+      drawArc(pvw*.33, pvh*.24, 28*Math.PI/180, 2.0, 0.62, AMBER); // other baselines: darker amber
+      drawArc(pvw*.27, pvh*.18, -22*Math.PI/180,2.5, 0.48, AMBER);
 
       // Quiet annotation (no glass card) — the exact u,v(H,δ) that trace the ellipse.
       const ay = H*0.74, axx = W*0.06, anA = pa(2.6,1.6);
       g.save(); g.globalAlpha = anA; g.textAlign='left'; g.textBaseline='top';
-      g.fillStyle=rgba(TEAL,0.92); g.font='600 12px ui-sans-serif,system-ui,sans-serif';
+      g.fillStyle=rgba(TEAL,0.92); g.font=`600 11px ${FONT}`;
       g.fillText('ONE BASELINE → ONE ELLIPSE  ·  colour-matched above', axx, ay);
-      g.fillStyle='#cfcfe6'; g.font='14px "Courier New",monospace';
+      g.fillStyle=TXT; g.font=`14px ${MONO}`;
       g.fillText('u =  B_X sin H + B_Y cos H', axx, ay+22);
       g.fillText('v = −B_X sinδ cos H + B_Y sinδ sin H + B_Z cosδ        (each ÷ λ)', axx, ay+44);
-      g.fillStyle=rgba(DIM,0.95); g.font='italic 12px ui-sans-serif,system-ui,sans-serif';
+      g.fillStyle=rgba(DIM,0.95); g.font=`11px ${FONT}`;
       g.fillText('→ over hour angle H the (u,v) point traces an ellipse centred at v₀ = B_Z cosδ / λ', axx, ay+68);
       g.restore();
 
@@ -1381,10 +1381,10 @@ function d07({ reducedMotion }) {
 
       // Characteristic baseline — an orbital-radius simplification, pending sign-off.
       g.globalAlpha=ease(prog(T,2.5,1.0));
-      g.fillStyle=AM; g.font='italic 16px Georgia, serif';
+      g.fillStyle=AM; g.font=`15px ${MONO}`;
       g.textAlign='center'; g.textBaseline='bottom';
       g.fillText('B ~ R⊕ + h',(almaX+bx)/2,(almaY+by)/2-8);
-      g.fillStyle=DIM; g.font='11px "Inter",sans-serif';
+      g.fillStyle=DIM; g.font=`11px ${FONT}`;
       g.fillText(`≈ ${P.str.bhexRadius} · pending sign-off`,(almaX+bx)/2,(almaY+by)/2+10);
       g.globalAlpha=1;
 
@@ -1392,7 +1392,7 @@ function d07({ reducedMotion }) {
       const panA = ease(prog(T,0.5,1.5));
       g.globalAlpha=panA;
       // Left panel (EHT Ground)
-      g.fillStyle='rgba(5,5,20,0.92)'; g.strokeStyle='#2d2200'; g.lineWidth=1;
+      g.fillStyle=rgba(BG2,0.92); g.strokeStyle=BORDER; g.lineWidth=1;
       g.fillRect(12,22,W*.22,H*.24); g.strokeRect(12,22,W*.22,H*.24);
       const lpc=12+W*.11, lpcy=22+H*.12;
       // EHT-Ground: a FUZZY, thick ring — Earth-limited resolution can't sharpen it.
@@ -1401,12 +1401,12 @@ function d07({ reducedMotion }) {
       g.beginPath(); g.arc(lpc,lpcy,H*.058,0,Math.PI*2); g.stroke();
       g.filter='none'; g.restore();
       g.globalAlpha=panA; g.fillStyle='#050308'; g.beginPath(); g.arc(lpc,lpcy,H*.040,0,Math.PI*2); g.fill();
-      g.fillStyle='#f0f0f8'; g.font='bold 13px "Inter",sans-serif'; g.textAlign='center'; g.textBaseline='top';
+      g.fillStyle=TXT; g.font='bold 13px "Inter",sans-serif'; g.textAlign='center'; g.textBaseline='top';
       g.fillText('EHT Ground',lpc,26);
       g.fillStyle=TEAL; g.font='11px "Inter",sans-serif';
       g.fillText(`θ ≈ ${P.str.thetaEht}`,lpc,22+H*.20);
-      // Right panel (BHEX)
-      g.fillStyle='rgba(5,5,20,0.92)'; g.strokeStyle=AM; g.lineWidth=1;
+      // Right panel (BHEX) — accent border marks the highlighted comparison (app pattern)
+      g.fillStyle=rgba(BG2,0.92); g.strokeStyle=AM; g.lineWidth=1;
       g.fillRect(W-W*.22-12,22,W*.22,H*.24); g.strokeRect(W-W*.22-12,22,W*.22,H*.24);
       const rpc=W-W*.11-12, rpcy=22+H*.12;
       // EHT+BHEX: a SHARP, thin ring with finer photon-ring substructure — the
