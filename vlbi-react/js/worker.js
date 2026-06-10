@@ -178,10 +178,10 @@ function gaussConvolve(img, N, sigma) {
 }
 
 
-function reconstruct(grayscale, uvPoints, params) {
+function reconstruct(grayscale, uvPoints, params, emitProgress) {
   const { N, noise, method, dishDiameter = 25, frequency = 230,
           fovRad = 80 * Math.PI / (180 * 3.6e9),
-          stationPairs = [], sefdMap = {} } = params;
+          stationPairs = [], sefdMap = {}, progressEvery = 0 } = params;
 
   // 1. Build complex array from grayscale, applying primary-beam Gaussian taper.
   //    Physical primary beam: FWHM = 1.02 × λ / D (Airy disk approximation).
@@ -312,6 +312,11 @@ function reconstruct(grayscale, uvPoints, params) {
       }
       if (peakVal < stopLevel) break;
 
+      // Opt-in progress for Act C's live residual sparkline (no-op unless progressEvery set).
+      if (progressEvery && emitProgress && (iter % progressEvery === 0)) {
+        emitProgress(iter, peakVal);
+      }
+
       const pr = Math.floor(peakIdx / N);
       const pc = peakIdx % N;
       const comp = GAIN * residual[peakIdx];
@@ -393,7 +398,8 @@ self.onmessage = function(e) {
   const { type, id, grayscale, uvPoints, params } = e.data;
   if (type !== 'reconstruct') return;
   try {
-    const { dirty, restored, beamSigmaU, beamSigmaV, beamPA } = reconstruct(grayscale, uvPoints, params);
+    const emitProgress = (iter, residual) => self.postMessage({ type: 'progress', id, iter, residual });
+    const { dirty, restored, beamSigmaU, beamSigmaV, beamPA } = reconstruct(grayscale, uvPoints, params, emitProgress);
     self.postMessage(
       { type: 'result', id, dirty, restored, uvCount: uvPoints.length,
         beamSigmaU, beamSigmaV, beamPA },

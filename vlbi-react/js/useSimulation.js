@@ -3,8 +3,10 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from './core.js';
 import { IMAGE_SIZE, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD,
          BHEX_PRESET, SKY_TARGETS } from './constants.js';
-import { computeUVPoints, computeUVPointsGl, computeUVFill, computeBaseline,
+import { computeUVPoints, computeUVPointsGl, computeUVFill,
          latLonToECEF, computeSatelliteECEF } from './uvCompute.js';
+import { scaleSource, buildSefdMap, buildPairSefdMap, computeDynamicRange,
+         beamFwhm as beamFwhmFn, angularRes as angularResFn } from './simCore.js';
 import { loadImagePresetAsync } from './presets.js';
 import { exportFITS } from './fitsExport.js';
 
@@ -127,49 +129,14 @@ export function useSimulation() {
   }, [selectedTarget, controls.fovMuas, controls.sourceFraction]);
 
   // ── Scaled source image ─────────────────────────────────────────────────────
-  const scaledGrayscale = useMemo(() => {
-    if (!grayscale) return null;
-    const N = IMAGE_SIZE;
-    const sourcePx = Math.max(1, Math.round(effectiveSourceFraction * N));
-    if (sourcePx === N) return grayscale;
-    const output = new Float64Array(N * N);
-    const outX0 = Math.floor((N - sourcePx) / 2);
-    const outY0 = Math.floor((N - sourcePx) / 2);
-    for (let oy = 0; oy < sourcePx; oy++) {
-      for (let ox = 0; ox < sourcePx; ox++) {
-        const sx = Math.min(Math.floor(ox * N / sourcePx), N - 1);
-        const sy = Math.min(Math.floor(oy * N / sourcePx), N - 1);
-        output[(outY0 + oy) * N + (outX0 + ox)] = grayscale[sy * N + sx];
-      }
-    }
-    return output;
-  }, [grayscale, effectiveSourceFraction]);
+  const scaledGrayscale = useMemo(
+    () => scaleSource(grayscale, effectiveSourceFraction, IMAGE_SIZE),
+    [grayscale, effectiveSourceFraction]);
 
   // ── SEFD maps ───────────────────────────────────────────────────────────────
-  const sefdMap = useMemo(() => {
-    const m = {};
-    telescopes.forEach(t => { m[t.name] = STATION_SEFD[t.name] ?? 10000; });
-    return m;
-  }, [telescopes]);
+  const sefdMap = useMemo(() => buildSefdMap(telescopes, STATION_SEFD), [telescopes]);
 
-  const pairSefdMap = useMemo(() => {
-    const m = {};
-    const visible = telescopes.filter(t => t.visible !== false);
-    const ground  = visible.filter(t => t.type !== 'space');
-    const space   = visible.filter(t => t.type === 'space');
-    for (let i = 0; i < ground.length; i++) {
-      for (let j = i + 1; j < ground.length; j++) {
-        const a = ground[i], b = ground[j];
-        m[`${a.id}-${b.id}`] = { sefdA: sefdMap[a.name] ?? 10000, sefdB: sefdMap[b.name] ?? 10000 };
-      }
-    }
-    for (const sat of space) {
-      for (const g of ground) {
-        m[`${sat.id}-${g.id}`] = { sefdA: sefdMap[sat.name] ?? 10000, sefdB: sefdMap[g.name] ?? 10000 };
-      }
-    }
-    return m;
-  }, [telescopes, sefdMap]);
+  const pairSefdMap = useMemo(() => buildPairSefdMap(telescopes, sefdMap), [telescopes, sefdMap]);
 
   // ── Debounced reconstruction ────────────────────────────────────────────────
   useEffect(() => {
@@ -210,23 +177,9 @@ export function useSimulation() {
   }, [uvPoints, stationPairs, scaledGrayscale, controls.noise, controls.method, controls.dishDiameter, controls.frequency, sefdMap]);
 
   // ── Derived display metrics ─────────────────────────────────────────────────
-  const angularRes = useMemo(() => {
-    if (telescopes.length < 2) return null;
-    let maxKm = 0;
-    for (let i = 0; i < telescopes.length; i++) {
-      for (let j = i + 1; j < telescopes.length; j++) {
-        const b = computeBaseline(telescopes[i], telescopes[j]);
-        const km = Math.sqrt(b.bx*b.bx + b.by*b.by + b.bz*b.bz);
-        if (km > maxKm) maxKm = km;
-      }
-    }
-    if (maxKm === 0) return null;
-    const lambdaM = 299792458 / (controls.frequency * 1e9);
-    const thetaMuas = (lambdaM / (maxKm * 1e3)) * 206265e6;
-    return thetaMuas < 1000
-      ? thetaMuas.toFixed(0) + ' μas'
-      : (thetaMuas / 1000).toFixed(2) + ' mas';
-  }, [telescopes, controls.frequency]);
+  const angularRes = useMemo(
+    () => angularResFn(telescopes, controls.frequency),
+    [telescopes, controls.frequency]);
 
   const baselineStats = useMemo(() => {
     const groundTels = telescopes.filter(t => t.type !== 'space');
@@ -256,36 +209,11 @@ export function useSimulation() {
     return { maxKm, maxGl, minGl };
   }, [telescopes, controls.frequency]);
 
-  const dynamicRange = useMemo(() => {
-    if (!restored || restored.length === 0) return 0;
-    let maxV = 0;
-    for (let i = 0; i < restored.length; i++) if (restored[i] > maxV) maxV = restored[i];
-    if (maxV === 0) return 0;
-    const Nm = IMAGE_SIZE;
-    const margin = Math.floor(Nm * 0.1);
-    const border = [];
-    for (let r = 0; r < Nm; r++) {
-      for (let c = 0; c < Nm; c++) {
-        if (r < margin || r >= Nm - margin || c < margin || c >= Nm - margin)
-          border.push(restored[r * Nm + c]);
-      }
-    }
-    const sorted = border.slice().sort((a, b) => a - b);
-    const med = sorted[Math.floor(sorted.length / 2)];
-    const absDevs = border.map(v => Math.abs(v - med)).sort((a, b) => a - b);
-    const madSigma = 1.4826 * absDevs[Math.floor(absDevs.length / 2)];
-    const safeSigma = (isFinite(madSigma) && madSigma > 0 && madSigma < maxV * 0.1)
-      ? madSigma : (maxV > 0 ? maxV * 0.01 : 0);
-    return safeSigma > 0 ? maxV / safeSigma : 0;
-  }, [restored]);
+  const dynamicRange = useMemo(() => computeDynamicRange(restored, IMAGE_SIZE), [restored]);
 
-  const beamFwhm = useMemo(() => {
-    const pixelScale = controls.fovMuas / IMAGE_SIZE;
-    return {
-      major: beamDims.sigmaU * 2.355 * pixelScale,
-      minor: beamDims.sigmaV * 2.355 * pixelScale,
-    };
-  }, [beamDims, controls.fovMuas]);
+  const beamFwhm = useMemo(
+    () => beamFwhmFn(beamDims, controls.fovMuas, IMAGE_SIZE),
+    [beamDims, controls.fovMuas]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
   const handleTargetChange = useCallback((name) => {
