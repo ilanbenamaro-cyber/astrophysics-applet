@@ -7,6 +7,7 @@ import { computeUVPointsGl, computeUVFill, computeUVPoints } from './uvCompute.j
 import { clearScene, makeStars, drawStarfield, drawUVAxes, beatT, toTelescopes, uvExtentGl } from './tourScene.js';
 import { drawUVPoints, drawFillGauge } from './tourAnnotations.js';
 import { sceneB } from './sceneB.js';
+import { sceneA } from './sceneA.js';
 
 // ── Generic real scene (fallback) ───────────────────────────────────────────────
 const genericScene = {
@@ -38,6 +39,7 @@ const genericScene = {
 
 // Bespoke scenes register here in Phase 2.
 export const SCENES = {
+  A: sceneA,
   B: sceneB,
 };
 
