@@ -1,242 +1,199 @@
-// Tour.js — cinematic 8-act VLBI physics tour.
-// animPhase state machine: 'visual' (SVG plays) → 'text' (paragraphs reveal) → 'ready' (advance).
-// Chapter title cards appear before acts 3 and 6 (chapter transitions).
+// Tour.js — engine-real cinematic tour host. Rebuilt internals; PUBLIC CONTRACT
+// PRESERVED: Tour({actIndex, onActChange, onClose, onTourAction, reducedMotion}) and the
+// autoAction types App.js dispatches. Each act hosts an engine-driven canvas scene
+// (tourScenes.js) over real uvCompute/worker output; numbers come from tourPhysics.js.
+//
+// Two venues, one build (master prompt §1.2): mode 'presenter' (Harvard talk — minimal
+// text, advance on cue) | 'guided' (public site — narrative tiers, self-paced). Default
+// guided; presenter via ?mode=presenter or the 'P' key.
+//
+// State leakage (G6): the rebuilt tour hosts its OWN canvases and never mutates the live
+// app mid-act, so a stranger's pre-tour app state is preserved automatically on Skip/Esc.
+// Only the final "Enter the simulator" beat deliberately dispatches loadEHT to hand off.
 import { html, useState, useEffect, useRef } from './core.js';
-import { TourCard } from './TourCard.js';
-import { TOUR_PHYSICS as P } from './tourPhysics.js';
+import { TOUR_ACTS } from './tourActs.js';
+import { getScene } from './tourScenes.js';
+import { setupCanvas } from './tourScene.js';
+import { LiveEquation } from './TourEquation.js';
+import { MiniUVSpine } from './TourSpine.js';
 
-// ─── Act data ─────────────────────────────────────────────────────────────────
-const TOUR_ACTS = [
-  // ─── Chapter I: THE PROBLEM ──────────────────────────────────────────────
-  {
-    chapter: 1,
-    title: 'The Resolution Problem',
-    visualDuration: 3500,
-    paragraphs: [
-      '55 million light-years away, a black hole the mass of 6.5 billion suns casts a shadow 42 microarcseconds wide.',
-      'A 100-meter dish — the largest steerable radio telescope on Earth — resolves 2.7 arcseconds at 230 GHz.',
-      'The shadow of M87* is ~64,000 times smaller than a single dish can resolve. No physically plausible telescope could image it directly.',
-    ],
-    equation: 'θ ≈ λ / D',
-    subtext: 'λ = 1.3 mm, D = 100 m → θ ≈ 2.7″ · (a circular aperture adds the Rayleigh ×1.22)',
-    diagramId: 1,
-    autoActions: [{ type: 'resetForTour' }, { type: 'loadEHT' }],
-  },
-  {
-    chapter: 1,
-    title: 'The Baseline',
-    visualDuration: 3000,
-    paragraphs: [
-      'Two telescopes on opposite sides of the Earth compare their signals. Each records the electric field E(t), timestamped by atomic clocks accurate to femtoseconds.',
-      'The visibility V₁₂ is the time-averaged product of the two fields — one delayed by τ_g to account for the geometric path length difference.',
-      'Each baseline measures exactly one Fourier component of the sky brightness distribution. The spatial frequency it samples is u = B/λ.',
-    ],
-    equation: 'V₁₂(u,v) = ⟨E₁(t) · E₂*(t + τ_g)⟩',
-    subtext: 'τ_g = B·ŝ/c  ·  u = B/λ  ·  van Cittert-Zernike theorem',
-    diagramId: 2,
-    autoActions: [
-      { type: 'resetForTour' },
-      { type: 'addTelescope', lat: -23.029, lon: -67.755 },
-      { type: 'addTelescope', lat: 19.823, lon: -155.478 },
-    ],
-  },
-  // ─── Chapter II: THE SOLUTION ─────────────────────────────────────────────
-  {
-    chapter: 2,
-    title: 'Earth Rotation Synthesis',
-    visualDuration: 5000,
-    paragraphs: [
-      'As Earth rotates, the projected baseline traces a different point in the UV plane.',
-      'Over 12 hours, one baseline traces a complete elliptical arc. Eight stations and 28 baselines yield 11,000+ UV samples per observation night.',
-      'Martin Ryle called this aperture synthesis. It earned him the Nobel Prize in Physics in 1974. The technique is used in every radio image produced today.',
-    ],
-    equation: 'u(H) = (Bₓ sinH + Bᵧ cosH) / λ',
-    subtext: 'TMS equation 4.1  ·  H = hour angle  ·  δ = declination',
-    diagramId: 3,
-    autoActions: [{ type: 'resetForTour' }, { type: 'loadEHT' }],
-  },
-  {
-    chapter: 2,
-    title: 'The Event Horizon Telescope',
-    visualDuration: 4500,
-    paragraphs: [
-      'Eight observatories. Six sites. One instrument — the Event Horizon Telescope. Observing M87*, the longest usable baseline (Spain–Hawaii) is ~10,900 km — the South Pole station cannot see M87*.',
-      'ALMA anchors the array with an SEFD of 94 Jy — over 200 times more sensitive than the South Pole Telescope. Per-baseline noise scales as √(SEFD_i × SEFD_j).',
-      'The achieved resolution of ~25 microarcseconds is sufficient to resolve a 42 μas shadow — comparable to reading a newspaper in New York from Paris.',
-    ],
-    equation: 'EHT 2017 · M87* · θ ≈ λ / B_max ≈ 25 μas',
-    subtext: 'B_max ≈ 10,900 km (Spain–Hawaii)  ·  λ = 1.3 mm  ·  230 GHz',
-    diagramId: 4,
-    autoActions: [{ type: 'resetForTour' }, { type: 'loadEHT' }],
-  },
-  {
-    chapter: 2,
-    title: 'From Noise to Image',
-    visualDuration: 4000,
-    paragraphs: [
-      'Inverse Fourier transforming incomplete UV data produces the dirty image — the true sky convolved with the array\'s point spread function, riddled with sidelobe artifacts.',
-      'The CLEAN algorithm (Högbom 1974) iteratively finds the brightest peak, subtracts a fraction of the dirty beam centered on it, and accumulates clean components.',
-      'Convergence stops when the residual peak falls below 3σ_noise. The model is convolved with a smooth restore beam. Sidelobes vanish. The source emerges.',
-    ],
-    equation: 'r ← r − γ · r_max · B^D(l − l₀)',
-    subtext: 'loop gain γ = 0.1  ·  stop at 3σ_noise (MAD estimator)',
-    diagramId: 5,
-    autoActions: [{ type: 'setMethod', method: 'clean' }],
-  },
-  // ─── Chapter III: THE FRONTIER ───────────────────────────────────────────
-  {
-    chapter: 3,
-    title: 'First Light',
-    visualDuration: 4000,
-    paragraphs: [
-      'April 10, 2019. The Event Horizon Telescope Collaboration released the first image of a black hole — M87*, 55 million light-years away.',
-      'Four independent imaging teams, using different algorithms, all recovered consistent ring structure. General Relativity confirmed to within measurement uncertainty.',
-      'The shadow diameter of 42 ± 3 microarcseconds matches the prediction of the Schwarzschild metric for a 6.5 billion solar mass black hole.',
-    ],
-    equation: `θ_shadow = ${P.shadowDiamFormula} ≈ ${P.str.m87Shadow}`,
-    subtext: 'EHT Collaboration 2019 · ApJL 875, L1 · Confirmed by GR',
-    diagramId: 6,
-    autoActions: [{ type: 'setPreset', preset: 'blackhole' }],
-  },
-  {
-    chapter: 3,
-    title: 'Beyond Earth: The BHEX Mission',
-    visualDuration: 4500,
-    paragraphs: [
-      'Earth\'s diameter sets a hard limit on ground baselines. At 230 GHz the EHT array resolves about 25 μas — enough to see the shadow, but not its fine internal structure.',
-      'The Black Hole Explorer (BHEX) is a proposed NASA mission: a 3.4 m dish in a ~26,600 km-altitude orbit. A space–ground baseline on the order of the orbital radius (~33,000 km) would sharpen the beam further.',
-      'A sharper beam could directly resolve the photon ring — the lensed image of photons orbiting the hole — the next precision test of General Relativity. The exact gain depends on observing geometry and remains a mission-design figure.',
-    ],
-    equation: 'θ ~ λ / B_space    (B_space ~ R⊕ + h)',
-    subtext: 'BHEX · proposed · altitude ~26,562 km · figures pending sign-off (Marrone / Alejandro)',
-    diagramId: 7,
-    autoActions: [],
-  },
-  {
-    chapter: 3,
-    title: 'The Simulator',
-    visualDuration: 3000,
-    paragraphs: [
-      'This simulator implements the complete VLBI pipeline with physical accuracy: per-baseline SEFD thermal noise, 10° elevation cutoffs, elliptical CLEAN restore beam, and Keplerian space telescope orbits.',
-      'Compare EHT 2017 against ngEHT Phase 1 side-by-side. Add BHEX and watch the UV coverage extend well beyond Earth\'s limit. Export valid FITS files with WCS headers compatible with CASA, Astropy, and ds9.',
-    ],
-    equation: 'DR = S_peak / (1.4826 · median|border − median|)',
-    subtext: 'Dynamic range · MAD estimator · EHT 2017: ~50:1 · ngEHT Ph.1: ~200:1',
-    diagramId: 8,
-    autoActions: [],
-    finalAct: true,
-  },
+const TIERS = [
+  { key: 'artist',    label: 'Artist' },
+  { key: 'scientist', label: 'Scientist' },
+  { key: 'layperson', label: 'You' },
 ];
 
-// Chapter title cards shown before the first act of chapters II and III
-const CHAPTER_CARDS = {
-  2: { number: 'Chapter II', title: 'THE SOLUTION', subtitle: 'Aperture synthesis and the Earth-sized array' },
-  5: { number: 'Chapter III', title: 'THE FRONTIER', subtitle: 'Space baselines and the next generation' },
-};
+function initialMode() {
+  try {
+    return new URLSearchParams(window.location.search).get('mode') === 'presenter'
+      ? 'presenter' : 'guided';
+  } catch (_) { return 'guided'; }
+}
 
-// ─── Tour component ───────────────────────────────────────────────────────────
 export function Tour({ actIndex, onActChange, onClose, onTourAction, reducedMotion }) {
-  const [animPhase, setAnimPhase] = useState('visual');
-  const [chapterCard, setChapterCard] = useState(false);
-  const animTimerRef = useRef(null);
-  const textTimerRef = useRef(null);
-  const chapterTimerRef = useRef(null);
-  const ranAutoRef = useRef(-1);
+  const act    = TOUR_ACTS[actIndex];
+  const total  = TOUR_ACTS.length;
+  const isLast = actIndex === total - 1;
 
-  // Fire autoActions once per act change (90ms stagger between actions)
+  const [mode, setMode]   = useState(initialMode);
+  const [phase, setPhase] = useState('visual');   // 'visual' → 'ready'
+  const [tier, setTier]   = useState('scientist');
+  const [computing, setComputing] = useState(false);
+
+  const canvasRef  = useRef(null);
+  const rafRef     = useRef(0);
+  const dataRef    = useRef(null);
+  const startRef   = useRef(0);
+  const phaseTimer = useRef(null);
+  const phaseRef   = useRef(phase);
+  useEffect(() => { phaseRef.current = phase; }, [phase]);
+
+  // ── Scene lifecycle: init (maybe async) → RAF draw → reveal text ──
   useEffect(() => {
-    if (ranAutoRef.current === actIndex) return;
-    ranAutoRef.current = actIndex;
-    const act = TOUR_ACTS[actIndex];
-    act.autoActions?.forEach((action, i) => {
-      setTimeout(() => onTourAction(action), i * 90);
+    let cancelled = false;
+    clearTimeout(phaseTimer.current);
+    cancelAnimationFrame(rafRef.current);
+    setPhase('visual');
+    phaseRef.current = 'visual';
+    dataRef.current = null;
+    const scene = getScene(act.actId);
+    const frameBase = { mode, reducedMotion };
+    const computeBacked = act.transition === 'computation-complete';
+    if (computeBacked) setComputing(true);
+
+    Promise.resolve(scene.init(act.engineState, { mode })).then((data) => {
+      if (cancelled) return;
+      dataRef.current = data;
+      startRef.current = performance.now() / 1000;
+      setComputing(false);
+
+      if (reducedMotion) {
+        const canvas = canvasRef.current;
+        if (canvas) {
+          const { ctx, w, h } = setupCanvas(canvas);
+          scene.drawFrame(ctx, { ...frameBase, w, h, T: act.durationMs / 1000, animPhase: 'ready' }, data);
+        }
+        setPhase('ready');
+        return;
+      }
+
+      const loop = () => {
+        rafRef.current = requestAnimationFrame(loop);
+        const canvas = canvasRef.current;
+        if (!canvas || !dataRef.current) return;
+        const { ctx, w, h } = setupCanvas(canvas);
+        const T = performance.now() / 1000 - startRef.current;
+        scene.drawFrame(ctx, { ...frameBase, w, h, T, animPhase: phaseRef.current }, dataRef.current);
+      };
+      rafRef.current = requestAnimationFrame(loop);
+
+      const revealMs = computeBacked ? 400
+        : (mode === 'presenter' ? Math.min(act.durationMs, 4000) : act.durationMs * 0.4);
+      phaseTimer.current = setTimeout(() => { if (!cancelled) setPhase('ready'); }, revealMs);
+    }).catch((err) => {
+      if (cancelled) return;
+      setComputing(false);
+      console.error('[tour] scene init failed for act', act.actId, err);
+      setPhase('ready');
     });
-  }, [actIndex, onTourAction]);
-
-  // animPhase state machine + chapter cards
-  useEffect(() => {
-    clearTimeout(animTimerRef.current);
-    clearTimeout(textTimerRef.current);
-    clearTimeout(chapterTimerRef.current);
-    setChapterCard(false); // always reset before showing new chapter card
-
-    setAnimPhase(reducedMotion ? 'ready' : 'visual');
-
-    if (reducedMotion) return;
-
-    // Show chapter card if this is the first act of a new chapter
-    if (CHAPTER_CARDS[actIndex]) {
-      setChapterCard(true);
-      chapterTimerRef.current = setTimeout(() => setChapterCard(false), 2200);
-    }
-
-    const act = TOUR_ACTS[actIndex];
-    animTimerRef.current = setTimeout(() => {
-      setAnimPhase('text');
-      const textDur = act.paragraphs.length * 800 + 1200;
-      textTimerRef.current = setTimeout(() => setAnimPhase('ready'), textDur);
-    }, act.visualDuration);
 
     return () => {
-      clearTimeout(animTimerRef.current);
-      clearTimeout(textTimerRef.current);
-      clearTimeout(chapterTimerRef.current);
+      cancelled = true;
+      clearTimeout(phaseTimer.current);
+      cancelAnimationFrame(rafRef.current);   // RAF cleanup every act change/unmount (G9)
     };
-  }, [actIndex, reducedMotion]);
+  }, [actIndex, mode, reducedMotion]);
 
-  // handleNext: respects animPhase (→ during 'text' skips to 'ready', not next act)
-  const handleNext = () => {
-    if (animPhase === 'text') {
-      clearTimeout(textTimerRef.current);
-      setAnimPhase('ready');
+  // ── Navigation ──
+  const advance = () => {
+    if (phase === 'visual') { setPhase('ready'); return; }
+    if (act.closing && isLast) {
+      onTourAction({ type: 'loadEHT' });   // deliberate handoff into the live tool
+      onClose();
       return;
     }
-    if (animPhase === 'ready') {
-      actIndex < TOUR_ACTS.length - 1 ? onActChange(actIndex + 1) : onClose();
-    }
+    isLast ? onClose() : onActChange(actIndex + 1);
   };
+  const back = () => { if (actIndex > 0) onActChange(actIndex - 1); };
 
-  const handleBack = () => {
-    if (animPhase !== 'visual' && actIndex > 0) onActChange(actIndex - 1);
-  };
-
-  // Keyboard navigation
   useEffect(() => {
     const handler = (e) => {
-      if (e.key === 'Escape') { onClose(); return; }
-      if (e.key === 'ArrowRight') { handleNext(); return; }
-      if (e.key === 'ArrowLeft') { handleBack(); }
+      if (e.key === 'Escape') return onClose();
+      if (e.key === 'ArrowRight' || e.key === 'Enter') return advance();
+      if (e.key === 'ArrowLeft') return back();
+      if (e.key === 'p' || e.key === 'P') setMode(m => m === 'presenter' ? 'guided' : 'presenter');
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [actIndex, animPhase, onClose, onActChange]);
+  }, [actIndex, phase, mode]);
 
-  const card = CHAPTER_CARDS[actIndex];
+  const progressPct = total > 1 ? (actIndex / (total - 1)) * 100 : 100;
+  const nextLabel = phase === 'visual' ? '…' : isLast ? 'Enter the simulator →' : 'Continue →';
 
   return html`
-    <div className="tour-cinematic" role="dialog" aria-modal="true" aria-label="VLBI Physics Tour">
+    <div className="tour-cinematic tour-engine" role="dialog" aria-modal="true"
+         aria-label="VLBI Physics Tour" data-mode=${mode}>
+      <div className="tour-visual">
+        <canvas ref=${canvasRef} className="tour-scene-canvas"
+                aria-label=${act.title + ' — engine-driven visualization'}></canvas>
+        ${computing ? html`<div className="tour-computing" aria-live="polite">
+          <span className="tour-spinner"></span> Computing…
+        </div>` : null}
+        <button className="tour-mode-toggle" onClick=${() => setMode(m => m === 'presenter' ? 'guided' : 'presenter')}
+                title="Toggle presenter / guided (P)">${mode === 'presenter' ? '◐ Presenter' : '◑ Guided'}</button>
+      </div>
 
-      <!-- Chapter title card (appears at chapter transitions) -->
-      ${chapterCard && card ? html`
-        <div className="chapter-card">
-          <div className="chapter-number">${card.number}</div>
-          <div className="chapter-title-card">${card.title}</div>
-          <div className="chapter-subtitle">${card.subtitle}</div>
+      <div className=${'tour-text-panel tour-engine-panel' + (mode === 'presenter' ? ' presenter' : '')}>
+        <div className="tour-chapter-badge">${act.chapter}</div>
+        <h2 className="tour-act-title">${act.title}</h2>
+
+        <div className="tour-nav-col">
+          <button className="tour-skip" onClick=${onClose}>Skip Tour</button>
+          <div className="tour-nav-buttons">
+            <div className=${'tour-continue-hint' + (phase === 'ready' ? ' hint-visible' : '')}>
+              ${isLast ? 'press → to finish' : 'press → to continue'}
+            </div>
+            <div style=${{ display: 'flex', gap: '8px' }}>
+              <button className="tour-nav-btn" onClick=${back}
+                      disabled=${actIndex === 0} aria-label="Previous act">←</button>
+              <button className=${'tour-nav-btn' + (phase === 'ready' ? ' btn-primary' : '')}
+                      onClick=${advance} disabled=${phase === 'visual'} aria-label=${nextLabel}>
+                ${nextLabel}
+              </button>
+            </div>
+          </div>
         </div>
-      ` : null}
 
-      <!-- Per-act content (hero SVG + text overlay + navigation) -->
-      <${TourCard}
-        act=${TOUR_ACTS[actIndex]}
-        animPhase=${animPhase}
-        actIndex=${actIndex}
-        totalActs=${TOUR_ACTS.length}
-        onNext=${handleNext}
-        onBack=${handleBack}
-        onSkip=${onClose}
-        onJump=${onActChange}
-        reducedMotion=${reducedMotion}
-      />
+        <div className="tour-body">
+          <div className="tour-headline">${act.headline}</div>
+
+          ${mode === 'guided' ? html`
+            <div className="tour-tier-tabs" role="tablist">
+              ${TIERS.map(t => html`
+                <button key=${t.key} role="tab" aria-selected=${tier === t.key}
+                        className=${'tour-tier-tab' + (tier === t.key ? ' active' : '')}
+                        onClick=${() => setTier(t.key)}>${t.label}</button>
+              `)}
+            </div>
+            <p className=${'tour-paragraph' + (phase === 'ready' ? ' p-visible' : '')}>
+              ${act.narrativeTriple[tier]}
+            </p>
+          ` : null}
+
+          <${LiveEquation} tex=${act.liveEquation.tex}
+                           values=${act.liveEquation.values()}
+                           visible=${phase === 'ready'} />
+        </div>
+      </div>
+
+      <div className="tour-spine" aria-hidden="true">
+        <${MiniUVSpine} frac=${(actIndex + (phase === 'ready' ? 1 : 0.4)) / total} />
+        <span className="tour-spine-label">${act.conceptTag} · ${actIndex + 1}/${total}</span>
+      </div>
+
+      <div className="tour-progress-track">
+        <div className="tour-progress-fill" style=${{ width: progressPct + '%' }} />
+      </div>
     </div>
   `;
 }

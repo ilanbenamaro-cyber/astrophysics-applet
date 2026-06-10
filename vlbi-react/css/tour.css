@@ -850,3 +850,136 @@
 
 [data-reduced-motion] .bl-draw   { stroke-dashoffset: 0 !important; }
 [data-reduced-motion] .lbl-dirty { opacity: 0 !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ENGINE-REAL TOUR (rebuild) — site-consistent chrome over engine-driven canvases.
+   Colours/type/shape conform to DESIGN-LANGUAGE.md (flat, gold accent, no glow on chrome).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tour-scene-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Computing indicator (reuses the app's spinner pattern; Act C never-stall, G5) */
+.tour-computing {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex; align-items: center; gap: 10px;
+  color: var(--text-secondary, #8888b0);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+}
+.tour-spinner {
+  width: 14px; height: 14px;
+  border: 2px solid var(--border, #2d2200);
+  border-top-color: var(--accent-teal, #C4A555);
+  border-radius: 50%;
+  animation: tourSpin 0.8s linear infinite;
+}
+@keyframes tourSpin { to { transform: rotate(360deg); } }
+
+/* Mode toggle (presenter / guided) — top-right of the visual zone */
+.tour-mode-toggle {
+  position: absolute;
+  top: 12px; right: 12px;
+  background: var(--bg-2, #111111);
+  border: 1px solid var(--border, #2d2200);
+  color: var(--text-secondary, #8888b0);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: color 150ms ease, border-color 150ms ease;
+}
+.tour-mode-toggle:hover { color: var(--accent-teal, #C4A555); border-color: var(--accent-teal, #C4A555); }
+
+/* Headline — the single presenter-visible line above the equation */
+.tour-headline {
+  font-size: clamp(0.86rem, 1.3vw, 1.02rem);
+  font-weight: 600;
+  color: var(--text-primary, #e8e8f0);
+  line-height: 1.4;
+  margin-bottom: 2px;
+}
+
+/* Narrative tier switcher (guided only) */
+.tour-tier-tabs {
+  display: flex;
+  gap: 4px;
+  margin: 4px 0 2px;
+}
+.tour-tier-tab {
+  background: none;
+  border: 1px solid var(--border, #2d2200);
+  color: var(--text-secondary, #8888b0);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+.tour-tier-tab:hover { color: var(--text-primary, #e8e8f0); }
+.tour-tier-tab.active {
+  color: var(--bg-0, #000);
+  background: var(--accent-teal, #C4A555);
+  border-color: var(--accent-teal, #C4A555);
+}
+
+/* Live equation: KaTeX render + bound values */
+.tour-equation-katex {
+  font-size: clamp(0.9rem, 1.3vw, 1.08rem);
+  color: var(--accent-teal, #C4A555);
+  margin-bottom: 6px;
+}
+.tour-equation-katex .katex { color: var(--accent-teal, #C4A555); }
+.tour-equation-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+.tour-eqval { display: flex; gap: 6px; align-items: baseline; }
+.tour-eqval-k {
+  font-size: 0.64rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary, #8888b0);
+}
+.tour-eqval-v {
+  font-size: 0.78rem;
+  font-family: var(--font-mono, monospace);
+  color: var(--text-primary, #e8e8f0);
+}
+
+/* Progress spine — the mini real-UV instrument (bottom-left over the visual) */
+.tour-spine {
+  position: absolute;
+  left: 18px;
+  bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 6;
+  pointer-events: none;
+}
+.tour-spine-canvas { display: block; }
+.tour-spine-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary, #8888b0);
+  font-family: var(--font-mono, monospace);
+}
+
+/* Presenter mode: minimal text (no tier tabs / paragraph), larger headline */
+.tour-engine-panel.presenter .tour-headline { font-size: clamp(1rem, 1.6vw, 1.25rem); }
+
+[data-reduced-motion] .tour-spinner { animation: none !important; }
