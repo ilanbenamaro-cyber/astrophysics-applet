@@ -8,6 +8,7 @@ import { clearScene, makeStars, drawStarfield, drawUVAxes, beatT, toTelescopes, 
 import { drawUVPoints, drawFillGauge } from './tourAnnotations.js';
 import { sceneB } from './sceneB.js';
 import { sceneA } from './sceneA.js';
+import { sceneC } from './sceneC.js';
 
 // ── Generic real scene (fallback) ───────────────────────────────────────────────
 const genericScene = {
@@ -41,6 +42,7 @@ const genericScene = {
 export const SCENES = {
   A: sceneA,
   B: sceneB,
+  C: sceneC,
 };
 
 export function getScene(actId) {
