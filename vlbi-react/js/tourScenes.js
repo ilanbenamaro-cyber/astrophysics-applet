@@ -9,6 +9,8 @@ import { drawUVPoints, drawFillGauge } from './tourAnnotations.js';
 import { sceneB } from './sceneB.js';
 import { sceneA } from './sceneA.js';
 import { sceneC } from './sceneC.js';
+import { sceneD } from './sceneD.js';
+import { sceneE } from './sceneE.js';
 
 // ── Generic real scene (fallback) ───────────────────────────────────────────────
 const genericScene = {
@@ -43,6 +45,8 @@ export const SCENES = {
   A: sceneA,
   B: sceneB,
   C: sceneC,
+  D: sceneD,
+  E: sceneE,
 };
 
 export function getScene(actId) {
