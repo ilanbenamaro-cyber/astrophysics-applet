@@ -90,9 +90,53 @@ App.js                        — global UI only: compareMode, infoKey, a11y, to
 ├── TelescopeList.js          — list of placed telescopes with remove buttons
 ├── InfoModal.js              — panel info popup
 ├── InfoTooltip.js            — hover tooltip on ? icons
-├── Tour.js                   — 8-act cinematic tour; animPhase state machine (visual→text→ready); chapter title cards before Ch II (act 3) / Ch III (act 6); keyboard nav (← → Esc); autoActions per act
-│   ├── TourCard.js           — cinematic layout: full-viewport .tour-hero SVG bg + .tour-text-overlay (right 32%); visibleCount state drives 1/800ms paragraph reveal; .text-right for Act 6 (EHT image left, text right)
-│   └── TourDiagram.js        — Canvas 2D cinematic diagrams. d01–d08 are React components (useRef+useEffect+RAF). Export renders as html`<${Comp}/>` — NEVER call d0N() as plain function (breaks React hooks). Color consts (BG/GOLD/AM/TEAL/DIM/GLOW/RED/BLUE). Shared utilities: makeStars, drawStars (twinkle+diffraction spikes), drawNebulae, drawMilkyWay, drawAtacama (bezier terrain), glow3, drawDish (parabola ∪-bowl clip+panel grid), drawBeam, drawBlurry (chromatic aberration bloom), drawSharp (6-spike diffraction), drawBaseline (traveling pulse), drawDivider, drawEarth. Left = magenta/crimson nebulae + RED beam (problem); right = cobalt/cyan nebulae + TEAL beam (solution). reducedMotion: draws T=999 static frame, no RAF. D03 Earth rotation in JS (T×2π/10), not CSS. D06 loads ../assets/eht-m87-2019.jpg via Image(). tour.css adds `.tour-visual canvas { width:100%;height:100%;display:block }`.
+├── Tour.js                   — ENGINE-REAL cinematic tour host (rebuilt 2026-06-10). 5 acts (A–E) whose
+│   │                           visuals are genuine uvCompute/worker output, not drawings. Signature
+│   │                           UNCHANGED: Tour({actIndex,onActChange,onClose,onTourAction,reducedMotion}).
+│   │                           mode 'presenter'|'guided' (?mode=presenter or 'P' key, default guided).
+│   │                           visual→ready state machine drives a single canvas RAF (one scene per act);
+│   │                           cancelAnimationFrame on every act change/unmount; reducedMotion draws one
+│   │                           static final frame, no RAF. Pointer events on the canvas forward to
+│   │                           scene.onPointer (guided interactivity). NEVER mutates app state mid-act →
+│   │                           Skip/Esc preserves the user's pre-tour state for free; only the closing
+│   │                           "Enter the simulator" beat dispatches loadEHT (handoff). NB: old TourCard.js
+│   │                           and TourDiagram.js were DELETED in this rebuild.
+│   ├── tourActs.js            — the 5 acts as DATA (master schema): actId A–E, engineState{stations,params}
+│   │                           from constants, liveEquation{tex,values()} bound to tourPhysics, three
+│   │                           narrative registers (artist/scientist/layperson), compute class, durations,
+│   │                           transition, closing flag. NO physics literal — all numbers via TOUR_PHYSICS.
+│   ├── tourScenes.js          — per-act scene registry SCENES[actId]→{init,drawFrame,onPointer?} +
+│   │                           a generic real-coverage fallback. toTelescopes/uvExtentGl live in tourScene.
+│   ├── sceneA.js              — ACT A Resolution: one-dish diffraction blur (θ=λ/D) vs the REAL EHT dirty
+│   │                           beam (point source through EHT u,v via runReconstruction method:'dirty',
+│   │                           drawn with drawHot). live-on-input.
+│   ├── sceneB.js              — ACT B Synthesized Aperture (flagship, live-60fps): ALMA+IRAM baseline on a
+│   │                           turning Earth → real (u,v) sample → real ellipse drawn point-by-point as the
+│   │                           HA clock turns → full EHT coverage + FillGauge + θ=λ/B callout. Guided: drag
+│   │                           UV panel to scrub HA (x) + declination (y); pair ellipse recomputes live.
+│   ├── sceneC.js              — ACT C From Data to Image: ConvolutionReveal → real dirty image → CLEAN runs
+│   │                           in its own worker, live residual sparkline from progress messages → restored
+│   │                           ContourMap render (DR matches the app). Guided: drag = thermal noise,
+│   │                           recompute on release with never-stall timeout→cache fallback.
+│   ├── sceneD.js              — ACT D First Light: real assets/eht-m87-2019.jpg (full-bleed, 42 μas scale,
+│   │                           provenance) paired with the simulator's own CLEAN reconstruction of
+│   │                           black-hole.png (hot colormap echoing the photo). static.
+│   ├── sceneE.js              — ACT E Beyond Earth (closing): real BHEX ground–space coverage
+│   │                           (computeSatelliteECEF + space branch of computeUVPointsGl) extending past a
+│   │                           dashed Earth-diameter limit ring; mini Earth + orbiting element; hedged
+│   │                           "characteristic ~ R⊕+h · pending sign-off (Marrone/Alejandro)"; CTA + handoff.
+│   ├── tourScene.js           — shared canvas primitives: setupCanvas (offsetWidth×dpr), ease
+│   │                           cubic-bezier(.25,.46,.45,.94), beatT, makeStars/drawStarfield, drawEarth
+│   │                           (shaded sphere + graticule), sphereProject/stationOnGlobe, drawUVAxes (Gλ),
+│   │                           hexA, toTelescopes, uvExtentGl. All colour via tourTokens.
+│   ├── tourAnnotations.js     — physics-annotation draws (ON the act canvas, so they can't intercept
+│   │                           pointer events): drawBaselineVector, drawUVTrace, drawUVPoints, drawFillGauge,
+│   │                           drawResolutionCallout, drawResidualSparkline, drawConvolutionReveal, roundRect.
+│   │                           Gold accent = the live/active data layer.
+│   ├── TourEquation.js        — LiveEquation: renders KaTeX into a ref (window.katex, already loaded in
+│   │                           index.html); plain-tex fallback if KaTeX missing (never blocks). + bound-value list.
+│   └── TourSpine.js           — MiniUVSpine: the progress indicator IS a tiny REAL EHT UV track that fills
+│                               as acts complete (computeUVPointsGl computed once at module load).
 ├── A11yPanel.js              — accessibility settings panel
 ├── PhysicsNotesModal.js      — static modal: UV formula, CLEAN/MEM algorithms, EHT sources
 └── CitationModal.js          — BibTeX + APA citation generator from live sim state
@@ -141,6 +185,19 @@ globeHelpers.js   — Three.js mesh helpers for globe, atmosphere, markers;
 presets.js        — IMAGE_PRESETS: { 'blackhole': '../assets/black-hole.png', 'wfu-seal': '../assets/wfu-seal.png' }
 worker.js         — self-contained Web Worker (no imports — cannot use import maps).
                     Each useSimulation instance spawns its own worker — two workers run in compare mode.
+                    Opt-in `params.progressEvery`: when set, the CLEAN loop posts {type:'progress',iter,residual}
+                    every K iters (powers Act C's sparkline). No imports added; absent flag ⇒ byte-identical.
+simCore.js        — pure simulation core lifted from useSimulation.js (behavior-neutral; the hook imports
+                    them back). runReconstruction(grayscale, uvPoints, params, onProgress?) → Promise — owns
+                    its OWN classic worker per call (non-singleton, proven by App.js left/right), resolves
+                    {dirty,restored,beamSigmaU/V,beamPA,uvCount}; TRANSFERS grayscale.buffer (pass a .slice()).
+                    Also scaleSource, buildSefdMap/buildPairSefdMap, computeDynamicRange, beamFwhm, angularRes.
+                    The hook's persistent-worker dispatch effect is UNCHANGED (only the pure memos call these).
+                    Tour acts import runReconstruction directly to drive real engine output.
+simRender.js      — pure canvas renderers lifted from ContourMap/ImageCanvas (components import them back):
+                    drawContour(ctx, data, {N,beamSigmaU,beamSigmaV,beamPA,dynamicRange}) → {isEmpty,stats,
+                    activeLevels} (viridis + marching-squares contours + colorbar + beam); drawHot(ctx,data,N)
+                    (hot colormap); exports CONTOUR_LEVELS, fmtVal. Tour scenes render engine output via these.
 ```
 
 ### Worker protocol
@@ -159,7 +216,8 @@ worker.js         — self-contained Web Worker (no imports — cannot use impor
     frequency: number,   // GHz
     fovRad: number,      // image FOV in radians (fovMuas * π/(180*3.6e9))
     stationPairs: [{a: string, b: string}],  // parallel to uvPoints; station name pairs for SEFD lookup
-    sefdMap: { [stationName]: number }       // per-station SEFD in Jy at observing frequency
+    sefdMap: { [stationName]: number },      // per-station SEFD in Jy at observing frequency
+    progressEvery?: number                   // OPT-IN: emit CLEAN progress every K iters (Act C). Omit = no progress.
   }
 }
 ```
@@ -175,6 +233,9 @@ worker.js         — self-contained Web Worker (no imports — cannot use impor
 
 // Error:
 { type: 'error', id: number, message: string }
+
+// Progress (only when params.progressEvery is set — Act C live sparkline):
+{ type: 'progress', id: number, iter: number, residual: number }
 ```
 
 ### Key computations
@@ -309,6 +370,21 @@ GitHub Pages from `main` branch root. Push to `main` = live within ~60 seconds.
 ---
 
 ## Last Updated
+
+2026-06-10 — Tour engine-real rebuild complete (2fd3bea..64480e5, branch feature/tour-world-class-overhaul, NOT yet merged to main):
+  The guided tour was rebuilt from 8 hand-drawn TourDiagram scenes into 5 engine-driven acts (A–E) whose
+  visuals are genuine uvCompute/worker output. **TourCard.js and TourDiagram.js DELETED** (1,697 lines).
+  Phase 0 (behavior-neutral): new simCore.js (runReconstruction + scaleSource/buildSefdMap/buildPairSefdMap/
+  computeDynamicRange/beamFwhm/angularRes) and simRender.js (drawContour/drawHot) extracted from
+  useSimulation/ContourMap/ImageCanvas — which import them back; worker.js gained opt-in progressEvery.
+  Timing gate (recorded in TOUR-ENGINE-AUDIT.md §2, N=512 dev): computeUVPoints 0.5ms, dirty 41ms,
+  CLEAN 98ms, MEM 2350ms → Act C runs CLEAN live in both modes. Phase 1: Tour.js host (presenter|guided
+  mode, scene RAF, KaTeX live equations via TourEquation.js, narrative tiers, real-UV progress spine via
+  TourSpine.js, pointer→scene). New: tourActs.js (act schema data), tourScenes.js (registry), tourScene.js
+  (canvas primitives), tourAnnotations.js (physics annotations), sceneA–E.js. Numbers via tourPhysics.js,
+  colours via tourTokens.js. All 12 quality gates verified on fresh port; app reconstructs unchanged (G12).
+  ⚠ HUMAN TODO: re-run the timing gate on the projector laptop before the talk (if CLEAN >300ms there,
+  switch presenter Act C to cached-frame playback).
 
 2026-04-28 — Canvas 2D cinematic rewrite complete (bed2d45):
   TourDiagram.js completely rewritten from SVG/htm to Canvas 2D requestAnimationFrame loops.

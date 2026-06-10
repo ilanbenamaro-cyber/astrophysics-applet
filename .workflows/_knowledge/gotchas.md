@@ -504,6 +504,42 @@ RESOLVED: YES — all three blur sites in TourDiagram.js have explicit `g.filter
 
 ---
 
+### Tour engine-real rebuild — several TourDiagram/TourCard gotchas are now OBSOLETE; new invariants
+DATE_DISCOVERED: 2026-06-10
+AREA: vlbi-react/js tour subsystem
+SEVERITY: INFO
+
+WHAT CHANGED: The tour was rebuilt (commits 2fd3bea..64480e5). `TourDiagram.js` and `TourCard.js` were
+DELETED. The following historical gotchas above are now OBSOLETE (kept for provenance, do not act on them):
+- "Tour animPhase: chapter card stale state" — chapter cards removed; Tour.js rebuilt.
+- "Tour TourCard: visibleCount single consolidated useEffect" — TourCard deleted.
+- "SVG filter IDs must be scoped per diagram" — already obsolete (Canvas 2D); TourDiagram now deleted.
+- "Tour d05 CLEAN scrubber translateX" — d05 gone.
+- "TourDiagram d01–d08 must be React components" — deleted. (New scenes are PLAIN objects {init,drawFrame,
+  onPointer}, not React components — only the Tour.js host uses hooks. Do not add hooks to scene modules.)
+- "Canvas 2D dish panel grid arc direction" — drawDish deleted.
+STILL ACTIVE & now also apply to the new tour: worker no-imports; Math.max-spread→for-loop; Playwright
+fresh-port on module-signature change; pairId is a string key; space telescopes have no lat/lon;
+g.filter='none' after any blur (general Canvas 2D rule).
+
+NEW INVARIANTS (this rebuild):
+1. `simCore.runReconstruction` TRANSFERS `grayscale.buffer` to its worker (zero-copy). The passed array is
+   DETACHED on return — always pass a fresh `.slice()` if you need to keep the source (scenes do this).
+2. Tour scene annotations are drawn ON the act canvas (tourAnnotations.js), never as DOM overlays, so they
+   can't intercept pointer events (G8 holds by construction). The host forwards canvas pointer events to
+   `scene.onPointer(data, {type,nx,ny,mode,phase})` — guided interactivity mutates the init-returned `data`.
+3. The hook's persistent-worker dispatch effect was deliberately NOT rewired to runReconstruction — keep it
+   that way (rewiring changes worker lifecycle + stale-result ordering = behavior change).
+4. worker.js `progressEvery` is opt-in; never make it default — absent flag must stay byte-identical.
+
+DETECTION: "detached ArrayBuffer" from a scene re-running reconstruction without slicing; guided drag not
+responding (scene.onPointer not wired or data._layout not set); app reconstruction regressions after touching
+useSimulation memos (re-verify G12 on a fresh port).
+
+RESOLVED: N/A — invariants to preserve.
+
+---
+
 ## Pattern: Things To Always Check
 
 □ After any change to telescope naming logic — verify EHT preset + manual click produces T(n+1) not T1
@@ -538,4 +574,11 @@ RESOLVED: YES — all three blur sites in TourDiagram.js have explicit `g.filter
 □ TourDiagram shared utils (drawDerivationPanel/drawContactShadow/drawAxisTicks/drawScaleBar/drawForegroundAccent/drawConceptTag/drawPlanet/roundRect) are APPEND-ONLY helpers after drawEarth — reused across acts. Reset g.filter='none' after any blur inside them (drawForegroundAccent, drawPlanet path, d05 dirty, d07/d08 fuzzy rings all use blur).
 □ Tour COLOURS/TYPE come from tourTokens.js (reads app :root via getComputedStyle, verbatim fallbacks) — the single source of VISUAL truth, like tourPhysics.js for numbers. NEVER hardcode a tour palette hex; reference the palette constants (BG/GOLD/AM/TEAL/BLUE/GLOW/RED/DIM/TXT/AMBER/BG2/BG3/BORDER/FONT/MONO), all remapped to site tokens. The site = warm-neutral dark + ONE muted-gold accent #C4A555. Banned in the tour: bright gold #ffd166/#FFD700, saturated teal #06d6a0, cyan #4cc9f0, candy nebula hues, blue-black panel fills, Georgia/Courier (the app has NO serif; use Inter + --font-mono). Governed by DESIGN-LANGUAGE.md.
 □ Tour scene art (nebulae/beams/Earth/rings): LICENSED to be cinematic but its palette must derive from the site family (MODERATE) — desaturated gold/amber/orange + neutral + ONE slate cool #3a4a6a; Earth keeps realistic blue (matches the app globe). Don't reintroduce saturated cosmic colour.
-□ Conformance is the gate, not beauty: a tour panel beside an app panel must be indistinguishable (accent/text/font/radius/hairline/fill/spacing). Re-skin, never redesign — preserve pass-2 composition (depth, modeled Earth, dirty→clean, ngEHT-sharper). Re-skinning passes must keep physics a no-op.
+□ Conformance is the gate, not beauty: a tour panel beside an app panel must be indistinguishable (accent/text/font/radius/hairline/fill/spacing). Re-skin, never redesign. (Tour now = engine-real scenes; the conformance/tourTokens/tourPhysics/DESIGN-LANGUAGE rules below STILL apply to scene chrome + colour + numbers.)
+□ ENGINE-REAL TOUR (post 2026-06-10 rebuild): TourDiagram.js + TourCard.js are DELETED — checklist items above that name d01–d08, drawDish, drawPlanet, chapter cards, scrubberMove, SVG filters are OBSOLETE. The tour is Tour.js (host) + tourActs.js (data) + tourScenes.js (registry) + sceneA–E.js + tourScene/tourAnnotations/TourEquation/TourSpine.
+□ simCore.runReconstruction transfers grayscale.buffer — pass a `.slice()`, never the array you want to keep.
+□ Scene modules are plain objects {init,drawFrame,onPointer} — NO React hooks inside them (only Tour.js host uses hooks). Annotations draw on the act canvas, not DOM overlays (G8 by construction).
+□ Do NOT rewire useSimulation's persistent-worker dispatch effect to runReconstruction — it would change worker lifecycle + stale-result ordering. Only the pure memos call simCore fns.
+□ worker.js progressEvery is opt-in and must stay byte-identical when absent. Worker stays import-free.
+□ After touching useSimulation/ContourMap/ImageCanvas (they import simCore/simRender back), re-verify the live app reconstructs on a fresh port (G12) — these are behavior-neutral extractions and must remain so.
+□ ⚠ Tour timing gate must be re-run on the projector laptop before the Harvard talk: if CLEAN > 300 ms there, switch presenter-mode Act C to cached-frame playback (numbers in TOUR-ENGINE-AUDIT.md §2).

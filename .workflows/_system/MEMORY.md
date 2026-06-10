@@ -313,8 +313,11 @@ IMPLICATION: Any new CSS animation class targeting an SVG element that uses tran
 
 ### TourDiagram.js: Canvas 2D is the right technology; SVG was the wrong tool
 DATE: 2026-04-28
+SUPERSEDED: 2026-06-10 — TourDiagram.js DELETED in the engine-real rebuild. The Canvas-2D-with-RAF
+            conclusion still holds and carries forward: the new sceneA–E.js use the same single-canvas RAF
+            approach (via tourScene.setupCanvas), now drawing REAL engine output instead of illustrations.
 CATEGORY: pattern
-APPLIES_TO: vlbi-react/js/TourDiagram.js
+APPLIES_TO: vlbi-react/js/ (was TourDiagram.js; now sceneA–E.js + tourScene.js)
 
 LEARNING: SVG/CSS cannot achieve additive blending, multi-pass glow, organic bezier terrain, or per-pixel chromatic aberration. The Smithsonian Art Pass quality bar required Canvas 2D with `requestAnimationFrame`. The rewrite (bed2d45) confirmed: ~1280 lines of Canvas 2D produces visually richer results than any SVG filter chain.
 EVIDENCE: Three sessions of iterative SVG art passes culminated in Canvas 2D rewrite — the quality ceiling was SVG's fundamental limitation, not the art direction.
@@ -324,8 +327,11 @@ IMPLICATION: Any future diagram requiring bloom, terrain, or cinematic animation
 
 ### Canvas 2D RAF components: hooks require component invocation, not plain function calls
 DATE: 2026-04-28
+SUPERSEDED: 2026-06-10 — TourDiagram.js deleted. INVERTED in the rebuild: the new scene modules
+            (sceneA–E.js) are PLAIN objects {init,drawFrame,onPointer} with NO hooks — only the Tour.js
+            host holds the useRef/useEffect/RAF. Do not put hooks in scene modules.
 CATEGORY: pattern
-APPLIES_TO: vlbi-react/js/TourDiagram.js — TourDiagram export
+APPLIES_TO: vlbi-react/js/ tour scenes
 
 LEARNING: d01–d08 use `useRef`/`useEffect` — React hooks. They MUST be rendered as React components (`html\`<${Comp}/>\``), not called as plain functions (`Comp({ props })`). The export uses a `comps[diagramId]` array and renders the selected component. Calling as a plain function breaks Rules of Hooks silently or with cryptic errors.
 EVIDENCE: Architectural requirement discovered during Canvas 2D rewrite (2026-04-28).
@@ -333,7 +339,46 @@ IMPLICATION: Any future Canvas 2D diagram added to TourDiagram.js must follow th
 
 ---
 
+### Tour rebuilt as engine-real 5-act cinematic — visuals are now genuine engine output
+DATE: 2026-06-10
+CATEGORY: pattern
+APPLIES_TO: vlbi-react/ tour subsystem; simCore.js; simRender.js
+
+LEARNING: The guided tour was rebuilt (2fd3bea..64480e5) from 8 hand-drawn TourDiagram scenes into 5
+engine-driven acts (A–E). Every act's visual is real uvCompute/worker output. TourCard.js + TourDiagram.js
+DELETED. Architecture: Tour.js (host, presenter|guided mode) + tourActs.js (act schema as data) +
+tourScenes.js (registry) + sceneA–E.js + tourScene.js (canvas primitives) + tourAnnotations.js + TourEquation.js
+(KaTeX) + TourSpine.js (real-UV progress). Phase 0 added pure simCore.js (runReconstruction + scaleSource/
+buildSefdMap/computeDynamicRange/beamFwhm/angularRes) and simRender.js (drawContour/drawHot), extracted
+behavior-neutrally from useSimulation/ContourMap/ImageCanvas (which import them back). worker.js gained
+opt-in progressEvery for Act C's live CLEAN sparkline. The full architecture + the projector-TODO are in
+the project memory file `tour-engine-real-architecture.md` and `.workflows/_system/TOUR-ENGINE-AUDIT.md`.
+EVIDENCE: 12 quality gates verified on a fresh port; app reconstructs unchanged (G12). Screenshots of all
+5 acts confirmed real coverage/dirty-beam/CLEAN/photo+reconstruction/BHEX coverage.
+IMPLICATION: When working on the tour, edit the new files — TourDiagram/TourCard are gone. Scenes are plain
+objects (no hooks). runReconstruction transfers grayscale.buffer (pass a slice). Keep the worker import-free
+and progressEvery opt-in. Re-verify G12 after touching the simCore/simRender consumers.
+
+---
+
+### Tour engine timing measured at N=512 (Phase-0 gate) — CLEAN is live-capable
+DATE: 2026-06-10
+CATEGORY: pattern
+APPLIES_TO: vlbi-react/js/worker.js, simCore.js; Harvard talk prep
+
+LEARNING: Measured on the dev machine (Chromium, 10-core, N=512, EHT 2017 + black-hole.png):
+computeUVPoints 0.5 ms · dirty 41 ms · CLEAN 97.5 ms · MEM 2350 ms (recorded in TOUR-ENGINE-AUDIT.md §2).
+CLEAN < 300 ms ⇒ Act C recomputes live in both presenter and guided modes; MEM is guided-only on-input.
+IMPLICATION: ⚠ This is dev-hardware. Re-run the gate on the actual projector-class laptop before the talk
+(CPU-bound JS — single-thread clock dominates, GPU irrelevant). If CLEAN exceeds 300 ms there, flip
+presenter-mode Act C to precomputed playback of cached real frames (the never-stall timeout→cache fallback
+in sceneC.js already exists). Supersedes the older "N=512 ~414ms CLEAN" benchmark for the tour's purposes
+(same order of magnitude; the new number is per-call-worker-inclusive).
+
+---
+
 ## Last Updated
+2026-06-10 — Tour engine-real rebuild: new 5-act architecture + simCore/simRender + measured timing memories added; TourDiagram Canvas-2D memories marked superseded
 2026-04-28 — Canvas 2D rewrite: TourDiagram SVG pattern updated to obsolete, Canvas 2D patterns added
 2026-04-26 — Tour Art Pass: SVG filter scoping pattern, transform-box pattern added
 2026-04-26 — Tour Cinematic Rewrite: animPhase pattern, stale "12 act" references corrected to 8 acts

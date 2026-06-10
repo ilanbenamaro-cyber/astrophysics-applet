@@ -108,7 +108,29 @@
 > physics a NO-OP (25 μas/10,883 km/2√27 intact), 0 HUD frames, 8 RAF cleanups + 8 reduced-motion
 > gates. Tour now indistinguishable from the app in chrome/type/colour/spacing. NOT yet merged to main.
 
-**ALL PLANNED SESSIONS COMPLETE — S1 through P3 + Tour Cinematic Rewrite + Tour Art Passes + Canvas 2D Rewrite + Tour World-Class Overhaul + Tour Apple-Precision Overhaul + Tour Design-Language Conformance**
+**Tour Engine-Real Rebuild: COMPLETE** — committed 2026-06-10 (feature/tour-world-class-overhaul, 8 commits, NOT merged to main)
+> The tour was rebuilt so EVERY act is a real, engine-driven instrument (genuine uvCompute/worker output),
+> not a hand-drawn illustration. 5 acts (A Resolution, B Synthesized Aperture, C From Data to Image,
+> D First Light, E Beyond Earth) replace the 8 Canvas-2D TourDiagram scenes. **TourCard.js + TourDiagram.js
+> DELETED** (1,697 lines). Preceded by a read-only feasibility audit (`.workflows/_system/TOUR-ENGINE-AUDIT.md`).
+> Phase 0 `2fd3bea` (behavior-neutral): new `simCore.js` (runReconstruction owns its own worker per call +
+> scaleSource/buildSefdMap/buildPairSefdMap/computeDynamicRange/beamFwhm/angularRes) and `simRender.js`
+> (drawContour/drawHot) extracted from useSimulation/ContourMap/ImageCanvas, which import them back; worker.js
+> gained opt-in `progressEvery`. TIMING GATE measured (TOUR-ENGINE-AUDIT.md §2, N=512 dev): computeUVPoints
+> 0.5ms, dirty 41ms, CLEAN 98ms, MEM 2350ms → Act C runs CLEAN live in both modes.
+> Phase 1 `8b0466d`: Tour.js host — presenter|guided mode (?mode=presenter / 'P', default guided), visual→ready
+> scene RAF, KaTeX live equations (TourEquation.js, fallback to plain tex), narrative-tier switcher, real-UV
+> progress spine (TourSpine.js), pointer→scene forwarding. New tourActs.js (act schema as data), tourScenes.js
+> (registry + generic real fallback), tourScene.js (canvas primitives), tourAnnotations.js (physics annotations
+> drawn ON the canvas). Phase 2: sceneB `170b7c6` (flagship — live HA-scrub ellipse), sceneA `22ae0e3` (real
+> EHT dirty beam vs one-dish blur), sceneC `31f7c38` (real CLEAN + live residual sparkline, DR matches app),
+> sceneD `0d39bac` (real M87 photo + own reconstruction), sceneE `facf32e` (real BHEX ground–space coverage +
+> handoff). Cleanup `64480e5`: TourCard/TourDiagram removed. All 12 quality gates verified on a fresh port in
+> both modes; the live app reconstructs unchanged (G12). Numbers via tourPhysics.js, colours via tourTokens.js,
+> visual law via DESIGN-LANGUAGE.md — all preserved. The tour never mutates app state mid-act (Skip/Esc
+> preserves pre-tour state for free; only Act E's "Enter the simulator" dispatches loadEHT).
+
+**ALL PLANNED SESSIONS COMPLETE — S1 through P3 + Tour Cinematic Rewrite + Tour Art Passes + Canvas 2D Rewrite + Tour World-Class Overhaul + Tour Apple-Precision Overhaul + Tour Design-Language Conformance + Tour Engine-Real Rebuild**
 
 ---
 
@@ -140,7 +162,11 @@ Push to `main` → live within ~60 seconds.
 
 **2. IMAGE_SIZE = N** — RESOLVED for N=512. N=512 benchmarked at 414–690ms CLEAN (acceptable for demo). IMAGE_SIZE is now permanently 512 in constants.js. N=1024 question deferred to Alejandro meeting — only needed if beam must reach 8+ pixels at M87* physical scale.
 
-**No current blockers** — All S1–S12 features complete and live.
+**3. Tour projector timing — OPEN (soft, before the talk).** The engine-real tour's Act C runs CLEAN live in both modes because the dev-machine gate measured CLEAN ≈ 98 ms (< 300 ms). This must be re-measured on the actual projector-class laptop (CPU-bound JS). If CLEAN > 300 ms there, switch presenter-mode Act C to precomputed playback of cached real frames (the never-stall timeout→cache fallback in sceneC.js already exists). Numbers + decision rule in TOUR-ENGINE-AUDIT.md §2.
+
+**4. feature/tour-world-class-overhaul NOT merged to main — OPEN.** The entire tour overhaul (world-class → apple-precision → design-language → engine-real rebuild) lives on this branch and is NOT yet live. Merge/push to main to deploy. Recommend a demo/sign-off with Alejandro first.
+
+**No code blockers** — simulator + engine-real tour are feature-complete on the branch.
 
 ---
 
@@ -172,17 +198,14 @@ Full VLBI simulation pipeline — S1 through S12c complete:
 
 ## WHAT TO DO NEXT
 
-All S1–S12 + P1/P2/P3 are complete. The simulator is feature-complete for the Harvard EHT talk.
+The simulator AND the engine-real tour are feature-complete on `feature/tour-world-class-overhaul`.
 
-1. **Demo session with Prof. Cárdenas-Avendaño** — walk through tour (8 acts, cinematic), compare mode (EHT 2017 vs ngEHT Phase 1), metrics panel, SNR color coding.
-2. **Harvard EHT talk preparation** — prepare a reference screenshot of compare mode: EHT 2017 (left) vs ngEHT Phase 1 (right), both CLEAN on M87* at 230 GHz.
-3. **Future enhancements** (no specific session planned):
-   - Multi-component sources (model with multiple point sources or Gaussians)
-   - Dynamic source structure (accretion disk animation)
-   - Frequency-dependent source size (spectral index)
-   - Re-expose Export FITS button (code in fitsExport.js is intact — just needs button in ContourMap or toolbar)
-   - These all require Alejandro sign-off before implementation.
-4. **Knowledge base is current as of 2026-04-26** — synced post Tour Cinematic Rewrite.
+1. **⚠ Re-run the tour timing gate on the projector laptop** before the talk (Blocker #3). If CLEAN > 300 ms there, flip presenter-mode Act C to cached-frame playback.
+2. **Demo session with Prof. Cárdenas-Avendaño** — walk through the new engine-real tour (5 acts A–E, presenter mode via ?mode=presenter), compare mode (EHT 2017 vs ngEHT Phase 1), metrics panel. Confirm the BHEX "characteristic ~ R⊕+h · pending sign-off" framing in Act E with Marrone/Alejandro.
+3. **Merge `feature/tour-world-class-overhaul` → main** (Blocker #4) to deploy the tour overhaul. Nothing on this branch is live yet.
+4. **Harvard EHT talk preparation** — presenter-mode tour for the talk; a reference compare-mode screenshot (EHT 2017 vs ngEHT Phase 1, both CLEAN on M87* @ 230 GHz).
+5. **Future enhancements** (no specific session planned; all require Alejandro sign-off): multi-component sources; dynamic source structure; frequency-dependent source size; re-expose Export FITS button.
+6. **Knowledge base is current as of 2026-06-10** — synced post Tour Engine-Real Rebuild.
 
 ---
 
@@ -200,16 +223,23 @@ All S1–S12 + P1/P2/P3 are complete. The simulator is feature-complete for the 
 ## LAST SIGNIFICANT COMMITS
 
 ```
-bed2d45  feat(vlbi-react): tour — canvas 2D cinematic rewrite
-467b979  feat(vlbi-react): tour art pass — Smithsonian quality (documentary animation, one motion per act, museum pacing)
-42e3b67  chore: sync knowledge files post-session 2026-04-26
-614932a  feat(vlbi-react): tour art pass — bloom filters, star fields, painted Earth, sidelobe→photon transformation, BHEX data beam, luminous CTA
-f12d196  fix(vlbi-react): tour layout — visual top 68vh, text panel bottom, zero overlap
-bb81ed1  chore: sync knowledge files post-session 2026-04-26
-d3b13b0  feat(vlbi-react): cinematic 8-act tour — full rewrite
-2c9f59b  fix(vlbi-react): tour diagram fixes — elliptic UV arcs, grid world map, CLEAN animation
-8eb63cb  feat(vlbi-react): tour diagram upgrade — richer SVG, more math, 700×500 viewBox, no text overlaps
+64480e5  chore(vlbi-react): tour — retire hand-drawn TourCard/TourDiagram
+facf32e  feat(vlbi-react): tour Act E — Beyond Earth & the Instrument (real BHEX coverage)
+0d39bac  feat(vlbi-react): tour Act D — First Light (real photo + own reconstruction)
+31f7c38  feat(vlbi-react): tour Act C — From Data to Image (real CLEAN pipeline)
+22ae0e3  feat(vlbi-react): tour Act A — Resolution (engine-real dirty beam)
+170b7c6  feat(vlbi-react): tour Act B — The Synthesized Aperture (engine-real)
+8b0466d  feat(vlbi-react): tour Phase 1 — engine-real act framework
+2fd3bea  feat(vlbi-react): tour Phase 0 — simCore/simRender extraction + timing gate
+2abace3  chore: sync knowledge — tour design-language conformance (pass 3)
+1051e69  feat(vlbi-react): tour C-5 — re-skin d05 + d08 to site palette + Phase D gates
 ```
+
+Files in Tour Engine-Real Rebuild (2fd3bea..64480e5):
+- NEW: `vlbi-react/js/simCore.js`, `simRender.js`, `tourActs.js`, `tourScenes.js`, `tourScene.js`, `tourAnnotations.js`, `sceneA.js`, `sceneB.js`, `sceneC.js`, `sceneD.js`, `sceneE.js`, `TourEquation.js`, `TourSpine.js`; `.workflows/_system/TOUR-ENGINE-AUDIT.md`
+- REWRITTEN: `vlbi-react/js/Tour.js`; `vlbi-react/css/tour.css` (+engine-tour chrome)
+- BEHAVIOR-NEUTRAL EDITS: `useSimulation.js`, `ContourMap.js`, `ImageCanvas.js` (import simCore/simRender back), `worker.js` (+opt-in progressEvery)
+- DELETED: `vlbi-react/js/TourCard.js`, `vlbi-react/js/TourDiagram.js`
 
 Files modified in Tour Art Pass (614932a):
 - `vlbi-react/js/TourDiagram.js` — complete rewrite of d01()–d08(): color constants, STARS[180] array, bloom filter defs (diagram-scoped), metallic dishes, painted Earth spheres, continent outlines, 9 stations (d04), sidelobe→photon transformation (d05), BHEX data beam + 3-layer star field (d07), luminous CTA (d08)

@@ -422,7 +422,9 @@ NOTE: This was an intermediate state. The 12-act tour was further refined in thi
 DATE: 2026-04-26
 LAST_VERIFIED: 2026-04-26
 EXPIRES: NEVER
-STATUS: ACTIVE
+STATUS: SUPERSEDED 2026-06-10 — see "Tour rebuilt: 5 engine-real acts" above. The 8-act count, animPhase
+        three-state machine, chapter cards, and TourCard/TourDiagram are all gone. The Tour exported
+        signature + autoAction contract it established is preserved by the rebuild.
 
 DECISION: Tour fully rewritten to 8 acts across 3 chapters: Ch I The Problem (acts 1–2), Ch II The Solution (acts 3–5), Ch III The Frontier (acts 6–8). animPhase 3-state machine: 'visual' (SVG animation plays, → arrow disabled) → 'text' (paragraphs reveal 1/800ms, → skips to 'ready') → 'ready' (continue hint pulses, → advances). Chapter title cards (2.2s overlay) appear before acts at actIndex 2 and 5. Tour.js holds all 3 timers as refs (animTimerRef, textTimerRef, chapterTimerRef); all cleared + setChapterCard(false) at the top of every actIndex effect. TourCard.js: visibleCount driven by a single consolidated useEffect (not two separate effects — prevents flash on visual→ready transitions). TourDiagram.js: 8 SVG functions d01()–d08(), viewBox 1200×700, #010103 bg. Real EHT M87* JPEG (assets/eht-m87-2019.jpg, 36KB) used in Act 6 via href="../assets/eht-m87-2019.jpg". Deep-space visual language: gold equations (#FFD700), teal data (#4ecdc4), dark backgrounds. Tour App.js contract unchanged (exported function signature, autoAction types).
 RATIONALE: 12-act tour was too long for a live EHT demo. 8 acts covers the complete physics story (single dish → UV sampling → aperture synthesis → EHT → deconvolution → first light → BHEX → simulator) without overrunning attention. The animPhase machine gives each act a cinematic rhythm matching how planetarium shows and science films present concepts: visual first, then prose, then advance. Three explicit timer refs with clearTimeout at effect start prevents stale overlapping timers when the user navigates quickly between acts.
@@ -461,7 +463,9 @@ TRIGGERS_REVIEW_IF: Tour diagrams are refactored into individual files and each 
 DATE: 2026-04-26
 LAST_VERIFIED: 2026-04-26
 EXPIRES: NEVER
-STATUS: ACTIVE
+STATUS: SUPERSEDED 2026-06-10 — TourDiagram.js (incl. d05) deleted in the engine-real rebuild. The
+        deconvolution concept now lives in sceneC.js as a REAL CLEAN run (dirty→restored, live residual
+        sparkline), not a drawn transformation.
 
 DECISION: Act 5 (CLEAN deconvolution) replaced the scrubber-wipe animation (a rect sliding over a dirty/CLEAN two-panel layout) with a single-canvas transformation: 5 concentric rings (sl-ring-1..5) fade out in staggered sequence via `sidelobeRingFade1–5` keyframes, a gold photon ring emerges via `photonRingReveal`, a black interior appears via `shadowReveal`, and the label transitions from "Dirty Image" (`labelDirtyFade`) to "CLEAN Image" (`labelCleanFade`). All centered at cx=600, cy=330.
 RATIONALE: The scrubber wipe was visually flat and didn't convey the physics of deconvolution. The sidelobe→photon-ring transformation visually encodes the key concept: CLEAN removes sidelobes and reveals the true photon ring structure. Five staggered rings give a sense of layers being peeled away. The single-canvas approach avoids the geometry coupling between SVG coordinates and CSS translateX distance that caused gotcha #d05-scrubber.
@@ -487,7 +491,10 @@ TRIGGERS_REVIEW_IF: A new tour act is added (must define exactly one teaching mo
 DATE: 2026-04-28
 LAST_VERIFIED: 2026-04-28
 EXPIRES: NEVER
-STATUS: ACTIVE
+STATUS: SUPERSEDED 2026-06-10 — TourDiagram.js deleted in the engine-real rebuild. The Canvas-2D-with-RAF
+        technique CARRIES FORWARD though: the new per-act scenes (sceneA–E.js) use the same single-canvas
+        RAF pattern (setupCanvas at offsetWidth×dpr, cancelAnimationFrame on unmount, reduced-motion final
+        frame) via tourScene.js — now drawing REAL engine output instead of illustrations.
 
 DECISION: TourDiagram.js fully rewritten from SVG/htm template literals to Canvas 2D `requestAnimationFrame` loops. d01–d08 are React components rendered via `html\`<${Comp} reducedMotion=${reducedMotion}/>\`` — never called as plain functions. Each uses `useRef` + `useEffect` with mandatory `cancelAnimationFrame` cleanup. `reducedMotion=true` draws T=999 static frame without starting RAF.
 RATIONALE: SVG filters cannot achieve additive blending (`ctx.globalCompositeOperation='screen'`), multi-pass glow rendering, organic bezier terrain, or per-pixel diffraction spikes. Canvas 2D can. The design requires: three-pass glow system, chromatic aberration bloom for unresolved sources, 6-spike diffraction for resolved sources, animated star field with twinkle and diffraction spikes for bright stars, Atacama terrain with organic bezier curves. None of these are achievable at quality in SVG without heavy filter chains that break in Safari and fight the browser compositor.
@@ -553,6 +560,89 @@ ALTERNATIVES_REJECTED: aspiration-driven restyling (unmeasurable, the root cause
 palette in the tour (drifts from the app); a separate tour theme (the goal is one product).
 TRIGGERS_REVIEW_IF: the app's `:root` tokens change meaningfully (tourTokens fallbacks should be
 updated to match); a deliberate decision to give the tour its own identity (would supersede this).
+
+---
+
+### Tour rebuilt: 5 engine-real acts (supersedes the 8-act Canvas-2D tour)
+DATE: 2026-06-10
+LAST_VERIFIED: 2026-06-10
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: The guided tour is rebuilt so EVERY act is a real, engine-driven instrument — genuine
+uvCompute/worker output rendered on a canvas — not a hand-drawn illustration. 5 acts (A Resolution,
+B Synthesized Aperture, C From Data to Image, D First Light, E Beyond Earth) replace the 8 hand-drawn
+TourDiagram scenes. `TourCard.js` and `TourDiagram.js` (1,697 lines) were DELETED. New architecture:
+`Tour.js` host + `tourActs.js` (act schema as data) + `tourScenes.js` (registry SCENES[actId]) + per-act
+`sceneA–E.js` + `tourScene.js` (canvas primitives) + `tourAnnotations.js` (physics annotations drawn ON
+the canvas) + `TourEquation.js` (KaTeX) + `TourSpine.js` (real-UV progress). The Tour exported signature,
+App.js wiring, and autoAction types are UNCHANGED. Build order was B first (flagship, pure geometry);
+presentation order is A→E. Preceded by the feasibility audit `.workflows/_system/TOUR-ENGINE-AUDIT.md`.
+RATIONALE: the prior tour's NUMBERS were already engine-real (tourPhysics.js) but its VISUALS were
+illustration — it never called computeUVPoints or the worker. The audit found the engine could drive the
+tour for real at small refactor cost (the worker is a classic, non-singleton module — App.js already runs
+two). "Impressive because it is real" beats decorative. ~5 deep instruments beat 8 shallow ones (audit §4.1).
+The tour never mutates app state mid-act (hosts its own canvases), so a stranger's pre-tour state is
+preserved on Skip/Esc for free; only Act E's "Enter the simulator" dispatches loadEHT (deliberate handoff).
+ALTERNATIVES_REJECTED: keeping the 8-act Canvas-2D illustrations (the thing being replaced); a spotlight/
+overlay of the live app's panels (master prompt §6 — the tour is a standalone cinematic, not a tooltip tour);
+two separate builds for talk vs site (one mode flag is simpler — see dual-venue decision).
+CONSEQUENCES: supersedes "Tour: 8-act cinematic", "TourDiagram.js: Canvas 2D", "d05 sidelobe→photon-ring",
+and "SVG bloom filter architecture" decisions below (all TourDiagram-specific; TourDiagram is gone).
+tourPhysics.js (numbers), tourTokens.js (colours), DESIGN-LANGUAGE.md (visual law) remain the SSOTs and
+govern the new tour unchanged. Branch feature/tour-world-class-overhaul — NOT yet merged to main.
+TRIGGERS_REVIEW_IF: an act needs WebGL/3D (that scene could use a Three.js canvas while others stay 2D);
+the act count needs to change (the count must fall out of what can be made real, not the reverse).
+
+---
+
+### Phase 0: simCore.js / simRender.js extraction — behavior-neutral, hook dispatch unchanged
+DATE: 2026-06-10
+LAST_VERIFIED: 2026-06-10
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: The reconstruction pipeline and renderers were lifted into pure modules so tour acts can drive
+them without React. `simCore.js`: `runReconstruction(grayscale,uvPoints,params,onProgress?)` owns its OWN
+classic worker per call and resolves a Promise; plus scaleSource, buildSefdMap/buildPairSefdMap,
+computeDynamicRange, beamFwhm, angularRes. `simRender.js`: drawContour, drawHot (+ CONTOUR_LEVELS, fmtVal).
+useSimulation.js, ContourMap.js, ImageCanvas.js import them back — net behavior identical. CRITICALLY, the
+hook's **persistent-worker dispatch effect was left UNCHANGED**: only the pure useMemo bodies now call the
+extracted functions. runReconstruction (per-call worker) is for the acts + the timing gate, not the hook.
+RATIONALE: "behavior-neutral" was the higher-priority constraint. Rewiring the hook to runReconstruction's
+per-call worker would change worker lifecycle and lose the stale-request-id ordering of the existing
+debounced dispatch — a real behavior change. The worker being non-singleton (App.js already runs left+right)
+is what makes per-call workers safe for the acts. runReconstruction TRANSFERS grayscale.buffer (zero-copy,
+matches the app) — callers pass a fresh `.slice()`.
+ALTERNATIVES_REJECTED: rewiring the hook to use runReconstruction (alters lifecycle + stale-result handling);
+duplicating the pipeline logic in the tour (drift from the tool — the whole point is shared truth).
+TRIGGERS_REVIEW_IF: the app is permanently served over HTTP and module workers become viable (could unify).
+
+---
+
+### Tour dual-venue: one build, presenter|guided flag; Act C live per timing gate; worker progressEvery opt-in
+DATE: 2026-06-10
+LAST_VERIFIED: 2026-06-10
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: One tour build serves both venues via a `mode: 'presenter' | 'guided'` flag (`?mode=presenter`
+URL param or the 'P' key; default guided). presenter = minimal text (headline + live equation), advance on
+cue; guided = narrative-tier switcher (artist/scientist/layperson), self-paced, interactive affordances.
+Act C's architecture was decided by the Phase-0 timing gate (recorded in TOUR-ENGINE-AUDIT.md §2): measured
+CLEAN ≈ 98 ms at N=512 (< 300 ms threshold) ⇒ CLEAN recomputes LIVE in both modes; MEM (2350 ms) is
+guided-only on-input. The worker gained an OPT-IN `params.progressEvery` that posts {type:'progress',iter,
+residual} from the CLEAN loop (powers Act C's live residual sparkline); absent flag ⇒ byte-identical output,
+no imports added (classic worker preserved).
+RATIONALE: the engine is identical for both venues; only text density, pacing, and the heavy-compute path
+differ — a single flag is cheaper than two builds. The timing gate converts the live-vs-precomputed Act C
+question from a guess into a measured decision.
+ALTERNATIVES_REJECTED: two separate builds (double maintenance for one differing compute); precomputed Act C
+playback in all cases (unnecessary — CLEAN is fast enough to be live on dev hardware).
+CRITICAL / ⚠ HUMAN TODO: re-run the timing gate on the actual projector-class laptop before the Harvard talk.
+If CLEAN there exceeds 300 ms, switch presenter-mode Act C to precomputed playback of cached real frames
+(the never-stall timeout→cache fallback already exists in sceneC). BHEX baseline relation stays hedged.
+TRIGGERS_REVIEW_IF: projector timing shows CLEAN > 300 ms; a third venue/mode is needed.
 
 ---
 
