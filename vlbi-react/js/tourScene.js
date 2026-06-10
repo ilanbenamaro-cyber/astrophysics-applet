@@ -5,6 +5,25 @@
 // tour follows the app's theme + a11y), all geometry from uvCompute.js.
 import { TOKENS } from './tourTokens.js';
 import { latLonToECEF } from './uvCompute.js';
+import { TELESCOPE_COLORS } from './constants.js';
+
+// Turn an ARRAY_PRESETS station list into the engine's {id,name,lat,lon,color,visible}
+// shape (same mapping useSimulation.loadEHTPresets uses). Optional satellite appended.
+export function toTelescopes(stations, satellite) {
+  const tels = stations.map((s, idx) => ({
+    id: idx, name: s.name, lat: s.lat, lon: s.lon,
+    color: TELESCOPE_COLORS[idx % TELESCOPE_COLORS.length], visible: true,
+  }));
+  if (satellite) tels.push({ id: tels.length, ...satellite, visible: true });
+  return tels;
+}
+
+// Max |u|,|v| extent (Gλ) × 1.2 — matches the app's UV auto-scale intent.
+export function uvExtentGl(pts) {
+  let m = 0;
+  for (const p of pts) m = Math.max(m, Math.abs(p.u), Math.abs(p.v));
+  return (m || 1) * 1.2;
+}
 
 // The site's single easing curve (DESIGN-LANGUAGE / master prompt). cubic-bezier(.25,.46,.45,.94).
 export function ease(t) {

@@ -45,6 +45,7 @@ export function Tour({ actIndex, onActChange, onClose, onTourAction, reducedMoti
   const dataRef    = useRef(null);
   const startRef   = useRef(0);
   const phaseTimer = useRef(null);
+  const sceneRef   = useRef(null);
   const phaseRef   = useRef(phase);
   useEffect(() => { phaseRef.current = phase; }, [phase]);
 
@@ -57,6 +58,7 @@ export function Tour({ actIndex, onActChange, onClose, onTourAction, reducedMoti
     phaseRef.current = 'visual';
     dataRef.current = null;
     const scene = getScene(act.actId);
+    sceneRef.current = scene;
     const frameBase = { mode, reducedMotion };
     const computeBacked = act.transition === 'computation-complete';
     if (computeBacked) setComputing(true);
@@ -126,6 +128,33 @@ export function Tour({ actIndex, onActChange, onClose, onTourAction, reducedMoti
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [actIndex, phase, mode]);
+
+  // ── Pointer → scene (guided interactivity, e.g. Act B HA-scrub / dec-drag) ──
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const norm = (e) => {
+      const r = canvas.getBoundingClientRect();
+      return { nx: (e.clientX - r.left) / r.width, ny: (e.clientY - r.top) / r.height };
+    };
+    const send = (type) => (e) => {
+      const scene = sceneRef.current, data = dataRef.current;
+      if (!scene || !scene.onPointer || !data) return;
+      const { nx, ny } = norm(e);
+      scene.onPointer(data, { type, nx, ny, mode, phase: phaseRef.current });
+    };
+    const onMove = send('move'), onDown = send('down'), onUp = send('up'), onLeave = send('leave');
+    canvas.addEventListener('pointermove', onMove);
+    canvas.addEventListener('pointerdown', onDown);
+    canvas.addEventListener('pointerup', onUp);
+    canvas.addEventListener('pointerleave', onLeave);
+    return () => {
+      canvas.removeEventListener('pointermove', onMove);
+      canvas.removeEventListener('pointerdown', onDown);
+      canvas.removeEventListener('pointerup', onUp);
+      canvas.removeEventListener('pointerleave', onLeave);
+    };
+  }, [mode]);
 
   const progressPct = total > 1 ? (actIndex / (total - 1)) * 100 : 100;
   const nextLabel = phase === 'visual' ? '…' : isLast ? 'Enter the simulator →' : 'Continue →';

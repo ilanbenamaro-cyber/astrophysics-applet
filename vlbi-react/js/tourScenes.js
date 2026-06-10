@@ -4,28 +4,9 @@
 // The host (Tour.js) looks up SCENES[actId]; acts without a bespoke scene fall back to
 // genericScene, which still renders REAL coverage (never a fake). Phase 2 fills SCENES.
 import { computeUVPointsGl, computeUVFill, computeUVPoints } from './uvCompute.js';
-import { TELESCOPE_COLORS } from './constants.js';
-import { setupCanvas, clearScene, makeStars, drawStarfield, drawUVAxes, beatT } from './tourScene.js';
+import { clearScene, makeStars, drawStarfield, drawUVAxes, beatT, toTelescopes, uvExtentGl } from './tourScene.js';
 import { drawUVPoints, drawFillGauge } from './tourAnnotations.js';
-import { TOKENS } from './tourTokens.js';
-
-// Turn an ARRAY_PRESETS station list into the {id,name,lat,lon,color,visible} shape the
-// engine expects (same mapping useSimulation.loadEHTPresets uses).
-export function toTelescopes(stations, satellite) {
-  const tels = stations.map((s, idx) => ({
-    id: idx, name: s.name, lat: s.lat, lon: s.lon,
-    color: TELESCOPE_COLORS[idx % TELESCOPE_COLORS.length], visible: true,
-  }));
-  if (satellite) tels.push({ id: tels.length, ...satellite, visible: true });
-  return tels;
-}
-
-// Max |u|,|v| extent (Gλ) × 1.2, matching the app's UV auto-scale intent.
-export function uvExtentGl(pts) {
-  let m = 0;
-  for (const p of pts) { m = Math.max(m, Math.abs(p.u), Math.abs(p.v)); }
-  return (m || 1) * 1.2;
-}
+import { sceneB } from './sceneB.js';
 
 // ── Generic real scene (fallback) ───────────────────────────────────────────────
 const genericScene = {
@@ -55,8 +36,10 @@ const genericScene = {
   },
 };
 
-// Bespoke scenes register here in Phase 2 (SCENES.B = ..., etc.).
-export const SCENES = {};
+// Bespoke scenes register here in Phase 2.
+export const SCENES = {
+  B: sceneB,
+};
 
 export function getScene(actId) {
   return SCENES[actId] || genericScene;
