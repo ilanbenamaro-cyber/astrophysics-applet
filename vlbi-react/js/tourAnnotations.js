@@ -160,6 +160,14 @@ export function drawResidualSparkline(ctx, x, y, w, h, series, opts = {}) {
   ctx.font = mono(10, 600);
   ctx.textAlign = 'left';
   ctx.fillText(title.toUpperCase(), x + 10, y + 16);
+  if (!series || series.length < 2) {
+    // CLEAN stopped before its first subtraction: every residual peak was already
+    // below the 3σ noise floor. State it — an empty plot would read as a bug.
+    ctx.fillStyle = hexA(TOKENS.textSecondary, 0.75);
+    ctx.font = mono(10, 500);
+    ctx.textAlign = 'center';
+    ctx.fillText('no components above 3σ — noise-limited', x + w / 2, y + h / 2 + 8);
+  }
   if (series && series.length >= 2) {
     const r0 = Math.max(series[0].residual, 1e-9);
     const plot = series.map(s => Math.log10(Math.max(s.residual, 1e-9) / r0)); // ≤ 0
@@ -183,31 +191,8 @@ export function drawResidualSparkline(ctx, x, y, w, h, series, opts = {}) {
   ctx.restore();
 }
 
-// ── ConvolutionReveal ──────────────────────────────────────────────────────────
-// Act C intro: a real PSF (dirty-beam image) swept across the real source to show
-// I_D = I_sky ⊛ B_D. Caller supplies pre-rendered source + psf canvases (any colormap)
-// and a sweep fraction; we stamp the psf marker travelling left→right.
-export function drawConvolutionReveal(ctx, rect, sourceCanvas, psfCanvas, sweep, opts = {}) {
-  const { x, y, w, h } = rect;
-  ctx.save();
-  ctx.globalAlpha = 1;
-  if (sourceCanvas) ctx.drawImage(sourceCanvas, x, y, w, h);
-  const sx = x + ease(clamp01(sweep)) * w;
-  if (psfCanvas) {
-    const ps = Math.min(w, h) * 0.5;
-    ctx.globalAlpha = 0.55;
-    ctx.drawImage(psfCanvas, sx - ps / 2, y + h / 2 - ps / 2, ps, ps);
-    ctx.globalAlpha = 1;
-  }
-  ctx.strokeStyle = hexA(TOKENS.orange, 0.9);
-  ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(sx, y); ctx.lineTo(sx, y + h); ctx.stroke();
-  ctx.fillStyle = TOKENS.orange;
-  ctx.font = mono(11, 600);
-  ctx.textAlign = 'center';
-  ctx.fillText('B_D', sx, y - 6);
-  ctx.restore();
-}
+// (ConvolutionReveal was retired with Act C's pipeline restage — the causal
+//  sparse→dirty→CLEAN sequence replaced the swept-beam intro.)
 
 // rounded-rect path helper
 export function roundRect(ctx, x, y, w, h, r) {
