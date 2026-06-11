@@ -1,10 +1,9 @@
 // tourScene.js — shared canvas primitives for the engine-real tour acts.
-// Low-level only: DPR-correct canvas setup, the site easing curve, a starfield, a
-// shaded Earth model, and UV-plane axes. Higher-level physics annotations live in
-// tourAnnotations.js and build on these. All colour comes from tourTokens.js (so the
-// tour follows the app's theme + a11y), all geometry from uvCompute.js.
+// Low-level only: DPR-correct canvas setup, the site easing curve, a starfield,
+// ring-source sizing, and UV-plane axes. Higher-level physics annotations live in
+// tourAnnotations.js; the textured Earth lives in tourEarth.js. All colour comes
+// from tourTokens.js (so the tour follows the app's theme + a11y).
 import { TOKENS } from './tourTokens.js';
-import { latLonToECEF } from './uvCompute.js';
 import { TELESCOPE_COLORS } from './constants.js';
 
 // Turn an ARRAY_PRESETS station list into the engine's {id,name,lat,lon,color,visible}
@@ -129,78 +128,8 @@ export function drawStarfield(ctx, stars, T, alpha = 1) {
   ctx.restore();
 }
 
-// ── Earth model ─────────────────────────────────────────────────────────────────
-// A shaded sphere with a day/night terminator. `rotation` (rad) spins longitude.
-// Realistic blue ocean is on-brand for the globe specifically (DESIGN-LANGUAGE §1).
-export function drawEarth(ctx, cx, cy, r, rotation = 0, opts = {}) {
-  const { nightShade = TOKENS.cool } = opts;
-  ctx.save();
-  // Ocean sphere with subtle radial shade
-  const g = ctx.createRadialGradient(cx - r * 0.35, cy - r * 0.35, r * 0.1, cx, cy, r);
-  g.addColorStop(0, '#2a4a72');
-  g.addColorStop(0.7, '#1b3350');
-  g.addColorStop(1, '#0f1f33');
-  ctx.fillStyle = g;
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.fill();
-  // Night side wash (right limb)
-  const ng = ctx.createLinearGradient(cx, cy, cx + r, cy);
-  ng.addColorStop(0, 'rgba(0,0,0,0)');
-  ng.addColorStop(1, hexA(nightShade, 0.55));
-  ctx.fillStyle = ng;
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.fill();
-  // Limb
-  ctx.strokeStyle = hexA(TOKENS.textSecondary, 0.35);
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.stroke();
-  // Graticule (a few meridians/parallels for rotation cue)
-  ctx.strokeStyle = hexA('#5a7aa0', 0.18);
-  ctx.lineWidth = 0.75;
-  for (let m = 0; m < 6; m++) {
-    const lon = rotation + m * Math.PI / 6;
-    ctx.beginPath();
-    for (let k = 0; k <= 40; k++) {
-      const lat = -Math.PI / 2 + (k / 40) * Math.PI;
-      const p = sphereProject(cx, cy, r, lat, lon);
-      if (p.front) (k === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
-    }
-    ctx.stroke();
-  }
-  for (let pa = 1; pa < 4; pa++) {
-    const lat = -Math.PI / 2 + pa * Math.PI / 4;
-    ctx.beginPath();
-    let started = false;
-    for (let k = 0; k <= 60; k++) {
-      const lon = rotation + (k / 60) * Math.PI * 2;
-      const p = sphereProject(cx, cy, r, lat, lon);
-      if (p.front) { p.front && (started ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); started = true; }
-      else started = false;
-    }
-    ctx.stroke();
-  }
-  ctx.restore();
-}
-
-// Orthographic projection of (lat,lon) onto a sphere centered (cx,cy) radius r.
-// Viewer looks down +z; `front` is true when the point faces the viewer.
-export function sphereProject(cx, cy, r, lat, lon) {
-  const x = Math.cos(lat) * Math.sin(lon);
-  const y = Math.sin(lat);
-  const z = Math.cos(lat) * Math.cos(lon);
-  return { x: cx + r * x, y: cy - r * y, front: z >= 0, z };
-}
-
-// Place a station (deg lat/lon) on the drawn globe, with `rotation` applied.
-export function stationOnGlobe(cx, cy, r, latDeg, lonDeg, rotation) {
-  const lat = latDeg * Math.PI / 180;
-  const lon = lonDeg * Math.PI / 180 + rotation;
-  return sphereProject(cx, cy, r, lat, lon);
-}
+// (The hand-drawn Earth model that lived here was retired in the polish pass —
+//  Acts B & E now reuse the main page's textured Three.js globe via tourEarth.js.)
 
 // ── UV-plane axes ─────────────────────────────────────────────────────────────
 // Draws centered axes for a UV panel of half-extent `maxGl` gigawavelengths into the

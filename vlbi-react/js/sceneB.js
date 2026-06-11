@@ -9,7 +9,8 @@ import { computeBaseline, baselineToUV, computeElevation, MIN_ELEVATION_RAD,
          computeUVPointsGl, computeUVPoints, computeUVFill } from './uvCompute.js';
 import { TOUR_PHYSICS as P } from './tourPhysics.js';
 import { TOKENS } from './tourTokens.js';
-import { clearScene, makeStars, drawStarfield, drawEarth, stationOnGlobe,
+import { getTourEarth } from './tourEarth.js';
+import { clearScene, makeStars, drawStarfield,
          drawUVAxes, beatT, ease, clamp01, hexA, toTelescopes, uvExtentGl } from './tourScene.js';
 import { drawBaselineVector, drawUVTrace, drawUVPoints, drawFillGauge,
          drawResolutionCallout } from './tourAnnotations.js';
@@ -55,8 +56,12 @@ export const sceneB = {
       fovMuas: params.fovMuas, N: 512,
     }).uvPoints;
 
+    // The main page's textured globe, read-only, with this act's stations marked.
+    const earth = getTourEarth();
+    earth.setStations(tels);
+
     return {
-      tels, t1, t2, baselineKm, params,
+      tels, t1, t2, baselineKm, params, earth,
       pairTrack, uvGl, maxGl: uvExtentGl(uvGl), fillPct: computeUVFill(uvPx, 512),
       scrub: { active: false, haFrac: 0.5, decDeg: params.decDeg },
       scrubTrack: pairTrack, scrubDec: params.decDeg,
@@ -94,23 +99,16 @@ export const sceneB = {
     const headIdx = track.length ? Math.max(0, Math.min(track.length - 1, Math.floor(track.length * headFrac))) : 0;
     const rotation = track.length ? track[headIdx].H : 0;
 
-    // ── Earth + stations ──
-    drawEarth(ctx, gcx, gcy, gR, rotation);
-    const p1 = stationOnGlobe(gcx, gcy, gR, data.t1.lat, data.t1.lon, rotation);
-    const p2 = stationOnGlobe(gcx, gcy, gR, data.t2.lat, data.t2.lon, rotation);
-    // other stations fade in for beat 3
-    if (b3 > 0) {
-      ctx.save();
-      for (const t of data.tels) {
-        if (t === data.t1 || t === data.t2) continue;
-        const p = stationOnGlobe(gcx, gcy, gR, t.lat, t.lon, rotation);
-        if (!p.front) continue;
-        ctx.globalAlpha = b3 * 0.9;
-        ctx.fillStyle = hexA(t.color, 0.9);
-        ctx.beginPath(); ctx.arc(p.x, p.y, 2.4, 0, Math.PI * 2); ctx.fill();
-      }
-      ctx.restore();
-    }
+    // ── Earth + stations (the main page's textured globe, read-only) ──
+    const earth = data.earth;
+    const eScale = gR / earth.radiusPx;
+    const eHalf = (earth.SIZE / 2) * eScale;
+    ctx.drawImage(earth.render(rotation), gcx - eHalf, gcy - eHalf,
+                  earth.SIZE * eScale, earth.SIZE * eScale);
+    const mapE = (q) => ({ x: gcx + (q.x - earth.SIZE / 2) * eScale,
+                           y: gcy + (q.y - earth.SIZE / 2) * eScale, front: q.front });
+    const p1 = mapE(earth.project(data.t1.lat, data.t1.lon, rotation));
+    const p2 = mapE(earth.project(data.t2.lat, data.t2.lon, rotation));
     if (p1.front && p2.front) drawBaselineVector(ctx, p1, p2, data.baselineKm,
       { showLabel: !reducedMotion, label: `|B| ${data.t1.name}–${data.t2.name}` });
     // pair station labels

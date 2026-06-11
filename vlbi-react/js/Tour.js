@@ -16,6 +16,7 @@ import { getScene } from './tourScenes.js';
 import { setupCanvas } from './tourScene.js';
 import { LiveEquation } from './TourEquation.js';
 import { MiniUVSpine } from './TourSpine.js';
+import { disposeTourEarth } from './tourEarth.js';
 
 function initialMode() {
   try {
@@ -41,6 +42,10 @@ export function Tour({ actIndex, onActChange, onClose, onTourAction, reducedMoti
   const sceneRef   = useRef(null);
   const phaseRef   = useRef(phase);
   useEffect(() => { phaseRef.current = phase; }, [phase]);
+
+  // The textured tour Earth is a module singleton shared by Acts B and E;
+  // release its WebGL context when the tour itself closes.
+  useEffect(() => () => disposeTourEarth(), []);
 
   // ── Scene lifecycle: init (maybe async) → RAF draw → reveal text ──
   useEffect(() => {

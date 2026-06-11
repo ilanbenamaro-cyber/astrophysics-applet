@@ -9,7 +9,8 @@ import { computeUVPointsGl, computeSatelliteECEF } from './uvCompute.js';
 import { BHEX_PRESET } from './constants.js';
 import { TOUR_PHYSICS as P } from './tourPhysics.js';
 import { TOKENS } from './tourTokens.js';
-import { clearScene, makeStars, drawStarfield, drawEarth, drawUVAxes,
+import { getTourEarth } from './tourEarth.js';
+import { clearScene, makeStars, drawStarfield, drawUVAxes,
          beatT, ease, clamp01, hexA, toTelescopes, uvExtentGl } from './tourScene.js';
 import { drawUVPoints, drawResolutionCallout, roundRect } from './tourAnnotations.js';
 
@@ -38,8 +39,12 @@ export const sceneE = {
     const uvSpace = uvAll.filter(p => p.pairId && p.pairId.startsWith(satId + '-'))
                          .map(p => ({ u: p.u, v: p.v }));
 
+    // Textured read-only Earth (main-page look) with the ground array marked.
+    const earth = getTourEarth();
+    earth.setStations(ground);
+
     return {
-      uvGround, uvSpace, satellite,
+      uvGround, uvSpace, satellite, earth,
       groundMax: maxExtent(uvGround),
       maxGl: uvExtentGl(uvAll),
       _stars: null,
@@ -110,10 +115,14 @@ export const sceneE = {
       }
     }
 
-    // ── Mini Earth + orbiting BHEX (left) ──
+    // ── Mini Earth + orbiting BHEX (left) — main-page textured globe, read-only ──
     const gR = Math.min(h * 0.16, w * 0.09);
     const gcx = w * 0.26, gcy = h * 0.40;
-    drawEarth(ctx, gcx, gcy, gR, reducedMotion ? 0 : T * 0.15);
+    const earth = data.earth;
+    const eScale = gR / earth.radiusPx;
+    const eHalf = (earth.SIZE / 2) * eScale;
+    ctx.drawImage(earth.render(reducedMotion ? 0 : T * 0.15), gcx - eHalf, gcy - eHalf,
+                  earth.SIZE * eScale, earth.SIZE * eScale);
     // schematic orbit (radius labelled real; px radius capped for the inset)
     const orbitR = gR * 2.3;
     ctx.save();
