@@ -16,10 +16,11 @@
   to   { opacity: 1; }
 }
 
-/* ── Visual zone (top 68vh — SVG fills it completely) ───────────────────── */
+/* ── Visual zone (top 62vh — canvas fills it; the unified single-voice
+      narrative + live equation need the taller text panel) ────────────────── */
 
 .tour-visual {
-  flex: 0 0 68vh;
+  flex: 0 0 62vh;
   width: 100%;
   position: relative;
   overflow: hidden;
@@ -56,7 +57,8 @@
   border-top: 1px solid var(--border, #2d2200);
   background: var(--bg-1, #0a0a0a);
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
+  /* narrative column widened: one exhaustive paragraph per act needs the line length */
+  grid-template-columns: 0.8fr 2.8fr 0.8fr;
   grid-template-rows: auto 1fr auto;
   padding: 16px 28px 14px;
   gap: 0 24px;
@@ -98,13 +100,15 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  overflow: hidden;
+  overflow-y: auto;   /* graceful fallback on short windows — content never lost */
+  overflow-x: hidden;
   min-height: 0;
+  scrollbar-width: thin;
 }
 
 .tour-paragraph {
   font-size: clamp(0.78rem, 1.1vw, 0.9rem);
-  line-height: 1.65;
+  line-height: 1.6;
   color: var(--text-primary, #e8e8f0);
   margin: 0;
   opacity: 0;
@@ -908,32 +912,6 @@
   margin-bottom: 2px;
 }
 
-/* Narrative tier switcher (guided only) */
-.tour-tier-tabs {
-  display: flex;
-  gap: 4px;
-  margin: 4px 0 2px;
-}
-.tour-tier-tab {
-  background: none;
-  border: 1px solid var(--border, #2d2200);
-  color: var(--text-secondary, #8888b0);
-  font-size: 0.62rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
-}
-.tour-tier-tab:hover { color: var(--text-primary, #e8e8f0); }
-.tour-tier-tab.active {
-  color: var(--bg-0, #000);
-  background: var(--accent-teal, #C4A555);
-  border-color: var(--accent-teal, #C4A555);
-}
-
 /* Live equation: KaTeX render + bound values */
 .tour-equation-katex {
   font-size: clamp(0.9rem, 1.3vw, 1.08rem);
@@ -982,7 +960,7 @@
   font-family: var(--font-mono, monospace);
 }
 
-/* Presenter mode: minimal text (no tier tabs / paragraph), larger headline */
+/* Presenter mode: minimal text (no paragraph), larger headline */
 .tour-engine-panel.presenter .tour-headline { font-size: clamp(1rem, 1.6vw, 1.25rem); }
 
 [data-reduced-motion] .tour-spinner { animation: none !important; }

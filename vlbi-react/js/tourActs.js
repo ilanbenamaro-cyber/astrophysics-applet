@@ -4,13 +4,20 @@
 // scene modules registered in tourScenes.js; this file is the act spine the host reads.
 //
 // Presentation order is A→E. Build order was B first (flagship, pure geometry).
-import { TOUR_PHYSICS as P } from './tourPhysics.js';
+import { TOUR_PHYSICS as P, TOUR_FREQ_GHZ, TOUR_FOV_MUAS, TOUR_DURATION_HR } from './tourPhysics.js';
 import { ARRAY_PRESETS, SKY_TARGETS, BHEX_PRESET } from './constants.js';
 
 const M87 = SKY_TARGETS['M87*'];
 
-// Shared engine params (mirror useSimulation DEFAULT_CONTROLS where relevant).
-const baseParams = { freqGHz: 230, decDeg: M87.dec, durationHr: 12, noise: 0, fovMuas: 80 };
+// Shared engine params (mirror useSimulation DEFAULT_CONTROLS where relevant;
+// frequency/FOV/duration come from tourPhysics so narration and scenes agree).
+const baseParams = {
+  freqGHz: TOUR_FREQ_GHZ, decDeg: M87.dec, durationHr: TOUR_DURATION_HR,
+  noise: 0, fovMuas: TOUR_FOV_MUAS,
+};
+
+// The opening baseline of Act B — one engine pair, named both in the scene and the prose.
+const PAIR = ['ALMA', 'IRAM'];
 
 export const TOUR_ACTS = [
   // ─── ACT A — RESOLUTION ────────────────────────────────────────────────────
@@ -34,11 +41,8 @@ export const TOUR_ACTS = [
         ['gain', P.str.improvement],
       ],
     },
-    narrativeTriple: {
-      artist: `A single dish, however vast, can only blur the sky into a soft smudge — its finest detail is ${P.str.thetaDish} across. The clarity we want is decided not by how large one eye is, but by how far two eyes stand apart.`,
-      scientist: `Angular resolution scales as θ ≈ λ/D. At λ = ${P.str.lambda} a ${P.dishD_m} m aperture reaches ${P.str.thetaDish}; the M87* shadow subtends ${P.str.m87Shadow} — roughly ${P.str.improvement} finer. Diffraction alone forbids the direct image.`,
-      layperson: `To photograph something this small and this far away, one telescope — even an enormous one — can't focus sharply enough. The fix is to combine many telescopes spread across the whole planet.`,
-    },
+    // One voice for every reader (W2.1): the physics exact, the language earned by it.
+    narrative: `At λ = ${P.str.lambda}, even a ${P.dishD_m} m dish — among the largest instruments a human hand can steer — blurs everything finer than ${P.str.thetaDish} into a single soft glow. The shadow of M87* subtends ${P.str.m87Shadow}: some ${P.str.improvement} finer still. This is no engineering shortfall but diffraction itself, θ ≈ λ/D — sharpness is bought only with diameter, and no buildable dish closes that gap. What closes it is distance: trade one aperture's diameter for the separation B between two, and the scale a pair resolves becomes λ/B — kilometers of glass exchanged for thousands of kilometers of empty air.`,
     transition: 'cue',
     durationMs: 9000,
   },
@@ -55,7 +59,7 @@ export const TOUR_ACTS = [
       stations: ARRAY_PRESETS['EHT 2017'],
       params: { ...baseParams },
       // The opening single baseline (real ARRAY_PRESETS coords).
-      pair: ['ALMA', 'IRAM'],
+      pair: PAIR,
     },
     liveEquation: {
       tex: 'u(H) \\;=\\; \\frac{B_x \\sin H + B_y \\cos H}{\\lambda}',
@@ -67,11 +71,7 @@ export const TOUR_ACTS = [
         ['|u|_max', P.str.uMax],
       ],
     },
-    narrativeTriple: {
-      artist: `Hold two telescopes still and they sample a single note of the sky. Let the Earth turn beneath them, and that one note sweeps into an arc — the planet itself becomes the lens, drawn slowly across the heavens.`,
-      scientist: `Each baseline samples one Fourier component u = B/λ of the sky brightness. As Earth rotates, the projected baseline traces an ellipse in the (u,v) plane; ${P.ehtStationCount} stations give ${P.ehtBaselineCount} baselines and coverage out to ${P.str.uMax}. This is aperture synthesis (Ryle, 1974).`,
-      layperson: `Two dishes far apart act like the edges of one giant telescope. As the Earth spins, they sweep out curves that gradually fill in the picture — building a virtual dish the size of the planet.`,
-    },
+    narrative: `Hold two dishes still — ${PAIR[0]} in the Atacama, ${PAIR[1]} in the Spanish Sierra — and together they measure one spatial tone of the sky: a single Fourier component of the brightness, at u = B/λ. Not a picture; one coefficient of one. But the ground beneath them refuses to hold still. As Earth turns, the baseline's projection toward M87* swings and stretches, and that lone tone glides along an ellipse through the (u,v) plane — a curve drawn by nothing moving except the planet. ${P.ehtStationCount} stations form ${P.ehtBaselineCount} such pairs; ${TOUR_DURATION_HR} hours of rotation stretch their ellipses to ${P.str.uMax} of coverage. The synthesized aperture is not a metaphor: point by computed point, the array assembles what a dish the size of Earth would have seen (Ryle, 1974).`,
     transition: 'cue',
     durationMs: 11000,
   },
@@ -97,11 +97,7 @@ export const TOUR_ACTS = [
         ['samples', `${P.ehtBaselineCount} baselines`],
       ],
     },
-    narrativeTriple: {
-      artist: `Incomplete data leaves the source haunted by ghosts — sidelobes radiating from every bright point. CLEAN walks the image, lifting the brightest peak again and again, until only the true sky is left standing.`,
-      scientist: `Inverse-transforming sparsely sampled visibilities yields the dirty image I_D = I_sky ⊛ B_D. Högbom CLEAN iteratively subtracts a scaled dirty beam at each residual peak (γ = 0.1) until the peak falls below 3σ_noise, then restores with a clean beam.`,
-      layperson: `Because we only measure part of the data, the first image is smeared with artifacts. An algorithm called CLEAN carefully removes them, peak by peak, until the real picture appears.`,
-    },
+    narrative: `${P.ehtBaselineCount} baselines sample just ${P.str.uvFill} of the (u,v) plane — a few bright threads pulled from an infinite weave. Invert that sparse record and the result is honest but haunted: the dirty image, I_D = I_sky ⊛ B_D, every true feature convolved with the instrument's own ghost, sidelobes radiating from each bright point. CLEAN (Högbom, 1974) is the exorcism, and it is almost embarrassingly simple — find the brightest point, subtract γ = 0.1 of the dirty beam there, repeat until what remains sinks below 3σ of the noise; the accumulated point model, re-convolved with a clean elliptical beam, is the image. Every subtraction on this screen, each step of the falling residual, runs live in this array's actual coverage — in about a tenth of a second.`,
     transition: 'computation-complete',
     durationMs: 12000,
   },
@@ -128,11 +124,7 @@ export const TOUR_ACTS = [
         ['θ achieved', P.str.thetaEht],
       ],
     },
-    narrativeTriple: {
-      artist: `On 10 April 2019 the world saw a shadow cast by gravity itself — a ring of light bent around the edge of darkness. Beside it, the same source rebuilt by the very instrument you have been driving.`,
-      scientist: `The 2019 EHT image of M87* resolved a ${P.str.m87Shadow} shadow (angular diameter 2√27·GM/c²d), consistent with a ${P.m87ShadowUas ? '6.5×10⁹ M☉' : ''} Kerr black hole. Shown alongside this simulator's own CLEAN reconstruction of the same source.`,
-      layperson: `This is the real photograph of a black hole's shadow — the first ever taken. Next to it is what this simulator produces from the same kind of data, so you can see the method is real.`,
-    },
+    narrative: `On 10 April 2019 the Event Horizon Telescope released the first photograph of a black hole: M87*, 55 million light-years away, its ring of lensed light ${P.str.m87Shadow} across — gravity's own silhouette, the shadow general relativity predicts at angular diameter ${P.shadowDiamFormula} for a mass of six and a half billion suns. The left panel is that photograph. The right is this simulator — the instrument you have been driving — given the same ring and the same ${P.str.nStations}, finding the same shadow. Neither side is an artist's impression: one is measured light; the other is the same mathematics, run before your eyes.`,
     transition: 'cue',
     durationMs: 9000,
   },
@@ -160,11 +152,7 @@ export const TOUR_ACTS = [
         ['status', '⚠ pending sign-off (Marrone/Alejandro)'],
       ],
     },
-    narrativeTriple: {
-      artist: `The Earth was only the first lens. Raise a single dish into orbit and the synthesized aperture detaches from the ground, reaching past the planet's own diameter toward a sharper sky.`,
-      scientist: `A space element (BHEX-class, h = ${BHEX_PRESET.orbitalAltitudeKm.toLocaleString('en-US')} km) extends baselines beyond Earth's diameter. The characteristic scale ~ R⊕ + h is an ORDER-OF-MAGNITUDE relation — the true ground–space baseline is geometry-dependent and under expert review.`,
-      layperson: `Put one telescope in space, and the "virtual dish" grows larger than the Earth itself — letting future arrays see even finer detail. The exact numbers here are still being checked by experts.`,
-    },
+    narrative: `Every baseline so far has been bounded by the planet that carries it — no two ground stations can stand farther apart than Earth's diameter. Lift one ${BHEX_PRESET.dishDiameter} m dish to orbit — BHEX — and that ceiling breaks: ground-to-space baselines sweep past the amber ring, toward a characteristic scale of order R⊕ + h ≈ ${P.str.bhexRadius} and a resolution near ${P.str.bhexTheta}. The relation is an order of magnitude, not an equality — true ground–space baselines are geometry-dependent, the numbers under expert review — but the geometry on screen is exact: every orange arc is the computed track of a real orbit over a real array. The next aperture is not a place; it is the volume of space we choose to thread with telescopes.`,
     transition: 'cue',
     durationMs: 10000,
     closing: true,  // last act: dispatches autoActions + opens the live tool

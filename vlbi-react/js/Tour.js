@@ -4,8 +4,8 @@
 // (tourScenes.js) over real uvCompute/worker output; numbers come from tourPhysics.js.
 //
 // Two venues, one build (master prompt §1.2): mode 'presenter' (Harvard talk — minimal
-// text, advance on cue) | 'guided' (public site — narrative tiers, self-paced). Default
-// guided; presenter via ?mode=presenter or the 'P' key.
+// text, advance on cue) | 'guided' (public site — one unified narrative per act,
+// self-paced). Default guided; presenter via ?mode=presenter or the 'P' key.
 //
 // State leakage (G6): the rebuilt tour hosts its OWN canvases and never mutates the live
 // app mid-act, so a stranger's pre-tour app state is preserved automatically on Skip/Esc.
@@ -16,12 +16,6 @@ import { getScene } from './tourScenes.js';
 import { setupCanvas } from './tourScene.js';
 import { LiveEquation } from './TourEquation.js';
 import { MiniUVSpine } from './TourSpine.js';
-
-const TIERS = [
-  { key: 'artist',    label: 'Artist' },
-  { key: 'scientist', label: 'Scientist' },
-  { key: 'layperson', label: 'You' },
-];
 
 function initialMode() {
   try {
@@ -37,7 +31,6 @@ export function Tour({ actIndex, onActChange, onClose, onTourAction, reducedMoti
 
   const [mode, setMode]   = useState(initialMode);
   const [phase, setPhase] = useState('visual');   // 'visual' → 'ready'
-  const [tier, setTier]   = useState('scientist');
   const [computing, setComputing] = useState(false);
 
   const canvasRef  = useRef(null);
@@ -197,15 +190,8 @@ export function Tour({ actIndex, onActChange, onClose, onTourAction, reducedMoti
           <div className="tour-headline">${act.headline}</div>
 
           ${mode === 'guided' ? html`
-            <div className="tour-tier-tabs" role="tablist">
-              ${TIERS.map(t => html`
-                <button key=${t.key} role="tab" aria-selected=${tier === t.key}
-                        className=${'tour-tier-tab' + (tier === t.key ? ' active' : '')}
-                        onClick=${() => setTier(t.key)}>${t.label}</button>
-              `)}
-            </div>
             <p className=${'tour-paragraph' + (phase === 'ready' ? ' p-visible' : '')}>
-              ${act.narrativeTriple[tier]}
+              ${act.narrative}
             </p>
           ` : null}
 
