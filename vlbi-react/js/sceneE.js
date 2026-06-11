@@ -10,8 +10,8 @@ import { BHEX_PRESET } from './constants.js';
 import { TOUR_PHYSICS as P } from './tourPhysics.js';
 import { TOKENS } from './tourTokens.js';
 import { getTourEarth } from './tourEarth.js';
-import { clearScene, makeStars, drawStarfield, drawUVAxes,
-         beatT, ease, clamp01, hexA, toTelescopes, uvExtentGl } from './tourScene.js';
+import { clearScene, drawUVAxes, beatT, ease, clamp01, hexA, toTelescopes, uvExtentGl } from './tourScene.js';
+import { ensureGalaxy, drawGalaxy } from './tourGalaxy.js';
 import { drawUVPoints, drawResolutionCallout, roundRect } from './tourAnnotations.js';
 
 const mono = (px, w = 500) => `${w} ${px}px ${TOKENS.fontMono}`;
@@ -47,22 +47,20 @@ export const sceneE = {
       uvGround, uvSpace, satellite, earth,
       groundMax: maxExtent(uvGround),
       maxGl: uvExtentGl(uvAll),
-      _stars: null,
     };
   },
 
   drawFrame(ctx, frame, data) {
     const { w, h, T, reducedMotion } = frame;
-    if (!data._stars) data._stars = makeStars(140, w, h, 13);
     clearScene(ctx, w, h);
-    drawStarfield(ctx, data._stars, reducedMotion ? 0 : T, 0.7);
+    drawGalaxy(ctx, ensureGalaxy(data, w, h, { seed: 13, intensity: 0.6 }), reducedMotion ? 0 : T);
 
     const b1 = reducedMotion ? 1 : beatT(T, 0.3, 2.0);   // ground coverage + Earth limit
     const b2 = reducedMotion ? 1 : beatT(T, 2.4, 3.0);   // space baselines extend
     const b3 = reducedMotion ? 1 : beatT(T, 6.0, 2.5);   // integrity callout + CTA
 
     // ── UV panel (right) ──
-    const panel = Math.min(h * 0.70, w * 0.42);
+    const panel = Math.min(h * 0.78, w * 0.44);
     const px = w * 0.54, py = (h - panel) * 0.40;
     const mapUV = drawUVAxes(ctx, px, py, panel, data.maxGl);
     const cx = px + panel / 2, cyP = py + panel / 2;
@@ -116,7 +114,7 @@ export const sceneE = {
     }
 
     // ── Mini Earth + orbiting BHEX (left) — main-page textured globe, read-only ──
-    const gR = Math.min(h * 0.16, w * 0.09);
+    const gR = Math.min(h * 0.20, w * 0.11);
     const gcx = w * 0.26, gcy = h * 0.40;
     const earth = data.earth;
     const eScale = gR / earth.radiusPx;

@@ -14,8 +14,9 @@ import { STATION_SEFD } from './constants.js';
 import { TOUR_PHYSICS as P } from './tourPhysics.js';
 import { drawHot } from './simRender.js';
 import { TOKENS } from './tourTokens.js';
-import { clearScene, makeStars, drawStarfield, beatT, ease, clamp01, hexA, toTelescopes,
+import { clearScene, beatT, ease, clamp01, hexA, toTelescopes,
          measureRingFraction, zoomSource } from './tourScene.js';
+import { ensureGalaxy, drawGalaxy } from './tourGalaxy.js';
 import { roundRect } from './tourAnnotations.js';
 
 const N = 512;
@@ -58,21 +59,21 @@ export const sceneD = {
     let photo = null;
     try { photo = await loadImage(params.photo || '../assets/eht-m87-2019.jpg'); } catch (_) { photo = null; }
 
-    return { photo, reconCanvas, shadowFrac, _stars: null };
+    return { photo, reconCanvas, shadowFrac };
   },
 
   drawFrame(ctx, frame, data) {
     const { w, h, T, reducedMotion } = frame;
-    if (!data._stars) data._stars = makeStars(70, w, h, 9);
     clearScene(ctx, w, h);
-    drawStarfield(ctx, data._stars, reducedMotion ? 0 : T, 0.4);
+    // dimmest galaxy of the five acts — nothing competes with the photograph
+    drawGalaxy(ctx, ensureGalaxy(data, w, h, { seed: 9, intensity: 0.35 }), reducedMotion ? 0 : T);
 
     const b1 = reducedMotion ? 1 : beatT(T, 0.3, 2.0);   // photo
     const b2 = reducedMotion ? 1 : beatT(T, 2.2, 2.0);   // reconstruction
     const b3 = reducedMotion ? 1 : beatT(T, 4.4, 1.8);   // scale + provenance
 
-    const panel = Math.min(h * 0.62, w * 0.34);
-    const cy = h * 0.40, py = cy - panel / 2;
+    const panel = Math.min(h * 0.72, w * 0.40);
+    const cy = h * 0.42, py = cy - panel / 2;
     const lx = w * 0.30 - panel / 2;
     const rx = w * 0.70 - panel / 2;
 

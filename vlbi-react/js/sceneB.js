@@ -10,8 +10,8 @@ import { computeBaseline, baselineToUV, computeElevation, MIN_ELEVATION_RAD,
 import { TOUR_PHYSICS as P } from './tourPhysics.js';
 import { TOKENS } from './tourTokens.js';
 import { getTourEarth } from './tourEarth.js';
-import { clearScene, makeStars, drawStarfield,
-         drawUVAxes, beatT, ease, clamp01, hexA, toTelescopes, uvExtentGl } from './tourScene.js';
+import { clearScene, drawUVAxes, beatT, ease, clamp01, hexA, toTelescopes, uvExtentGl } from './tourScene.js';
+import { ensureGalaxy, drawGalaxy } from './tourGalaxy.js';
 import { drawBaselineVector, drawUVTrace, drawUVPoints, drawFillGauge,
          drawResolutionCallout } from './tourAnnotations.js';
 
@@ -65,20 +65,19 @@ export const sceneB = {
       pairTrack, uvGl, maxGl: uvExtentGl(uvGl), fillPct: computeUVFill(uvPx, 512),
       scrub: { active: false, haFrac: 0.5, decDeg: params.decDeg },
       scrubTrack: pairTrack, scrubDec: params.decDeg,
-      _layout: null, _stars: null,
+      _layout: null,
     };
   },
 
   drawFrame(ctx, frame, data) {
     const { w, h, T, reducedMotion, mode, animPhase } = frame;
-    if (!data._stars) data._stars = makeStars(120, w, h, 11);
     clearScene(ctx, w, h);
-    drawStarfield(ctx, data._stars, reducedMotion ? 0 : T, 0.6);
+    drawGalaxy(ctx, ensureGalaxy(data, w, h, { seed: 11, intensity: 0.6 }), reducedMotion ? 0 : T);
 
     // Layout: turning Earth (left), UV panel (right)
-    const gR  = Math.min(h * 0.30, w * 0.17);
-    const gcx = w * 0.26, gcy = h * 0.45;
-    const panelSize = Math.min(h * 0.72, w * 0.42);
+    const gR  = Math.min(h * 0.34, w * 0.18);
+    const gcx = w * 0.26, gcy = h * 0.42;
+    const panelSize = Math.min(h * 0.80, w * 0.44);
     const px = w * 0.53, py = (h - panelSize) * 0.42;
     data._layout = { px, py, panelSize, w, h, gcx, gcy, gR };
     const mapUV = drawUVAxes(ctx, px, py, panelSize, data.maxGl);
@@ -141,7 +140,7 @@ export const sceneB = {
       drawFillGauge(ctx, px + panelSize - 34, py + panelSize - 34, 28, data.fillPct, b3);
     }
     if (b3 > 0.35) {
-      drawResolutionCallout(ctx, gcx - 115, gcy + gR + 24, [
+      drawResolutionCallout(ctx, gcx - 115, gcy + gR + 20, [
         `λ = ${P.str.lambda}`,
         `B_max (M87*) = ${P.str.ehtBaseline}`,
         `θ = λ/B_max = ${P.str.thetaEht}`,

@@ -4,7 +4,8 @@
 // The host (Tour.js) looks up SCENES[actId]; acts without a bespoke scene fall back to
 // genericScene, which still renders REAL coverage (never a fake). Phase 2 fills SCENES.
 import { computeUVPointsGl, computeUVFill, computeUVPoints } from './uvCompute.js';
-import { clearScene, makeStars, drawStarfield, drawUVAxes, beatT, toTelescopes, uvExtentGl } from './tourScene.js';
+import { clearScene, drawUVAxes, beatT, toTelescopes, uvExtentGl } from './tourScene.js';
+import { ensureGalaxy, drawGalaxy } from './tourGalaxy.js';
 import { drawUVPoints, drawFillGauge } from './tourAnnotations.js';
 import { sceneB } from './sceneB.js';
 import { sceneA } from './sceneA.js';
@@ -28,9 +29,8 @@ const genericScene = {
   },
   drawFrame(ctx, frame, data) {
     const { w, h, T, reducedMotion } = frame;
-    if (!frame._stars) frame._stars = makeStars(110, w, h, 7);
     clearScene(ctx, w, h);
-    drawStarfield(ctx, frame._stars, reducedMotion ? 0 : T, 0.7);
+    drawGalaxy(ctx, ensureGalaxy(data, w, h, { seed: 7, intensity: 0.6 }), reducedMotion ? 0 : T);
     const size = Math.min(h * 0.74, w * 0.5);
     const x = w / 2 - size / 2, y = h * 0.1;
     const mapUV = drawUVAxes(ctx, x, y, size, data.maxGl);

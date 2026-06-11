@@ -84,7 +84,7 @@
 .tour-act-title {
   grid-column: 2;
   grid-row: 1;
-  font-size: clamp(1.1rem, 2vw, 1.5rem);
+  font-size: clamp(1.2rem, 2.2vw, 1.7rem);
   font-weight: 800;
   color: var(--text-primary, #e8e8f0);
   line-height: 1.2;
@@ -107,7 +107,7 @@
 }
 
 .tour-paragraph {
-  font-size: clamp(0.78rem, 1.1vw, 0.9rem);
+  font-size: clamp(0.82rem, 1.15vw, 0.95rem);
   line-height: 1.6;
   color: var(--text-primary, #e8e8f0);
   margin: 0;
@@ -120,8 +120,8 @@
 }
 
 .tour-equation-block {
-  margin-top: 4px;
-  padding: 8px 14px;
+  margin-top: 2px;
+  padding: 6px 14px;
   background: var(--bg-2, #111111);
   border: 1px solid var(--border, #2d2200);
   border-radius: 4px;
@@ -905,7 +905,7 @@
 
 /* Headline — the single presenter-visible line above the equation */
 .tour-headline {
-  font-size: clamp(0.86rem, 1.3vw, 1.02rem);
+  font-size: clamp(0.95rem, 1.45vw, 1.12rem);
   font-weight: 600;
   color: var(--text-primary, #e8e8f0);
   line-height: 1.4;
@@ -914,13 +914,13 @@
 
 /* Live equation: KaTeX render + bound values */
 .tour-equation-katex {
-  font-size: clamp(0.9rem, 1.3vw, 1.08rem);
+  font-size: clamp(0.95rem, 1.4vw, 1.16rem);
   color: var(--accent-teal, #C4A555);
   margin-bottom: 6px;
 }
 /* KaTeX displayMode ships 1em top/bottom margins — at 32vh of text panel that
    pushes the bound-values row (incl. the Act E integrity hedge) below the fold. */
-.tour-equation-katex .katex-display { margin: 4px 0; }
+.tour-equation-katex .katex-display { margin: 2px 0; }
 .tour-equation-katex .katex { color: var(--accent-teal, #C4A555); }
 .tour-equation-values {
   display: flex;

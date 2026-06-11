@@ -15,8 +15,9 @@ import { STATION_SEFD } from './constants.js';
 import { TOUR_PHYSICS as P } from './tourPhysics.js';
 import { TOKENS } from './tourTokens.js';
 import { drawContour, drawHot } from './simRender.js';
-import { clearScene, makeStars, drawStarfield, beatT, ease, clamp01, hexA, toTelescopes,
+import { clearScene, beatT, ease, clamp01, hexA, toTelescopes,
          measureRingFraction, zoomSource } from './tourScene.js';
+import { ensureGalaxy, drawGalaxy } from './tourGalaxy.js';
 import { drawConvolutionReveal, drawResidualSparkline, roundRect } from './tourAnnotations.js';
 
 const N = 512;
@@ -79,7 +80,7 @@ export const sceneC = {
       freqGHz: params.freqGHz, fovRad: params.fovMuas * (Math.PI / (180 * 3.6e9)),
       noise: 0, _recomputing: false, _recomputeToken: 0,
       sourceCanvas: render512(ctx => drawHot(ctx, srcMaster, N)),
-      _stars: null, _layout: null,
+      _layout: null,
     };
     await recomputeCLEAN(data);   // first CLEAN before the act shows (computation-complete)
     return data;
@@ -87,9 +88,8 @@ export const sceneC = {
 
   drawFrame(ctx, frame, data) {
     const { w, h, T, reducedMotion, mode } = frame;
-    if (!data._stars) data._stars = makeStars(80, w, h, 5);
     clearScene(ctx, w, h);
-    drawStarfield(ctx, data._stars, reducedMotion ? 0 : T, 0.45);
+    drawGalaxy(ctx, ensureGalaxy(data, w, h, { seed: 5, intensity: 0.45 }), reducedMotion ? 0 : T);
 
     const panel = Math.min(h * 0.66, w * 0.40);
     const ix = w * 0.30 - panel / 2, iy = (h - panel) * 0.42;

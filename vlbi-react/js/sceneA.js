@@ -14,7 +14,8 @@ import { STATION_SEFD } from './constants.js';
 import { TOUR_PHYSICS as P } from './tourPhysics.js';
 import { drawHot } from './simRender.js';
 import { TOKENS } from './tourTokens.js';
-import { clearScene, makeStars, drawStarfield, beatT, ease, clamp01, hexA, toTelescopes } from './tourScene.js';
+import { clearScene, beatT, ease, clamp01, hexA, toTelescopes } from './tourScene.js';
+import { ensureGalaxy, drawGalaxy } from './tourGalaxy.js';
 import { roundRect } from './tourAnnotations.js';
 
 const N = 512;
@@ -38,21 +39,20 @@ export const sceneA = {
     const beamCanvas = document.createElement('canvas');
     beamCanvas.width = N; beamCanvas.height = N;
     drawHot(beamCanvas.getContext('2d'), dirty, N);
-    return { beamCanvas, _stars: null };
+    return { beamCanvas };
   },
 
   drawFrame(ctx, frame, data) {
     const { w, h, T, reducedMotion } = frame;
-    if (!data._stars) data._stars = makeStars(90, w, h, 3);
     clearScene(ctx, w, h);
-    drawStarfield(ctx, data._stars, reducedMotion ? 0 : T, 0.5);
+    drawGalaxy(ctx, ensureGalaxy(data, w, h, { seed: 3, intensity: 0.55 }), reducedMotion ? 0 : T);
 
     const b1 = reducedMotion ? 1 : beatT(T, 0.3, 2.2);    // single dish blur
     const b2 = reducedMotion ? 1 : beatT(T, 3.0, 2.4);    // EHT dirty beam
     const b3 = reducedMotion ? 1 : beatT(T, 6.0, 2.4);    // the gain
 
-    const panel = Math.min(h * 0.5, w * 0.30);
-    const cy = h * 0.40;
+    const panel = Math.min(h * 0.62, w * 0.32);
+    const cy = h * 0.42;
     const lx = w * 0.27 - panel / 2;
     const rx = w * 0.73 - panel / 2;
     const py = cy - panel / 2;
@@ -92,19 +92,21 @@ export const sceneA = {
       ctx.globalAlpha = ease(b3);
       ctx.textAlign = 'center';
       ctx.fillStyle = TOKENS.accent;
-      ctx.font = mono(15, 600);
-      ctx.fillText('θ = λ/D  →  λ/B', w / 2, cy - 14);
+      ctx.font = mono(17, 600);
+      ctx.fillText('θ = λ/D  →  λ/B', w / 2, cy - 18);
       ctx.fillStyle = TOKENS.textPrimary;
-      ctx.font = mono(22, 700);
-      ctx.fillText(P.str.improvement, w / 2, cy + 16);
+      ctx.font = mono(30, 700);
+      ctx.fillText(P.str.improvement, w / 2, cy + 22);
       ctx.fillStyle = TOKENS.textSecondary;
-      ctx.font = mono(10, 500);
-      ctx.fillText('SHARPER', w / 2, cy + 34);
-      // arrow
+      ctx.font = mono(11, 500);
+      ctx.fillText('SHARPER', w / 2, cy + 44);
+      // arrow — split around the gain figure so it never strikes through the text
+      const gap = 130;
       ctx.strokeStyle = hexA(TOKENS.accent, 0.7);
       ctx.lineWidth = 1.4;
       ctx.beginPath();
-      ctx.moveTo(lx + panel + 8, cy); ctx.lineTo(rx - 8, cy);
+      ctx.moveTo(lx + panel + 8, cy); ctx.lineTo(w / 2 - gap, cy);
+      ctx.moveTo(w / 2 + gap, cy); ctx.lineTo(rx - 8, cy);
       ctx.stroke();
       ctx.restore();
     }

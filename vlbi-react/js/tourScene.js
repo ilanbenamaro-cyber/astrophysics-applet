@@ -1,5 +1,5 @@
 // tourScene.js — shared canvas primitives for the engine-real tour acts.
-// Low-level only: DPR-correct canvas setup, the site easing curve, a starfield,
+// Low-level only: DPR-correct canvas setup, the site easing curve,
 // ring-source sizing, and UV-plane axes. Higher-level physics annotations live in
 // tourAnnotations.js; the textured Earth lives in tourEarth.js. All colour comes
 // from tourTokens.js (so the tour follows the app's theme + a11y).
@@ -104,29 +104,8 @@ export function clearScene(ctx, w, h, color) {
   ctx.fillRect(0, 0, w, h);
 }
 
-// ── Starfield (space backdrop) ──────────────────────────────────────────────────
-export function makeStars(n, w, h, seed = 1) {
-  let s = seed >>> 0;
-  const rand = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
-  const stars = [];
-  for (let i = 0; i < n; i++) {
-    stars.push({ x: rand() * w, y: rand() * h, r: 0.3 + rand() * 1.1, tw: rand() * Math.PI * 2, sp: 0.6 + rand() * 1.4 });
-  }
-  return stars;
-}
-
-export function drawStarfield(ctx, stars, T, alpha = 1) {
-  ctx.save();
-  for (const st of stars) {
-    const a = alpha * (0.35 + 0.45 * (0.5 + 0.5 * Math.sin(T * st.sp + st.tw)));
-    ctx.globalAlpha = a;
-    ctx.fillStyle = '#e8e8f0';
-    ctx.beginPath();
-    ctx.arc(st.x, st.y, st.r, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.restore();
-}
+// (The single-layer starfield that lived here was superseded by tourGalaxy.js —
+//  multi-layer parallax + nebula wash, one shared background for every act.)
 
 // (The hand-drawn Earth model that lived here was retired in the polish pass —
 //  Acts B & E now reuse the main page's textured Three.js globe via tourEarth.js.)
