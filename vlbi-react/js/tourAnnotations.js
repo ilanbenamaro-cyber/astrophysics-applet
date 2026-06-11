@@ -10,9 +10,11 @@ import { hexA, ease, clamp01 } from './tourScene.js';
 const mono = (px, w = 500) => `${w} ${px}px ${TOKENS.fontMono}`;
 
 // ── BaselineVector ───────────────────────────────────────────────────────────
-// A real baseline between two station screen points, labeled |B| in km.
+// A real baseline between two station screen points, labeled by IDENTITY in km.
+// `label` names WHICH baseline this is (e.g. "|B| ALMA–IRAM") so it can never be
+// confused with the array max or the coverage extent shown in the same frame (W1.1).
 export function drawBaselineVector(ctx, p1, p2, baselineKm, opts = {}) {
-  const { color = TOKENS.amber, alpha = 1, showLabel = true } = opts;
+  const { color = TOKENS.amber, alpha = 1, showLabel = true, label = '|B|' } = opts;
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.strokeStyle = hexA(color, 0.9);
@@ -34,7 +36,7 @@ export function drawBaselineVector(ctx, p1, p2, baselineKm, opts = {}) {
     ctx.fillStyle = TOKENS.textPrimary;
     ctx.font = mono(12, 600);
     ctx.textAlign = 'center';
-    ctx.fillText(`|B| = ${Math.round(baselineKm).toLocaleString('en-US')} km`, mx, my - 8);
+    ctx.fillText(`${label} = ${Math.round(baselineKm).toLocaleString('en-US')} km`, mx, my - 8);
   }
   ctx.restore();
 }

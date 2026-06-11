@@ -3,8 +3,8 @@
 // branch of computeUVPointsGl) extends baselines BEYOND Earth's diameter. The Earth-only
 // limit is drawn as a ring; the space baselines (orange) reach past it.
 // INTEGRITY (master prompt §5, G3): geometry is real, but the baseline relation is hedged
-// — "characteristic ~ R⊕ + h · pending sign-off (Marrone/Alejandro)" verbatim, never a
-// clean equality. The final beat hands off to the live simulator (host dispatches loadEHT).
+// — characteristic ~ R⊕ + h, never a clean equality. The sign-off hedge is stated ONCE,
+// in the act's equation box (tourActs.js). Final beat hands off to the live simulator.
 import { computeUVPointsGl, computeSatelliteECEF } from './uvCompute.js';
 import { BHEX_PRESET } from './constants.js';
 import { TOUR_PHYSICS as P } from './tourPhysics.js';
@@ -29,9 +29,14 @@ export const sceneE = {
     const satId = engineState.stations.length;   // appended last by toTelescopes
     const opts = { declination: params.decDeg, duration: params.durationHr, frequency: params.freqGHz };
 
-    const uvGround = computeUVPointsGl(ground, opts);
+    const uvGroundRaw = computeUVPointsGl(ground, opts);
     const uvAll = computeUVPointsGl(all, opts);
-    const uvSpace = uvAll.filter(p => p.pairId && p.pairId.startsWith(satId + '-'));
+    // Strip per-point pair colours: this act's story is the two-CLASS contrast
+    // (ground gold inside the limit ring vs space orange beyond it), and the BHEX
+    // preset colour is itself gold — per-pair colouring would erase the distinction.
+    const uvGround = uvGroundRaw.map(p => ({ u: p.u, v: p.v }));
+    const uvSpace = uvAll.filter(p => p.pairId && p.pairId.startsWith(satId + '-'))
+                         .map(p => ({ u: p.u, v: p.v }));
 
     return {
       uvGround, uvSpace, satellite,
@@ -58,25 +63,51 @@ export const sceneE = {
     const cx = px + panel / 2, cyP = py + panel / 2;
     const scale = (panel / 2) / data.maxGl;
 
-    // Earth-diameter limit ring (max ground baseline extent)
+    // The one thing this act exists to show (W1.4): coverage EXCEEDING Earth's limit.
+    // Three visually separated layers — dim gold ground coverage INSIDE a solid amber
+    // reference ring, bright orange space baselines crossing OUT past it.
+    const limitR = data.groundMax * scale;
     if (b1 > 0) {
+      // ground coverage — subordinate (reduced alpha, small radius)
+      ctx.save();
+      ctx.globalAlpha = 0.5;
+      drawUVPoints(ctx, mapUV, data.uvGround, b1, { radius: 0.9, defaultColor: TOKENS.accent });
+      ctx.restore();
+      // Earth-diameter limit: a clear solid reference ring
       ctx.save();
       ctx.globalAlpha = ease(b1);
-      ctx.strokeStyle = hexA(TOKENS.textSecondary, 0.45);
-      ctx.setLineDash([3, 4]);
+      ctx.strokeStyle = hexA(TOKENS.amber, 0.9);
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(cx, cyP, data.groundMax * scale, 0, Math.PI * 2);
+      ctx.arc(cx, cyP, limitR, 0, Math.PI * 2);
       ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle = TOKENS.textSecondary;
-      ctx.font = mono(9, 600); ctx.textAlign = 'center';
-      ctx.fillText('EARTH-DIAMETER LIMIT', cx, cyP - data.groundMax * scale - 6);
+      ctx.fillStyle = TOKENS.amber;
+      ctx.font = mono(10, 600); ctx.textAlign = 'center';
+      ctx.fillText('EARTH-DIAMETER LIMIT', cx, cyP - limitR - 8);
       ctx.restore();
-      drawUVPoints(ctx, mapUV, data.uvGround, b1, { radius: 1.0, defaultColor: TOKENS.accent });
     }
     // Space baselines reaching beyond the ring (orange = beyond-Earth)
     if (b2 > 0) {
-      drawUVPoints(ctx, mapUV, data.uvSpace, b2, { radius: 1.2, defaultColor: TOKENS.orange });
+      // faint orange wash over the beyond-Earth annulus — "we left the planet"
+      ctx.save();
+      ctx.globalAlpha = ease(b2) * 0.10;
+      ctx.fillStyle = TOKENS.orange;
+      ctx.beginPath();
+      ctx.arc(cx, cyP, Math.min(panel / 2, data.maxGl * scale), 0, Math.PI * 2);
+      ctx.arc(cx, cyP, limitR, 0, Math.PI * 2, true);
+      ctx.fill();
+      ctx.restore();
+      drawUVPoints(ctx, mapUV, data.uvSpace, b2, { radius: 1.4, defaultColor: TOKENS.orange });
+      if (b2 > 0.5) {
+        ctx.save();
+        ctx.globalAlpha = ease(beatT(b2, 0.5, 0.4));
+        ctx.fillStyle = TOKENS.orange;
+        ctx.font = mono(10, 600); ctx.textAlign = 'left';
+        const lx2 = cx + limitR * Math.SQRT1_2 + 10, ly2 = cyP - limitR * Math.SQRT1_2 - 10;
+        ctx.fillText('coverage beyond', lx2, ly2);
+        ctx.fillText("Earth's diameter ↗", lx2, ly2 + 13);
+        ctx.restore();
+      }
     }
 
     // ── Mini Earth + orbiting BHEX (left) ──
@@ -103,22 +134,19 @@ export const sceneE = {
     ctx.fillText(`h = ${data.satellite.orbitalAltitudeKm.toLocaleString('en-US')} km`, gcx, gcy + gR + 18);
     ctx.restore();
 
-    // ── Integrity callout (hedged) + CTA ──
+    // ── Relation callout + CTA. The pending-sign-off hedge lives ONCE, in the act's
+    // equation box (tourActs.js liveEquation) — not repeated here (W1.4). ──
     if (b3 > 0) {
       ctx.save();
       ctx.globalAlpha = ease(b3);
       drawResolutionCallout(ctx, gcx - 120, gcy + gR + 30, [
         `B characteristic ~ R⊕ + h`,
         `≈ ${P.str.bhexRadius}`,
-        `⚠ pending sign-off`,
+        `order-of-magnitude relation`,
       ], { w: 240, title: 'Space VLBI' });
-      // integrity note (verbatim)
-      ctx.fillStyle = hexA(TOKENS.textSecondary, 0.85);
-      ctx.font = mono(10, 500); ctx.textAlign = 'center';
-      ctx.fillText('characteristic ~ R⊕ + h · pending sign-off (Marrone/Alejandro)', w / 2, py + panel + 26);
       // CTA
-      ctx.fillStyle = TOKENS.accent; ctx.font = mono(14, 700);
-      ctx.fillText('Place your first telescope.', w / 2, py + panel + 50);
+      ctx.fillStyle = TOKENS.accent; ctx.font = mono(14, 700); ctx.textAlign = 'center';
+      ctx.fillText('Place your first telescope.', w / 2, py + panel + 32);
       ctx.restore();
     }
   },

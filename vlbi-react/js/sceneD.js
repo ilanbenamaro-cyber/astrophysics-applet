@@ -14,11 +14,11 @@ import { STATION_SEFD } from './constants.js';
 import { TOUR_PHYSICS as P } from './tourPhysics.js';
 import { drawHot } from './simRender.js';
 import { TOKENS } from './tourTokens.js';
-import { clearScene, makeStars, drawStarfield, beatT, ease, clamp01, hexA, toTelescopes } from './tourScene.js';
+import { clearScene, makeStars, drawStarfield, beatT, ease, clamp01, hexA, toTelescopes,
+         measureRingFraction, zoomSource } from './tourScene.js';
 import { roundRect } from './tourAnnotations.js';
 
 const N = 512;
-const SOURCE_FRACTION = 0.525;   // 42 μas shadow / 80 μas FOV
 const mono = (px, w = 500) => `${w} ${px}px ${TOKENS.fontMono}`;
 
 function loadImage(url) {
@@ -39,7 +39,13 @@ export const sceneD = {
       fovMuas: params.fovMuas, N,
     });
     const { grayscale } = await loadImagePresetAsync('../assets/black-hole.png');
-    const src = scaleSource(grayscale, SOURCE_FRACTION, N);
+    // Same measured ring sizing as Act C (W1.3): the ring spans its true 42 μas of FOV.
+    const ringFrac = measureRingFraction(grayscale, N);
+    const sizeFactor = (P.m87ShadowUas / params.fovMuas) / ringFrac;
+    const src = sizeFactor >= 1
+      ? zoomSource(grayscale, sizeFactor, N)
+      : scaleSource(grayscale, sizeFactor, N);
+    const shadowFrac = P.m87ShadowUas / params.fovMuas;   // scale-bar length, computed
     const sefdMap = buildSefdMap(tels, STATION_SEFD);
     const { restored } = await runReconstruction(src.slice(), uvPoints.map(p => ({ u: p.u, v: p.v })), {
       N, noise: 0, method: 'clean', dishDiameter: 25, frequency: params.freqGHz,
@@ -52,7 +58,7 @@ export const sceneD = {
     let photo = null;
     try { photo = await loadImage(params.photo || '../assets/eht-m87-2019.jpg'); } catch (_) { photo = null; }
 
-    return { photo, reconCanvas, _stars: null };
+    return { photo, reconCanvas, shadowFrac, _stars: null };
   },
 
   drawFrame(ctx, frame, data) {
@@ -97,8 +103,8 @@ export const sceneD = {
     if (b3 > 0) {
       ctx.save();
       ctx.globalAlpha = ease(b3);
-      scaleAndCaption(ctx, lx, py, panel, 'M87* · EHT Collaboration', '10 April 2019');
-      if (b2 > 0) scaleAndCaption(ctx, rx, py, panel, 'This simulator · EHT 2017', `CLEAN · θ = ${P.str.thetaEht}`);
+      scaleAndCaption(ctx, lx, py, panel, data.shadowFrac, 'M87* · EHT Collaboration', '10 April 2019');
+      if (b2 > 0) scaleAndCaption(ctx, rx, py, panel, data.shadowFrac, 'This simulator · EHT 2017', `CLEAN · θ = ${P.str.thetaEht}`);
       ctx.restore();
     }
   },
@@ -114,9 +120,9 @@ function panelFrame(ctx, x, y, s) {
   ctx.restore();
 }
 
-// 42 μas shadow scale bar + a two-line caption under a panel.
-function scaleAndCaption(ctx, x, y, s, line1, line2) {
-  const barLen = s * (42 / 80);   // shadow / FOV
+// Shadow scale bar (length = shadow/FOV, computed) + a two-line caption under a panel.
+function scaleAndCaption(ctx, x, y, s, shadowFrac, line1, line2) {
+  const barLen = s * shadowFrac;
   const bx = x + (s - barLen) / 2, by = y + s + 12;
   ctx.save();
   ctx.strokeStyle = TOKENS.textPrimary;

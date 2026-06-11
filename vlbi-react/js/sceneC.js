@@ -12,13 +12,14 @@ import { computeUVPoints } from './uvCompute.js';
 import { runReconstruction, buildSefdMap, computeDynamicRange, scaleSource } from './simCore.js';
 import { loadImagePresetAsync } from './presets.js';
 import { STATION_SEFD } from './constants.js';
+import { TOUR_PHYSICS as P } from './tourPhysics.js';
 import { TOKENS } from './tourTokens.js';
 import { drawContour, drawHot } from './simRender.js';
-import { clearScene, makeStars, drawStarfield, beatT, ease, clamp01, hexA, toTelescopes } from './tourScene.js';
+import { clearScene, makeStars, drawStarfield, beatT, ease, clamp01, hexA, toTelescopes,
+         measureRingFraction, zoomSource } from './tourScene.js';
 import { drawConvolutionReveal, drawResidualSparkline, roundRect } from './tourAnnotations.js';
 
 const N = 512;
-const SOURCE_FRACTION = 0.525;   // M87* shadow (42 μas) / 80 μas FOV
 const RECOMPUTE_TIMEOUT_MS = 2500;
 const mono = (px, w = 500) => `${w} ${px}px ${TOKENS.fontMono}`;
 
@@ -35,13 +36,18 @@ async function recomputeCLEAN(data) {
   const r = await runReconstruction(
     data.srcMaster.slice(),
     data.uvLite,
+    // progressEvery 1: CLEAN on the true-size ring stops well before iter 20 (the 3σ
+    // floor rises with the brighter dirty border), so coarser sampling starves the
+    // residual sparkline. Per-iteration messages are still only ~10-100 posts.
     { N, noise: data.noise, method: 'clean', dishDiameter: 25, frequency: data.freqGHz,
-      fovRad: data.fovRad, stationPairs: data.stationPairs, sefdMap: data.sefdMap, progressEvery: 20 },
+      fovRad: data.fovRad, stationPairs: data.stationPairs, sefdMap: data.sefdMap, progressEvery: 1 },
     (p) => series.push({ iter: p.iter, residual: p.residual }),
   );
   const dr = computeDynamicRange(r.restored, N);
   data.dirtyCanvas    = render512(ctx => drawContour(ctx, r.dirty, { N, beamSigmaU: r.beamSigmaU, beamSigmaV: r.beamSigmaV, beamPA: 0, dynamicRange: 0 }));
-  data.restoredCanvas = render512(ctx => drawContour(ctx, r.restored, { N, beamSigmaU: r.beamSigmaU, beamSigmaV: r.beamSigmaV, beamPA: 0, dynamicRange: dr }));
+  // Restored panel renders with the SAME hot colormap Act D uses (W1.3): viridis on a
+  // low-DR reconstruction buries the ring; drawHot makes the payoff unmistakable.
+  data.restoredCanvas = render512(ctx => drawHot(ctx, r.restored, N));
   data.series = series.length ? series : [{ iter: 0, residual: 1 }];
   data.dynamicRange = dr;
   return data;
@@ -56,7 +62,15 @@ export const sceneC = {
       fovMuas: params.fovMuas, N,
     });
     const { grayscale } = await loadImagePresetAsync(engineState.params.photo || '../assets/black-hole.png');
-    const srcMaster = scaleSource(grayscale, SOURCE_FRACTION, N);
+    // Size the source so its measured bright ring spans the TRUE shadow diameter
+    // (42 μas) of the act's FOV — computed, never assumed (W1.3: the previous fixed
+    // fraction assumed the ring filled the photograph and under-sized it ~2.3×,
+    // leaving it barely 2 restore beams across — a blob, not a ring).
+    const ringFrac = measureRingFraction(grayscale, N);
+    const sizeFactor = (P.m87ShadowUas / params.fovMuas) / ringFrac;
+    const srcMaster = sizeFactor >= 1
+      ? zoomSource(grayscale, sizeFactor, N)
+      : scaleSource(grayscale, sizeFactor, N);
 
     const data = {
       tels, srcMaster,

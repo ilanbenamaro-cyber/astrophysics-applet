@@ -60,15 +60,16 @@ export const TOUR_ACTS = [
     liveEquation: {
       tex: 'u(H) \\;=\\; \\frac{B_x \\sin H + B_y \\cos H}{\\lambda}',
       values: () => [
-        ['stations', P.str.nStations],
-        ['baselines', P.str.nBaselines],
+        // bare counts — the row key already carries the noun (W1.2: no doubled tokens)
+        ['stations', String(P.ehtStationCount)],
+        ['baselines', String(P.ehtBaselineCount)],
         ['B_max (M87*)', P.str.ehtBaseline],
         ['|u|_max', P.str.uMax],
       ],
     },
     narrativeTriple: {
       artist: `Hold two telescopes still and they sample a single note of the sky. Let the Earth turn beneath them, and that one note sweeps into an arc — the planet itself becomes the lens, drawn slowly across the heavens.`,
-      scientist: `Each baseline samples one Fourier component u = B/λ of the sky brightness. As Earth rotates, the projected baseline traces an ellipse in the (u,v) plane; ${P.str.nStations} stations give ${P.str.nBaselines} baselines and coverage out to ${P.str.uMax}. This is aperture synthesis (Ryle, 1974).`,
+      scientist: `Each baseline samples one Fourier component u = B/λ of the sky brightness. As Earth rotates, the projected baseline traces an ellipse in the (u,v) plane; ${P.ehtStationCount} stations give ${P.ehtBaselineCount} baselines and coverage out to ${P.str.uMax}. This is aperture synthesis (Ryle, 1974).`,
       layperson: `Two dishes far apart act like the edges of one giant telescope. As the Earth spins, they sweep out curves that gradually fill in the picture — building a virtual dish the size of the planet.`,
     },
     transition: 'cue',
@@ -85,7 +86,7 @@ export const TOUR_ACTS = [
     compute: 'live-on-input',  // CLEAN ≈ 98 ms on dev (audit §2) — live in both modes
     engineState: {
       stations: ARRAY_PRESETS['EHT 2017'],
-      params: { ...baseParams, method: 'clean', sourcePreset: 'blackhole', progressEvery: 20 },
+      params: { ...baseParams, method: 'clean', sourcePreset: 'blackhole', progressEvery: 1 },
     },
     liveEquation: {
       tex: 'I_D = I_{sky} \\circledast B_D \\qquad r \\leftarrow r - \\gamma\\, B_D',
@@ -155,12 +156,13 @@ export const TOUR_ACTS = [
         ['altitude h', `${BHEX_PRESET.orbitalAltitudeKm.toLocaleString('en-US')} km`],
         ['B characteristic', P.str.bhexRadius],
         ['θ (characteristic)', P.str.bhexTheta],
-        ['status', '⚠ pending sign-off'],
+        // The ONE place the integrity hedge is stated (W1.4) — on the relation itself.
+        ['status', '⚠ pending sign-off (Marrone/Alejandro)'],
       ],
     },
     narrativeTriple: {
       artist: `The Earth was only the first lens. Raise a single dish into orbit and the synthesized aperture detaches from the ground, reaching past the planet's own diameter toward a sharper sky.`,
-      scientist: `A space element (BHEX-class, h = ${BHEX_PRESET.orbitalAltitudeKm.toLocaleString('en-US')} km) extends baselines beyond Earth's diameter. The characteristic scale ~ R⊕ + h is an ORDER-OF-MAGNITUDE relation — the true ground–space baseline is geometry-dependent. ⚠ pending sign-off (Marrone / Alejandro).`,
+      scientist: `A space element (BHEX-class, h = ${BHEX_PRESET.orbitalAltitudeKm.toLocaleString('en-US')} km) extends baselines beyond Earth's diameter. The characteristic scale ~ R⊕ + h is an ORDER-OF-MAGNITUDE relation — the true ground–space baseline is geometry-dependent and under expert review.`,
       layperson: `Put one telescope in space, and the "virtual dish" grows larger than the Earth itself — letting future arrays see even finer detail. The exact numbers here are still being checked by experts.`,
     },
     transition: 'cue',

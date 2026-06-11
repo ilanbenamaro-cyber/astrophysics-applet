@@ -111,7 +111,8 @@ export const sceneB = {
       }
       ctx.restore();
     }
-    if (p1.front && p2.front) drawBaselineVector(ctx, p1, p2, data.baselineKm, { showLabel: !reducedMotion });
+    if (p1.front && p2.front) drawBaselineVector(ctx, p1, p2, data.baselineKm,
+      { showLabel: !reducedMotion, label: `|B| ${data.t1.name}–${data.t2.name}` });
     // pair station labels
     ctx.save();
     ctx.font = mono(10, 600); ctx.fillStyle = TOKENS.textSecondary; ctx.textAlign = 'center';
@@ -134,16 +135,26 @@ export const sceneB = {
       ctx.restore();
     }
 
-    // beat 3: real fill gauge + θ=λ/B callout
+    // beat 3: real fill gauge + θ=λ/B_max callout. Every baseline in frame is named
+    // by identity (W1.1): the live pair |B| t1–t2 on the globe, the array's
+    // M87*-observing max B_max here, and the coverage extent |u|max on the panel —
+    // three different quantities, zero in-frame contradiction.
     if (b3 > 0.02) {
       drawFillGauge(ctx, px + panelSize - 34, py + panelSize - 34, 28, data.fillPct, b3);
     }
     if (b3 > 0.35) {
       drawResolutionCallout(ctx, gcx - 115, gcy + gR + 24, [
         `λ = ${P.str.lambda}`,
-        `B = ${P.str.ehtBaseline}`,
-        `θ = ${P.str.thetaEht}`,
-      ], { w: 230 });
+        `B_max (M87*) = ${P.str.ehtBaseline}`,
+        `θ = λ/B_max = ${P.str.thetaEht}`,
+      ], { w: 230, title: 'θ = λ / B_max' });
+      ctx.save();
+      ctx.globalAlpha = ease(beatT(b3, 0.35, 0.4));
+      ctx.fillStyle = hexA(TOKENS.textSecondary, 0.9);
+      ctx.font = mono(11, 500); ctx.textAlign = 'center';
+      ctx.fillText(`one pair = one baseline · rotation fills coverage to |u|max = ${P.str.uMax}`,
+        px + panelSize / 2, py - 10);
+      ctx.restore();
     }
 
     // guided affordance hint

@@ -940,6 +940,9 @@
   color: var(--accent-teal, #C4A555);
   margin-bottom: 6px;
 }
+/* KaTeX displayMode ships 1em top/bottom margins — at 32vh of text panel that
+   pushes the bound-values row (incl. the Act E integrity hedge) below the fold. */
+.tour-equation-katex .katex-display { margin: 4px 0; }
 .tour-equation-katex .katex { color: var(--accent-teal, #C4A555); }
 .tour-equation-values {
   display: flex;
