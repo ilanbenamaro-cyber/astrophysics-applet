@@ -88,24 +88,41 @@ export const sceneD = {
     ctx.restore();
     ctx.restore();
 
-    // RIGHT — the simulator's own reconstruction
+    // RIGHT — the simulator's own reconstruction, RESOLVING into recognizability:
+    // blur collapses 14px→0 as the beat completes (the act's "the method finds the
+    // same ring" moment). ctx.filter is reset to 'none' immediately after the draw.
     if (b2 > 0) {
+      const e2 = ease(b2);
       ctx.save();
-      ctx.globalAlpha = ease(b2);
+      ctx.globalAlpha = e2;
       panelFrame(ctx, rx, py, panel);
       ctx.save();
       roundRect(ctx, rx, py, panel, panel, 4); ctx.clip();
+      const blurPx = 14 * (1 - e2);
+      if (blurPx > 0.05) ctx.filter = `blur(${blurPx.toFixed(1)}px)`;
       ctx.drawImage(data.reconCanvas, rx, py, panel, panel);
+      ctx.filter = 'none';
       ctx.restore();
       ctx.restore();
     }
 
-    // Scale bars (42 μas shadow) + provenance
+    // Scale bars (42 μas shadow) + provenance + the dated moment itself
     if (b3 > 0) {
       ctx.save();
       ctx.globalAlpha = ease(b3);
-      scaleAndCaption(ctx, lx, py, panel, data.shadowFrac, 'M87* · EHT Collaboration', '10 April 2019');
+      scaleAndCaption(ctx, lx, py, panel, data.shadowFrac, 'M87* · EHT Collaboration', `λ = ${P.str.lambda} · ${P.freqGHz} GHz`);
       if (b2 > 0) scaleAndCaption(ctx, rx, py, panel, data.shadowFrac, 'This simulator · EHT 2017', `CLEAN · θ = ${P.str.thetaEht}`);
+      // The emotional peak gets its own typographic weight: the date, large and
+      // letter-spaced, centered beneath the pair.
+      ctx.fillStyle = TOKENS.textPrimary;
+      ctx.font = `600 22px ${TOKENS.font}`;
+      try { ctx.letterSpacing = '8px'; } catch (_) { /* older canvas impls */ }
+      ctx.textAlign = 'center';
+      ctx.fillText('10 APRIL 2019', w / 2, py + panel + 78);
+      try { ctx.letterSpacing = '0px'; } catch (_) { /* reset */ }
+      ctx.fillStyle = TOKENS.textSecondary;
+      ctx.font = mono(10, 500);
+      ctx.fillText('the first photograph of a black hole', w / 2, py + panel + 98);
       ctx.restore();
     }
   },
