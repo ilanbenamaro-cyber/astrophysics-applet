@@ -102,8 +102,10 @@ App.js                        — global UI only: compareMode, infoKey, a11y, to
 │   │                           "Enter the simulator" beat dispatches loadEHT (handoff). NB: old TourCard.js
 │   │                           and TourDiagram.js were DELETED in this rebuild.
 │   ├── tourActs.js            — the 5 acts as DATA (master schema): actId A–E, engineState{stations,params}
-│   │                           from constants, liveEquation{tex,values()} bound to tourPhysics, three
-│   │                           narrative registers (artist/scientist/layperson), compute class, durations,
+│   │                           from constants (freq/FOV/duration via tourPhysics exports), liveEquation
+│   │                           {tex,values()} bound to tourPhysics, ONE unified `narrative` per act
+│   │                           (polish pass 2026-06-11: the artist/scientist/layperson triple + tier tabs
+│   │                           were REMOVED — one voice, exact and evocative), compute class, durations,
 │   │                           transition, closing flag. NO physics literal — all numbers via TOUR_PHYSICS.
 │   ├── tourScenes.js          — per-act scene registry SCENES[actId]→{init,drawFrame,onPointer?} +
 │   │                           a generic real-coverage fallback. toTelescopes/uvExtentGl live in tourScene.
@@ -114,25 +116,41 @@ App.js                        — global UI only: compareMode, infoKey, a11y, to
 │   │                           turning Earth → real (u,v) sample → real ellipse drawn point-by-point as the
 │   │                           HA clock turns → full EHT coverage + FillGauge + θ=λ/B callout. Guided: drag
 │   │                           UV panel to scrub HA (x) + declination (y); pair ellipse recomputes live.
-│   ├── sceneC.js              — ACT C From Data to Image: ConvolutionReveal → real dirty image → CLEAN runs
-│   │                           in its own worker, live residual sparkline from progress messages → restored
-│   │                           ContourMap render (DR matches the app). Guided: drag = thermal noise,
-│   │                           recompute on release with never-stall timeout→cache fallback.
-│   ├── sceneD.js              — ACT D First Light: real assets/eht-m87-2019.jpg (full-bleed, 42 μas scale,
-│   │                           provenance) paired with the simulator's own CLEAN reconstruction of
-│   │                           black-hole.png (hot colormap echoing the photo). static.
+│   ├── sceneC.js              — ACT C From Data to Image, staged as a CAUSAL three-panel pipeline (polish
+│   │                           pass): [SPARSE DATA real (u,v) + computed fill %] —FFT⁻¹→ [DIRTY] —CLEAN→
+│   │                           [RESTORED ring over the dirty base], both image panels drawHot (Act D's
+│   │                           colormap), live residual sparkline (progressEvery:1 — CLEAN stops ~iter 11).
+│   │                           Source sized by measureRingFraction/zoomSource so the ring truly spans
+│   │                           42 μas. Guided: labeled THERMAL NOISE slider (hit-tested track, range
+│   │                           0…0.25× RMS — the engine-measured point where the image is noise-limited),
+│   │                           recompute on release, never-stall timeout→cache fallback.
+│   ├── sceneD.js              — ACT D First Light: real assets/eht-m87-2019.jpg paired with the simulator's
+│   │                           own CLEAN reconstruction (same measured ring sizing as C), which RESOLVES in
+│   │                           (blur 14px→0, filter reset per draw); computed shadow scale bars; the dated
+│   │                           moment "10 APRIL 2019" letter-spaced beneath. static/precompute.
 │   ├── sceneE.js              — ACT E Beyond Earth (closing): real BHEX ground–space coverage
-│   │                           (computeSatelliteECEF + space branch of computeUVPointsGl) extending past a
-│   │                           dashed Earth-diameter limit ring; mini Earth + orbiting element; hedged
-│   │                           "characteristic ~ R⊕+h · pending sign-off (Marrone/Alejandro)"; CTA + handoff.
+│   │                           (computeSatelliteECEF + space branch of computeUVPointsGl). Dim gold ground
+│   │                           coverage INSIDE a solid amber Earth-diameter ring; orange space arcs +
+│   │                           annulus wash beyond it (per-pair colours stripped — BHEX preset is itself
+│   │                           gold). Hedge stated ONCE, in the equation status row. CTA + handoff.
+│   ├── tourEarth.js           — READ-ONLY textured Three.js Earth (polish pass): module singleton matching
+│   │                           the main globe by construction (loadEarthTextures + Globe.js material/light/
+│   │                           atmosphere/fresnel register, syncTelescopeMarkers-style markers). No controls,
+│   │                           no placement; rotation = group.rotation.y. Scenes drawImage(render(H)) and
+│   │                           place 2D overlays via project(); Tour.js disposes it on tour unmount.
+│   ├── tourGalaxy.js          — shared deep-space background (polish pass): 3 parallax star layers + nebula
+│   │                           wash pre-rendered once at half-res (slate/amber/neutral family) + vignette;
+│   │                           subordinate to the gold data layer by design; T=0 → fully static (reduced
+│   │                           motion). ensureGalaxy(slot,w,h,{seed,intensity}) caches per canvas size.
 │   ├── tourScene.js           — shared canvas primitives: setupCanvas (offsetWidth×dpr), ease
-│   │                           cubic-bezier(.25,.46,.45,.94), beatT, makeStars/drawStarfield, drawEarth
-│   │                           (shaded sphere + graticule), sphereProject/stationOnGlobe, drawUVAxes (Gλ),
-│   │                           hexA, toTelescopes, uvExtentGl. All colour via tourTokens.
+│   │                           cubic-bezier(.25,.46,.45,.94), beatT, measureRingFraction/zoomSource
+│   │                           (ring-source sizing), drawUVAxes (Gλ), hexA, toTelescopes, uvExtentGl.
+│   │                           (makeStars/drawStarfield + the hand-drawn drawEarth were retired.)
 │   ├── tourAnnotations.js     — physics-annotation draws (ON the act canvas, so they can't intercept
-│   │                           pointer events): drawBaselineVector, drawUVTrace, drawUVPoints, drawFillGauge,
-│   │                           drawResolutionCallout, drawResidualSparkline, drawConvolutionReveal, roundRect.
-│   │                           Gold accent = the live/active data layer.
+│   │                           pointer events): drawBaselineVector (labeled by IDENTITY, e.g. "|B| ALMA–IRAM"),
+│   │                           drawUVTrace, drawUVPoints, drawFillGauge, drawResolutionCallout,
+│   │                           drawResidualSparkline (states "no components above 3σ — noise-limited" when
+│   │                           CLEAN stops at iter 0), roundRect. Gold accent = the live/active data layer.
 │   ├── TourEquation.js        — LiveEquation: renders KaTeX into a ref (window.katex, already loaded in
 │   │                           index.html); plain-tex fallback if KaTeX missing (never blocks). + bound-value list.
 │   └── TourSpine.js           — MiniUVSpine: the progress indicator IS a tiny REAL EHT UV track that fills

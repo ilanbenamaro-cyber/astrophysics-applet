@@ -653,3 +653,30 @@ Claude runs this check when adding a new decision:
 2. Check if new decision conflicts with any existing one
 3. If conflict found: FLAG before adding — do not silently overwrite
 4. Format: ⚠ CONFLICT: [new decision] conflicts with [existing decision] — resolve before proceeding
+
+---
+
+### Tour polish pass — measured ring sizing, one narrative voice, reused Earth, galaxy depth
+DATE: 2026-06-11
+LAST_VERIFIED: 2026-06-11
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: (1) Ring-source sizing in Acts C/D is MEASURED, never assumed: measureRingFraction
+radially profiles the loaded image and zoomSource scales it so the bright ring spans exactly
+P.m87ShadowUas of the act's FOV (the fixed 0.525 fraction had displayed an ~18 μas ring labeled
+42 μas — the "blob" bug). (2) The three-register narrativeTriple + tier tabs are replaced by ONE
+unified narrative per act — exact physics in genuinely evocative language; the original intent was
+always one text serving both audiences, not a toggle. (3) Acts B/E reuse the main page's globe via
+tourEarth.js, a read-only offscreen Three.js singleton built from the same loadEarthTextures +
+material register — the tour Earth matches the app BY CONSTRUCTION and cannot drift. (4) One shared
+tourGalaxy.js background (parallax stars + half-res nebula wash) fills the dead black on all acts,
+luminance-capped below the gold data layer. (5) Act C noise slider range is 0…0.25× visibility RMS
+because the engine itself says the 42 μas source is noise-limited there; the breakdown is presented
+as the lesson ("no components above 3σ — noise-limited"), not hidden.
+ALTERNATIVES_REJECTED: per-act 2D textured-sphere sampling (re-invents the globe look, perf risk);
+keeping viridis drawContour for Act C's restored panel (buries the ring at low DR); noise range 0…3
+(erases the source halfway along the track); lateral nebula drift (non-tiling seam).
+TRIGGERS_REVIEW_IF: black-hole.png is replaced (re-check measureRingFraction's radial-peak
+assumption); the live app's "Source: 42 μas (52.5% of FOV)" label is revisited (same flawed
+assumption, still unfixed there); BHEX sign-off lands (Act E hedge wording).
