@@ -7,10 +7,14 @@
 //   [RESTORED]     Högbom CLEAN's ring, emerging over the dirty image, with the live
 //                  residual sparkline (real worker progress messages) beneath it.
 // CLEAN ≈ 100 ms at N=512 (audit §2) so it recomputes LIVE in both modes.
-// Guided: a labeled THERMAL NOISE slider under the dirty panel (hit-tested to the
-// track — no whole-panel drag); CLEAN recomputes on release, old canvases held so
-// nothing flickers (never-stall: hard timeout falls back to cache). Numbers via
-// tourPhysics; the ring is sized to its true 42 μas by measureRingFraction (W1.3).
+// Guided: a labeled THERMAL NOISE slider under the dirty panel (shared
+// drawSliderControl chrome, hit-tested to its returned rect); CLEAN recomputes
+// live DURING the drag (one in flight at a time) with an on-release settle, old
+// canvases held so nothing flickers (never-stall: hard timeout falls back to
+// cache). The noise's continuous downstream consequences are surfaced — a DR log
+// bar + CLEAN component count under the restored panel, a dashed 3σ stop line on
+// the sparkline — so the cliff (CLEAN finds nothing) is named, not mysterious.
+// Numbers via tourPhysics; ring sized to its true 42 μas by measureRingFraction (W1.3).
 import { computeUVPoints, computeUVPointsGl } from './uvCompute.js';
 import { runReconstruction, buildSefdMap, computeDynamicRange, scaleSource } from './simCore.js';
 import { loadImagePresetAsync } from './presets.js';
@@ -21,7 +25,7 @@ import { drawHot } from './simRender.js';
 import { clearScene, beatT, ease, clamp01, hexA, toTelescopes,
          measureRingFraction, zoomSource, drawUVAxes, uvExtentGl } from './tourScene.js';
 import { ensureGalaxy, drawGalaxy } from './tourGalaxy.js';
-import { drawResidualSparkline, drawUVPoints, roundRect } from './tourAnnotations.js';
+import { drawResidualSparkline, drawUVPoints, roundRect, drawSliderControl } from './tourAnnotations.js';
 
 const N = 512;
 const RECOMPUTE_TIMEOUT_MS = 2500;
@@ -31,6 +35,14 @@ const RECOMPUTE_TIMEOUT_MS = 2500;
 // where the engine says the image is noise-limited; the sparkline names that state.
 const NOISE_MAX = 0.25;
 const mono = (px, w = 500) => `${w} ${px}px ${TOKENS.fontMono}`;
+
+// Slider-fraction ↔ noise mapping, isolated in ONE place so a later switch to a
+// perceptual (non-linear) mapping touches nothing else. LINEAR for now.
+function fracToNoise(f) { return +(f * NOISE_MAX).toFixed(2); }
+function noiseToFrac(n) { return clamp01(n / NOISE_MAX); }
+
+// CLEAN found nothing above its 3σ floor — zero components, the image is noise-limited.
+function isNoiseLimited(data) { return data.series.length < 2; }
 
 function render512(draw) {
   const c = document.createElement('canvas');
@@ -43,12 +55,16 @@ function render512(draw) {
 // Both panels render with the same hot colormap Act D uses — one image, before/after.
 async function recomputeCLEAN(data) {
   const series = [];
+  // Capture the noise THIS run computes with: data.noise can move mid-flight
+  // during a live drag, and computedNoise must record what was actually used
+  // (else the release settle sees "already computed" and keeps a stale image).
+  const noiseUsed = data.noise;
   const r = await runReconstruction(
     data.srcMaster.slice(),
     data.uvLite,
     // progressEvery 1: CLEAN on the true-size ring stops in ~10 iters (the 3σ floor
     // rises with the brighter dirty border); coarser sampling would starve the sparkline.
-    { N, noise: data.noise, method: 'clean', dishDiameter: 25, frequency: data.freqGHz,
+    { N, noise: noiseUsed, method: 'clean', dishDiameter: 25, frequency: data.freqGHz,
       fovRad: data.fovRad, stationPairs: data.stationPairs, sefdMap: data.sefdMap, progressEvery: 1 },
     (p) => series.push({ iter: p.iter, residual: p.residual }),
   );
@@ -56,7 +72,7 @@ async function recomputeCLEAN(data) {
   data.restoredCanvas = render512(ctx => drawHot(ctx, r.restored, N));
   data.series = series.length ? series : [{ iter: 0, residual: 1 }];
   data.dynamicRange = computeDynamicRange(r.restored, N);
-  data.computedNoise = data.noise;
+  data.computedNoise = noiseUsed;
   return data;
 }
 
@@ -116,6 +132,21 @@ export const sceneC = {
     const b2 = reducedMotion ? 1 : beatT(T, 2.2, 1.8);   // FFT⁻¹ → dirty
     const b3 = reducedMotion ? 1 : beatT(T, 4.6, 3.4);   // CLEAN → ring + sparkline
 
+    // ── Causal connector (guided): the slider governs the FFT⁻¹/CLEAN
+    // transformation — a thin hairline from the track's center up to just below
+    // the arrow row. Drawn FIRST so panels and captions sit on top of it. ──
+    if (mode === 'guided') {
+      ctx.save();
+      ctx.strokeStyle = hexA(TOKENS.accent, 0.35);
+      ctx.lineWidth = 1;
+      const ccx = slider.x + slider.w / 2;
+      ctx.beginPath();
+      ctx.moveTo(ccx, slider.y);
+      ctx.lineTo(ccx, cyP + 14);
+      ctx.stroke();
+      ctx.restore();
+    }
+
     // ── Panel 1: the sparse (u,v) data ──
     ctx.save();
     ctx.globalAlpha = ease(b1);
@@ -151,39 +182,77 @@ export const sceneC = {
       ctx.globalAlpha = ease(b3) * ease(clamp01(b3 * 1.4));
       ctx.drawImage(data.restoredCanvas, xs[2], py, S, S);
       ctx.restore();
-      const drTxt = !isFinite(data.dynamicRange) ? '>1000' : data.dynamicRange.toFixed(0);
-      panelCaption(ctx, xs[2], py, S, 'RESTORED (CLEAN)',
-        b3 > 0.6 ? `DR ${drTxt}:1` : '…');
+      panelCaption(ctx, xs[2], py, S, 'RESTORED (CLEAN)', b3 > 0.6 ? '' : '…');
       ctx.restore();
 
-      // Live residual sparkline (real worker progress), revealed across beat 3
+      // ── Consequence readouts: the CONTINUOUS cost of noise, so mid-slider
+      // motion is visible long before CLEAN's 3σ cliff (which is named below). ──
+      if (b3 > 0.6) {   // reduced motion: b3 = 1, so readouts always render statically
+        ctx.save();
+        ctx.globalAlpha = ease(b3);
+        const rowX = xs[2] + S * 0.08, rowW = S * 0.84;
+        // DYNAMIC RANGE log bar (1→1000 scale): gold fill ∝ log10(DR)/3, clamped.
+        const drTxt = !isFinite(data.dynamicRange) ? '>1000' : data.dynamicRange.toFixed(0);
+        const drVal = !isFinite(data.dynamicRange) ? 1000 : Math.max(data.dynamicRange, 1);
+        const drFrac = clamp01(Math.log10(drVal) / 3);
+        const yDr = py + S + 30;
+        ctx.font = mono(10, 600); ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = TOKENS.accent;
+        ctx.fillText(`DR ${drTxt}:1`, rowX, yDr);
+        const barX = rowX + 64, barW = rowW - 64;
+        ctx.strokeStyle = hexA(TOKENS.border, 1);
+        ctx.lineWidth = 2; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(barX, yDr); ctx.lineTo(barX + barW, yDr); ctx.stroke();
+        if (drFrac > 0) {
+          ctx.strokeStyle = TOKENS.accent;
+          ctx.beginPath(); ctx.moveTo(barX, yDr); ctx.lineTo(barX + barW * drFrac, yDr); ctx.stroke();
+        }
+        // CLEAN component count — collapses to 0 (danger) when noise-limited.
+        const nComp = data.series.length >= 2 ? data.series.length : 0;
+        const yCc = py + S + 45;
+        ctx.fillStyle = TOKENS.textSecondary;
+        ctx.fillText('CLEAN components: ', rowX, yCc);
+        const lblW = ctx.measureText('CLEAN components: ').width;
+        ctx.fillStyle = nComp === 0 ? hexA(TOKENS.danger, 0.85) : TOKENS.accent;
+        ctx.fillText(`${nComp}`, rowX + lblW, yCc);
+        ctx.restore();
+      }
+
+      // Live residual sparkline (real worker progress), revealed across beat 3;
+      // the dashed 3σ line marks CLEAN's natural stop level (≈ its final residual).
       const revealN = reducedMotion ? data.series.length
         : Math.max(2, Math.floor(data.series.length * clamp01(b3 + 0.05)));
-      drawResidualSparkline(ctx, xs[2], py + S + 46, S, 62, data.series.slice(0, revealN));
+      drawResidualSparkline(ctx, xs[2], py + S + 58, S, 62, data.series.slice(0, revealN),
+        { threshold: data.series.length >= 2 ? data.series[data.series.length - 1].residual : null });
       ctx.save();
       ctx.globalAlpha = ease(b3);
       ctx.fillStyle = hexA(TOKENS.textSecondary, 0.85);
       ctx.font = mono(10, 500); ctx.textAlign = 'center';
-      ctx.fillText('peak → subtract γ·B_D → repeat · stop at 3σ', xs[2] + S / 2, py + S + 124);
+      ctx.fillText('peak → subtract γ·B_D → repeat · stop at 3σ', xs[2] + S / 2, py + S + 136);
       ctx.restore();
     }
 
-    // ── Thermal-noise slider (guided): a real control, not an invisible drag ──
+    // ── Thermal-noise slider (guided): the shared control chrome; its returned
+    // hit rect is what onPointer tests against. ──
     if (mode === 'guided') {
-      drawNoiseSlider(ctx, slider, data, reducedMotion ? 0 : T);
+      data._layout.sliderHit = drawNoiseSlider(ctx, slider, data, reducedMotion ? 0 : T);
     }
   },
 
   onPointer(data, { type, nx, ny, mode }) {
     if (mode !== 'guided' || !data._layout) return;
-    const { slider, w, h } = data._layout;
+    const { slider, sliderHit, w, h } = data._layout;
     const x = nx * w, y = ny * h;
-    const onTrack = x >= slider.x - 10 && x <= slider.x + slider.w + 10 &&
-                    y >= slider.y - 18 && y <= slider.y + 18;
+    const onTrack = !!sliderHit &&
+                    x >= sliderHit.x && x <= sliderHit.x + sliderHit.w &&
+                    y >= sliderHit.y && y <= sliderHit.y + sliderHit.h;
     if (type === 'down' && onTrack) data._dragging = true;
     if ((type === 'move' && data._dragging) || (type === 'down' && onTrack)) {
       const fx = clamp01((x - slider.x) / slider.w);
-      data.noise = +(fx * NOISE_MAX).toFixed(2);
+      data.noise = fracToNoise(fx);
+      // Live recompute during the drag (CLEAN ≈ 100 ms): at most one in flight —
+      // the _recomputing guard serializes; release below is the final settle.
+      if (!data._recomputing && Math.abs(data.noise - data.computedNoise) > 0.005) scheduleRecompute(data);
     }
     if (type === 'up' || type === 'leave') {
       if (data._dragging && data.noise !== data.computedNoise) scheduleRecompute(data);
@@ -229,44 +298,32 @@ function stageArrow(ctx, xFrom, xTo, cy, label) {
   ctx.restore();
 }
 
-// The thermal-noise control: track + fill + handle + label; a small spinner while
-// CLEAN reruns (old canvases stay up — no flicker).
+// The thermal-noise control: shared slider chrome (drawSliderControl) + a small
+// spinner while CLEAN reruns (old canvases stay up — no flicker). When the engine
+// is noise-limited the whole control goes danger and the value names the state.
+// Returns the hit rect onPointer tests against.
 function drawNoiseSlider(ctx, slider, data, T) {
   const { x, y, w } = slider;
-  const f = data.noise / NOISE_MAX;
-  ctx.save();
-  // label + value
-  ctx.font = mono(10, 600);
-  ctx.fillStyle = TOKENS.textSecondary;
-  ctx.textAlign = 'left';
-  ctx.fillText('THERMAL NOISE — drag', x, y - 12);
-  ctx.textAlign = 'right';
-  ctx.fillStyle = data.noise > 0 ? TOKENS.accent : TOKENS.textSecondary;
-  ctx.fillText(`× ${data.noise.toFixed(2)}`, x + w, y - 12);
-  // track
-  ctx.strokeStyle = hexA(TOKENS.border, 1);
-  ctx.lineWidth = 3;
-  ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + w, y); ctx.stroke();
-  // fill
-  ctx.strokeStyle = TOKENS.accent;
-  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + w * f, y); ctx.stroke();
-  // handle
-  ctx.fillStyle = TOKENS.accent;
-  ctx.beginPath(); ctx.arc(x + w * f, y, 5.5, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = hexA(TOKENS.bg0, 0.9);
-  ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.arc(x + w * f, y, 5.5, 0, Math.PI * 2); ctx.stroke();
+  const limited = isNoiseLimited(data);
+  const value = `× ${data.noise.toFixed(2)} σ_vis${limited ? ' — NOISE-LIMITED' : ''}`;
+  const hit = drawSliderControl(ctx, { x, y, w }, noiseToFrac(data.noise), {
+    label: 'THERMAL NOISE (PER-BASELINE SEFD)',
+    value,
+    active: data._dragging || data._recomputing,
+    danger: limited,
+  });
   // recompute spinner (right of the value)
   if (data._recomputing) {
+    ctx.save();
     const sx = x + w + 18, r = 5;
     ctx.strokeStyle = TOKENS.accent;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(sx, y - 16, r, T * 6, T * 6 + Math.PI * 1.4);
     ctx.stroke();
+    ctx.restore();
   }
-  ctx.restore();
+  return hit;
 }
 
 function scheduleRecompute(data) {
