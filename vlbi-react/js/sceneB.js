@@ -3,8 +3,12 @@
 //   beat 1 — ALMA+IRAM baseline on a turning Earth → the single (u,v) sample it measures
 //   beat 2 — Earth rotates (HA clock); the REAL ellipse is drawn point by point
 //   beat 3 — full EHT 2017 coverage fades in; real UV-fill gauge; θ = λ/B callout
-// Guided mode: drag across the UV panel to scrub hour angle (↔) and declination (↕);
-// the ellipse recomputes live (sub-ms, audit §2). All numbers via tourPhysics.js.
+// Guided mode: two decoupled labeled controls — an HOUR ANGLE track under the UV
+// panel and a vertical DECLINATION slider beside it; the ellipse recomputes live
+// (sub-ms, audit §2). Once the intro beats finish, the Earth keeps turning on its
+// own (auto-advancing hour angle, ~36 s per synthesis loop); dragging HA takes
+// over the head, releasing resumes the spin after a short ramp. Declination drags
+// never pause the spin. All numbers via tourPhysics.js.
 import { computeBaseline, baselineToUV, computeElevation, MIN_ELEVATION_RAD,
          computeUVPointsGl, computeUVPoints, computeUVFill } from './uvCompute.js';
 import { TOUR_PHYSICS as P } from './tourPhysics.js';
@@ -13,9 +17,17 @@ import { getTourEarth } from './tourEarth.js';
 import { clearScene, drawUVAxes, beatT, ease, clamp01, hexA, toTelescopes, uvExtentGl } from './tourScene.js';
 import { ensureGalaxy, drawGalaxy } from './tourGalaxy.js';
 import { drawBaselineVector, drawUVTrace, drawUVPoints, drawFillGauge,
-         drawResolutionCallout } from './tourAnnotations.js';
+         drawResolutionCallout, drawSliderControl } from './tourAnnotations.js';
 
 const C_M_S = 299792458;
+
+// Idle-spin tuning (UX timing, not physics): one full synthesis loop ≈ 36 s,
+// spin eases back in over 0.8 s, and resumes 1.2 s after an HA-handle release.
+const IDLE_LOOP_S = 36;
+const IDLE_RAMP_S = 0.8;
+const IDLE_RESUME_DELAY_S = 1.2;
+// Declination drag span: slider top = +40°, bottom = −40° (same mapping as before).
+const DEC_SPAN_DEG = 80;
 
 // One baseline's real (u,v) track in Gλ over a full synthesis, with hour angle kept.
 // Mirrors computeUVPointsGl's per-pair math (elevation-filtered, ground stations).
@@ -62,9 +74,11 @@ export const sceneB = {
 
     return {
       tels, t1, t2, baselineKm, params, earth,
-      pairTrack, uvGl, maxGl: uvExtentGl(uvGl), fillPct: computeUVFill(uvPx, 512),
-      scrub: { active: false, haFrac: 0.5, decDeg: params.decDeg },
+      uvGl, maxGl: uvExtentGl(uvGl), fillPct: computeUVFill(uvPx, 512),
+      scrub: { dragging: null, haFrac: 0.5, decDeg: params.decDeg },
       scrubTrack: pairTrack, scrubDec: params.decDeg,
+      idle: { haFrac: 0.55, lastT: null, resumeT: 0 },
+      _touched: false, _T: 0,
       _layout: null,
     };
   },
@@ -82,19 +96,39 @@ export const sceneB = {
     data._layout = { px, py, panelSize, w, h, gcx, gcy, gR };
     const mapUV = drawUVAxes(ctx, px, py, panelSize, data.maxGl);
 
-    const scrubbing = data.scrub.active && mode === 'guided';
-    // recompute the scrub track only when declination actually changed (cheap, but tidy)
-    if (scrubbing && data.scrubDec !== data.scrub.decDeg) {
+    data._T = T;  // stashed so onPointer can timestamp HA releases
+
+    // recompute the scrub track only when declination actually changed (sub-ms, but tidy)
+    if (data.scrubDec !== data.scrub.decDeg) {
       data.scrubTrack = pairTrackGl(data.t1, data.t2, data.scrub.decDeg, data.params.freqGHz, data.params.durationHr);
       data.scrubDec = data.scrub.decDeg;
     }
 
     const sweep = reducedMotion ? 1 : beatT(T, 2.6, 5.0);
     const b3    = reducedMotion ? 1 : beatT(T, 7.8, 3.0);
-    const inBeat1 = !scrubbing && !reducedMotion && T < 2.6;
 
-    const track = scrubbing ? data.scrubTrack : data.pairTrack;
-    const headFrac = scrubbing ? data.scrub.haFrac : (inBeat1 ? 0 : sweep);
+    // ── Continuous idle spin = auto-advancing hour angle ──
+    // Active once scrub interactivity is available; the (u,v) head keeps tracing
+    // while the Earth turns. The HA handle owns the head while dragged; release
+    // hands back to the spin after IDLE_RESUME_DELAY_S with an eased ramp.
+    // Declination drags never pause it. Reduced motion: idle never runs — the one
+    // static frame falls through to sweep = 1 (full ellipse, full coverage).
+    const idleActive = animPhase === 'ready' && !reducedMotion;
+    if (idleActive) {
+      if (data.idle.lastT == null) data.idle.haFrac = sweep % 1;  // seamless hand-off from intro sweep
+      const dt = data.idle.lastT == null ? 0 : Math.min(0.1, T - data.idle.lastT);
+      data.idle.lastT = T;
+      if (data.scrub.dragging === 'ha') {
+        data.idle.haFrac = data.scrub.haFrac;            // handle owns position while dragging
+      } else if (T > data.idle.resumeT) {
+        const ramp = ease(clamp01((T - data.idle.resumeT) / IDLE_RAMP_S));
+        data.idle.haFrac = (data.idle.haFrac + ramp * dt / IDLE_LOOP_S) % 1;
+      }
+    }
+
+    const inBeat1 = !idleActive && !reducedMotion && T < 2.6;
+    const track = data.scrubTrack;
+    const headFrac = idleActive ? data.idle.haFrac : (inBeat1 ? 0 : sweep);
     const headIdx = track.length ? Math.max(0, Math.min(track.length - 1, Math.floor(track.length * headFrac))) : 0;
     const rotation = track.length ? track[headIdx].H : 0;
 
@@ -154,35 +188,58 @@ export const sceneB = {
       ctx.restore();
     }
 
-    // guided affordance hint
+    // ── Guided controls: decoupled HA track (below panel) + dec slider (left) ──
+    // Each control carries its own label + live readout (replaces the old combined
+    // 'H … · δ …' scrub readout). Hit rects are stashed on _layout for onPointer;
+    // fractions are computed against the raw track rects (also stashed).
     if (mode === 'guided' && animPhase === 'ready' && !reducedMotion) {
-      ctx.save();
-      ctx.fillStyle = hexA(TOKENS.textSecondary, scrubbing ? 0.4 : 0.85);
-      ctx.font = mono(11, 500); ctx.textAlign = 'center';
-      ctx.fillText('drag ↔ hour angle    ↕ declination', px + panelSize / 2, py + panelSize + 22);
-      if (scrubbing) {
-        ctx.fillStyle = TOKENS.accent;
-        ctx.fillText(`H ${(track[headIdx]?.H * 12 / Math.PI || 0).toFixed(1)} h   ·   δ ${data.scrub.decDeg.toFixed(1)}°`,
-          px + panelSize / 2, py + panelSize + 38);
+      const haH = (track[headIdx]?.H ?? 0) * 12 / Math.PI;  // radians → hours
+      const haTrack  = { x: px + 0.06 * panelSize, y: py + panelSize + 26, w: 0.88 * panelSize };
+      const decTrack = { x: px - 40, y: py + 0.06 * panelSize, h: 0.88 * panelSize, vertical: true };
+      data._layout.haTrack = haTrack;
+      data._layout.decTrack = decTrack;
+      data._layout.haCtl = drawSliderControl(ctx, haTrack, headFrac, {
+        label: 'HOUR ANGLE — DRAG',
+        value: `H = ${haH.toFixed(1)} h`,
+        active: data.scrub.dragging === 'ha' || T < data.idle.resumeT,
+      });
+      data._layout.decCtl = drawSliderControl(ctx, decTrack, 0.5 - data.scrub.decDeg / DEC_SPAN_DEG, {
+        label: 'DECLINATION',
+        value: `δ = ${data.scrub.decDeg.toFixed(1)}°`,
+        active: data.scrub.dragging === 'dec',
+      });
+      // affordance caption, hidden once the visitor has interacted
+      if (!data._touched) {
+        ctx.save();
+        ctx.fillStyle = TOKENS.textSecondary;
+        ctx.font = mono(11, 500); ctx.textAlign = 'center';
+        ctx.fillText('steer the array — hour angle turns the Earth · declination tilts the source',
+          px + panelSize / 2, py + panelSize + 56);
+        ctx.restore();
       }
-      ctx.restore();
     }
   },
 
-  // Guided interactivity: drag over the UV panel → scrub HA (x) + declination (y).
-  onPointer(data, { type, nx, ny, mode, phase }) {
-    if (mode !== 'guided' || !data._layout) return;
-    if (type === 'down') data.scrub.active = true;
-    if (type === 'leave' || type === 'up') { /* keep last manual state; stop tracking moves */ if (type === 'leave') data.scrub.dragging = false; }
-    if (type === 'down') data.scrub.dragging = true;
-    if (type === 'up') data.scrub.dragging = false;
-    if ((type === 'move' && data.scrub.dragging) || type === 'down') {
-      const { px, py, panelSize, w, h } = data._layout;
-      const x = nx * w, y = ny * h;
-      const fx = clamp01((x - px) / panelSize);
-      const fy = clamp01((y - py) / panelSize);
-      data.scrub.haFrac = fx;
-      data.scrub.decDeg = 80 * (0.5 - fy);  // map panel y → dec ∈ [+40°, −40°]
+  // Guided interactivity: rect-scoped drags on the two labeled controls only.
+  // Hit-test against the padded hit rects drawSliderControl returned; compute the
+  // drag fraction against the raw track geometry. Releasing the HA handle schedules
+  // the idle spin to resume; declination drags never pause it.
+  onPointer(data, ev) {
+    if (ev.mode !== 'guided' || !data._layout) return;
+    const L = data._layout;
+    const x = ev.nx * L.w, y = ev.ny * L.h;
+    const hit = (r) => r && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+    if (ev.type === 'down') data.scrub.dragging = hit(L.haCtl) ? 'ha' : hit(L.decCtl) ? 'dec' : null;
+    if (data.scrub.dragging && (ev.type === 'down' || ev.type === 'move')) {
+      data._touched = true;
+      if (data.scrub.dragging === 'ha')
+        data.scrub.haFrac = clamp01((x - L.haTrack.x) / L.haTrack.w);
+      else
+        data.scrub.decDeg = DEC_SPAN_DEG * (0.5 - clamp01((y - L.decTrack.y) / L.decTrack.h));  // top = +40°, bottom = −40°
+    }
+    if (ev.type === 'up' || ev.type === 'leave') {
+      if (data.scrub.dragging === 'ha') data.idle.resumeT = (data._T || 0) + IDLE_RESUME_DELAY_S;
+      data.scrub.dragging = null;
     }
   },
 };
