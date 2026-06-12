@@ -92,18 +92,44 @@
   padding: 0;
 }
 
-/* ── Body: paragraphs + equation (col 2, row 2) ─────────────────────────── */
+/* ── Body: scrollable prose (col 2, row 2) — the equation lives OUTSIDE this
+      scroller in .tour-equation-pinned (col 2, row 3) so it never scrolls away. */
 
 .tour-body {
   grid-column: 2;
   grid-row: 2;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  overflow-y: auto;   /* graceful fallback on short windows — content never lost */
+  gap: 8px;
+  overflow-y: auto;   /* exhaustive multi-paragraph narrative scrolls; equation stays pinned */
   overflow-x: hidden;
   min-height: 0;
   scrollbar-width: thin;
+}
+
+/* Scroll-fade affordance: a sticky gradient pinned to the visible bottom edge of
+   the prose scroller — CSS-only (no scroll listener), signals overflowed text.
+   In flow as the last flex item: mid-scroll it sticks to the scrollport bottom and
+   fades the lowest lines; at scroll-end it rests below the prose, overlaying nothing
+   (so the final paragraph and short/presenter content are never washed out). */
+.tour-body::after {
+  content: '';
+  position: sticky;
+  bottom: 0;
+  flex-shrink: 0;
+  height: 22px;
+  background: linear-gradient(to bottom, rgba(10, 10, 10, 0), var(--bg-1, #0a0a0a));
+  pointer-events: none;
+}
+
+/* ── Pinned equation (col 2, row 3) — same column as the prose, its own grid
+      row below the scroller; LiveEquation markup (.tour-equation-block /
+      .tour-equation-katex) is unchanged, so existing selectors still match. */
+
+.tour-equation-pinned {
+  grid-column: 2;
+  grid-row: 3;
+  min-width: 0;
 }
 
 .tour-paragraph {

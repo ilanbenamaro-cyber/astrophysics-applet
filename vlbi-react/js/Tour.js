@@ -194,12 +194,12 @@ export function Tour({ actIndex, onActChange, onClose, onTourAction, reducedMoti
         <div className="tour-body">
           <div className="tour-headline">${act.headline}</div>
 
-          ${mode === 'guided' ? html`
-            <p className=${'tour-paragraph' + (phase === 'ready' ? ' p-visible' : '')}>
-              ${act.narrative}
-            </p>
-          ` : null}
+          ${mode === 'guided' ? act.narrative.map((p, i) => html`
+            <p key=${i} className=${'tour-paragraph' + (phase === 'ready' ? ' p-visible' : '')}>${p}</p>
+          `) : null}
+        </div>
 
+        <div className="tour-equation-pinned">
           <${LiveEquation} tex=${act.liveEquation.tex}
                            values=${act.liveEquation.values()}
                            visible=${phase === 'ready'} />
