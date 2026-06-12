@@ -138,46 +138,6 @@ function estimateNoiseRms(arr, N) {
   return count > 0 ? Math.sqrt(sum / count) : 0;
 }
 
-function gaussConvolve(img, N, sigma) {
-  const radius = Math.ceil(3*sigma);
-  const size = 2*radius+1;
-  const kernel = new Float64Array(size);
-  let ksum = 0;
-  for (let i = 0; i < size; i++) {
-    const x = i - radius;
-    kernel[i] = Math.exp(-x*x / (2*sigma*sigma));
-    ksum += kernel[i];
-  }
-  for (let i = 0; i < size; i++) kernel[i] /= ksum;
-
-  const tmp = new Float64Array(N*N);
-  // Horizontal pass with wrap-around
-  for (let r = 0; r < N; r++) {
-    for (let c = 0; c < N; c++) {
-      let v = 0;
-      for (let k = 0; k < size; k++) {
-        const cc = ((c + k - radius) % N + N) % N;
-        v += img[r*N+cc] * kernel[k];
-      }
-      tmp[r*N+c] = v;
-    }
-  }
-  const out = new Float64Array(N*N);
-  // Vertical pass with wrap-around
-  for (let r = 0; r < N; r++) {
-    for (let c = 0; c < N; c++) {
-      let v = 0;
-      for (let k = 0; k < size; k++) {
-        const rr = ((r + k - radius) % N + N) % N;
-        v += tmp[rr*N+c] * kernel[k];
-      }
-      out[r*N+c] = v;
-    }
-  }
-  return out;
-}
-
-
 function reconstruct(grayscale, uvPoints, params, emitProgress) {
   const { N, noise, method, dishDiameter = 25, frequency = 230,
           fovRad = 80 * Math.PI / (180 * 3.6e9),

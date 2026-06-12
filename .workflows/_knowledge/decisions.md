@@ -680,3 +680,35 @@ keeping viridis drawContour for Act C's restored panel (buries the ring at low D
 TRIGGERS_REVIEW_IF: black-hole.png is replaced (re-check measureRingFraction's radial-peak
 assumption); the live app's "Source: 42 μas (52.5% of FOV)" label is revisited (same flawed
 assumption, still unfixed there); BHEX sign-off lands (Act E hedge wording).
+
+---
+
+### Final pass (2026-06-12): app ring-fraction fix, two licensed palette divergences, dead-code sweep
+DATE: 2026-06-12
+LAST_VERIFIED: 2026-06-12
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: (1) The LIVE APP now measures the loaded image's bright-ring fraction
+(measureRingFraction, moved tourScene→simCore with tourScene re-exporting) and corrects
+effectiveSourceFraction = (shadowUas/FOV) ÷ ringFraction — zooming (zoomSource, ≥1) or
+shrinking (<1) so the RING, not the frame, spans the physical size. Sanity band
+[0.2, 0.95]: outside it (gaussian/jet/double/point-like) ringFraction=1 and legacy
+behavior is byte-identical; Custom slider path untouched. Sidebar reads "Ring: 42 μas
+(52.5% of FOV, measured)". This CHANGES reconstruction output for ring-like sources on
+named targets — user-approved at an explicit pause gate (before/after screenshots:
+unresolved blob → resolved shadow + ring matching tour Acts C/D and published EHT
+morphology). (2) DESIGN-LANGUAGE Phase B is OVERRIDDEN in two places by the final-pass
+spec: the tour galaxy uses a multi-hue deep-space palette (slate/indigo/violet/teal/
+faint-magenta/amber, value-controlled, gold data layer still dominant) and Act E ground
+arcs use the app's saturated TELESCOPE_COLORS per-pair blends (spec S1.6: match the main
+app). Both recorded in DESIGN-LANGUAGE.md so a future conformance audit doesn't revert
+them. (3) Dead code removed: worker.js gaussConvolve (never referenced), ~480 lines of
+orphaned tour.css (chapter cards, scrubber, sl-rings, station dots — all from the
+deleted TourDiagram era), tourScene tombstone comments. The cloud layer in Globe.js was
+deleted outright: earth-clouds.png exists at NO CDN — the app had never displayed
+clouds, only console errors.
+RATIONALE: tour and tool must agree (G-PHYSICS); the spec's explicit visual targets
+post-date and override the MODERATE palette license; grep-proven dead code.
+TRIGGERS_REVIEW_IF: black-hole.png replaced (re-measure assumption holds via the band);
+a working cloud texture CDN is found (reintroduce behind a verified URL); BHEX sign-off.

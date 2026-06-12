@@ -72,12 +72,6 @@ export function clearScene(ctx, w, h, color) {
   ctx.fillRect(0, 0, w, h);
 }
 
-// (The single-layer starfield that lived here was superseded by tourGalaxy.js —
-//  multi-layer parallax + nebula wash, one shared background for every act.)
-
-// (The hand-drawn Earth model that lived here was retired in the polish pass —
-//  Acts B & E now reuse the main page's textured Three.js globe via tourEarth.js.)
-
 // ── UV-plane axes ─────────────────────────────────────────────────────────────
 // Draws centered axes for a UV panel of half-extent `maxGl` gigawavelengths into the
 // rect (x,y,size). Returns a mapper uv→screen so callers can plot real points.

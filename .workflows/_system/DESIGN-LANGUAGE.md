@@ -134,3 +134,19 @@ copy is quiet (only its color/spacing needs the label treatment).
   space/cold/Earth-night — never candy cyan/teal/bright-gold. Keep glow/depth via opacity & value,
   not saturated hue. The Earth may use realistic blue (it matches the app's own globe).
 - Net: the tour's CONTENT is cinematic; its CHROME, TYPE, COLOR SYSTEM, SPACING are the app's.
+
+---
+
+## FINAL-PASS LICENSES (2026-06-12 — spec `.workflows/_prompts/tour-final-pass-fable.md` overrides Phase B in two places)
+
+1. **Tour galaxy (tourGalaxy.js):** licensed multi-hue deep-space nebula —
+   slate `#4a5e8a` → indigo `#46549e` → violet `#6a4a9e` → teal `#3a7a7e` → faint
+   magenta `#7a4472` + amber `#B8924A` — value-controlled (core stops 0.38–0.50 ×
+   breath × per-act intensity ⇒ effective ~0.10–0.18), gold data layer remains the
+   brightest/sharpest element in every act (vision-verified). Supersedes the single
+   slate-cool rule FOR THE GALAXY ONLY.
+2. **Act E coverage arcs (sceneE.js):** ground arcs use the APP'S own per-pair
+   TELESCOPE_COLORS blends (S1.6: the viewer must connect arcs to stations exactly as
+   in the main app). Space class stays fixed orange; gold remains reserved for data.
+   A drawLegend panel maps colour → station.
+Do not "fix" either back to Phase B in a future conformance pass.
