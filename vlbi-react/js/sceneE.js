@@ -12,7 +12,7 @@ import { TOKENS } from './tourTokens.js';
 import { getTourEarth } from './tourEarth.js';
 import { clearScene, drawUVAxes, beatT, ease, clamp01, hexA, toTelescopes, uvExtentGl } from './tourScene.js';
 import { ensureGalaxy, drawGalaxy } from './tourGalaxy.js';
-import { drawUVPoints, drawResolutionCallout, roundRect } from './tourAnnotations.js';
+import { drawUVPoints, drawResolutionCallout, drawLegend, roundRect } from './tourAnnotations.js';
 
 const mono = (px, w = 500) => `${w} ${px}px ${TOKENS.fontMono}`;
 
@@ -32,10 +32,13 @@ export const sceneE = {
 
     const uvGroundRaw = computeUVPointsGl(ground, opts);
     const uvAll = computeUVPointsGl(all, opts);
-    // Strip per-point pair colours: this act's story is the two-CLASS contrast
-    // (ground gold inside the limit ring vs space orange beyond it), and the BHEX
-    // preset colour is itself gold — per-pair colouring would erase the distinction.
-    const uvGround = uvGroundRaw.map(p => ({ u: p.u, v: p.v }));
+    // GROUND arcs keep their per-pair colours (the blend of the two stations'
+    // colours — exactly how the main app paints baselines) so the viewer can
+    // connect an arc to the stations that produced it. SPACE points are stripped
+    // and drawn in a fixed orange CLASS colour instead: the BHEX preset colour is
+    // itself gold, and per-pair blending would collide with the gold data
+    // reservation — the orange class keeps ground-vs-space instantly legible.
+    const uvGround = uvGroundRaw.map(p => ({ u: p.u, v: p.v, color: p.color }));
     const uvSpace = uvAll.filter(p => p.pairId && p.pairId.startsWith(satId + '-'))
                          .map(p => ({ u: p.u, v: p.v }));
 
@@ -43,8 +46,14 @@ export const sceneE = {
     const earth = getTourEarth();
     earth.setStations(ground);
 
+    // Legend rows: the stations in toTelescopes order (their assigned colours),
+    // then the two class entries the panel layers add.
+    const legend = ground.map(t => ({ color: t.color, label: t.name, shape: 'dot' }));
+    legend.push({ color: TOKENS.orange, label: 'BHEX–ground', shape: 'square' });
+    legend.push({ color: TOKENS.amber, label: 'Earth limit', shape: 'ring' });
+
     return {
-      uvGround, uvSpace, satellite, earth,
+      uvGround, uvSpace, satellite, earth, legend,
       groundMax: maxExtent(uvGround),
       maxGl: uvExtentGl(uvAll),
     };
@@ -71,11 +80,9 @@ export const sceneE = {
     // reference ring, bright orange space baselines crossing OUT past it.
     const limitR = data.groundMax * scale;
     if (b1 > 0) {
-      // ground coverage — subordinate (reduced alpha, small radius)
-      ctx.save();
-      ctx.globalAlpha = 0.5;
-      drawUVPoints(ctx, mapUV, data.uvGround, b1, { radius: 0.9, defaultColor: TOKENS.accent });
-      ctx.restore();
+      // ground coverage — station-coloured (per-pair blends), small radius keeps
+      // it subordinate to the larger orange space points layered on top
+      drawUVPoints(ctx, mapUV, data.uvGround, b1, { radius: 0.9 });
       // Earth-diameter limit: a clear solid reference ring
       ctx.save();
       ctx.globalAlpha = ease(b1);
@@ -151,6 +158,12 @@ export const sceneE = {
         `≈ ${P.str.bhexRadius}`,
         `order-of-magnitude relation`,
       ], { w: 240, title: 'Space VLBI' });
+      // colour → station legend, top-left (clear of the Earth inset at all sizes)
+      drawLegend(ctx, 20, 18, data.legend, {
+        title: 'stations', w: 190, cols: 2,
+        footnote: 'arc = blend of its 2 stations',
+        alpha: ease(b3),
+      });
       // CTA
       ctx.fillStyle = TOKENS.accent; ctx.font = mono(14, 700); ctx.textAlign = 'center';
       ctx.fillText('Place your first telescope.', w / 2, py + panel + 32);
