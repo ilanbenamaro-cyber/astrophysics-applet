@@ -16,7 +16,7 @@ export function UVMap({ uvPoints, N, pairSefdMap = null }) {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const DST = N;
-    ctx.fillStyle = '#070718';
+    ctx.fillStyle = '#0a0a0a';  // --bg-1 neutral (was off-token blue-purple; SITE-AUDIT 3.4)
     ctx.fillRect(0, 0, DST, DST);
 
     // Find max UV distance in Gλ

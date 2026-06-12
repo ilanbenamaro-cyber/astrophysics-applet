@@ -990,3 +990,12 @@
 .tour-engine-panel.presenter .tour-headline { font-size: clamp(1rem, 1.6vw, 1.25rem); }
 
 [data-reduced-motion] .tour-spinner { animation: none !important; }
+
+/* ── Keyboard focus (SITE-AUDIT 3.5): visible focus rings on tour controls; the
+      overlay is a focus-trapped aria-modal dialog (Tour.js Tab handler). ── */
+.tour-nav-btn:focus-visible,
+.tour-skip:focus-visible,
+.tour-mode-toggle:focus-visible {
+  outline: 1px solid var(--accent-teal, #C4A555);
+  outline-offset: 2px;
+}

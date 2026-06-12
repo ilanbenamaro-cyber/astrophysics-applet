@@ -92,19 +92,10 @@ export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMo
     scene.add(earthMesh);
     earthMeshRef.current = earthMesh;
 
-    // Cloud layer
-    const cloudGeo = new THREE.SphereGeometry(1.01, 64, 64);
-    const cloudMat = new THREE.MeshPhongMaterial({
-      transparent: true, opacity: 0.10, depthWrite: false, side: THREE.DoubleSide,
-    });
-    const cloudMesh = new THREE.Mesh(cloudGeo, cloudMat);
-    scene.add(cloudMesh);
-    new THREE.TextureLoader().load(
-      'https://unpkg.com/three-globe@2.41.12/example/img/earth-clouds.png',
-      (tex) => { cloudMat.map = tex; cloudMat.needsUpdate = true; },
-      undefined,
-      () => { scene.remove(cloudMesh); }
-    );
+    // (Cloud layer removed: earth-clouds.png is not published at any CDN —
+    //  every load 404'd/CORS-failed and the error handler removed the mesh, so
+    //  the app never actually displayed clouds. Removing the dead load is
+    //  visually identical and clears the console errors. SITE-AUDIT 3.2.)
 
     // Atmosphere
     const atmoGeo = new THREE.SphereGeometry(1.02, 64, 64);
@@ -233,7 +224,6 @@ export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMo
     function animate() {
       animFrameRef.current = requestAnimationFrame(animate);
       orbitControls.update();
-      cloudMesh.rotation.y += 0.0001;
 
       for (const group of [markerGroup, satelliteGroup, countryLabelGroup]) {
         const isCountryGroup = group === countryLabelGroup;

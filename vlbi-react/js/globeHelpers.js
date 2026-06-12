@@ -49,18 +49,18 @@ export async function loadEarthTextures(earthMat, isCancelled) {
       earthMat.map = tex;
       earthMat.color.setHex(0xffffff);
       earthMat.needsUpdate = true;
-      console.log('[Globe] diffuse loaded:', url);
+      console.debug('[Globe] diffuse loaded:', url);
       break;
     } catch (_) {
-      console.warn('[Globe] diffuse failed:', url);
+      console.debug('[Globe] diffuse failed:', url);
     }
   }
 
   if (isCancelled()) return;
 
-  // Bump map
+  // Bump map (jsdelivr — unpkg's redirect chain breaks CORS, known gotcha)
   try {
-    const bumpTex = await tryLoad('https://unpkg.com/three-globe@2.41.12/example/img/earth-topology.png');
+    const bumpTex = await tryLoad('https://cdn.jsdelivr.net/npm/three-globe@2.41.12/example/img/earth-topology.png');
     if (!isCancelled()) {
       earthMat.bumpMap = bumpTex;
       earthMat.bumpScale = 0.05;
@@ -68,18 +68,9 @@ export async function loadEarthTextures(earthMat, isCancelled) {
     }
   } catch (_) {}
 
-  if (isCancelled()) return;
-
-  // Specular map
-  try {
-    const specTex = await tryLoad('https://cdn.jsdelivr.net/npm/three@0.163.0/examples/textures/planets/earth_specular_2048.jpg');
-    if (!isCancelled()) {
-      earthMat.specularMap = specTex;
-      earthMat.specular = new THREE.Color(0x333333);
-      earthMat.shininess = 60;
-      earthMat.needsUpdate = true;
-    }
-  } catch (_) {}
+  // (Specular map removed: three@0.163.0 does not ship
+  //  examples/textures/planets/earth_specular_2048.jpg — the load 404'd on every
+  //  page view, main globe AND tourEarth, and never applied. SITE-AUDIT 3.2.)
 }
 
 /**

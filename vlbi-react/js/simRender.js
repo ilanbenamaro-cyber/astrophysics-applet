@@ -163,7 +163,7 @@ export function drawContour(ctx, data, { N, beamSigmaU = 2, beamSigmaV = 2, beam
   const DST = 512;
 
   if (!data || data.length === 0) {
-    ctx.fillStyle = '#0a0a20';
+    ctx.fillStyle = '#0a0a0a';  // --bg-1 neutral (was off-token blue-purple; SITE-AUDIT 3.4)
     ctx.fillRect(0, 0, DST, DST);
     return { isEmpty: true, stats: null, activeLevels: [] };
   }

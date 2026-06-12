@@ -12,7 +12,7 @@ export function ImageCanvas({ data, N, label, infoKey, onOpenInfo }) {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!data) {
-      ctx.fillStyle = '#0a0a20';
+      ctx.fillStyle = '#0a0a0a';  // --bg-1 neutral (was off-token blue-purple; SITE-AUDIT 3.4)
       ctx.fillRect(0, 0, N, N);
       ctx.fillStyle = 'rgba(136,136,176,0.3)';
       ctx.font = '11px Inter, sans-serif';

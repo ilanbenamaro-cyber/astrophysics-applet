@@ -35,6 +35,7 @@ export function Tour({ actIndex, onActChange, onClose, onTourAction, reducedMoti
   const [computing, setComputing] = useState(false);
 
   const canvasRef  = useRef(null);
+  const rootRef    = useRef(null);
   const rafRef     = useRef(0);
   const dataRef    = useRef(null);
   const startRef   = useRef(0);
@@ -122,10 +123,33 @@ export function Tour({ actIndex, onActChange, onClose, onTourAction, reducedMoti
       if (e.key === 'ArrowRight' || e.key === 'Enter') return advance();
       if (e.key === 'ArrowLeft') return back();
       if (e.key === 'p' || e.key === 'P') setMode(m => m === 'presenter' ? 'guided' : 'presenter');
+      // Focus trap: this is an aria-modal dialog — Tab must wrap within it
+      // rather than escaping into the app behind the overlay (SITE-AUDIT 3.5).
+      if (e.key === 'Tab') {
+        const root = rootRef.current;
+        if (!root) return;
+        const focusables = Array.from(root.querySelectorAll('button, [tabindex]:not([tabindex="-1"])'))
+          .filter(el => !el.disabled && el.offsetParent !== null);
+        if (focusables.length === 0) return;
+        const first = focusables[0], last = focusables[focusables.length - 1];
+        const active = document.activeElement;
+        if (e.shiftKey && (active === first || !root.contains(active))) {
+          e.preventDefault(); last.focus();
+        } else if (!e.shiftKey && (active === last || !root.contains(active))) {
+          e.preventDefault(); first.focus();
+        }
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [actIndex, phase, mode]);
+
+  // Focus management: take focus on mount, restore the opener's focus on close.
+  useEffect(() => {
+    const prev = document.activeElement;
+    rootRef.current?.focus();
+    return () => { if (prev && prev.focus) prev.focus(); };
+  }, []);
 
   // ── Pointer → scene (guided interactivity, e.g. Act B HA-scrub / dec-drag) ──
   useEffect(() => {
@@ -159,7 +183,7 @@ export function Tour({ actIndex, onActChange, onClose, onTourAction, reducedMoti
 
   return html`
     <div className="tour-cinematic tour-engine" role="dialog" aria-modal="true"
-         aria-label="VLBI Physics Tour" data-mode=${mode}>
+         aria-label="VLBI Physics Tour" data-mode=${mode} ref=${rootRef} tabIndex=${-1}>
       <div className="tour-visual">
         <canvas ref=${canvasRef} className="tour-scene-canvas"
                 aria-label=${act.title + ' — engine-driven visualization'}></canvas>
