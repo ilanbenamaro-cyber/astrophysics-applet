@@ -5,8 +5,8 @@ import { IMAGE_SIZE, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD,
          BHEX_PRESET, SKY_TARGETS } from './constants.js';
 import { computeUVPoints, computeUVPointsGl, computeUVFill,
          latLonToECEF, computeSatelliteECEF } from './uvCompute.js';
-import { scaleSource, buildSefdMap, buildPairSefdMap, computeDynamicRange,
-         beamFwhm as beamFwhmFn, angularRes as angularResFn } from './simCore.js';
+import { scaleSource, zoomSource, measureRingFraction, buildSefdMap, buildPairSefdMap,
+         computeDynamicRange, beamFwhm as beamFwhmFn, angularRes as angularResFn } from './simCore.js';
 import { loadImagePresetAsync } from './presets.js';
 import { exportFITS } from './fitsExport.js';
 
@@ -119,18 +119,34 @@ export function useSimulation() {
     }));
   }, [telescopes, controls.declination, controls.duration, controls.frequency, controls.fovMuas]);
 
+  // ── Measured ring fraction ──────────────────────────────────────────────────
+  // The loaded image's bright ring does NOT fill its frame (black-hole.png: ~0.43).
+  // Radial-peak measurement is only meaningful for ring-like sources, so the value
+  // is sanity-banded — outside [0.2, 0.95] (point-like / extended sources) it falls
+  // back to 1 and the legacy frame-fraction behavior is preserved unchanged.
+  const ringFraction = useMemo(() => {
+    if (!grayscale) return 1;
+    const f = measureRingFraction(grayscale, IMAGE_SIZE);
+    return (f >= 0.2 && f <= 0.95) ? f : 1;
+  }, [grayscale]);
+
   // ── Derived source fraction ─────────────────────────────────────────────────
+  // For named targets the RING (not the frame) must span shadowUas of the FOV:
+  // frame factor = (shadowUas / fov) / measured ring fraction. Factors > 1 zoom
+  // (center-crop) the source; < 1 shrink it — same math the tour's Acts C/D use.
   const effectiveSourceFraction = useMemo(() => {
     const target = SKY_TARGETS[selectedTarget];
     if (target && target.shadowUas !== null) {
-      return Math.min(0.95, Math.max(0.05, target.shadowUas / controls.fovMuas));
+      return Math.min(3, Math.max(0.05, (target.shadowUas / controls.fovMuas) / ringFraction));
     }
     return controls.sourceFraction;
-  }, [selectedTarget, controls.fovMuas, controls.sourceFraction]);
+  }, [selectedTarget, controls.fovMuas, controls.sourceFraction, ringFraction]);
 
   // ── Scaled source image ─────────────────────────────────────────────────────
   const scaledGrayscale = useMemo(
-    () => scaleSource(grayscale, effectiveSourceFraction, IMAGE_SIZE),
+    () => effectiveSourceFraction >= 1
+      ? zoomSource(grayscale, effectiveSourceFraction, IMAGE_SIZE)
+      : scaleSource(grayscale, effectiveSourceFraction, IMAGE_SIZE),
     [grayscale, effectiveSourceFraction]);
 
   // ── SEFD maps ───────────────────────────────────────────────────────────────
@@ -333,7 +349,7 @@ export function useSimulation() {
     dirty, restored,
     controls, status, isComputing, uvCount, beamDims, selectedTarget,
     // Derived
-    effectiveSourceFraction, angularRes, baselineStats,
+    effectiveSourceFraction, ringFraction, angularRes, baselineStats,
     sefdMap, pairSefdMap, dynamicRange, beamFwhm,
     bhexAdded,
     // Setters needed by App.js

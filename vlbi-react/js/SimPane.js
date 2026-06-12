@@ -69,6 +69,7 @@ export function SimPane({ sim, onOpenInfo, label, reducedMotion = false }) {
           selectedTarget=${sim.selectedTarget}
           onTargetChange=${sim.handleTargetChange}
           effectiveSourceFraction=${sim.effectiveSourceFraction}
+          ringFraction=${sim.ringFraction}
         />
       </div>
 

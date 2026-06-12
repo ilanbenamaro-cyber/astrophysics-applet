@@ -78,6 +78,47 @@ export function scaleSource(grayscale, fraction, N = IMAGE_SIZE) {
   return output;
 }
 
+// ── Ring-source measurement + zoom ──────────────────────────────────────────────
+// The M87* photograph does NOT fill its frame — its bright ring spans only a
+// fraction of the image. Displaying/reconstructing the ring at its TRUE angular
+// size requires measuring that fraction from the data, never assuming it.
+// (Moved here from tourScene.js so the LIVE APP and the tour share one truth;
+// tourScene re-exports them.)
+
+// Radial-profile peak: the bright-ring diameter as a fraction of the N×N field.
+// Only meaningful for ring-like sources — callers should sanity-band the result.
+export function measureRingFraction(gs, N) {
+  const c = N / 2, maxR = Math.floor(N / 2) - 2;
+  const sum = new Float64Array(maxR + 1), cnt = new Uint32Array(maxR + 1);
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      const r = Math.round(Math.hypot(x - c, y - c));
+      if (r <= maxR) { sum[r] += gs[y * N + x]; cnt[r]++; }
+    }
+  }
+  let peakR = 1;
+  for (let r = 1; r <= maxR; r++) {
+    if (cnt[r] && sum[r] / cnt[r] > sum[peakR] / (cnt[peakR] || 1)) peakR = r;
+  }
+  return (2 * peakR) / N;
+}
+
+// Center-crop zoom (factor ≥ 1), nearest-sample — the enlargement counterpart of
+// scaleSource (which only shrinks). Returns the input unchanged for zoom ≤ 1.
+export function zoomSource(gs, zoom, N) {
+  if (!gs || zoom <= 1) return gs;
+  const out = new Float64Array(N * N);
+  const x0 = (N - N / zoom) / 2;
+  for (let oy = 0; oy < N; oy++) {
+    const sy = Math.max(0, Math.min(N - 1, Math.floor(x0 + oy / zoom)));
+    for (let ox = 0; ox < N; ox++) {
+      const sx = Math.max(0, Math.min(N - 1, Math.floor(x0 + ox / zoom)));
+      out[oy * N + ox] = gs[sy * N + sx];
+    }
+  }
+  return out;
+}
+
 // ── SEFD maps ──────────────────────────────────────────────────────────────────
 // Per-station SEFD lookup. Verbatim from useSimulation.js:149–153.
 export function buildSefdMap(telescopes, stationSefd) {

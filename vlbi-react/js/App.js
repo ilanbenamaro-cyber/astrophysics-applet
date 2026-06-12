@@ -168,6 +168,7 @@ export function App() {
             selectedTarget=${left.selectedTarget}
             onTargetChange=${left.handleTargetChange}
             effectiveSourceFraction=${left.effectiveSourceFraction}
+            ringFraction=${left.ringFraction}
             compareMode=${compareMode}
             onToggleCompare=${handleToggleCompare}
           />

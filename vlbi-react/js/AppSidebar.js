@@ -12,7 +12,7 @@ export function AppSidebar({
   bhexAdded, onAddBHEX,
   onClearAll, showCountryLabels, onToggleCountryLabels,
   controls, onControlChange, onOpenInfo, onReset,
-  selectedTarget, onTargetChange, effectiveSourceFraction,
+  selectedTarget, onTargetChange, effectiveSourceFraction, ringFraction,
   compareMode = false, onToggleCompare = null,
 }) {
   return html`
@@ -83,6 +83,7 @@ export function AppSidebar({
           selectedTarget=${selectedTarget}
           onTargetChange=${onTargetChange}
           effectiveSourceFraction=${effectiveSourceFraction}
+          ringFraction=${ringFraction}
         />
       </section>
 

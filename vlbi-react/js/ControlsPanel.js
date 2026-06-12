@@ -2,7 +2,7 @@ import { html, useState, useEffect } from './core.js';
 import { InfoTooltip } from './InfoTooltip.js';
 import { SKY_TARGETS } from './constants.js';
 
-export function ControlsPanel({ controls, onChange, onOpenInfo, selectedTarget = 'Custom', onTargetChange, effectiveSourceFraction }) {
+export function ControlsPanel({ controls, onChange, onOpenInfo, selectedTarget = 'Custom', onTargetChange, effectiveSourceFraction, ringFraction = 1 }) {
   // Local text state for FOV input so the user can type freely before committing
   const [fovText, setFovText] = useState(String(controls.fovMuas));
   useEffect(() => { setFovText(String(controls.fovMuas)); }, [controls.fovMuas]);
@@ -105,8 +105,11 @@ export function ControlsPanel({ controls, onChange, onOpenInfo, selectedTarget =
       </div>
     ` : target?.shadowUas !== null && target?.shadowUas !== undefined ? html`
       <div style=${{ fontSize: 'var(--fs-xs, 0.7rem)', opacity: 0.85, marginBottom: '4px' }}>
-        Source: ${target.shadowUas} μas
-        (${effectiveSourceFraction !== undefined ? (effectiveSourceFraction * 100).toFixed(1) : '—'}% of FOV)
+        ${ringFraction !== 1
+          ? html`Ring: ${target.shadowUas} μas
+            (${effectiveSourceFraction !== undefined ? (effectiveSourceFraction * ringFraction * 100).toFixed(1) : '—'}% of FOV, measured)`
+          : html`Source: ${target.shadowUas} μas
+            (${effectiveSourceFraction !== undefined ? (effectiveSourceFraction * 100).toFixed(1) : '—'}% of FOV)`}
       </div>
     ` : null}
 

@@ -18,42 +18,10 @@ export function toTelescopes(stations, satellite) {
 }
 
 // ── Ring-source sizing (Acts C & D) ─────────────────────────────────────────────
-// The M87* photograph does NOT fill its frame — its bright ring spans only a fraction
-// of the image. To display the ring at its TRUE angular size (42 μas of the act's FOV)
-// the zoom factor must be measured from the data, never assumed.
-
-// Radial-profile peak: the bright-ring diameter as a fraction of the N×N field.
-export function measureRingFraction(gs, N) {
-  const c = N / 2, maxR = Math.floor(N / 2) - 2;
-  const sum = new Float64Array(maxR + 1), cnt = new Uint32Array(maxR + 1);
-  for (let y = 0; y < N; y++) {
-    for (let x = 0; x < N; x++) {
-      const r = Math.round(Math.hypot(x - c, y - c));
-      if (r <= maxR) { sum[r] += gs[y * N + x]; cnt[r]++; }
-    }
-  }
-  let peakR = 1;
-  for (let r = 1; r <= maxR; r++) {
-    if (cnt[r] && sum[r] / cnt[r] > sum[peakR] / (cnt[peakR] || 1)) peakR = r;
-  }
-  return (2 * peakR) / N;
-}
-
-// Center-crop zoom (factor ≥ 1), nearest-sample — the enlargement counterpart of
-// simCore.scaleSource (which only shrinks). Returns the input unchanged for zoom ≤ 1.
-export function zoomSource(gs, zoom, N) {
-  if (!gs || zoom <= 1) return gs;
-  const out = new Float64Array(N * N);
-  const x0 = (N - N / zoom) / 2;
-  for (let oy = 0; oy < N; oy++) {
-    const sy = Math.max(0, Math.min(N - 1, Math.floor(x0 + oy / zoom)));
-    for (let ox = 0; ox < N; ox++) {
-      const sx = Math.max(0, Math.min(N - 1, Math.floor(x0 + ox / zoom)));
-      out[oy * N + ox] = gs[sy * N + sx];
-    }
-  }
-  return out;
-}
+// measureRingFraction + zoomSource now live in simCore.js (the live app uses them
+// too — one shared truth for ring-true source sizing). Re-exported here so the
+// tour scenes' imports are unchanged.
+export { measureRingFraction, zoomSource } from './simCore.js';
 
 // Max |u|,|v| extent (Gλ) × 1.2 — matches the app's UV auto-scale intent.
 export function uvExtentGl(pts) {
