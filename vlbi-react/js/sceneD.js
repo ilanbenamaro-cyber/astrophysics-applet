@@ -2,7 +2,9 @@
 // The one honest illustration in the tour — the real photograph — held to account by
 // the instrument beside it:
 //   LEFT  — the actual EHT M87* image (assets/eht-m87-2019.jpg), presented impeccably,
-//           with provenance and a 42 μas shadow scale.
+//           with provenance and a 42 μas shadow scale. The DISPLAYED photo is zoomed
+//           (display-only crop) so its measured ring spans the same fraction of the
+//           frame as the reconstruction's — both scale bars are then true.
 //   RIGHT — this simulator's OWN reconstruction of the same source (black-hole.png
 //           through the real CLEAN pipeline), rendered in the hot colormap that echoes
 //           the published image: "this is what the instrument you just used produces."
@@ -59,7 +61,41 @@ export const sceneD = {
     let photo = null;
     try { photo = await loadImage(params.photo || '../assets/eht-m87-2019.jpg'); } catch (_) { photo = null; }
 
-    return { photo, reconCanvas, shadowFrac };
+    // True scale matching (display-only): measure the photograph's own ring and
+    // pre-render a zoomed crop so BOTH panels show the ring spanning the same
+    // fraction of the frame (shadowFrac) — making the shared scale bars true for
+    // the photo too. Never touches reconstruction data; degenerate measurements
+    // (≤0.05 or ≥0.95) fall back to zoom 1.
+    let photoCanvas = null;
+    if (photo) {
+      try {
+        const s = Math.min(photo.width, photo.height);
+        const oc = document.createElement('canvas');
+        oc.width = N; oc.height = N;
+        const octx = oc.getContext('2d');
+        // cover-fit the (square-ish) photo into N×N for measurement
+        octx.drawImage(photo, (photo.width - s) / 2, (photo.height - s) / 2, s, s, 0, 0, N, N);
+        const id = octx.getImageData(0, 0, N, N).data;
+        const gs = new Float64Array(N * N);
+        for (let i = 0; i < N * N; i++) {
+          gs[i] = id[i * 4] * 0.299 + id[i * 4 + 1] * 0.587 + id[i * 4 + 2] * 0.114;
+        }
+        const photoRingFrac = measureRingFraction(gs, N);
+        const photoZoom = (photoRingFrac > 0.05 && photoRingFrac < 0.95)
+          ? Math.max(1, shadowFrac / photoRingFrac)
+          : 1;
+        const pc = document.createElement('canvas');
+        pc.width = N; pc.height = N;
+        const pctx = pc.getContext('2d');
+        const sw = s / photoZoom;
+        pctx.drawImage(photo,
+          (photo.width - sw) / 2, (photo.height - sw) / 2, sw, sw,
+          0, 0, N, N);
+        photoCanvas = pc;
+      } catch (_) { photoCanvas = null; /* draw the raw photo as before */ }
+    }
+
+    return { photo, photoCanvas, reconCanvas, shadowFrac };
   },
 
   drawFrame(ctx, frame, data) {
@@ -77,13 +113,15 @@ export const sceneD = {
     const lx = w * 0.30 - panel / 2;
     const rx = w * 0.70 - panel / 2;
 
-    // LEFT — the real photograph
+    // LEFT — the real photograph (scale-matched crop when available)
     ctx.save();
     ctx.globalAlpha = ease(b1);
+    panelHeader(ctx, lx, py, panel, 'REAL PHOTOGRAPH — EHT COLLABORATION · 10 APRIL 2019');
     panelFrame(ctx, lx, py, panel);
     ctx.save();
     roundRect(ctx, lx, py, panel, panel, 4); ctx.clip();
-    if (data.photo) ctx.drawImage(data.photo, lx, py, panel, panel);
+    if (data.photoCanvas) ctx.drawImage(data.photoCanvas, lx, py, panel, panel);
+    else if (data.photo) ctx.drawImage(data.photo, lx, py, panel, panel);
     else { ctx.fillStyle = hexA(TOKENS.orange, 0.3); ctx.fillRect(lx, py, panel, panel); }
     ctx.restore();
     ctx.restore();
@@ -95,6 +133,7 @@ export const sceneD = {
       const e2 = ease(b2);
       ctx.save();
       ctx.globalAlpha = e2;
+      panelHeader(ctx, rx, py, panel, "THIS SIMULATOR'S RECONSTRUCTION — THE ACT III PIPELINE");
       panelFrame(ctx, rx, py, panel);
       ctx.save();
       roundRect(ctx, rx, py, panel, panel, 4); ctx.clip();
@@ -110,6 +149,7 @@ export const sceneD = {
     if (b3 > 0) {
       ctx.save();
       ctx.globalAlpha = ease(b3);
+      drawBridge(ctx, lx + panel, rx, cy, w);
       scaleAndCaption(ctx, lx, py, panel, data.shadowFrac, 'M87* · EHT Collaboration', `λ = ${P.str.lambda} · ${P.freqGHz} GHz`);
       if (b2 > 0) scaleAndCaption(ctx, rx, py, panel, data.shadowFrac, 'This simulator · EHT 2017', `CLEAN · θ = ${P.str.thetaEht}`);
       // The emotional peak gets its own typographic weight: the date, large and
@@ -123,10 +163,48 @@ export const sceneD = {
       ctx.fillStyle = TOKENS.textSecondary;
       ctx.font = mono(10, 500);
       ctx.fillText('the first photograph of a black hole', w / 2, py + panel + 98);
+      ctx.fillText('same physics, same array geometry — differences are weather, calibration, and the imaging pipeline', w / 2, py + panel + 116);
       ctx.restore();
     }
   },
 };
+
+// Unmistakable panel header — the app's label treatment, centered above a panel.
+function panelHeader(ctx, x, y, s, text) {
+  ctx.save();
+  ctx.fillStyle = TOKENS.textSecondary;
+  ctx.font = mono(10, 600);
+  ctx.textAlign = 'center';
+  try { ctx.letterSpacing = '0.08em'; } catch (_) { /* older canvas impls */ }
+  ctx.fillText(text.toUpperCase(), x + s / 2, y - 14);
+  try { ctx.letterSpacing = '0px'; } catch (_) { /* reset */ }
+  ctx.restore();
+}
+
+// Connecting bridge at mid-height: two hairlines pointing at each panel with a
+// centered two-line label. Subtle — no glow, no box.
+function drawBridge(ctx, leftEdge, rightEdge, cy, w) {
+  const mid = w / 2;
+  const inset = 8;         // breathing room off each panel edge
+  const labelHalf = 62;    // clearance around the centered label
+  const l0 = leftEdge + inset, l1 = mid - labelHalf;
+  const r0 = mid + labelHalf, r1 = rightEdge - inset;
+  ctx.save();
+  ctx.strokeStyle = hexA(TOKENS.textSecondary, 0.6);
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  if (l1 > l0) { ctx.moveTo(l0, cy); ctx.lineTo(l1, cy); }
+  if (r1 > r0) { ctx.moveTo(r0, cy); ctx.lineTo(r1, cy); }
+  ctx.stroke();
+  ctx.fillStyle = TOKENS.textSecondary;
+  ctx.font = mono(10, 600);
+  ctx.textAlign = 'center';
+  try { ctx.letterSpacing = '0.08em'; } catch (_) { /* older canvas impls */ }
+  ctx.fillText('SAME SOURCE', mid, cy - 4);
+  ctx.fillText('TWO INSTRUMENTS', mid, cy + 12);
+  try { ctx.letterSpacing = '0px'; } catch (_) { /* reset */ }
+  ctx.restore();
+}
 
 function panelFrame(ctx, x, y, s) {
   ctx.save();
