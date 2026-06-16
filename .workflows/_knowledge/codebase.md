@@ -113,17 +113,27 @@ App.js                        — global UI only: compareMode, infoKey, a11y, to
 │   │                           beam (point source through EHT u,v via runReconstruction method:'dirty',
 │   │                           drawn with drawHot). live-on-input.
 │   ├── sceneB.js              — ACT B Synthesized Aperture (flagship, live-60fps): ALMA+IRAM baseline on a
-│   │                           turning Earth → real (u,v) sample → real ellipse drawn point-by-point as the
-│   │                           HA clock turns → full EHT coverage + FillGauge + θ=λ/B callout. Guided: drag
-│   │                           UV panel to scrub HA (x) + declination (y); pair ellipse recomputes live.
-│   ├── sceneC.js              — ACT C From Data to Image, staged as a CAUSAL three-panel pipeline (polish
-│   │                           pass): [SPARSE DATA real (u,v) + computed fill %] —FFT⁻¹→ [DIRTY] —CLEAN→
-│   │                           [RESTORED ring over the dirty base], both image panels drawHot (Act D's
-│   │                           colormap), live residual sparkline (progressEvery:1 — CLEAN stops ~iter 11).
-│   │                           Source sized by measureRingFraction/zoomSource so the ring truly spans
-│   │                           42 μas. Guided: labeled THERMAL NOISE slider (hit-tested track, range
-│   │                           0…0.25× RMS — the engine-measured point where the image is noise-limited),
-│   │                           recompute on release, never-stall timeout→cache fallback.
+│   │                           turning Earth → real (u,v) sample → real ellipse drawn point-by-point → full
+│   │                           EHT coverage + FillGauge + θ=λ/B callout. Idle spin = a CONTINUOUS hour-angle
+│   │                           clock (2026-06-16): idle.haRad advances IDLE_RATE×dt from the RAF timestamp,
+│   │                           wraps at ±12h, so the globe spins fully + smoothly like the main globe
+│   │                           (IDLE_DAY_S=40). Globe rotation, u,v head, HA readout all derive from haRad;
+│   │                           the head traces during the ±4.85h co-visible window and holds the ellipse full
+│   │                           off-window ("source below horizon" caption). Guided: decoupled HOUR ANGLE track
+│   │                           + vertical DECLINATION slider (drawSliderControl, rect hit-tested); HA drag =
+│   │                           direct control, release resumes the constant spin from the current angle (no
+│   │                           ramp/snap). Replaced the old quantized track[headIdx] lookup + eased ramp.
+│   ├── sceneC.js              — ACT C From Data to Image, CAUSAL three-panel pipeline: [SPARSE DATA real (u,v)
+│   │                           + computed fill %] —FFT⁻¹→ [DIRTY] —CLEAN→ [RESTORED ring over the dirty base],
+│   │                           both image panels drawHot (Act D's colormap). Source sized by
+│   │                           measureRingFraction/zoomSource so the ring truly spans 42 μas. Guided control
+│   │                           (2026-06-16): THREE engine-honest THERMAL-NOISE presets {0, 0.015, 0.03} ×
+│   │                           visibility RMS as a segmented button bar (default 0); each recomputes via the
+│   │                           real engine (own worker), caches dirty+restored, never-stall timeout + spinner.
+│   │                           Replaced the noise slider + residual sparkline + DR/component-count readouts —
+│   │                           Högbom on EHT-sparse coverage is near-inert (~12 components even at noise 0;
+│   │                           restored ≈ dirty+residual), so the component count was an erratic, misleading
+│   │                           proxy (see gotchas.md / SITE-AUDIT addendum). Worker untouched.
 │   ├── sceneD.js              — ACT D First Light: real assets/eht-m87-2019.jpg paired with the simulator's
 │   │                           own CLEAN reconstruction (same measured ring sizing as C), which RESOLVES in
 │   │                           (blur 14px→0, filter reset per draw); computed shadow scale bars; the dated
@@ -204,7 +214,8 @@ presets.js        — IMAGE_PRESETS: { 'blackhole': '../assets/black-hole.png', 
 worker.js         — self-contained Web Worker (no imports — cannot use import maps).
                     Each useSimulation instance spawns its own worker — two workers run in compare mode.
                     Opt-in `params.progressEvery`: when set, the CLEAN loop posts {type:'progress',iter,residual}
-                    every K iters (powers Act C's sparkline). No imports added; absent flag ⇒ byte-identical.
+                    every K iters. No imports added; absent flag ⇒ byte-identical. (Capability retained; Act C
+                    no longer consumes it after the 2026-06-16 slider→presets change — no current caller.)
 simCore.js        — pure simulation core lifted from useSimulation.js (behavior-neutral; the hook imports
                     them back). runReconstruction(grayscale, uvPoints, params, onProgress?) → Promise — owns
                     its OWN classic worker per call (non-singleton, proven by App.js left/right), resolves

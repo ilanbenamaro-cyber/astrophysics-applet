@@ -389,3 +389,23 @@ in sceneC.js already exists). Supersedes the older "N=512 ~414ms CLEAN" benchmar
 2026-04-16 — Added N=512 benchmark result and contour boundary artifact pattern
 2026-04-16 — Added Stop hook fix entry: primer.md rewrite moved to /handoff, claude -p removed from Stop hook
 2026-04-15 — Added 4 entries: new slash commands, multi-instance structure, Obsidian vault layout, Harvard EHT scope elevation
+
+---
+
+### CLEAN component count / DR are misleading on EHT-sparse coverage — judge the image
+DATE: 2026-06-16
+CATEGORY: pattern
+APPLIES_TO: vlbi-react/worker.js CLEAN; sceneC.js; any UI showing CLEAN component count or DR
+
+LEARNING: Vanilla Högbom CLEAN with the worker's 3σ-border-RMS stop is near-inert on
+EHT-sparse coverage of a ring — it extracts only ~12 components even at noise 0, so the
+restored image is dominated by dirty+residual, and the per-iteration component count is an
+erratic, often-zero Gaussian-noise-realization artifact (NOT monotonic in noise). DR
+saturates at computeDynamicRange's maxV*0.01 fallback (=100) for these sidelobe-heavy images.
+EVIDENCE: probe across noise 0→0.25× RMS → comps {12,15,1,12,0,0,0,5,0,2,0}, DR=100 throughout.
+This is the same worker the live app uses (same 3σ stop, CASA-standard) — not a tour bug.
+IMPLICATION: Never surface CLEAN component count or this DR as a quality/noise readout for
+sparse reconstructions — both mislead and made Act C look broken. Judge the restored IMAGE
+(it degrades gracefully with noise). Act C now uses three σ presets chosen by rendering the
+ring, not by component count. Don't lower the worker's 3σ stop to force components (worker is
+shared with the live app). See gotchas.md "Högbom CLEAN is near-inert…" + decisions.md.

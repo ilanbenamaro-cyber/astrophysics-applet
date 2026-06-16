@@ -635,3 +635,34 @@ selector class is library-generated (KaTeX `katex*`, Three/Leaflet injected DOM,
 The restored rule now carries a do-not-sweep comment.
 
 RESOLVED: YES — rule restored with warning comment (commit 10 of the final pass).
+
+---
+
+### Högbom CLEAN is near-inert on EHT-sparse coverage — component count is a misleading proxy
+DATE_DISCOVERED: 2026-06-16
+AREA: vlbi-react/worker.js CLEAN loop; Act C (sceneC.js); any UI surfacing CLEAN component count
+SEVERITY: MEDIUM (drove the Act C "looks broken" report)
+
+WHAT HAPPENED: Act C's noise slider drove the residual graph to "no components above 3σ —
+noise-limited" and the restored image looked broken across much of the 0–0.25× RMS range.
+A probe (replicating Act C's exact path, EHT 2017 + black-hole.png ring-sized to 42 μas)
+measured CLEAN component count vs noise: 12, 15, 1, 12, 0, 0, 0, 5, 0, 2, 0 across
+{0,.01,.02,.03,.04,.05,.06,.08,.10,.12,.25}. DR was pinned at exactly 100 at EVERY level.
+
+ROOT CAUSE: vanilla Högbom with the worker's 3σ-border-RMS stop (worker.js:263-264) barely
+runs on EHT-sparse coverage of a ring — the dirty image's heavy sidelobe border sets a high
+stop floor, so CLEAN extracts only ~12 components EVEN AT NOISE 0. The restored image is
+therefore dominated by dirty+residual, not the CLEAN model. Thermal noise is a random
+Gaussian realization per run (Math.random in addPerBaselineNoise), so the per-iteration
+component count is erratic and frequently 0 — NOT a monotonic function of noise, and NOT a
+regression. computeDynamicRange saturates at its maxV*0.01 fallback (border MAD-σ > maxV*0.1
+on these sidelobe-heavy images) → DR=100 constant, also uninformative.
+
+HOW TO AVOID: Do NOT surface CLEAN component count or this DR as a quality/noise indicator
+for sparse-coverage reconstructions — both are misleading. Judge the restored IMAGE visually
+(it DOES degrade gracefully with noise). The 3σ stop is CASA-standard and worker-internal —
+do not "fix" it to force more components. Act C now uses three engine-honest σ presets
+(0/0.015/0.03 × RMS) chosen by rendering the restored ring, not by component count.
+
+RESOLVED: YES — Act C slider+sparkline replaced by presets (2026-06-16, commit 04e58b4);
+diagnosis in SITE-AUDIT.md addendum.

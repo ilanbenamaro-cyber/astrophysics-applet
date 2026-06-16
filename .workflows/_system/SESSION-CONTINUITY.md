@@ -205,7 +205,7 @@ The simulator AND the engine-real tour are feature-complete on `feature/tour-wor
 3. **Merge `feature/tour-world-class-overhaul` → main** (Blocker #4) to deploy the tour overhaul. Nothing on this branch is live yet.
 4. **Harvard EHT talk preparation** — presenter-mode tour for the talk; a reference compare-mode screenshot (EHT 2017 vs ngEHT Phase 1, both CLEAN on M87* @ 230 GHz).
 5. **Future enhancements** (no specific session planned; all require Alejandro sign-off): multi-component sources; dynamic source structure; frequency-dependent source size; re-expose Export FITS button.
-6. **Knowledge base is current as of 2026-06-10** — synced post Tour Engine-Real Rebuild.
+6. **Knowledge base is current as of 2026-06-16** — synced post Act B + Act C fix pass.
 
 ---
 
@@ -223,6 +223,8 @@ The simulator AND the engine-real tour are feature-complete on `feature/tour-wor
 ## LAST SIGNIFICANT COMMITS
 
 ```
+04e58b4  fix(vlbi-react): tour Act C — diagnose CLEAN noise-limit, replace slider with three engine-honest presets
+8f0b301  fix(vlbi-react): tour Act B — constant smooth HA-coupled Earth spin (no eased-ramp jerk)
 64480e5  chore(vlbi-react): tour — retire hand-drawn TourCard/TourDiagram
 facf32e  feat(vlbi-react): tour Act E — Beyond Earth & the Instrument (real BHEX coverage)
 0d39bac  feat(vlbi-react): tour Act D — First Light (real photo + own reconstruction)
@@ -282,6 +284,24 @@ constants.js ─ IMAGE_SIZE=512, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD, 
 ---
 
 ## LAST UPDATED
+
+2026-06-16 — Act B + Act C fix pass complete (feature/tour-world-class-overhaul, 2 commits): Act B
+`8f0b301` — idle Earth spin rewritten from the quantized track[headIdx] lookup + eased resume ramp
+(the jerk/slowness sources) to a CONTINUOUS hour-angle clock (idle.haRad += IDLE_RATE×dt, ±12h wrap,
+IDLE_DAY_S=40) so it spins fully + smoothly like the main globe; globe/head/HA-readout all derive
+from haRad; head traces the ±4.85h co-visible window and holds the ellipse full off-window with a
+"source below horizon" caption; HA drag = direct control, release resumes constant spin with no
+ramp/snap. Act C `04e58b4` — DIAGNOSED the "CLEAN noise-limited/broken" report as NOT a regression:
+Högbom + the 3σ-border stop is near-inert on EHT-sparse coverage (~12 components even at noise 0;
+restored ≈ dirty+residual), so the component count is an erratic, often-zero noise-realization
+artifact and DR saturates at the 100 fallback — both misleading proxies. Removed the noise slider +
+residual sparkline (drawResidualSparkline deleted from tourAnnotations.js) + DR/component readouts;
+replaced with THREE engine-honest σ presets {0, 0.015, 0.03}×RMS (segmented buttons, default 0, real
+engine recompute + cache, drawHot), verified in-act over two realizations (recognizable ring degrading
+gracefully, no dead state). Worker untouched (zero diff); Tour signature/autoActions/App.js wiring
+unchanged; Acts A/D/E + app reconstruct unchanged; zero console errors (never-used port 8791). Gates
+G1–G6 all pass. Diagnosis in SITE-AUDIT.md addendum; decisions.md (+1), gotchas.md (+1), MEMORY.md (+1),
+codebase.md tour section updated. NOT merged to main.
 
 2026-06-11 — Tour Polish Pass complete (feature/tour-world-class-overhaul, 7 commits): WAVE 1 bugs — Act B baselines labeled by identity (|B| ALMA–IRAM vs B_max (M87*) vs |u|max relation line); narrative dedup ("8 stations stations" interpolation fixed, rendered-text regex clean); Act C/D ring legibility ROOT-CAUSED to source sizing (png ring spans 42.6% of frame, fixed 0.525 fraction undersized the displayed ring 2.3× → blob) — now measured via measureRingFraction + zoomSource, restored panel drawHot, scale bars computed; Act E hedge stated once (equation status row) + solid amber Earth-limit ring vs orange space arcs (per-pair colours stripped). WAVE 2 richness — ONE unified narrative per act (tier tabs/narrativeTriple deleted; tourPhysics gains computed uvFillPct + TOUR_FOV_MUAS/TOUR_DURATION_HR; layout 62vh visual + wider column); tourEarth.js read-only textured Three.js singleton (main-globe look by construction, Acts B/E, disposed on tour unmount); tourGalaxy.js parallax-starfield + nebula background on all acts (subordinate to gold data layer; static under reduced motion — frame-diff verified pixel-identical); subjects + text enlarged; Act C restaged as causal sparse→dirty→CLEAN pipeline with labeled THERMAL NOISE slider (range 0…0.25× RMS, engine-measured noise-limit; sparkline names the noise-limited state); Act D resolve-in reveal + "10 APRIL 2019" typographic moment. Gates G1–G8 Playwright-verified on fresh no-cache ports. decisions.md (+1), gotchas.md (+8, obsolescence note), codebase.md tour section updated. ⚠ FLAGGED: live app sidebar "Source: 42 μas (52.5% of FOV)" carries the same ring-fills-frame assumption (out of tour scope). NOT merged to main.
 

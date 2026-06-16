@@ -712,3 +712,47 @@ RATIONALE: tour and tool must agree (G-PHYSICS); the spec's explicit visual targ
 post-date and override the MODERATE palette license; grep-proven dead code.
 TRIGGERS_REVIEW_IF: black-hole.png replaced (re-measure assumption holds via the band);
 a working cloud texture CDN is found (reintroduce behind a verified URL); BHEX sign-off.
+
+---
+
+### Act B idle spin = continuous hour-angle clock; Act C control = three engine-honest noise presets
+DATE: 2026-06-16
+LAST_VERIFIED: 2026-06-16
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: Two surgical interaction fixes on the engine-real tour (branch
+feature/tour-world-class-overhaul; spec .workflows/_prompts/tour-actB-actC-fix.md).
+(1) ACT B idle spin: replace the quantized `rotation = track[floor(len·haFrac)].H` lookup +
+eased pause/resume ramp with a CONTINUOUS hour-angle clock — `idle.haRad += IDLE_RATE·dt`
+(dt from the RAF timestamp, clamped 0.1), wrapping at ±π (±12 h) so the globe spins fully and
+smoothly like the main page's globe (OrbitControls autoRotate, ~200 s/rev; tour IDLE_DAY_S=40,
+vision-tuned). Globe rotation, u,v head (radToHeadFrac, saturating 0/1 off the ±4.85 h
+co-visible window, ellipse held full off-window with a "source below horizon" caption), and the
+HA readout all derive from the single continuous haRad. HA drag = direct control; release
+resumes the constant advance from the current angle (no ramp, no snap). Stays HA-coupled so the
+live u,v trace remains honest. Reduced-motion unchanged (idle gated off → static final frame).
+(2) ACT C control: REMOVE the noise slider + residual sparkline + DR-bar/component-count
+readouts + live-recompute-on-drag; REPLACE with three engine-honest σ presets {0, 0.015, 0.03}
+× visibility RMS (segmented buttons, default 0 = cleanest; each recomputes via the real engine
+in its own worker, caches dirty+restored, drawHot, never-stall spinner). `drawResidualSparkline`
+deleted from tourAnnotations.js (Act C was its only consumer); `progressEvery` capability kept in
+the worker but no longer consumed.
+RATIONALE: (B) the quantized track stepping + eased ramp were the jerk/slowness sources; a
+time-based rate×dt clock is the canonical smooth fix and matches the main globe's felt pace.
+(C) DIAGNOSIS (not a regression): vanilla Högbom with the 3σ-border stop is near-inert on
+EHT-sparse coverage of a ring (~12 components even at noise 0 → restored ≈ dirty+residual), and
+the per-iteration component count is an erratic, often-zero Gaussian-realization artifact; DR
+saturates at the 100 fallback. Surfacing those proxies made a working-but-modest reconstruction
+look broken. The restored IMAGE degrades gracefully with noise, so present three levels chosen by
+rendering the ring (verified over two realizations), labeled honestly by σ×RMS. See gotchas.md.
+CONSTRAINT: worker.js untouched (zero diff) — the 3σ stop is CASA-standard (see "CLEAN stopping"
+decision); Tour signature / autoActions / App.js wiring unchanged. Refines the Act C half of the
+2026-06-11 "Tour polish pass" decision (which introduced the now-removed 0–0.25× slider + sparkline).
+ALTERNATIVES_REJECTED: (B) ping-pong across the transit (user chose full continuous spin); keeping
+the eased ramp (the jerk source). (C) widening/relabeling the slider range (most of any range is
+noise-limited for this source); lowering the worker's 3σ stop to force more components (forbidden —
+worker-internal, would change app behavior); switching Act C to MEM (contradicts the CLEAN narrative).
+TRIGGERS_REVIEW_IF: black-hole.png replaced or array changed (re-pick preset σ by rendering);
+tour duration/FOV changed (re-derive the co-visible window / IDLE pacing); a regularized imager
+replaces Högbom (the component-count proxy could become meaningful again).
