@@ -164,7 +164,12 @@ Push to `main` → live within ~60 seconds.
 
 **3. Tour projector timing — OPEN (soft, before the talk).** The engine-real tour's Act C runs CLEAN live in both modes because the dev-machine gate measured CLEAN ≈ 98 ms (< 300 ms). This must be re-measured on the actual projector-class laptop (CPU-bound JS). If CLEAN > 300 ms there, switch presenter-mode Act C to precomputed playback of cached real frames (the never-stall timeout→cache fallback in sceneC.js already exists). Numbers + decision rule in TOUR-ENGINE-AUDIT.md §2.
 
-**4. feature/tour-world-class-overhaul NOT merged to main — OPEN.** The entire tour overhaul (world-class → apple-precision → design-language → engine-real rebuild) lives on this branch and is NOT yet live. Merge/push to main to deploy. Recommend a demo/sign-off with Alejandro first.
+**4. Merge to main DONE; live deploy (push) PENDING — 2026-06-16.** The entire tour overhaul
+(world-class → apple-precision → design-language → engine-real rebuild → final pass → Act B/C
+fixes) was fast-forward-merged into local `main` on 2026-06-16 (main now at 651aa2e). It is NOT
+yet live: local `main` is **59 commits ahead of `origin/main`**, and GitHub Pages deploys from
+the pushed remote — so the live site is unchanged until `git push origin main`. Recommend a
+demo/sign-off with Alejandro before that push (it deploys the research-grade tool publicly).
 
 **No code blockers** — simulator + engine-real tour are feature-complete on the branch.
 
