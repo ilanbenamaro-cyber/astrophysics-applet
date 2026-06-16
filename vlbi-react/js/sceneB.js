@@ -6,9 +6,13 @@
 // Guided mode: two decoupled labeled controls — an HOUR ANGLE track under the UV
 // panel and a vertical DECLINATION slider beside it; the ellipse recomputes live
 // (sub-ms, audit §2). Once the intro beats finish, the Earth keeps turning on its
-// own (auto-advancing hour angle, ~36 s per synthesis loop); dragging HA takes
-// over the head, releasing resumes the spin after a short ramp. Declination drags
-// never pause the spin. All numbers via tourPhysics.js.
+// own at a CONSTANT, CONTINUOUS pace — a real hour-angle clock advanced by elapsed
+// time (rate × dt from the RAF timestamp), wrapping seamlessly at ±12 h so it spins
+// like the main page's globe with no stutter and no slow-down. The (u,v) head traces
+// while the source is co-visible and parks at the arc end while it is below the
+// horizon, then resumes as the spin brings it back. Dragging HA takes direct control;
+// releasing resumes the constant advance from the current angle (no eased ramp, no
+// snap). Declination drags never affect the spin. All numbers via tourPhysics.js.
 import { computeBaseline, baselineToUV, computeElevation, MIN_ELEVATION_RAD,
          computeUVPointsGl, computeUVPoints, computeUVFill } from './uvCompute.js';
 import { TOUR_PHYSICS as P } from './tourPhysics.js';
@@ -21,11 +25,12 @@ import { drawBaselineVector, drawUVTrace, drawUVPoints, drawFillGauge,
 
 const C_M_S = 299792458;
 
-// Idle-spin tuning (UX timing, not physics): one full synthesis loop ≈ 36 s,
-// spin eases back in over 0.8 s, and resumes 1.2 s after an HA-handle release.
-const IDLE_LOOP_S = 36;
-const IDLE_RAMP_S = 0.8;
-const IDLE_RESUME_DELAY_S = 1.2;
+// Idle-spin pace (UX timing, not physics): seconds for the Earth's hour-angle clock
+// to advance a full 24 h / 360°. The main globe (Globe.js) auto-rotates at a very
+// calm ~200 s/rev; here we run a touch brisker so the act reads as "clearly turning"
+// without being sluggish — vision-tuned. Constant rate, no easing.
+const IDLE_DAY_S = 40;
+const IDLE_RATE = (2 * Math.PI) / IDLE_DAY_S;   // rad of hour angle per second
 // Declination drag span: slider top = +40°, bottom = −40° (same mapping as before).
 const DEC_SPAN_DEG = 80;
 
@@ -77,8 +82,9 @@ export const sceneB = {
       uvGl, maxGl: uvExtentGl(uvGl), fillPct: computeUVFill(uvPx, 512),
       scrub: { dragging: null, haFrac: 0.5, decDeg: params.decDeg },
       scrubTrack: pairTrack, scrubDec: params.decDeg,
-      idle: { haFrac: 0.55, lastT: null, resumeT: 0 },
-      _touched: false, _T: 0,
+      // Continuous hour-angle clock (radians). lastT = last RAF timestamp (s).
+      idle: { haRad: 0, lastT: null, seeded: false },
+      _touched: false,
       _layout: null,
     };
   },
@@ -96,8 +102,6 @@ export const sceneB = {
     data._layout = { px, py, panelSize, w, h, gcx, gcy, gR };
     const mapUV = drawUVAxes(ctx, px, py, panelSize, data.maxGl);
 
-    data._T = T;  // stashed so onPointer can timestamp HA releases
-
     // recompute the scrub track only when declination actually changed (sub-ms, but tidy)
     if (data.scrubDec !== data.scrub.decDeg) {
       data.scrubTrack = pairTrackGl(data.t1, data.t2, data.scrub.decDeg, data.params.freqGHz, data.params.durationHr);
@@ -107,30 +111,47 @@ export const sceneB = {
     const sweep = reducedMotion ? 1 : beatT(T, 2.6, 5.0);
     const b3    = reducedMotion ? 1 : beatT(T, 7.8, 3.0);
 
-    // ── Continuous idle spin = auto-advancing hour angle ──
-    // Active once scrub interactivity is available; the (u,v) head keeps tracing
-    // while the Earth turns. The HA handle owns the head while dragged; release
-    // hands back to the spin after IDLE_RESUME_DELAY_S with an eased ramp.
-    // Declination drags never pause it. Reduced motion: idle never runs — the one
-    // static frame falls through to sweep = 1 (full ellipse, full coverage).
+    const track = data.scrubTrack;
+    // Co-visible hour-angle window (track is ascending in H, elevation-filtered).
+    const Hmin = track.length ? track[0].H : 0;
+    const Hmax = track.length ? track[track.length - 1].H : 0;
+    const haSpan = Hmax - Hmin || 1;
+    const haFracToRad = (f) => Hmin + clamp01(f) * haSpan;
+    const radToHeadFrac = (h) => clamp01((h - Hmin) / haSpan);
+
+    // ── Continuous idle spin = a real hour-angle clock ──
+    // Constant angular rate advanced by elapsed time (rate × dt) — smooth like the
+    // main globe, no quantized track stepping, no eased ramp. Wraps at ±π (±12 h)
+    // seamlessly (continuous on the circle → no snap). The HA handle takes direct
+    // control while dragged; releasing just resumes the constant advance from the
+    // current angle. Reduced motion: idle never runs — the static frame falls
+    // through to sweep = 1 (full ellipse + coverage).
     const idleActive = animPhase === 'ready' && !reducedMotion;
     if (idleActive) {
-      if (data.idle.lastT == null) data.idle.haFrac = sweep % 1;  // seamless hand-off from intro sweep
       const dt = data.idle.lastT == null ? 0 : Math.min(0.1, T - data.idle.lastT);
       data.idle.lastT = T;
+      if (!data.idle.seeded) { data.idle.haRad = haFracToRad(sweep % 1); data.idle.seeded = true; }  // seamless hand-off from intro sweep
       if (data.scrub.dragging === 'ha') {
-        data.idle.haFrac = data.scrub.haFrac;            // handle owns position while dragging
-      } else if (T > data.idle.resumeT) {
-        const ramp = ease(clamp01((T - data.idle.resumeT) / IDLE_RAMP_S));
-        data.idle.haFrac = (data.idle.haFrac + ramp * dt / IDLE_LOOP_S) % 1;
+        data.idle.haRad = haFracToRad(data.scrub.haFrac);   // direct control while dragging
+      } else {
+        data.idle.haRad += IDLE_RATE * dt;
+        if (data.idle.haRad > Math.PI) data.idle.haRad -= 2 * Math.PI;   // wrap ±12 h
       }
     }
 
     const inBeat1 = !idleActive && !reducedMotion && T < 2.6;
-    const track = data.scrubTrack;
-    const headFrac = idleActive ? data.idle.haFrac : (inBeat1 ? 0 : sweep);
-    const headIdx = track.length ? Math.max(0, Math.min(track.length - 1, Math.floor(track.length * headFrac))) : 0;
-    const rotation = track.length ? track[headIdx].H : 0;
+    // Globe rotation = the continuous hour angle (smooth full-circle spin). The
+    // (u,v) head follows the same angle, saturating 0/1 off the co-visible window
+    // (trace holds full while the source is "down", restarts as the next transit
+    // begins — the globe never snaps, only the trace resets, which is honest).
+    const sourceUp = !idleActive || (data.idle.haRad >= Hmin && data.idle.haRad <= Hmax);
+    // Co-visible: trace progressively with the head. Source down: hold the ellipse
+    // FULL (frac 1) through the far-side passage, so it only resets to 0 at the next
+    // rise (when sourceUp flips true → radToHeadFrac(Hmin)=0) — no mid-passage snap.
+    const headFrac = idleActive ? (sourceUp ? radToHeadFrac(data.idle.haRad) : 1)
+      : (inBeat1 ? 0 : sweep);
+    const rotation = idleActive ? data.idle.haRad
+      : (track.length ? track[Math.max(0, Math.min(track.length - 1, Math.floor(track.length * headFrac)))].H : 0);
 
     // ── Earth + stations (the main page's textured globe, read-only) ──
     const earth = data.earth;
@@ -154,6 +175,17 @@ export const sceneB = {
     // ── UV panel ──
     if (b3 > 0) drawUVPoints(ctx, mapUV, data.uvGl, b3, { radius: 1.0 });
     if (track.length) drawUVTrace(ctx, mapUV, track, headFrac, { width: 1.8 });
+
+    // Off-window affordance: while the idle clock has the source below the horizon,
+    // the (u,v) head parks — say so, so the pause reads as physics, not a stall.
+    if (idleActive && !sourceUp && !data.scrub.dragging) {
+      ctx.save();
+      ctx.fillStyle = hexA(TOKENS.textSecondary, 0.8);
+      ctx.font = mono(10, 600); ctx.textAlign = 'center';
+      ctx.fillText('source below horizon — sampling resumes as it rises',
+        px + panelSize / 2, py + panelSize - 12);
+      ctx.restore();
+    }
 
     // beat 1 emphasis: the single (u,v) sample this one baseline measures right now
     if (inBeat1 && track.length) {
@@ -193,7 +225,7 @@ export const sceneB = {
     // 'H … · δ …' scrub readout). Hit rects are stashed on _layout for onPointer;
     // fractions are computed against the raw track rects (also stashed).
     if (mode === 'guided' && animPhase === 'ready' && !reducedMotion) {
-      const haH = (track[headIdx]?.H ?? 0) * 12 / Math.PI;  // radians → hours
+      const haH = rotation * 12 / Math.PI;  // continuous hour angle (radians → hours)
       const haTrack  = { x: px + 0.06 * panelSize, y: py + panelSize + 26, w: 0.88 * panelSize };
       const decTrack = { x: px - 40, y: py + 0.06 * panelSize, h: 0.88 * panelSize, vertical: true };
       data._layout.haTrack = haTrack;
@@ -201,7 +233,7 @@ export const sceneB = {
       data._layout.haCtl = drawSliderControl(ctx, haTrack, headFrac, {
         label: 'HOUR ANGLE — DRAG',
         value: `H = ${haH.toFixed(1)} h`,
-        active: data.scrub.dragging === 'ha' || T < data.idle.resumeT,
+        active: data.scrub.dragging === 'ha',
       });
       data._layout.decCtl = drawSliderControl(ctx, decTrack, 0.5 - data.scrub.decDeg / DEC_SPAN_DEG, {
         label: 'DECLINATION',
@@ -222,8 +254,10 @@ export const sceneB = {
 
   // Guided interactivity: rect-scoped drags on the two labeled controls only.
   // Hit-test against the padded hit rects drawSliderControl returned; compute the
-  // drag fraction against the raw track geometry. Releasing the HA handle schedules
-  // the idle spin to resume; declination drags never pause it.
+  // drag fraction against the raw track geometry. Releasing the HA handle simply
+  // hands back to the constant idle advance from the current angle (no ramp, no
+  // snap — drawFrame reads data.idle.haRad which the drag kept in lock-step).
+  // Declination drags never affect the spin.
   onPointer(data, ev) {
     if (ev.mode !== 'guided' || !data._layout) return;
     const L = data._layout;
@@ -238,7 +272,6 @@ export const sceneB = {
         data.scrub.decDeg = DEC_SPAN_DEG * (0.5 - clamp01((y - L.decTrack.y) / L.decTrack.h));  // top = +40°, bottom = −40°
     }
     if (ev.type === 'up' || ev.type === 'leave') {
-      if (data.scrub.dragging === 'ha') data.idle.resumeT = (data._T || 0) + IDLE_RESUME_DELAY_S;
       data.scrub.dragging = null;
     }
   },
