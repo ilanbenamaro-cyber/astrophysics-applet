@@ -96,7 +96,7 @@ export const TOUR_ACTS = [
     compute: 'live-on-input',  // CLEAN ≈ 98 ms on dev (audit §2) — live in both modes
     engineState: {
       stations: ARRAY_PRESETS['EHT 2017'],
-      params: { ...baseParams, method: 'clean', sourcePreset: 'blackhole', progressEvery: 1 },
+      params: { ...baseParams, method: 'clean', sourcePreset: 'blackhole' },
     },
     liveEquation: {
       tex: 'I_D = I_{sky} \\circledast B_D \\qquad r \\leftarrow r - \\gamma\\, B_D',

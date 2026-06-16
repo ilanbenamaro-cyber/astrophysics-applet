@@ -256,72 +256,10 @@ export function drawLegend(ctx, x, y, entries, opts = {}) {
   return { x, y, w, h };
 }
 
-// ── ResidualSparkline ──────────────────────────────────────────────────────────
-// Live CLEAN convergence: plots {iter, residual} from worker progress messages.
-// `series` = [{iter, residual}]. Log-y, normalised to the first residual.
-// `opts.threshold` (absolute residual) draws a dashed stop line labeled 3σ —
-// undefined keeps the original output pixel-identical.
-export function drawResidualSparkline(ctx, x, y, w, h, series, opts = {}) {
-  const { title = 'CLEAN residual', threshold } = opts;
-  ctx.save();
-  ctx.fillStyle = hexA(TOKENS.bg2, 0.92);
-  ctx.strokeStyle = hexA(TOKENS.border, 1);
-  ctx.lineWidth = 1;
-  roundRect(ctx, x, y, w, h, 6);
-  ctx.fill(); ctx.stroke();
-  ctx.fillStyle = TOKENS.textSecondary;
-  ctx.font = mono(10, 600);
-  ctx.textAlign = 'left';
-  ctx.fillText(title.toUpperCase(), x + 10, y + 16);
-  if (!series || series.length < 2) {
-    // CLEAN stopped before its first subtraction: every residual peak was already
-    // below the 3σ noise floor. State it — an empty plot would read as a bug.
-    ctx.fillStyle = hexA(TOKENS.textSecondary, 0.75);
-    ctx.font = mono(10, 500);
-    ctx.textAlign = 'center';
-    ctx.fillText('no components above 3σ — noise-limited', x + w / 2, y + h / 2 + 8);
-  }
-  if (series && series.length >= 2) {
-    const r0 = Math.max(series[0].residual, 1e-9);
-    const plot = series.map(s => Math.log10(Math.max(s.residual, 1e-9) / r0)); // ≤ 0
-    const lo = Math.min(...plot, -0.1), hi = 0;
-    const padX = 12, padTop = 24, padBot = 10;
-    const px = (i) => x + padX + (w - 2 * padX) * (i / (series.length - 1));
-    const py = (val) => y + padTop + (h - padTop - padBot) * (1 - (val - lo) / (hi - lo));
-    // 3σ stop threshold: the floor CLEAN iterates down to (dashed, labeled).
-    if (threshold != null && threshold > 0) {
-      const tv = Math.log10(Math.max(threshold, 1e-9) / r0);
-      if (tv >= lo && tv <= hi) {
-        const tys = py(tv);
-        ctx.strokeStyle = hexA(TOKENS.textSecondary, 0.6);
-        ctx.lineWidth = 1;
-        ctx.setLineDash([3, 3]);
-        ctx.beginPath(); ctx.moveTo(x + padX, tys); ctx.lineTo(x + w - padX, tys); ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle = hexA(TOKENS.textSecondary, 0.8);
-        ctx.font = mono(9, 500);
-        ctx.textAlign = 'left';
-        ctx.fillText('3σ', x + padX + 2, tys - 3);
-      }
-    }
-    ctx.strokeStyle = TOKENS.accent;
-    ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    plot.forEach((v, i) => i === 0 ? ctx.moveTo(px(i), py(v)) : ctx.lineTo(px(i), py(v)));
-    ctx.stroke();
-    const last = plot.length - 1;
-    ctx.fillStyle = TOKENS.accent;
-    ctx.beginPath(); ctx.arc(px(last), py(plot[last]), 2.5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = TOKENS.textSecondary;
-    ctx.font = mono(10, 500);
-    ctx.textAlign = 'right';
-    ctx.fillText(`iter ${series[last].iter}`, x + w - 10, y + 16);
-  }
-  ctx.restore();
-}
-
-// (ConvolutionReveal was retired with Act C's pipeline restage — the causal
-//  sparse→dirty→CLEAN sequence replaced the swept-beam intro.)
+// (ResidualSparkline was removed 2026-06-16: Act C replaced the slider + residual
+//  graph with three engine-honest noise presets — the per-iteration component count
+//  it plotted is erratic on EHT-sparse coverage and read as "broken". See sceneC.js
+//  and SITE-AUDIT. ConvolutionReveal was retired earlier with the pipeline restage.)
 
 // rounded-rect path helper
 export function roundRect(ctx, x, y, w, h, r) {

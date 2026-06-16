@@ -4,19 +4,21 @@
 //        │ FFT⁻¹
 //   [DIRTY IMAGE]  the actual inverse transform of that coverage (runReconstruction)
 //        │ CLEAN
-//   [RESTORED]     Högbom CLEAN's ring, emerging over the dirty image, with the live
-//                  residual sparkline (real worker progress messages) beneath it.
-// CLEAN ≈ 100 ms at N=512 (audit §2) so it recomputes LIVE in both modes.
-// Guided: a labeled THERMAL NOISE slider under the dirty panel (shared
-// drawSliderControl chrome, hit-tested to its returned rect); CLEAN recomputes
-// live DURING the drag (one in flight at a time) with an on-release settle, old
-// canvases held so nothing flickers (never-stall: hard timeout falls back to
-// cache). The noise's continuous downstream consequences are surfaced — a DR log
-// bar + CLEAN component count under the restored panel, a dashed 3σ stop line on
-// the sparkline — so the cliff (CLEAN finds nothing) is named, not mysterious.
-// Numbers via tourPhysics; ring sized to its true 42 μas by measureRingFraction (W1.3).
+//   [RESTORED]     Högbom CLEAN's recovered ring (model⊛beam + residual).
+// CLEAN ≈ 100 ms at N=512 (audit §2). Guided: THREE thermal-noise PRESETS (segmented
+// buttons under the dirty panel) replace the old slider+residual-graph. WHY (diagnosis,
+// SITE-AUDIT 2026-06-16): vanilla Högbom with the worker's 3σ-border stop barely runs on
+// EHT-sparse coverage of a ring (~12 components even at noise 0 — the dirty image's
+// sidelobe border sets a high stop floor), so the restored image is dominated by
+// dirty+residual and the per-iteration component count is erratic (and 0 across much of
+// the old 0–0.25× range). Surfacing that count (and a DR readout that saturates at the
+// 100 fallback) made a working-but-modest reconstruction look broken. The restored IMAGE,
+// however, degrades gracefully with noise. So: present three engine-chosen σ levels at
+// which the ring is recognizable and degrades visibly; recompute each via the real engine
+// (own worker), render with drawHot. Worker untouched (3σ stop is CASA-standard). Numbers
+// via tourPhysics; ring sized to its true 42 μas by measureRingFraction (W1.3).
 import { computeUVPoints, computeUVPointsGl } from './uvCompute.js';
-import { runReconstruction, buildSefdMap, computeDynamicRange, scaleSource } from './simCore.js';
+import { runReconstruction, buildSefdMap, scaleSource } from './simCore.js';
 import { loadImagePresetAsync } from './presets.js';
 import { STATION_SEFD } from './constants.js';
 import { TOUR_PHYSICS as P } from './tourPhysics.js';
@@ -25,24 +27,17 @@ import { drawHot } from './simRender.js';
 import { clearScene, beatT, ease, clamp01, hexA, toTelescopes,
          measureRingFraction, zoomSource, drawUVAxes, uvExtentGl } from './tourScene.js';
 import { ensureGalaxy, drawGalaxy } from './tourGalaxy.js';
-import { drawResidualSparkline, drawUVPoints, roundRect, drawSliderControl } from './tourAnnotations.js';
+import { drawUVPoints, roundRect } from './tourAnnotations.js';
 
 const N = 512;
 const RECOMPUTE_TIMEOUT_MS = 2500;
-// Slider range 0…0.25× visibility RMS, measured against this act's 42 μas source:
-// the ring survives to ~0.15 and dissolves by 0.25 (CLEAN's 3σ floor rises above the
-// peak — it finds nothing). The breakdown IS the lesson, so the range ends exactly
-// where the engine says the image is noise-limited; the sparkline names that state.
-const NOISE_MAX = 0.25;
+// Three thermal-noise presets in units of the engine's own visibility RMS (the worker
+// scales injected σ by visRms). Chosen from the 2026-06-16 engine probe: each level
+// still yields a recognizable ring that degrades visibly; none lands in the
+// zero-component regime that made the old slider look dead. Default = 0 (cleanest).
+const PRESET_NOISE  = [0, 0.015, 0.03];
+const PRESET_LABELS = ['0 σ', '0.015 σ', '0.03 σ'];
 const mono = (px, w = 500) => `${w} ${px}px ${TOKENS.fontMono}`;
-
-// Slider-fraction ↔ noise mapping, isolated in ONE place so a later switch to a
-// perceptual (non-linear) mapping touches nothing else. LINEAR for now.
-function fracToNoise(f) { return +(f * NOISE_MAX).toFixed(2); }
-function noiseToFrac(n) { return clamp01(n / NOISE_MAX); }
-
-// CLEAN found nothing above its 3σ floor — zero components, the image is noise-limited.
-function isNoiseLimited(data) { return data.series.length < 2; }
 
 function render512(draw) {
   const c = document.createElement('canvas');
@@ -51,28 +46,20 @@ function render512(draw) {
   return c;
 }
 
-// Run one CLEAN, collecting real progress, and rebuild the cached canvases on `data`.
-// Both panels render with the same hot colormap Act D uses — one image, before/after.
-async function recomputeCLEAN(data) {
-  const series = [];
-  // Capture the noise THIS run computes with: data.noise can move mid-flight
-  // during a live drag, and computedNoise must record what was actually used
-  // (else the release settle sees "already computed" and keeps a stale image).
-  const noiseUsed = data.noise;
+// Run one CLEAN at the given preset's noise; cache its dirty+restored canvases on
+// data.cache[idx]. Same hot colormap as Act D. No progress/series — the (erratic)
+// component count is deliberately not surfaced.
+async function computePreset(data, idx) {
   const r = await runReconstruction(
     data.srcMaster.slice(),
     data.uvLite,
-    // progressEvery 1: CLEAN on the true-size ring stops in ~10 iters (the 3σ floor
-    // rises with the brighter dirty border); coarser sampling would starve the sparkline.
-    { N, noise: noiseUsed, method: 'clean', dishDiameter: 25, frequency: data.freqGHz,
-      fovRad: data.fovRad, stationPairs: data.stationPairs, sefdMap: data.sefdMap, progressEvery: 1 },
-    (p) => series.push({ iter: p.iter, residual: p.residual }),
+    { N, noise: PRESET_NOISE[idx], method: 'clean', dishDiameter: 25, frequency: data.freqGHz,
+      fovRad: data.fovRad, stationPairs: data.stationPairs, sefdMap: data.sefdMap },
   );
-  data.dirtyCanvas    = render512(ctx => drawHot(ctx, r.dirty, N));
-  data.restoredCanvas = render512(ctx => drawHot(ctx, r.restored, N));
-  data.series = series.length ? series : [{ iter: 0, residual: 1 }];
-  data.dynamicRange = computeDynamicRange(r.restored, N);
-  data.computedNoise = noiseUsed;
+  data.cache[idx] = {
+    dirtyCanvas:    render512(ctx => drawHot(ctx, r.dirty, N)),
+    restoredCanvas: render512(ctx => drawHot(ctx, r.restored, N)),
+  };
   return data;
 }
 
@@ -102,10 +89,10 @@ export const sceneC = {
       nSamples: uvPoints.length,
       stationPairs, sefdMap: buildSefdMap(tels, STATION_SEFD),
       freqGHz: params.freqGHz, fovRad: params.fovMuas * (Math.PI / (180 * 3.6e9)),
-      noise: 0, computedNoise: 0, _recomputing: false, _recomputeToken: 0,
+      preset: 0, cache: {}, _recomputing: false, _recomputeToken: 0,
       _layout: null,
     };
-    await recomputeCLEAN(data);   // first CLEAN before the act shows (computation-complete)
+    await computePreset(data, 0);   // open on the cleanest preset (computation-complete)
     return data;
   },
 
@@ -122,30 +109,19 @@ export const sceneC = {
     const cyP = py + S / 2;
     const xs = [x0, x0 + S + G, x0 + 2 * (S + G)];
 
-    // Noise slider geometry (under the dirty panel) — stored for onPointer hit-tests
-    const slider = {
-      x: xs[1] + S * 0.08, y: py + S + 56, w: S * 0.84,
-    };
-    data._layout = { xs, py, S, w, h, slider };
+    // Preset-control geometry (under the dirty panel) — stored for onPointer hit-tests
+    const presetBar = { x: xs[1] + S * 0.08, y: py + S + 52, w: S * 0.84 };
+    data._layout = { xs, py, S, w, h, presetBar };
+
+    // Hold the last good canvases while a freshly-selected preset is still computing,
+    // so nothing flickers or blanks (init always seeds cache[0]).
+    const cur = data.cache[data.preset];
+    if (cur) data._shown = cur;
+    const shown = cur || data._shown;
 
     const b1 = reducedMotion ? 1 : beatT(T, 0.2, 1.8);   // sparse coverage
     const b2 = reducedMotion ? 1 : beatT(T, 2.2, 1.8);   // FFT⁻¹ → dirty
-    const b3 = reducedMotion ? 1 : beatT(T, 4.6, 3.4);   // CLEAN → ring + sparkline
-
-    // ── Causal connector (guided): the slider governs the FFT⁻¹/CLEAN
-    // transformation — a thin hairline from the track's center up to just below
-    // the arrow row. Drawn FIRST so panels and captions sit on top of it. ──
-    if (mode === 'guided') {
-      ctx.save();
-      ctx.strokeStyle = hexA(TOKENS.accent, 0.35);
-      ctx.lineWidth = 1;
-      const ccx = slider.x + slider.w / 2;
-      ctx.beginPath();
-      ctx.moveTo(ccx, slider.y);
-      ctx.lineTo(ccx, cyP + 14);
-      ctx.stroke();
-      ctx.restore();
-    }
+    const b3 = reducedMotion ? 1 : beatT(T, 4.6, 3.4);   // CLEAN → restored ring
 
     // ── Panel 1: the sparse (u,v) data ──
     ctx.save();
@@ -164,7 +140,7 @@ export const sceneC = {
       panelFrame(ctx, xs[1], py, S);
       ctx.save();
       roundRect(ctx, xs[1], py, S, S, 4); ctx.clip();
-      ctx.drawImage(data.dirtyCanvas, xs[1], py, S, S);
+      ctx.drawImage(shown.dirtyCanvas, xs[1], py, S, S);
       ctx.restore();
       panelCaption(ctx, xs[1], py, S, 'DIRTY IMAGE', 'I_D = I_sky ⊛ B_D');
       ctx.restore();
@@ -178,85 +154,44 @@ export const sceneC = {
       panelFrame(ctx, xs[2], py, S);
       ctx.save();
       roundRect(ctx, xs[2], py, S, S, 4); ctx.clip();
-      ctx.drawImage(data.dirtyCanvas, xs[2], py, S, S);
+      ctx.drawImage(shown.dirtyCanvas, xs[2], py, S, S);
       ctx.globalAlpha = ease(b3) * ease(clamp01(b3 * 1.4));
-      ctx.drawImage(data.restoredCanvas, xs[2], py, S, S);
+      ctx.drawImage(shown.restoredCanvas, xs[2], py, S, S);
       ctx.restore();
       panelCaption(ctx, xs[2], py, S, 'RESTORED (CLEAN)', b3 > 0.6 ? '' : '…');
       ctx.restore();
 
-      // ── Consequence readouts: the CONTINUOUS cost of noise, so mid-slider
-      // motion is visible long before CLEAN's 3σ cliff (which is named below). ──
-      if (b3 > 0.6) {   // reduced motion: b3 = 1, so readouts always render statically
-        ctx.save();
-        ctx.globalAlpha = ease(b3);
-        const rowX = xs[2] + S * 0.08, rowW = S * 0.84;
-        // DYNAMIC RANGE log bar (1→1000 scale): gold fill ∝ log10(DR)/3, clamped.
-        const drTxt = !isFinite(data.dynamicRange) ? '>1000' : data.dynamicRange.toFixed(0);
-        const drVal = !isFinite(data.dynamicRange) ? 1000 : Math.max(data.dynamicRange, 1);
-        const drFrac = clamp01(Math.log10(drVal) / 3);
-        const yDr = py + S + 30;
-        ctx.font = mono(10, 600); ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-        ctx.fillStyle = TOKENS.accent;
-        ctx.fillText(`DR ${drTxt}:1`, rowX, yDr);
-        const barX = rowX + 64, barW = rowW - 64;
-        ctx.strokeStyle = hexA(TOKENS.border, 1);
-        ctx.lineWidth = 2; ctx.lineCap = 'round';
-        ctx.beginPath(); ctx.moveTo(barX, yDr); ctx.lineTo(barX + barW, yDr); ctx.stroke();
-        if (drFrac > 0) {
-          ctx.strokeStyle = TOKENS.accent;
-          ctx.beginPath(); ctx.moveTo(barX, yDr); ctx.lineTo(barX + barW * drFrac, yDr); ctx.stroke();
-        }
-        // CLEAN component count — collapses to 0 (danger) when noise-limited.
-        const nComp = data.series.length >= 2 ? data.series.length : 0;
-        const yCc = py + S + 45;
-        ctx.fillStyle = TOKENS.textSecondary;
-        ctx.fillText('CLEAN components: ', rowX, yCc);
-        const lblW = ctx.measureText('CLEAN components: ').width;
-        ctx.fillStyle = nComp === 0 ? hexA(TOKENS.danger, 0.85) : TOKENS.accent;
-        ctx.fillText(`${nComp}`, rowX + lblW, yCc);
-        ctx.restore();
-      }
-
-      // Live residual sparkline (real worker progress), revealed across beat 3;
-      // the dashed 3σ line marks CLEAN's natural stop level (≈ its final residual).
-      const revealN = reducedMotion ? data.series.length
-        : Math.max(2, Math.floor(data.series.length * clamp01(b3 + 0.05)));
-      drawResidualSparkline(ctx, xs[2], py + S + 58, S, 62, data.series.slice(0, revealN),
-        { threshold: data.series.length >= 2 ? data.series[data.series.length - 1].residual : null });
+      // One honest line describing what CLEAN does (no sparkline/graph).
       ctx.save();
       ctx.globalAlpha = ease(b3);
       ctx.fillStyle = hexA(TOKENS.textSecondary, 0.85);
       ctx.font = mono(10, 500); ctx.textAlign = 'center';
-      ctx.fillText('peak → subtract γ·B_D → repeat · stop at 3σ', xs[2] + S / 2, py + S + 136);
+      ctx.fillText('peak → subtract γ·B_D → repeat · stop at 3σ', xs[2] + S / 2, py + S + 30);
       ctx.restore();
     }
 
-    // ── Thermal-noise slider (guided): the shared control chrome; its returned
-    // hit rect is what onPointer tests against. ──
+    // ── Thermal-noise PRESETS (guided): three engine-honest σ levels; the returned
+    // hit rects are what onPointer tests against. Default opens on the cleanest. ──
     if (mode === 'guided') {
-      data._layout.sliderHit = drawNoiseSlider(ctx, slider, data, reducedMotion ? 0 : T);
+      data._layout.presetHits = drawPresets(ctx, presetBar, data, reducedMotion ? 0 : T);
     }
   },
 
+  // Click a preset segment → select it; compute on first selection (cached after).
   onPointer(data, { type, nx, ny, mode }) {
-    if (mode !== 'guided' || !data._layout) return;
-    const { slider, sliderHit, w, h } = data._layout;
-    const x = nx * w, y = ny * h;
-    const onTrack = !!sliderHit &&
-                    x >= sliderHit.x && x <= sliderHit.x + sliderHit.w &&
-                    y >= sliderHit.y && y <= sliderHit.y + sliderHit.h;
-    if (type === 'down' && onTrack) data._dragging = true;
-    if ((type === 'move' && data._dragging) || (type === 'down' && onTrack)) {
-      const fx = clamp01((x - slider.x) / slider.w);
-      data.noise = fracToNoise(fx);
-      // Live recompute during the drag (CLEAN ≈ 100 ms): at most one in flight —
-      // the _recomputing guard serializes; release below is the final settle.
-      if (!data._recomputing && Math.abs(data.noise - data.computedNoise) > 0.005) scheduleRecompute(data);
-    }
-    if (type === 'up' || type === 'leave') {
-      if (data._dragging && data.noise !== data.computedNoise) scheduleRecompute(data);
-      data._dragging = false;
+    if (mode !== 'guided' || type !== 'down' || !data._layout) return;
+    const hits = data._layout.presetHits;
+    if (!hits) return;
+    const x = nx * data._layout.w, y = ny * data._layout.h;
+    for (let i = 0; i < hits.length; i++) {
+      const r = hits[i];
+      if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) {
+        if (i !== data.preset || !data.cache[i]) {
+          data.preset = i;
+          if (!data.cache[i]) selectPreset(data, i);   // engine recompute (cached after)
+        }
+        break;
+      }
     }
   },
 };
@@ -298,41 +233,59 @@ function stageArrow(ctx, xFrom, xTo, cy, label) {
   ctx.restore();
 }
 
-// The thermal-noise control: shared slider chrome (drawSliderControl) + a small
-// spinner while CLEAN reruns (old canvases stay up — no flicker). When the engine
-// is noise-limited the whole control goes danger and the value names the state.
-// Returns the hit rect onPointer tests against.
-function drawNoiseSlider(ctx, slider, data, T) {
-  const { x, y, w } = slider;
-  const limited = isNoiseLimited(data);
-  const value = `× ${data.noise.toFixed(2)} σ_vis${limited ? ' — NOISE-LIMITED' : ''}`;
-  const hit = drawSliderControl(ctx, { x, y, w }, noiseToFrac(data.noise), {
-    label: 'THERMAL NOISE (PER-BASELINE SEFD)',
-    value,
-    active: data._dragging || data._recomputing,
-    danger: limited,
-  });
-  // recompute spinner (right of the value)
-  if (data._recomputing) {
-    ctx.save();
-    const sx = x + w + 18, r = 5;
-    ctx.strokeStyle = TOKENS.accent;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(sx, y - 16, r, T * 6, T * 6 + Math.PI * 1.4);
+// Three thermal-noise presets as a labeled segmented control (THERMAL NOISE, under
+// the dirty panel). Active segment in gold; a small spinner shows while the chosen
+// preset's CLEAN computes (held canvases stay up — no flicker). Each segment is
+// labeled by its real σ (× visibility RMS). Returns one hit rect per segment.
+function drawPresets(ctx, bar, data, T) {
+  const { x, y, w } = bar;
+  const n = PRESET_NOISE.length;
+  const gap = 6;
+  const segW = (w - gap * (n - 1)) / n;
+  const segH = 22;
+  ctx.save();
+  ctx.font = mono(10, 600); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = TOKENS.textSecondary;
+  ctx.fillText('THERMAL NOISE', x, y - 8);
+  const hits = [];
+  for (let i = 0; i < n; i++) {
+    const sx = x + i * (segW + gap);
+    const on = i === data.preset;
+    roundRect(ctx, sx, y, segW, segH, 4);
+    ctx.fillStyle = on ? hexA(TOKENS.accent, 0.18) : hexA(TOKENS.bg0, 0.6);
+    ctx.fill();
+    ctx.strokeStyle = on ? TOKENS.accent : hexA(TOKENS.border, 1);
+    ctx.lineWidth = on ? 1.5 : 1;
     ctx.stroke();
-    ctx.restore();
+    ctx.fillStyle = on ? TOKENS.accent : TOKENS.textSecondary;
+    ctx.font = mono(11, on ? 600 : 500); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(PRESET_LABELS[i], sx + segW / 2, y + segH / 2 + 0.5);
+    hits.push({ x: sx, y, w: segW, h: segH });
   }
-  return hit;
+  // spinner while the selected preset is still computing
+  if (data._recomputing) {
+    ctx.strokeStyle = TOKENS.accent; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(x + w + 16, y + segH / 2, 5, T * 6, T * 6 + Math.PI * 1.4);
+    ctx.stroke();
+  }
+  // unit note
+  ctx.fillStyle = hexA(TOKENS.textSecondary, 0.7);
+  ctx.font = mono(9, 500); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  ctx.fillText('× visibility RMS', x, y + segH + 13);
+  ctx.restore();
+  return hits;
 }
 
-function scheduleRecompute(data) {
+// Compute the selected preset via the real engine (own worker), caching the result.
+// Never-stall (G5): if the worker hangs past the timeout, drop the spinner; the held
+// canvases stay up. A later re-select recomputes (cache still empty).
+function selectPreset(data, idx) {
   const token = ++data._recomputeToken;
   data._recomputing = true;
   let settled = false;
   const finish = () => { if (token === data._recomputeToken) data._recomputing = false; };
-  // Never-stall (G5): if the worker hangs past the timeout, drop the spinner and keep cache.
   const timeout = setTimeout(() => { if (!settled) finish(); }, RECOMPUTE_TIMEOUT_MS);
-  recomputeCLEAN(data).then(() => { settled = true; clearTimeout(timeout); finish(); })
-                      .catch(() => { settled = true; clearTimeout(timeout); finish(); });
+  computePreset(data, idx).then(() => { settled = true; clearTimeout(timeout); finish(); })
+                          .catch(() => { settled = true; clearTimeout(timeout); finish(); });
 }

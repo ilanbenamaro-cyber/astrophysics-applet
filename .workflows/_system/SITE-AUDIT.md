@@ -119,3 +119,41 @@ five acts, compare mode, 5× tour open/close):
 | G-AUDIT | this file; fixes in commits 9–10 |
 | G-PERF | PASS (no GL leak; live recompute) + projector HUMAN TODO |
 | G-APP / G-CONTRACT | verified at Stage 0 + re-verified after commits 8–10 |
+
+---
+
+## ADDENDUM 2026-06-16 — Act B + Act C fix pass (diagnosis, G4)
+
+**Act C "CLEAN looks broken / noise-limited" — ROOT CAUSE (not a regression).**
+Empirical probe (replicated Act C's exact path via dynamic import, never-used port 8791,
+EHT 2017 + black-hole.png, ring-sized to 42 μas, sizeFactor 1.233):
+
+| noise ×RMS | 0 | 0.01 | 0.02 | 0.03 | 0.04 | 0.05 | 0.06 | 0.08 | 0.10 | 0.12 | 0.25 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| CLEAN comps | 12 | 15 | 1 | 12 | 0 | 0 | 0 | 5 | 0 | 2 | 0 |
+| DR | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
+
+Findings: (1) Vanilla Högbom with the worker's 3σ-border-RMS stop barely runs on
+EHT-sparse coverage of a ring — only ~12 components even at noise 0 (the dirty image's
+heavy sidelobe border sets a high stop floor). The restored image is therefore dominated
+by dirty+residual, NOT the CLEAN model. (2) The injected thermal noise is a random
+Gaussian realization per run, so the component count is erratic (12,15,1,12,0,0,0,5,0,2,0
+— not monotonic) and frequently 0. The old UI surfaced this count + a "noise-limited"
+label, so a working-but-modest reconstruction looked broken/flickering during the
+live-drag. (3) `computeDynamicRange` saturates at the `maxV*0.01` fallback → DR = 100
+exactly at every level (the sparse-coverage border MAD-σ exceeds maxV*0.1), so DR was an
+uninformative readout. **Conclusion: NOT a recompute-path regression — CLEAN is correct;
+the 3σ stop (CASA-standard, worker-internal, decisions.md — not touched) simply makes
+Högbom inert on this source. Component-count and DR were the wrong proxies to surface.**
+The restored IMAGE does degrade gracefully with noise (verified by rendering 0→0.10).
+
+**Fix:** removed the noise slider, the residual sparkline (`drawResidualSparkline`
+deleted from tourAnnotations.js — Act C was its only consumer), the "noise-limited"
+readout, the DR-bar + component-count readouts, and the live-recompute-on-drag. Replaced
+with three engine-honest σ presets `{0, 0.015, 0.03} × visibility RMS` (chosen from the
+probe: each reliably shows a recognizable shadow/ring degrading visibly; none lands in the
+blank/dead regime; verified in-act over two noise realizations). Each preset recomputes
+via the real engine (own worker) and renders with drawHot; default opens on 0 σ. Worker
+diff empty. **Act B** idle spin: replaced the quantized track[headIdx] lookup + eased
+resume ramp (the jerk/slowness sources) with a continuous hour-angle clock (rate×dt,
+±12 h wrap) so it spins smoothly like the main globe.
