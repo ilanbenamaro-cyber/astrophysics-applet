@@ -85,11 +85,12 @@ export function SimPane({ sim, onOpenInfo, label, reducedMotion = false }) {
         ${showTels ? html`
           <div style=${{ padding: '0 12px 8px' }}>
             <button
-              className=${'btn btn-xs bhex-button' + (sim.bhexAdded ? ' bhex-added' : '')}
-              onClick=${sim.handleAddBHEX}
-              disabled=${sim.bhexAdded}
+              className=${'btn btn-xs bhex-button' + (sim.bhexAdded ? ' bhex-on' : '')}
+              onClick=${sim.handleToggleBHEX}
+              aria-pressed=${sim.bhexAdded}
+              title="Toggle the BHEX space telescope on or off"
               style=${{ width: '100%', marginBottom: '6px' }}
-            >${sim.bhexAdded ? 'BHEX Added ✓' : '＋ BHEX Satellite'}</button>
+            >${sim.bhexAdded ? '✓ BHEX: ON' : 'BHEX: OFF'}</button>
             <${TelescopeList}
               telescopes=${sim.telescopes}
               onRemove=${sim.handleTelescopeRemove}

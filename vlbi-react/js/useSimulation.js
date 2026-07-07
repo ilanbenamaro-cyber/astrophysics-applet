@@ -84,16 +84,23 @@ export function useSimulation() {
 
   // ── Array preset helpers ────────────────────────────────────────────────────
   function loadEHTPresets(presetName = 'EHT 2017') {
-    telIdRef.current = 0;
     const stations = ARRAY_PRESETS[presetName] || ARRAY_PRESETS['EHT 2017'];
-    setTelescopes(stations.map((s, idx) => ({
-      id: telIdRef.current++,
-      name: s.name,
-      lat: s.lat,
-      lon: s.lon,
-      color: TELESCOPE_COLORS[idx % TELESCOPE_COLORS.length],
-      visible: true,
-    })));
+    setTelescopes(prev => {
+      // BHEX is an independent toggle (N2): preset changes swap the ground
+      // array but must not silently drop the space element.
+      const keepBhex = prev.some(t => t.name === BHEX_PRESET.name);
+      telIdRef.current = 0;
+      const next = stations.map((s, idx) => ({
+        id: telIdRef.current++,
+        name: s.name,
+        lat: s.lat,
+        lon: s.lon,
+        color: TELESCOPE_COLORS[idx % TELESCOPE_COLORS.length],
+        visible: true,
+      }));
+      if (keepBhex) next.push({ id: telIdRef.current++, ...BHEX_PRESET, visible: true });
+      return next;
+    });
   }
 
   // Load EHT 2017 on mount (after short delay for worker init)
@@ -250,14 +257,11 @@ export function useSimulation() {
     }
   }, []);
 
-  const handleAddBHEX = useCallback(() => {
-    if (telescopes.some(t => t.name === 'BHEX')) return;
-    setTelescopes(prev => [...prev, {
-      id: telIdRef.current++,
-      ...BHEX_PRESET,
-      visible: true,
-    }]);
-  }, [telescopes]);
+  const handleToggleBHEX = useCallback(() => {
+    setTelescopes(prev => prev.some(t => t.name === BHEX_PRESET.name)
+      ? prev.filter(t => t.name !== BHEX_PRESET.name)
+      : [...prev, { id: telIdRef.current++, ...BHEX_PRESET, visible: true }]);
+  }, []);
 
   const handleTelescopeAdd = useCallback((lat, lon) => {
     setTelescopes(prev => {
@@ -368,7 +372,7 @@ export function useSimulation() {
     setControls, setSelectedArrayPreset, setShowCountryLabels,
     // Handlers
     handleTelescopeAdd, handleTelescopeRemove, handleToggleVisibility,
-    handleTargetChange, handleAddBHEX, handleLoadArrayPreset,
+    handleTargetChange, handleToggleBHEX, handleLoadArrayPreset,
     handlePresetSelect, handleFileUpload, handleReset, handleExportFITS,
     handleClearTelescopes, handleLoadDefaultEHT,
     loadEHTPresets,

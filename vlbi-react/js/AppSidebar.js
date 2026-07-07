@@ -9,7 +9,7 @@ export function AppSidebar({
   selectedPreset, onPresetSelect, onFileUpload,
   telescopes, onTelescopeRemove, onToggleVisibility,
   onLoadEHT, selectedArrayPreset, onArrayPresetChange, onLoadArray,
-  bhexAdded, onAddBHEX,
+  bhexAdded, onToggleBHEX,
   onClearAll, showCountryLabels, onToggleCountryLabels,
   controls, onControlChange, onOpenInfo, onReset,
   selectedTarget, onTargetChange, effectiveSourceFraction, ringFraction,
@@ -54,11 +54,12 @@ export function AppSidebar({
         </div>
         ${selectedArrayPreset === 'ngEHT Phase 1' ? html`<span className="preset-note">† Reference array — coordinates approximate</span>` : null}
         <button
-          className=${'btn bhex-button' + (bhexAdded ? ' bhex-added' : '')}
-          onClick=${onAddBHEX}
-          disabled=${bhexAdded}
+          className=${'btn bhex-button' + (bhexAdded ? ' bhex-on' : '')}
+          onClick=${onToggleBHEX}
+          aria-pressed=${bhexAdded}
+          title="Toggle the BHEX space telescope on or off"
         >
-          ${bhexAdded ? 'BHEX Added ✓' : '＋ BHEX Satellite'}
+          ${bhexAdded ? '✓ BHEX Satellite: ON' : 'BHEX Satellite: OFF'}
         </button>
         <div className="telescope-actions">
           <button className="btn btn-ghost" onClick=${onClearAll}>Clear All</button>

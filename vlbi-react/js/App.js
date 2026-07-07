@@ -157,7 +157,7 @@ export function App() {
             onArrayPresetChange=${left.setSelectedArrayPreset}
             onLoadArray=${left.handleLoadArrayPreset}
             bhexAdded=${left.bhexAdded}
-            onAddBHEX=${left.handleAddBHEX}
+            onToggleBHEX=${left.handleToggleBHEX}
             onClearAll=${left.handleClearTelescopes}
             showCountryLabels=${left.showCountryLabels}
             onToggleCountryLabels=${() => left.setShowCountryLabels(v => !v)}

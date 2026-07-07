@@ -608,14 +608,17 @@ input[type="range"]::-moz-range-thumb {
   justify-content: center;
 }
 
-.bhex-button:hover:not(:disabled) {
+.bhex-button:hover {
   background: rgba(255, 215, 0, 0.08);
 }
 
-.bhex-button:disabled,
-.bhex-button.bhex-added {
-  opacity: 0.5;
-  cursor: not-allowed;
+/* Toggle ON state (N2) — button stays clickable; pressed state reads as lit */
+.bhex-button.bhex-on {
+  background: rgba(255, 215, 0, 0.14);
+}
+
+.bhex-button.bhex-on:hover {
+  background: rgba(255, 215, 0, 0.2);
 }
 
 /* ── Status Bar ── */
