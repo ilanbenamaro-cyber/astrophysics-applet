@@ -129,7 +129,7 @@ export const sceneC = {
     const mapUV = drawUVAxes(ctx, xs[0], py, S, data.maxGl, { label: 'u, v (Gλ)' });
     drawUVPoints(ctx, mapUV, data.uvGl, b1, { radius: 0.9 });
     panelCaption(ctx, xs[0], py, S, 'SPARSE DATA',
-      `${data.nSamples.toLocaleString('en-US')} samples · ${P.str.uvFill} of the plane`);
+      `${data.nSamples.toLocaleString('en-US')} samples · ${P.str.uvFill} of the UV frame`);
     ctx.restore();
 
     // ── Arrow 1 + Panel 2: the dirty image ──

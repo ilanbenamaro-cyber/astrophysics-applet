@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from './core.js';
 import { IMAGE_SIZE, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD,
          BHEX_PRESET, SKY_TARGETS } from './constants.js';
-import { computeUVPoints, computeUVPointsGl, computeUVFill,
+import { computeUVPoints, computeUVPointsGl, computeUVFillGl,
          computeUVMaxExtentGl,
          latLonToECEF, computeSatelliteECEF } from './uvCompute.js';
 import { scaleSource, zoomSource, measureRingFraction, buildSefdMap, buildPairSefdMap,
@@ -32,7 +32,6 @@ export function useSimulation() {
   const [uvPoints, setUvPoints]                 = useState([]);
   const [stationPairs, setStationPairs]         = useState([]);
   const [uvPointsGl, setUvPointsGl]             = useState([]);
-  const [uvFill, setUvFill]                     = useState(0);
   const [dirty, setDirty]                       = useState(null);
   const [restored, setRestored]                 = useState(null);
   const [controls, setControls]                 = useState(DEFAULT_CONTROLS);
@@ -119,7 +118,6 @@ export function useSimulation() {
     const { uvPoints: uvPts, stationPairs: pairs } = computeUVPoints(telescopes, { ...controls, N: IMAGE_SIZE });
     setUvPoints(uvPts);
     setStationPairs(pairs);
-    setUvFill(computeUVFill(uvPts, IMAGE_SIZE));
     setUvPointsGl(computeUVPointsGl(telescopes, {
       declination: controls.declination,
       duration:    controls.duration,
@@ -210,6 +208,12 @@ export function useSimulation() {
       frequency:   controls.frequency,
     }),
     [telescopes, controls.declination, controls.duration, controls.frequency]);
+
+  // UV fill (N3): % of cells sampled on a fixed grid spanning the locked display
+  // extent above — one frame for both the axes and the fill denominator.
+  const uvFill = useMemo(
+    () => computeUVFillGl(uvPointsGl, uvDisplayMaxGl),
+    [uvPointsGl, uvDisplayMaxGl]);
 
   const angularRes = useMemo(
     () => angularResFn(telescopes, controls.frequency),

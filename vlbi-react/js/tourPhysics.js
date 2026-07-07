@@ -9,7 +9,8 @@
 // it is the one place we cannot allow drift (Dan Marrone caught a longitude
 // sign error there once — fixed in 54c855b — and a copy could silently diverge).
 import { EARTH_RADIUS_KM, ARRAY_PRESETS, SKY_TARGETS, BHEX_PRESET, STATION_SEFD } from './constants.js';
-import { latLonToECEF, computeElevation, MIN_ELEVATION_RAD, computeUVPoints, computeUVFill } from './uvCompute.js';
+import { latLonToECEF, computeElevation, MIN_ELEVATION_RAD, computeUVPointsGl,
+         computeUVFillGl, computeUVMaxExtentGl } from './uvCompute.js';
 
 const C_M_S        = 299792458;   // speed of light [m/s]
 const RAD_TO_UAS   = 206265e6;    // radians → microarcseconds (matches useSimulation.js:225)
@@ -119,22 +120,21 @@ const ngMaxKm = maxBaselineKmVisible(NGEHT, M87_DEC).km;
 const ngTheta = thetaUas(ngMaxKm, LAM);
 const ngN     = NGEHT.length * (NGEHT.length - 1) / 2;
 
-// UV-plane fill of the canonical tour observation (EHT 2017 → M87*, 12 h, 230 GHz,
-// 80 μas FOV at N=512 — the same engineState every act narrates). Computed through
-// the engine's own computeUVPoints/computeUVFill so the "how sparse is sparse"
-// number in the narration can never drift from what the scenes draw.
+// UV-plane fill of the canonical tour observation (EHT 2017 → M87*, 12 h, 230 GHz —
+// the same engineState every act narrates). Computed through the engine's own
+// computeUVFillGl on the SAME locked (BHEX-enabled) frame the live app's UV map and
+// fill use (N1+N3), so the "how sparse is sparse" number in the narration can never
+// drift from what the tool shows for the same observation.
 export const TOUR_FOV_MUAS = 80;
 export const TOUR_DURATION_HR = 12;
-const TOUR_GRID_N = 512;
-const uvFillPct = computeUVFill(
-  computeUVPoints(
-    // color is required by computeUVPoints (it lerps pair colours); the value is
-    // irrelevant here — only the sampled cell positions feed computeUVFill.
-    EHT2017.map((s, i) => ({ id: i, name: s.name, lat: s.lat, lon: s.lon, color: '#C4A555', visible: true })),
-    { declination: M87_DEC, duration: TOUR_DURATION_HR, frequency: TOUR_FREQ_GHZ,
-      fovMuas: TOUR_FOV_MUAS, N: TOUR_GRID_N },
-  ).uvPoints,
-  TOUR_GRID_N,
+const TOUR_TELS = EHT2017.map((s, i) =>
+  // color is required by the coverage functions (they lerp pair colours); the value
+  // is irrelevant here — only the sampled cell positions feed the fill.
+  ({ id: i, name: s.name, lat: s.lat, lon: s.lon, color: '#C4A555', visible: true }));
+const TOUR_UV_OPTS = { declination: M87_DEC, duration: TOUR_DURATION_HR, frequency: TOUR_FREQ_GHZ };
+const uvFillPct = computeUVFillGl(
+  computeUVPointsGl(TOUR_TELS, TOUR_UV_OPTS),
+  computeUVMaxExtentGl(TOUR_TELS, TOUR_UV_OPTS),
 );
 
 // BHEX: characteristic baseline ~ orbital RADIUS. This is an oversimplification —
@@ -187,7 +187,7 @@ export const TOUR_PHYSICS = Object.freeze({
     uMax:         fmt.gl(uMax),                        // "8.4 Gλ"
     improvement:  fmt.pow(improve),                   // "1.1 × 10⁵×"
     nBaselines:   `${nBase} baselines`,               // "28 baselines"
-    uvFill:       `${uvFillPct.toFixed(3)} %`,         // "0.010 %" — grid cells sampled
+    uvFill:       `${uvFillPct.toFixed(1)} %`,         // grid cells sampled on the locked UV frame
     nStations:    `${EHT2017.length} stations`,        // "8 stations"
     ngTheta:      fmt.uas(ngTheta),                    // ngEHT θ=λ/B (M87*)
     ngBaselines:  `${ngN} baselines`,                  // "136 baselines"

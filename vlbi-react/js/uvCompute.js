@@ -196,13 +196,20 @@ export function computeUVMaxExtentGl(telescopes, opts) {
   return maxGl * 1.2;
 }
 
-export function computeUVFill(uvPoints, N) {
-  if (uvPoints.length === 0) return 0;
+// UV fill % (Alejandro note N3): fraction of cells sampled on a fixed M×M grid
+// spanning ±halfExtentGl in Gλ — the same locked frame as the UV-map axes
+// (computeUVMaxExtentGl), so the number grows when coverage grows and never
+// jumps because axes rescaled. Replaces the old pixel-space fill, which at
+// 80 μas FOV collapsed the entire EHT coverage into ~27 cells of the 512²
+// Nyquist grid (0.010 % — a rounding artifact, not a coverage measure).
+export function computeUVFillGl(uvPointsGl, halfExtentGl, M = 200) {
+  if (uvPointsGl.length === 0 || !(halfExtentGl > 0)) return 0;
   const seen = new Set();
-  for (const p of uvPoints) {
-    const iu = ((Math.round(p.u)) % N + N) % N;
-    const iv = ((Math.round(p.v)) % N + N) % N;
-    seen.add(iv * N + iu);
+  for (const p of uvPointsGl) {
+    const iu = Math.round((p.u / halfExtentGl + 1) / 2 * (M - 1));
+    const iv = Math.round((p.v / halfExtentGl + 1) / 2 * (M - 1));
+    if (iu < 0 || iu >= M || iv < 0 || iv >= M) continue;
+    seen.add(iv * M + iu);
   }
-  return (seen.size / (N * N)) * 100;
+  return (seen.size / (M * M)) * 100;
 }

@@ -190,7 +190,7 @@ export function App() {
             <section id="tour-uv" className="panel-section">
               <h2>UV Coverage <${InfoTooltip} infoKey="uvmap" onOpen=${setInfoKey} /></h2>
               <${UVMap} uvPoints=${left.uvPointsGl} N=${IMAGE_SIZE} pairSefdMap=${left.pairSefdMap} displayMaxGl=${left.uvDisplayMaxGl} />
-              <p className="caption">Fill: ${left.uvFill.toFixed(2)}% of spatial frequencies sampled · ${left.uvPoints.length} samples</p>
+              <p className="caption">Fill: ${left.uvFill.toFixed(1)}% of the UV frame sampled · ${left.uvPoints.length} samples</p>
             </section>
 
             <section id="tour-images" className="panel-section">

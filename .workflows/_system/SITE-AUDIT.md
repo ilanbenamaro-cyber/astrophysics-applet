@@ -157,3 +157,41 @@ via the real engine (own worker) and renders with drawHot; default opens on 0 σ
 diff empty. **Act B** idle spin: replaced the quantized track[headIdx] lookup + eased
 resume ramp (the jerk/slowness sources) with a continuous hour-angle clock (rate×dt,
 ±12 h wrap) so it spins smoothly like the main globe.
+
+---
+
+## ADDENDUM 2026-07-07 — Alejandro physics pass (5 authorized notes + fenced audit)
+
+Spec: five P0 notes from Prof. Cárdenas-Avendaño (authority to change core behavior),
+everything else diagnose/propose-only for physics. Instrument-first: all N3/N4 numbers
+below were measured (Node probe on the pure modules, `probe-n3-n4.mjs`) BEFORE any change.
+
+### N1 — UV map rescaled with BHEX [HIGH][fix][UVMap.js:23-30]
+UVMap auto-scaled to the current coverage's radial max ×1.2, so the BHEX toggle rezoomed
+the axes. FIX: `computeUVMaxExtentGl` (uvCompute.js) = extent of coverage AS IF BHEX were
+present (telescopes ∪ BHEX_PRESET, radial max ×1.2) — toggle-invariant (measured 34.635 Gλ
+with BHEX on AND off; 52.0 Gλ at 345 GHz — still physically responsive). Exposed as
+`uvDisplayMaxGl` (useSimulation), passed to UVMap in App + SimPane.
+Tour panels intentionally NOT changed: sceneB/C/E frame their own instruments via
+`uvExtentGl` (fixed engineState → static frames), and sceneE already presents the N1
+relationship (ground-limit ring inside the BHEX-extent frame). [FLAG][low] Act B/C panel
+frames are Earth-scaled while the Act B fill gauge / Act C caption % is locked-frame
+(see N3) — wording kept frame-agnostic; a future polish could sublabel the gauge.
+
+### N3 — UV fill 0.0%/0.1% [HIGH][fix][uvCompute.js:181-190 old, useSimulation.js:114, tourPhysics.js:129-138]
+MEASURED INTERMEDIATES (before change, EHT 2017 → M87*, 12 h, 230 GHz, FOV 80 μas, N=512):
+7,298 samples → 27 unique cells of 262,144 (entire coverage inside a ±3.2 px disk; Gλ max
+8.35 vs 660 Gλ Nyquist half-grid) → 0.0103% → displayed "0.0%". +BHEX: 9,828 samples →
+271 cells → 0.1034% → "0.1%". ngEHT: 42,176 samples → 47 cells → 0.018%. ROOT CAUSE: the
+metric gridded FOV-scaled pixel-space points on the full Nyquist grid — sub-pixel collapse
+(the documented UV-display gotcha) applied to the fill; a rounding artifact, not coverage.
+The tour's "0.010 %" was the SAME computation (not a divergence).
+FIX (definition chosen by Ilan from measured candidates): `computeUVFillGl(ptsGl,
+halfExtentGl, M=200)` — % of cells sampled on a fixed M×M grid spanning the N1-locked
+frame, in Gλ. One frame for axes AND fill. Old computeUVFill removed (all 4 callers
+switched: useSimulation, tourPhysics, sceneB, tourScenes genericScene).
+MEASURED AFTER (locked frame 34.63 Gλ, M=200): EHT 2017 = 442 cells → 1.10%; +BHEX =
+2,098 → 5.24%; EHT 2022 = 658 → 1.65%; ngEHT = 1,250 → 3.13%; Sgr A* 1.55%, 3C 279 1.19%,
+Cen A 0.86%. Fill now grows with coverage and never jumps on toggle. App == tour verified
+to machine precision for the same observation (TOUR_PHYSICS.uvFillPct = 1.1050 = app path).
+Frozen anchors re-verified: 10,883 km / 25 μas / 42 μas.
