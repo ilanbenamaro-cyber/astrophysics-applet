@@ -195,3 +195,42 @@ MEASURED AFTER (locked frame 34.63 Gλ, M=200): EHT 2017 = 442 cells → 1.10%; 
 Cen A 0.86%. Fill now grows with coverage and never jumps on toggle. App == tour verified
 to machine precision for the same observation (TOUR_PHYSICS.uvFillPct = 1.1050 = app path).
 Frozen anchors re-verified: 10,883 km / 25 μas / 42 μas.
+
+### N4 — TARGET-STRESS-TEST (EHT 2017, 12 h, 230 GHz; probe + live browser, 2026-07-07)
+
+Analytic (Node probe on the app's own modules) — expected vs actual per target:
+
+| Target | dec (°) | excluded by elevation | co-vis \|B\|max (pair) | θ=λ/B co-vis | θ from sampled UV | samples | max Gλ | fill (new) | browser recon |
+|---|---|---|---|---|---|---|---|---|---|
+| M87*   | 12.391  | SPT  | 10,883 km (IRAM–JCMT) | 24.7 μas | 24.7 μas | 7,298 | 8.35 | 1.10 % | ✓ (dec readout exact) |
+| Sgr A* | −29.008 | none | 11,406 km (IRAM–SPT)  | 23.6 μas | 23.6 μas | 7,660 | 8.74 | 1.55 % | ✓ |
+| 3C 279 | −5.789  | SPT  | 10,883 km (IRAM–JCMT) | 24.7 μas | 24.8 μas | 7,022 | 8.31 | 1.19 % | ✓ |
+| Cen A  | −43.019 | IRAM | 11,182 km (SMT–SPT)   | 24.0 μas | 26.7 μas | 4,842 | 7.72 | 0.86 % | ✓ |
+| Custom | slider  | —    | (keeps last dec — by design) | — | — | — | — | — | ✓ |
+
+Edge decs (Custom path): ±60/±90° all sane (dec 60 == dec 90 sample counts are CORRECT:
+12 h duration ⇒ HA ∈ [−6h,+6h] where cos H ≥ 0, so all northern stations stay visible in
+both cases — verified analytically). BHEX max ground–space |B| over the full track =
+39,291 km ≤ 2R⊕+h = 39,304 km ✓. No target produces degenerate or nonphysical coverage;
+declination flows target → handleTargetChange → controls.declination → computeUVPoints/Gl
+with the MIN_ELEVATION_RAD filter applied per station per HA step (verified end-to-end in
+the browser: all named targets reconstruct; zero console errors). Cen A's sampled-UV θ
+(26.7 μas) rightly differs from its full-track co-vis θ (24.0): the SMT–SPT co-visibility
+window falls outside the ±6 h observation — physics, not a bug.
+
+DEFECTS → PROPOSALS (core display formulas beyond the 5 notes — fenced, NOT fixed):
+- [P1][flag][simCore.js angularRes / useSimulation.js:196] The app's displayed
+  "resolution" uses the GEOMETRIC array max (11,406 km, dec-independent → "24 μas" for
+  every target), pairing stations that never co-observe the selected source. The tour
+  explicitly forbids this for its headline (ehtArrayMaxBaselineKm "never shown as
+  resolution"). Proposed fix for Alejandro sign-off: derive θ from the actually-sampled
+  coverage max (λ/|uv|max of computeUVPointsGl output) — by construction consistent with
+  the tracks; per-target values in the table above.
+- [P2][flag][useSimulation.js:214-221 baselineStats] Space-baseline max sampled at H=0
+  only; actual BHEX max over the track is 39,291 km — StatusBar's km/Gλ stats understate
+  BHEX. Proposed: scan the track (or reuse computeUVPointsGl max).
+
+Tour ↔ target consistency: the tour's dec is the M87* constant by design (fixed
+narrative); tourPhysics headline logic (SPT excluded, 10,883 km) re-verified intact.
+Evidence: n4-tour-state.png (Act A), n4-actB.png (fill gauge 1.10%), n4-actC.png
+(caption "1.1 % of the UV frame"; σ presets hold) — local session artifacts (repo-ignored).
