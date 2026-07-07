@@ -36,7 +36,7 @@ export const TOUR_ACTS = [
       tex: '\\theta \\;\\approx\\; \\frac{\\lambda}{D} \\;\\longrightarrow\\; \\frac{\\lambda}{B}',
       values: () => [
         ['λ', P.str.lambda],
-        ['D (one dish)', `100 m → θ = ${P.str.thetaDish}`],
+        ['D (one dish)', `${P.dishD_m} m → θ = ${P.str.thetaDish}`],
         ['B (Earth-wide)', `${P.str.ehtBaseline} → θ = ${P.str.thetaEht}`],
         ['gain', P.str.improvement],
       ],
@@ -185,4 +185,3 @@ export const TOUR_ACTS = [
   },
 ];
 
-export const ACT_BY_ID = Object.fromEntries(TOUR_ACTS.map(a => [a.actId, a]));

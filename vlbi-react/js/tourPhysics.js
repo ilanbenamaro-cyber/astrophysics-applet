@@ -14,7 +14,7 @@ import { latLonToECEF, computeElevation, MIN_ELEVATION_RAD, computeUVPointsGl,
 import { presetMeanDish } from './simCore.js';
 
 const C_M_S        = 299792458;   // speed of light [m/s]
-const RAD_TO_UAS   = 206265e6;    // radians → microarcseconds (matches useSimulation.js:225)
+const RAD_TO_UAS   = 206265e6;    // radians → microarcseconds (matches simCore.js angularRes)
 const RAD_TO_ARCSEC = 206265;     // radians → arcseconds
 
 // The setup the tour narrates: EHT primary band + a GBT-class single aperture.
@@ -23,7 +23,7 @@ export const SINGLE_DISH_D_M = 100;
 
 // ── Canonical formulas (kept identical to the simulator) ────────────────────────
 export function lambdaM(freqGHz)            { return C_M_S / (freqGHz * 1e9); }
-// θ = λ/B (NO 1.22 factor) — matches useSimulation.js:224-225
+// θ = λ/B (NO 1.22 factor) — matches simCore.js angularRes
 export function thetaUas(baselineKm, lam)   { return (lam / (baselineKm * 1e3)) * RAD_TO_UAS; }
 export function thetaArcsec(apertureM, lam) { return (lam / apertureM) * RAD_TO_ARCSEC; }
 // |u| = B/λ in gigawavelengths — matches uvCompute.js kmToGl

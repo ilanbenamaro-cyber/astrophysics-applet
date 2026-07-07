@@ -21,6 +21,7 @@ export function SimPane({ sim, onOpenInfo, label, reducedMotion = false }) {
         <select
           className="preset-select"
           value=${sim.selectedArrayPreset}
+          aria-label="Telescope array preset"
           onChange=${e => {
             const v = e.target.value;
             sim.setSelectedArrayPreset(v);
@@ -35,6 +36,7 @@ export function SimPane({ sim, onOpenInfo, label, reducedMotion = false }) {
         <select
           className="preset-select"
           value=${sim.selectedTarget}
+          aria-label="Sky target source"
           onChange=${e => sim.handleTargetChange(e.target.value)}
           style=${{ flex: '1', minWidth: '0' }}
         >

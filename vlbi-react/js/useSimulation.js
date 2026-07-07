@@ -13,7 +13,7 @@ import { loadImagePresetAsync } from './presets.js';
 import { exportFITS } from './fitsExport.js';
 
 const DEFAULT_CONTROLS = {
-  declination: 12.391, duration: 12, frequency: 230,
+  declination: SKY_TARGETS['M87*'].dec, duration: 12, frequency: 230,
   noise: 0,
   // N5: default dish = mean dish of the initial preset's stations (EHT 2017),
   // recomputed on every preset load; EHT 2022 mean when no EHT stations remain.

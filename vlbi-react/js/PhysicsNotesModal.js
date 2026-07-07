@@ -1,5 +1,7 @@
 // Physics Notes modal — implementation methodology and references.
+// BHEX figures interpolate TOUR_PHYSICS (single source; hedged pending sign-off).
 import { html, useEffect } from './core.js';
+import { TOUR_PHYSICS as P } from './tourPhysics.js';
 
 export function PhysicsNotesModal({ open, onClose, fovMuas = 80 }) {
   useEffect(() => {
@@ -51,9 +53,10 @@ v = (−Bx·sin(δ)·cos(H) + By·sin(δ)·sin(H) + Bz·cos(δ)) / λ</pre>
         <h4 className="modal-section-title">Thermal Noise</h4>
         <p className="modal-body">
           Each baseline has noise ∝ sqrt(SEFD_i × SEFD_j), where SEFD is the System Equivalent
-          Flux Density in Jansky. ALMA (94 Jy) produces ~0.15× the noise of SMT (17,100 Jy)
-          on shared baselines, reflecting its much larger effective collecting area as a phased
-          array. SEFD values sourced from published EHT array performance specifications.
+          Flux Density in Jansky. ALMA (94 Jy) produces ~0.07× the noise of SMT (17,100 Jy)
+          on shared baselines (√(94/17,100)), reflecting its much larger effective collecting
+          area as a phased array. SEFD values sourced from published EHT array performance
+          specifications.
         </p>
 
         <h4 className="modal-section-title">EHT Station Coordinates</h4>
@@ -65,10 +68,13 @@ v = (−Bx·sin(δ)·cos(H) + By·sin(δ)·sin(H) + Bz·cos(δ)) / λ</pre>
 
         <h4 className="modal-section-title">BHEX Space Telescope</h4>
         <p className="modal-body">
-          BHEX (Black Hole Explorer) is a proposed NASA space VLBI mission at 26,562 km altitude,
-          near-polar orbit, 12-hour period. Space baselines extend to ~27,000 km (~20 Gλ at
-          230 GHz) — 3× the maximum EHT ground baseline — enabling ~6 μas resolution to probe
-          the M87* photon ring. Reference: Johnson et al. (2024), arXiv:2406.12917.
+          BHEX (Black Hole Explorer) is a proposed NASA space VLBI mission
+          at ${P.bhex.altitudeKm.toLocaleString('en-US')} km altitude, near-polar orbit,
+          12-hour period. Ground–space baselines reach a characteristic scale
+          B ~ R⊕ + h ≈ ${P.str.bhexRadius} — roughly 3× the maximum EHT ground baseline —
+          for a characteristic ~${P.str.bhexTheta} resolution probing the M87* photon ring
+          (order-of-magnitude relation, pending expert sign-off). Reference: Johnson et al.
+          (2024), arXiv:2406.12917.
         </p>
 
         <h4 className="modal-section-title">Acknowledgements</h4>

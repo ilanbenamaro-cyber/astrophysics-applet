@@ -21,6 +21,9 @@ export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMo
   const countryLabelGroupRef = useRef(null);
   const onAddRef = useRef(onTelescopeAdd);
   const showCountryLabelsRef = useRef(showCountryLabels);
+  // Live reducedMotion for closures created in the mount-once effect (stopAutoRotate
+  // resumes rotation on a timer and must not do so under reduced motion).
+  const reducedMotionRef = useRef(reducedMotion);
 
   useEffect(() => { onAddRef.current = onTelescopeAdd; }, [onTelescopeAdd]);
   useEffect(() => { showCountryLabelsRef.current = showCountryLabels; }, [showCountryLabels]);
@@ -28,7 +31,10 @@ export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMo
     if (!labelRendererRef.current) return;
     labelRendererRef.current.domElement.style.display = tourActive ? 'none' : '';
   }, [tourActive]);
-  useEffect(() => { if (controlsRef.current) { controlsRef.current.autoRotate = !reducedMotion; } }, [reducedMotion]);
+  useEffect(() => {
+    reducedMotionRef.current = reducedMotion;
+    if (controlsRef.current) { controlsRef.current.autoRotate = !reducedMotion; }
+  }, [reducedMotion]);
 
   // Effect 1: Initialize Three.js scene ONCE
   useEffect(() => {
@@ -179,7 +185,7 @@ export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMo
       orbitControls.autoRotate = false;
       clearTimeout(autoRotateTimerRef.current);
       autoRotateTimerRef.current = setTimeout(() => {
-        orbitControls.autoRotate = true;
+        if (!reducedMotionRef.current) orbitControls.autoRotate = true;
       }, 3000);
     };
     renderer.domElement.addEventListener('pointerdown', stopAutoRotate);

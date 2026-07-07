@@ -23,7 +23,8 @@ export function toTelescopes(stations, satellite) {
 // tour scenes' imports are unchanged.
 export { measureRingFraction, zoomSource } from './simCore.js';
 
-// Max |u|,|v| extent (Gλ) × 1.2 — matches the app's UV auto-scale intent.
+// Per-scene coverage half-extent (tour framing only): max |u|,|v| × 1.2.
+// The live app no longer auto-scales — it uses the locked BHEX frame (N1).
 export function uvExtentGl(pts) {
   let m = 0;
   for (const p of pts) m = Math.max(m, Math.abs(p.u), Math.abs(p.v));

@@ -38,7 +38,7 @@ export function UVMap({ uvPoints, N, pairSefdMap = null, displayMaxGl = null }) 
     });
 
     // Grid circles
-    ctx.strokeStyle = 'rgba(30,30,80,0.6)';
+    ctx.strokeStyle = 'rgba(45,34,0,0.55)';
     ctx.lineWidth = 0.5;
     for (const frac of [0.25, 0.5, 0.75, 1.0]) {
       const r = frac * DST / 2;
@@ -48,7 +48,7 @@ export function UVMap({ uvPoints, N, pairSefdMap = null, displayMaxGl = null }) 
     }
 
     // Axes
-    ctx.strokeStyle = 'rgba(40,40,100,0.8)';
+    ctx.strokeStyle = 'rgba(45,34,0,0.85)';
     ctx.lineWidth = 0.5;
     ctx.beginPath(); ctx.moveTo(DST/2, 0); ctx.lineTo(DST/2, DST); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(0, DST/2); ctx.lineTo(DST, DST/2); ctx.stroke();
@@ -110,6 +110,7 @@ export function UVMap({ uvPoints, N, pairSefdMap = null, displayMaxGl = null }) 
           className=${'btn btn-ghost btn-xs' + (snrMode ? ' btn-active' : '')}
           style=${{ position: 'absolute', top: '4px', right: '4px', zIndex: 2, fontSize: '0.65rem', padding: '1px 5px' }}
           onClick=${() => setSnrMode(m => !m)}
+          aria-pressed=${snrMode}
           title="Toggle between baseline-pair and SNR coloring"
         >Color: ${snrMode ? 'SNR' : 'Pair'}</button>
       ` : null}
@@ -124,29 +125,29 @@ export function UVMap({ uvPoints, N, pairSefdMap = null, displayMaxGl = null }) 
         <span style=${{
           position: 'absolute', top: '2px', left: '50%',
           transform: 'translateX(-50%)',
-          fontSize: '9px', color: 'rgba(255,255,255,0.6)',
-          pointerEvents: 'none', fontFamily: 'monospace',
+          fontSize: 'var(--fs-2xs)', color: 'rgba(255,255,255,0.6)',
+          pointerEvents: 'none', fontFamily: 'var(--font-mono)',
           textShadow: '0 0 4px rgba(0,0,0,0.9)'
         }}>+${axisLabel} Gλ</span>
         <span style=${{
           position: 'absolute', bottom: '2px', left: '50%',
           transform: 'translateX(-50%)',
-          fontSize: '9px', color: 'rgba(255,255,255,0.6)',
-          pointerEvents: 'none', fontFamily: 'monospace',
+          fontSize: 'var(--fs-2xs)', color: 'rgba(255,255,255,0.6)',
+          pointerEvents: 'none', fontFamily: 'var(--font-mono)',
           textShadow: '0 0 4px rgba(0,0,0,0.9)'
         }}>−${axisLabel} Gλ</span>
         <span style=${{
           position: 'absolute', top: '50%', left: '2px',
           transform: 'translateY(-50%)',
-          fontSize: '9px', color: 'rgba(255,255,255,0.6)',
-          pointerEvents: 'none', fontFamily: 'monospace',
+          fontSize: 'var(--fs-2xs)', color: 'rgba(255,255,255,0.6)',
+          pointerEvents: 'none', fontFamily: 'var(--font-mono)',
           textShadow: '0 0 4px rgba(0,0,0,0.9)'
         }}>+${axisLabel} Gλ</span>
         <span style=${{
           position: 'absolute', top: '50%', right: '2px',
           transform: 'translateY(-50%)',
-          fontSize: '9px', color: 'rgba(255,255,255,0.6)',
-          pointerEvents: 'none', fontFamily: 'monospace',
+          fontSize: 'var(--fs-2xs)', color: 'rgba(255,255,255,0.6)',
+          pointerEvents: 'none', fontFamily: 'var(--font-mono)',
           textShadow: '0 0 4px rgba(0,0,0,0.9)'
         }}>−${axisLabel} Gλ</span>
       ` : null}

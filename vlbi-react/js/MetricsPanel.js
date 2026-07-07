@@ -7,7 +7,14 @@ export function MetricsPanel({ beamFwhm, dynamicRange, uvFill, uvCount, baseline
 
   return html`
     <div className="metrics-panel">
-      <div className="metrics-header" onClick=${() => setOpen(o => !o)}>
+      <div
+        className="metrics-header"
+        role="button"
+        tabIndex="0"
+        aria-expanded=${open}
+        onClick=${() => setOpen(o => !o)}
+        onKeyDown=${e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(o => !o); } }}
+      >
         <span>Image Metrics</span>
         <span className="metrics-toggle">${open ? '▴' : '▾'}</span>
       </div>
@@ -18,7 +25,7 @@ export function MetricsPanel({ beamFwhm, dynamicRange, uvFill, uvCount, baseline
           <span className="metrics-label">Dynamic Range</span>
           <span className="metrics-value">${dynamicRange > 0 ? dynamicRange.toFixed(0) + ':1' : '—'}</span>
           <span className="metrics-label">UV Fill</span>
-          <span className="metrics-value">${uvFill.toFixed(2)}%</span>
+          <span className="metrics-value">${uvFill.toFixed(1)}%</span>
           <span className="metrics-label">UV Samples</span>
           <span className="metrics-value">${uvCount.toLocaleString()}</span>
           ${baselineStats ? html`

@@ -22,6 +22,7 @@ export function AppSidebar({
           <button
             className=${'btn btn-compare' + (compareMode ? ' active' : '')}
             onClick=${onToggleCompare}
+            aria-pressed=${compareMode}
           >⊞ Compare Mode</button>
         </div>
       ` : null}
@@ -41,6 +42,7 @@ export function AppSidebar({
           <select
             className="preset-select"
             value=${selectedArrayPreset}
+            aria-label="Telescope array preset"
             onChange=${e => {
               const v = e.target.value;
               onArrayPresetChange(v);
@@ -69,6 +71,7 @@ export function AppSidebar({
             className="btn btn-ghost"
             style=${{ width: '100%', justifyContent: 'center' }}
             onClick=${onToggleCountryLabels}
+            aria-pressed=${showCountryLabels}
           >
             ${showCountryLabels ? 'Hide Country Names' : 'Show Country Names'}
           </button>

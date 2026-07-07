@@ -69,7 +69,7 @@ export const sceneA = {
     g.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = g;
     ctx.fillRect(lx, py, panel, panel);
-    panelCaption(ctx, lx, py, panel, 'ONE 100 m DISH', `θ = ${P.str.thetaDish}`);
+    panelCaption(ctx, lx, py, panel, `ONE ${P.dishD_m} m DISH`, `θ = ${P.str.thetaDish}`);
     ctx.restore();
 
     // ── RIGHT: the real EHT dirty beam (point reconstructed through EHT u,v) ──

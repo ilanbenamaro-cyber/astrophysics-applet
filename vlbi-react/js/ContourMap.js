@@ -45,10 +45,12 @@ export function ContourMap({ dirtyData, restoredData, N, angularResolution, fovM
           <button
             className=${'btn btn-xs' + (displayMode === 'dirty' ? ' btn-active' : '')}
             onClick=${() => setDisplayMode('dirty')}
+            aria-pressed=${displayMode === 'dirty'}
           >Dirty</button>
           <button
             className=${'btn btn-xs' + (displayMode === 'clean' ? ' btn-active' : '')}
             onClick=${() => setDisplayMode('clean')}
+            aria-pressed=${displayMode === 'clean'}
           >CLEAN</button>
           <${InfoTooltip} infoKey="contourmap" onOpen=${onOpenInfo} />
         </div>

@@ -9,17 +9,6 @@ export const TELESCOPE_COLORS = [
   '#fdcb6e','#00b894','#d63031','#e84393','#0984e3',
 ];
 
-export const EHT_PRESETS = [
-  { name:'ALMA',  lat:-23.029, lon:-67.755 },
-  { name:'APEX',  lat:-23.006, lon:-67.759 },
-  { name:'SPT',   lat:-89.99,  lon:-44.65  },
-  { name:'JCMT',  lat: 19.823, lon:-155.478},
-  { name:'SMT',   lat: 32.702, lon:-109.891},
-  { name:'IRAM',  lat: 37.066, lon: -3.392 },
-  { name:'LMT',   lat: 18.985, lon: -97.315},
-  { name:'NOEMA', lat: 44.634, lon:  5.909 },
-];
-
 export const ARRAY_PRESETS = {
   'EHT 2017': [
     { name: 'ALMA',  lat: -23.0229, lon:  -67.7552 },
@@ -112,11 +101,11 @@ export const SKY_TARGETS = {
 
 export const INFO = {
   globe:       { title: 'Radio Telescope Globe',    body: 'Click anywhere on Earth to place a radio telescope. Every pair of telescopes forms a "baseline" — like a giant antenna spanning the distance between them. More telescopes = more baselines = sharper images.' },
-  uvmap:       { title: 'UV-Plane Coverage',        body: 'As Earth rotates, each telescope pair sweeps an arc through Fourier space (the UV-plane). Each point sampled corresponds to one spatial frequency of the sky. The axis range auto-scales to the current UV coverage extent (max baseline × 1.2) and is labeled in gigawavelengths (Gλ) — the standard unit in radio astronomy publications. Dense, uniform coverage produces higher-fidelity reconstruction.' },
+  uvmap:       { title: 'UV-Plane Coverage',        body: 'As Earth rotates, each telescope pair sweeps an arc through Fourier space (the UV-plane). Each point sampled corresponds to one spatial frequency of the sky. The axis range is fixed to the array’s BHEX-enabled coverage extent, labeled in gigawavelengths (Gλ) — so toggling BHEX changes the coverage drawn, never the axes. The fill percentage counts sampled cells on the same fixed frame. Dense, uniform coverage produces higher-fidelity reconstruction.' },
   dirty:       { title: 'Dirty Image',              body: 'The raw result of taking the inverse Fourier transform of only the sampled UV points (with zeros elsewhere). Artifacts called "sidelobes" appear because we only measured some Fourier frequencies.' },
   restored:    { title: 'Restored Image',           body: 'After applying a deconvolution algorithm (Max Entropy or CLEAN), many sidelobes are suppressed. This is closer to the true sky, but resolution is still limited by the longest baseline.' },
   ground:      { title: 'Ground Truth',             body: 'The original image we are trying to reconstruct. In real radio astronomy, we never have this — only the raw telescope data. This simulator lets you compare what we recover vs. the actual source.' },
-  noise:       { title: 'Thermal Noise',            body: 'Radio receivers add random electronic noise to every measurement. Noise scales as sqrt(SEFD_i × SEFD_j) per baseline — ALMA (94 Jy) produces ~0.15× the noise of SMT (17,100 Jy) on shared baselines, reflecting its much larger collecting area. Higher noise amplitude makes the reconstruction blurrier and noisier.' },
+  noise:       { title: 'Thermal Noise',            body: 'Radio receivers add random electronic noise to every measurement. Noise scales as sqrt(SEFD_i × SEFD_j) per baseline — ALMA (94 Jy) produces ~0.07× the noise of SMT (17,100 Jy) on shared baselines, reflecting its much larger collecting area. Higher noise amplitude makes the reconstruction blurrier and noisier.' },
   frequency:   { title: 'Observing Frequency',      body: 'Higher frequencies (shorter wavelengths) give finer resolution because the UV coordinates scale as u = baseline/λ. The EHT observes at 230 GHz (1.3 mm wavelength) for maximum resolution.' },
   duration:    { title: 'Synthesis Duration',       body: 'Earth rotates 360° in 24 hours. Longer observations allow each baseline to sweep more of the UV-plane, improving image quality. The EHT typically observes a source for 6–12 hours per night.' },
   declination: { title: 'Source Declination',       body: 'The angular distance of the target source from the celestial equator. Sources near the equator (δ ≈ 0°) produce roughly circular UV tracks; polar sources produce more compact, circular tracks. Elevation cutoffs (min 10°) are applied per telescope — stations that cannot see the source at a given hour angle contribute no UV samples.' },

@@ -255,3 +255,87 @@ mount 18.1 → 2022 16.7 → ngEHT 15.6 → manual 42 persists → preset reload
 Clear All 16.7; zero console errors. Note: dish 25→18.1 widens the worker's primary-beam
 taper (1.02λ/D) — reconstruction output changes slightly for all defaults; this is the
 authorized point of the note ("changes θ=λ/D-driven displays").
+
+### Stage 2 — fenced site-wide audit (2026-07-07)
+
+Method: 3 parallel read-only sub-agents (physics / design+dead-code / a11y-responsive-perf)
++ inline tour/UX browser checks. The design+dead-code agent was cut off by the subagent
+session limit mid-run — its scope was completed INLINE (grep sweeps below), per the spec's
+budget fallback. All fixes below verified live on port 8547, zero console errors.
+
+#### 2.1 PHYSICS — PROPOSALS for Alejandro (fenced: NOT fixed)
+- [P1][flag][simCore.js angularRes] Displayed "resolution" uses the geometric array max
+  (dec-independent "24 μas"; pairs non-co-observing stations). Propose θ from the sampled
+  coverage max (per-target values in the N4 table).
+- [P2][flag][useSimulation.js baselineStats] Space baseline sampled at H=0 only; true BHEX
+  track max is 39,291 km — StatusBar understates space baselines. Propose track-max scan.
+- [P3][flag][worker.js:142] Worker's default `dishDiameter = 25` destructure is the
+  pre-N5 value. Unreachable today (all callers pass it), left untouched to keep the worker
+  diff at zero; propose removing the numeric default at the next authorized worker change.
+
+#### 2.1 PHYSICS-COPY — fixed under the copy fence (no computation touched)
+- [MED][fix][constants.js INFO.noise + PhysicsNotesModal.js] "ALMA ~0.15× the noise of
+  SMT on shared baselines" was numerically wrong: σ∝√SEFD ⇒ √(94/17,100) ≈ 0.07×. Fixed
+  in both (0.15 was the ALMA↔APEX ratio).
+- [MED][fix][PhysicsNotesModal.js BHEX §] Hardcoded, self-inconsistent BHEX figures
+  ("~27,000 km / ~20 Gλ / ~6 μas") contradicted the tour. Now interpolates
+  TOUR_PHYSICS.bhex (32,933 km, ~8 μas), hedged "B ~ R⊕ + h … pending expert sign-off".
+  (htm gotcha hit: whitespace-only text before an interpolation hole is stripped —
+  keep "at ${…}" on one line.)
+- [MED][fix][constants.js INFO.uvmap] Said axes "auto-scale to current coverage ×1.2" —
+  stale after N1. Now describes the locked BHEX-enabled frame + same-frame fill.
+- [LOW][fix][tourActs.js Act A values row + sceneA caption] literal "100 m" →
+  `${P.dishD_m} m` (single-sourced with θ).
+- [LOW][fix][useSimulation.js] DEFAULT_CONTROLS.declination literal 12.391 →
+  SKY_TARGETS['M87*'].dec (single-sourcing, value unchanged).
+- [DOC][fix] stale cross-refs: tourPhysics "useSimulation.js:224-225" → simCore
+  angularRes; tourScene uvExtentGl comment no longer claims to match the app.
+- [OK] verified correct by the sweep: baselineToUV deg/rad handling, satellite
+  t_hours mapping, fitsExport unit conversions, worker PSF/restore-beam conventions,
+  √27 vs 2√27 usage, tourActs numbers all routed through TOUR_PHYSICS.
+
+#### 2.2 DESIGN (fixed) — inline sweep after agent budget cut
+- [fix][UVMap.js] grid circles rgba(30,30,80)/axes rgba(40,40,100) (off-token blue) →
+  border-family rgba(45,34,0); axis labels fontSize 9px → var(--fs-2xs) (follows the
+  a11y font scale); fontFamily 'monospace' → var(--font-mono).
+- [fix][app.css] .modal-code 'Courier New' → var(--font-mono); .contour-map-panel
+  radius 8 → 6. [fix][tour.css] CTA radius 8 → 6.
+- [OK/licensed left as-is] .a11y-panel popover (radius 8 + shadow — floating overlay,
+  modal-class); .a11y-toggle-track 9px (pill switch); .bhex-button #FFD700 (recorded
+  license); serif grep clean ("Georgia" hit = the country name).
+
+#### 2.3 TOUR (verified holding)
+Act B continuous smooth spin + live HA/dec + 1.10% gauge ✓; Act C three σ presets
+recompute via own worker (0.03σ visibly degraded, no stall, buttons highlight) ✓;
+Act D reached ✓; Act E BHEX coverage + Earth-limit ring + single hedge ✓; presenter
+mode (?mode=presenter) = headline+equation only ✓. Screenshots: s2-actC-003sigma.png,
+s2-actE.png, s2-presenter.png (local session artifacts).
+
+#### 2.4 UX (fixed in N2/N5 + verified)
+BHEX toggle reads as a labeled ON/OFF state in both sidebar and SimPane; dish default
+visibly tracks the preset; no ambiguous drags found beyond the accepted Act B/C canvas
+controls.
+
+#### 2.5 A11Y / RESPONSIVE / PERF
+FIXED: :focus-visible ring for .btn/.tel-btn/.info-btn (app-wide); aria-pressed on
+Compare Mode, country-labels, Dirty/CLEAN, UVMap SNR toggles (BHEX had it from N2);
+aria-labels on array/target selects (AppSidebar + SimPane); MetricsPanel header now
+keyboard-operable (role=button, tabIndex, aria-expanded, Enter/Space); Globe reduced-
+motion leak fixed (auto-rotate no longer resumes 3 s after interaction under reduced
+motion — reducedMotionRef guard); meta description added to index.html.
+FLAGGED (human/design decision):
+- [FLAG][app.css .compare-layout] No breakpoint — compare mode stays two-up below
+  1100px and gets cramped on tablets; propose stacked variant or width gate.
+- [FLAG][index.html] 'JetBrains Mono' declared but never loaded (silent fallback to
+  system monospace — documented DESIGN-LANGUAGE status quo; load it or drop the name).
+PERF: computeUVMaxExtentGl adds ≈ one computeUVPointsGl per control change (~0.5–0.8 ms
+at ≤17 stations + BHEX; memo-gated, not per-frame) — negligible vs the worker; no new
+RAF/listener leaks; UVMap effect allocation-per-change only.
+
+#### 2.6 DEAD CODE (fixed, grep-proven)
+- constants.js EHT_PRESETS (superseded by ARRAY_PRESETS; 1 ref = definition) — removed.
+- tourActs.js ACT_BY_ID (1 ref = definition) — removed.
+- app.css orphan blocks removed (0 occurrences in js/ or index.html; none library-
+  generated or concat-composed): .header-credit, .header-ai-note, .clean-toggle (+input
+  rule), .method-row, .method-btn (+.selected/:hover — P1-era method buttons),
+  .info-modal-content (+reduced-motion refs), .contour-panel:hover.
