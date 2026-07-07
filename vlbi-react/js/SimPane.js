@@ -102,7 +102,7 @@ export function SimPane({ sim, onOpenInfo, label, reducedMotion = false }) {
       <div className="sim-pane-outputs">
         <div className="panel-section">
           <h2>UV Coverage <${InfoTooltip} infoKey="uvmap" onOpen=${onOpenInfo} /></h2>
-          <${UVMap} uvPoints=${sim.uvPointsGl} N=${IMAGE_SIZE} pairSefdMap=${sim.pairSefdMap} />
+          <${UVMap} uvPoints=${sim.uvPointsGl} N=${IMAGE_SIZE} pairSefdMap=${sim.pairSefdMap} displayMaxGl=${sim.uvDisplayMaxGl} />
           <p className="caption">Fill: ${sim.uvFill.toFixed(2)}% · ${sim.uvPoints.length} samples</p>
         </div>
 

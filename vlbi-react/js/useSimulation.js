@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from './core.js';
 import { IMAGE_SIZE, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD,
          BHEX_PRESET, SKY_TARGETS } from './constants.js';
 import { computeUVPoints, computeUVPointsGl, computeUVFill,
+         computeUVMaxExtentGl,
          latLonToECEF, computeSatelliteECEF } from './uvCompute.js';
 import { scaleSource, zoomSource, measureRingFraction, buildSefdMap, buildPairSefdMap,
          computeDynamicRange, beamFwhm as beamFwhmFn, angularRes as angularResFn } from './simCore.js';
@@ -193,6 +194,16 @@ export function useSimulation() {
   }, [uvPoints, stationPairs, scaledGrayscale, controls.noise, controls.method, controls.dishDiameter, controls.frequency, sefdMap]);
 
   // ── Derived display metrics ─────────────────────────────────────────────────
+  // Fixed UV-map scale (N1): the BHEX-enabled coverage extent, independent of
+  // whether BHEX is toggled — the UV axes must not move when BHEX toggles.
+  const uvDisplayMaxGl = useMemo(
+    () => computeUVMaxExtentGl(telescopes, {
+      declination: controls.declination,
+      duration:    controls.duration,
+      frequency:   controls.frequency,
+    }),
+    [telescopes, controls.declination, controls.duration, controls.frequency]);
+
   const angularRes = useMemo(
     () => angularResFn(telescopes, controls.frequency),
     [telescopes, controls.frequency]);
@@ -349,6 +360,7 @@ export function useSimulation() {
     dirty, restored,
     controls, status, isComputing, uvCount, beamDims, selectedTarget,
     // Derived
+    uvDisplayMaxGl,
     effectiveSourceFraction, ringFraction, angularRes, baselineStats,
     sefdMap, pairSefdMap, dynamicRange, beamFwhm,
     bhexAdded,

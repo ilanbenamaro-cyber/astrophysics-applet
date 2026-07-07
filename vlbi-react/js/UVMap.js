@@ -6,7 +6,7 @@ function snrColor(sefdA, sefdB, minSnr, maxSnr) {
   return `hsl(45, ${(t * 100).toFixed(0)}%, ${(30 + t * 30).toFixed(0)}%)`;
 }
 
-export function UVMap({ uvPoints, N, pairSefdMap = null }) {
+export function UVMap({ uvPoints, N, pairSefdMap = null, displayMaxGl = null }) {
   const canvasRef = useRef(null);
   const [axisLabel, setAxisLabel] = useState('');
   const [snrMode, setSnrMode] = useState(false);
@@ -19,15 +19,18 @@ export function UVMap({ uvPoints, N, pairSefdMap = null }) {
     ctx.fillStyle = '#0a0a0a';  // --bg-1 neutral (was off-token blue-purple; SITE-AUDIT 3.4)
     ctx.fillRect(0, 0, DST, DST);
 
-    // Find max UV distance in Gλ
-    let maxUV_Gl = 0;
-    for (const p of uvPoints) {
-      const dist = Math.sqrt(p.u*p.u + p.v*p.v);
-      if (dist > maxUV_Gl) maxUV_Gl = dist;
+    // Scale: fixed BHEX-enabled extent from the hook (N1 — axes must not move when
+    // BHEX toggles). Auto-scale from the points only as a fallback when no prop given.
+    let displayMax_Gl = displayMaxGl;
+    if (!displayMax_Gl) {
+      let maxUV_Gl = 0;
+      for (const p of uvPoints) {
+        const dist = Math.sqrt(p.u*p.u + p.v*p.v);
+        if (dist > maxUV_Gl) maxUV_Gl = dist;
+      }
+      if (maxUV_Gl === 0) maxUV_Gl = 10;
+      displayMax_Gl = maxUV_Gl * 1.2;
     }
-    if (maxUV_Gl === 0) maxUV_Gl = 10;
-
-    const displayMax_Gl = maxUV_Gl * 1.2;
 
     const toCanvas = (u, v) => ({
       x: (u / displayMax_Gl + 0.5) * DST,
@@ -96,7 +99,7 @@ export function UVMap({ uvPoints, N, pairSefdMap = null }) {
     }
 
     setAxisLabel(displayMax_Gl.toFixed(1));
-  }, [uvPoints, N, snrMode, pairSefdMap]);
+  }, [uvPoints, N, snrMode, pairSefdMap, displayMaxGl]);
 
   const hasPairs = pairSefdMap && Object.keys(pairSefdMap).length > 0;
 

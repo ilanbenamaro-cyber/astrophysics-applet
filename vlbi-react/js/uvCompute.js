@@ -1,5 +1,5 @@
 // UV-plane coverage computation: ECEF coordinates, baseline → UV, conjugate symmetry.
-import { EARTH_RADIUS_KM } from './constants.js';
+import { EARTH_RADIUS_KM, BHEX_PRESET } from './constants.js';
 
 export function latLonToECEF(lat, lon) {
   const phi = lat * Math.PI / 180;
@@ -176,6 +176,24 @@ export function computeUVPointsGl(telescopes, { declination, duration, frequency
   }
 
   return pts;
+}
+
+// Fixed display extent for the UV map (Alejandro note N1): the half-extent in Gλ
+// of the coverage the array WOULD have with BHEX present — computed whether or not
+// BHEX is actually toggled on, so toggling BHEX changes what's drawn, never the axes.
+// Still responds honestly to frequency/declination/duration (u = B/λ physics).
+export function computeUVMaxExtentGl(telescopes, opts) {
+  const withBhex = telescopes.some(t => t.name === BHEX_PRESET.name)
+    ? telescopes
+    : [...telescopes, { id: -1, ...BHEX_PRESET, visible: true }];
+  const pts = computeUVPointsGl(withBhex, opts);
+  let maxGl = 0;
+  for (const p of pts) {
+    const r = Math.hypot(p.u, p.v);
+    if (r > maxGl) maxGl = r;
+  }
+  if (maxGl === 0) maxGl = 10;   // matches UVMap's historical empty-coverage fallback
+  return maxGl * 1.2;
 }
 
 export function computeUVFill(uvPoints, N) {
