@@ -32,7 +32,7 @@ export const sceneA = {
     const src = generatePreset('point').grayscale;     // a real point source
     const sefdMap = buildSefdMap(tels, STATION_SEFD);
     const { dirty } = await runReconstruction(src.slice(), uvPoints.map(p => ({ u: p.u, v: p.v })), {
-      N, noise: 0, method: 'dirty', dishDiameter: 25, frequency: params.freqGHz,
+      N, noise: 0, method: 'dirty', dishDiameter: P.ehtMeanDishM, frequency: params.freqGHz,
       fovRad: params.fovMuas * (Math.PI / (180 * 3.6e9)), stationPairs, sefdMap,
     });
     // Pre-render the dirty beam (the EHT PSF) once — it is static.

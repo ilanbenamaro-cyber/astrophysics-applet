@@ -51,7 +51,7 @@ export const sceneD = {
     const shadowFrac = P.m87ShadowUas / params.fovMuas;   // scale-bar length, computed
     const sefdMap = buildSefdMap(tels, STATION_SEFD);
     const { restored } = await runReconstruction(src.slice(), uvPoints.map(p => ({ u: p.u, v: p.v })), {
-      N, noise: 0, method: 'clean', dishDiameter: 25, frequency: params.freqGHz,
+      N, noise: 0, method: 'clean', dishDiameter: P.ehtMeanDishM, frequency: params.freqGHz,
       fovRad: params.fovMuas * (Math.PI / (180 * 3.6e9)), stationPairs, sefdMap,
     });
     const reconCanvas = document.createElement('canvas');

@@ -19,7 +19,7 @@ export function ControlsPanel({ controls, onChange, onOpenInfo, selectedTarget =
     { key: 'duration',    label: 'Duration',      min: 1,    max: 24,  step: 0.5,   unit: 'h',   infoKey: 'duration'    },
     { key: 'frequency',   label: 'Frequency',     min: 1,    max: 500, step: 1,     unit: ' GHz',infoKey: 'frequency'   },
     { key: 'noise',       label: 'Noise',         min: 0,    max: 1,   step: 0.01,  unit: '',    infoKey: 'noise'       },
-    { key: 'dishDiameter',label: 'Dish Diameter', min: 10,   max: 100, step: 5,     unit: ' m',  infoKey: 'dish'        },
+    { key: 'dishDiameter',label: 'Dish Diameter', min: 3,    max: 100, step: 0.5,   unit: ' m',  infoKey: 'dish'        },
   ];
 
   // When a named target is selected, hide the declination slider — it's set automatically

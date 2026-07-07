@@ -74,6 +74,22 @@ export const STATION_SEFD = {
   'GAM':   10000, 'CNI':   10000, 'SGO':   10000, 'BHEX':  10000,
 };
 
+// Physical single-dish diameters [m] per station (Alejandro note N5). For phased
+// stations (ALMA, SMA, NOEMA) this is the ELEMENT dish: the primary-beam FOV the
+// worker's θ≈λ/D taper models is set per element, not by the phased sum.
+// Sources: EHT 2019 Paper II Table 1 (2017/2022 stations); ngEHT Reference Array,
+// arXiv:2306.08787 (OVRO = 10.4 m Leighton, HAY = 37 m Haystack, GAM = 15 m Africa
+// Millimetre Telescope, BAJA/CNI/SGO = refurbished 6.1 m BIMA dishes).
+// ⚠ PENDING confirmation by Prof. Cárdenas-Avendaño (added 2026-07-07).
+export const DISH_DIAMETERS = {
+  'ALMA': 12,   'APEX': 12,   'SMA': 6,    'LMT': 50,
+  'IRAM': 30,   'SMT': 10,    'SPT': 10,   'JCMT': 15,
+  'GLT': 12,    'NOEMA': 15,  'KP12m': 12,
+  'BAJA': 6.1,  'OVRO': 10.4, 'HAY': 37,   'GAM': 15,
+  'CNI': 6.1,   'SGO': 6.1,
+  'BHEX': 3.4,  // matches BHEX_PRESET.dishDiameter
+};
+
 export const BHEX_PRESET = {
   name: 'BHEX',
   type: 'space',
@@ -105,7 +121,7 @@ export const INFO = {
   duration:    { title: 'Synthesis Duration',       body: 'Earth rotates 360° in 24 hours. Longer observations allow each baseline to sweep more of the UV-plane, improving image quality. The EHT typically observes a source for 6–12 hours per night.' },
   declination: { title: 'Source Declination',       body: 'The angular distance of the target source from the celestial equator. Sources near the equator (δ ≈ 0°) produce roughly circular UV tracks; polar sources produce more compact, circular tracks. Elevation cutoffs (min 10°) are applied per telescope — stations that cannot see the source at a given hour angle contribute no UV samples.' },
   method:      { title: 'Reconstruction Method',    body: '"Dirty only": raw IFFT with no cleanup. "CLEAN": iteratively subtracts the PSF to remove sidelobe artifacts — the standard method in radio astronomy. "Max Entropy": gradient descent maximising image entropy under a data-fidelity constraint — favours smooth, positive images used by the EHT team alongside CLEAN.' },
-  dish:        { title: 'Dish Diameter',            body: 'Larger dishes collect more signal (better sensitivity). The angular field of view of each telescope is roughly λ/D radians. This does not change the UV coverage but affects sensitivity and how much sky is imaged at once.' },
+  dish:        { title: 'Dish Diameter',            body: 'Larger dishes collect more signal (better sensitivity). The angular field of view of each telescope is roughly λ/D radians. This does not change the UV coverage but affects sensitivity and how much sky is imaged at once. The default is the mean physical dish diameter of the selected array preset (the EHT 2022 mean when no EHT stations are loaded).' },
   contours:    { title: 'Contour Overlays',         body: 'Logarithmic contour lines drawn over the reconstructed image at three brightness levels: 50% of peak (solid white), 10% of peak (semi-transparent white), and 1% of peak (dashed white). This is the standard display format in radio astronomy publications. Contours reveal the dynamic range of the reconstruction — how much faint structure exists around the bright central source.' },
   contourmap:  { title: 'Contour Map',              body: 'A professional radio astronomy contour map showing the brightness distribution. The viridis colormap (blue→green→yellow) is perceptually uniform and colorblind-safe — the standard in modern astronomy publications. White contour lines are drawn at 50%, 10%, and 2% of the peak brightness, filtered to only show where signal exceeds 2× the noise floor (estimated from border pixels). The beam ellipse in the lower-right shows the angular resolution of the array. Toggle between the CLEAN/Max Entropy reconstruction and the dirty image to see how deconvolution removes sidelobe artifacts. Angular axis labels show the true physical scale of the image in microarcseconds (μas).' },
   fov:         { title: 'Image Field of View',       body: 'The total angular size of the image in microarcseconds (μas). Sets the physical pixel scale: pixel scale = FOV / N μas/pixel. Default is 80 μas — M87* physical scale. The 2019 EHT M87* images used an ~80 μas FOV at 1–2 μas/pixel. EHT baselines sample the inner portion of the UV grid at this scale.' },

@@ -11,6 +11,7 @@
 import { EARTH_RADIUS_KM, ARRAY_PRESETS, SKY_TARGETS, BHEX_PRESET, STATION_SEFD } from './constants.js';
 import { latLonToECEF, computeElevation, MIN_ELEVATION_RAD, computeUVPointsGl,
          computeUVFillGl, computeUVMaxExtentGl } from './uvCompute.js';
+import { presetMeanDish } from './simCore.js';
 
 const C_M_S        = 299792458;   // speed of light [m/s]
 const RAD_TO_UAS   = 206265e6;    // radians → microarcseconds (matches useSimulation.js:225)
@@ -157,6 +158,9 @@ export const TOUR_PHYSICS = Object.freeze({
   improvementFactor: improve,
   ehtStationCount:  EHT2017.length,
   ehtBaselineCount: nBase,
+  // N5: the app's default dish (mean of the EHT 2017 stations' physical dishes) —
+  // tour engine calls that model the app's array must use this, never a literal.
+  ehtMeanDishM:     presetMeanDish('EHT 2017'),
   uvFillPct:        uvFillPct,
   almaSefdJy:       STATION_SEFD['ALMA'],
   m87ShadowUas:     SKY_TARGETS['M87*'].shadowUas,

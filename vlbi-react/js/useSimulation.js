@@ -7,13 +7,18 @@ import { computeUVPoints, computeUVPointsGl, computeUVFillGl,
          computeUVMaxExtentGl,
          latLonToECEF, computeSatelliteECEF } from './uvCompute.js';
 import { scaleSource, zoomSource, measureRingFraction, buildSefdMap, buildPairSefdMap,
-         computeDynamicRange, beamFwhm as beamFwhmFn, angularRes as angularResFn } from './simCore.js';
+         computeDynamicRange, beamFwhm as beamFwhmFn, angularRes as angularResFn,
+         presetMeanDish } from './simCore.js';
 import { loadImagePresetAsync } from './presets.js';
 import { exportFITS } from './fitsExport.js';
 
 const DEFAULT_CONTROLS = {
   declination: 12.391, duration: 12, frequency: 230,
-  noise: 0, dishDiameter: 25, method: 'clean',
+  noise: 0,
+  // N5: default dish = mean dish of the initial preset's stations (EHT 2017),
+  // recomputed on every preset load; EHT 2022 mean when no EHT stations remain.
+  dishDiameter: presetMeanDish('EHT 2017'),
+  method: 'clean',
   fovMuas: 80, sourceFraction: 0.50,
 };
 
@@ -100,6 +105,8 @@ export function useSimulation() {
       if (keepBhex) next.push({ id: telIdRef.current++, ...BHEX_PRESET, visible: true });
       return next;
     });
+    // N5: the default dish tracks the selected EHT version's mean dish.
+    setControls(c => ({ ...c, dishDiameter: presetMeanDish(presetName) }));
   }
 
   // Load EHT 2017 on mount (after short delay for worker init)
@@ -330,6 +337,8 @@ export function useSimulation() {
   const handleClearTelescopes = useCallback(() => {
     setTelescopes([]);
     telIdRef.current = 0;
+    // N5: with no EHT stations present, the default dish is the EHT 2022 mean.
+    setControls(c => ({ ...c, dishDiameter: presetMeanDish('EHT 2022') }));
   }, []);
 
   // Exposed for Tour's loadEHT action

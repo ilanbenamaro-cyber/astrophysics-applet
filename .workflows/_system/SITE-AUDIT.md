@@ -234,3 +234,24 @@ Tour ↔ target consistency: the tour's dec is the M87* constant by design (fixe
 narrative); tourPhysics headline logic (SPT excluded, 10,883 km) re-verified intact.
 Evidence: n4-tour-state.png (Act A), n4-actB.png (fill gauge 1.10%), n4-actC.png
 (caption "1.1 % of the UV frame"; σ presets hold) — local session artifacts (repo-ignored).
+
+### N5 — default dish = mean of the selected EHT preset [fix][constants.js, simCore.js, useSimulation.js]
+Per-station dish data did NOT exist in the repo (STATION_SEFD only) — surfaced as the
+note predicted; Ilan approved adding published physical dish diameters. New
+`DISH_DIAMETERS` in constants.js (element dish for phased stations — ALMA 12, APEX 12,
+SMA 6, LMT 50, IRAM 30, SMT 10, SPT 10, JCMT 15, GLT 12, NOEMA 15, KP12m 12; ngEHT-only
+sites from the Reference Array paper arXiv:2306.08787 — OVRO 10.4 m Leighton, HAY 37 m
+Haystack, GAM 15 m AMT, BAJA/CNI/SGO 6.1 m refurbished BIMA; BHEX 3.4).
+⚠ PENDING Alejandro confirmation (flagged in the source comment).
+`presetMeanDish` (simCore.js): EHT 2017 → 18.1 m, EHT 2022 → 16.7 m, ngEHT P1 → 15.6 m;
+EHT-2022-mean fallback for unknown presets / cleared arrays. Wiring: DEFAULT_CONTROLS,
+loadEHTPresets (recompute on preset change; manual slider edits persist until then),
+handleClearTelescopes (no-EHT-stations fallback). Dish slider min 3 m / step 0.5 m (was
+10/5) so the new defaults and BHEX-class dishes are reachable. Stale `dishDiameter: 25`
+hardcodes replaced with the computed `P.ehtMeanDishM` in sceneA/sceneC/sceneD (tour
+engine calls now track the app default); worker.js untouched (its `= 25` destructure
+default is unreachable — params always carry dishDiameter). Verified in-browser:
+mount 18.1 → 2022 16.7 → ngEHT 15.6 → manual 42 persists → preset reload 18.1 →
+Clear All 16.7; zero console errors. Note: dish 25→18.1 widens the worker's primary-beam
+taper (1.02λ/D) — reconstruction output changes slightly for all defaults; this is the
+authorized point of the note ("changes θ=λ/D-driven displays").

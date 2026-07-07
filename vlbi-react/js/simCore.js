@@ -7,7 +7,7 @@
 // functions are the same logic expressed as plain calls. useSimulation.js imports them
 // back, so the live app is unchanged; tour acts import the same functions to drive real
 // engine output. The worker stays a classic, non-singleton module (one per call here).
-import { IMAGE_SIZE } from './constants.js';
+import { IMAGE_SIZE, ARRAY_PRESETS, DISH_DIAMETERS } from './constants.js';
 import { computeBaseline } from './uvCompute.js';
 
 const C_M_S = 299792458;
@@ -198,4 +198,19 @@ export function angularRes(telescopes, frequency) {
   return thetaMuas < 1000
     ? thetaMuas.toFixed(0) + ' μas'
     : (thetaMuas / 1000).toFixed(2) + ' mas';
+}
+
+// Default dish diameter (Alejandro note N5): the mean physical dish of the stations
+// in an array preset (constants.DISH_DIAMETERS), rounded to 0.1 m. The EHT 2022 mean
+// is the canonical fallback when the preset is unknown or carries no station with a
+// known dish — the note's "no EHT stations present" default.
+export function presetMeanDish(presetName) {
+  const dishes = (ARRAY_PRESETS[presetName] || [])
+    .map(s => DISH_DIAMETERS[s.name])
+    .filter(Number.isFinite);
+  if (dishes.length === 0) {
+    // Recursion guard: if EHT 2022 itself ever lacked dish data, keep the historical 25 m.
+    return presetName === 'EHT 2022' ? 25 : presetMeanDish('EHT 2022');
+  }
+  return Math.round(dishes.reduce((a, b) => a + b, 0) / dishes.length * 10) / 10;
 }
