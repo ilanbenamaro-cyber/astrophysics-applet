@@ -581,6 +581,10 @@ RESOLVED: N/A — invariants to preserve.
 □ Do NOT rewire useSimulation's persistent-worker dispatch effect to runReconstruction — it would change worker lifecycle + stale-result ordering. Only the pure memos call simCore fns.
 □ worker.js progressEvery is opt-in and must stay byte-identical when absent. Worker stays import-free.
 □ After touching useSimulation/ContourMap/ImageCanvas (they import simCore/simRender back), re-verify the live app reconstructs on a fresh port (G12) — these are behavior-neutral extractions and must remain so.
+□ UV fill/extent: metrics use computeUVFillGl + computeUVMaxExtentGl (Gλ, locked BHEX frame). Never grid pixel-space uvPoints for a metric (sub-pixel collapse). Axes and fill share ONE frame (uvDisplayMaxGl).
+□ BHEX toggle: loadEHTPresets must re-append BHEX when it was on (N2) — a preset swap silently dropping BHEX is a regression.
+□ DISH_DIAMETERS (constants.js) is PENDING Alejandro confirmation — do not treat as validated; presetMeanDish drives the default dish (EHT 2017→18.1, 2022→16.7, ngEHT→15.6; 2022-mean fallback).
+□ htm strips whitespace-only text at line breaks next to ${…} holes — keep "word ${…}" on one line in prose templates.
 □ ⚠ Tour timing gate must be re-run on the projector laptop before the Harvard talk: if CLEAN > 300 ms there, switch presenter-mode Act C to cached-frame playback (numbers in TOUR-ENGINE-AUDIT.md §2).
 □ computeUVPoints/computeUVPointsGl REQUIRE `color` on every telescope object (they call lerpColor on pair colours) — a station list without color crashes at module load. tourPhysics's fill computation passes a dummy '#C4A555'.
 □ black-hole.png's bright ring spans only ~42.6% of its frame — NEVER assume the ring fills the image. A fixed sourceFraction of 0.525 displayed an ~18 μas ring labeled "42 μas" (2.3× undersized → ~2 restore beams → blob, the Act C/D "doesn't read as a black hole" bug). Measure with measureRingFraction + size with zoomSource (tourScene.js); scale bars computed from shadow/FOV, never 42/80 literals. ⚠ FLAGGED: the LIVE APP sidebar still says "Source: 42 μas (52.5% of FOV)" under the same assumption — out of tour scope, not yet fixed.
@@ -666,3 +670,51 @@ do not "fix" it to force more components. Act C now uses three engine-honest σ 
 
 RESOLVED: YES — Act C slider+sparkline replaced by presets (2026-06-16, commit 04e58b4);
 diagnosis in SITE-AUDIT.md addendum.
+
+---
+
+### htm strips whitespace-only text before interpolation holes at line breaks
+DATE_DISCOVERED: 2026-07-07
+AREA: vlbi-react/js — any htm template mixing prose text with ${…} interpolations
+SEVERITY: MEDIUM
+
+WHAT HAPPENED: PhysicsNotesModal prose "…mission at\n          ${P.bhex.altitudeKm…}"
+rendered as "mission at26,562 km" — the newline+indent between "at" and the hole was
+dropped entirely.
+
+ROOT CAUSE: htm trims whitespace-only text nodes containing newlines when parsing the
+template, including ones adjacent to interpolation holes — so the separating space
+between a word and a following ${…} vanishes if it sits at a line break.
+
+HOW TO AVOID: keep the word and its interpolation on the SAME line with an explicit
+space ("at ${…}"). Break lines elsewhere in the sentence.
+
+DETECTION: rendered text shows a word fused to an interpolated number ("at26,562").
+
+RESOLVED: YES — PhysicsNotesModal reflowed (Alejandro pass, Stage 2).
+
+---
+
+### UV fill metric collapsed on the pixel grid — metrics must use Gλ space too
+DATE_DISCOVERED: 2026-07-07
+AREA: vlbi-react/js/uvCompute.js (old computeUVFill), useSimulation.js, tourPhysics.js
+SEVERITY: HIGH (physics display)
+
+WHAT HAPPENED: UV fill showed 0.0% (Earth) / 0.1% (BHEX) at every array. The old
+computeUVFill gridded FOV-scaled PIXEL-space points onto the full 512² Nyquist grid:
+at 80 μas FOV the whole EHT coverage lives in a ±3.2 px disk → 27 unique cells /
+262,144 → 0.0103%. ngEHT (17 stations) read 0.018% — the metric couldn't distinguish
+arrays. Same number in the tour ("0.010 %") — one broken path, not a divergence.
+
+ROOT CAUSE: the documented sub-pixel-collapse gotcha ("UV pixel coordinates become
+sub-pixel at small FOV — never use for display") applies to METRICS as much as to
+canvases. Any per-cell statistic on computeUVPoints output is FOV-quantization, not
+coverage.
+
+HOW TO AVOID: compute coverage statistics from computeUVPointsGl (Gλ) on an explicit
+frame — computeUVFillGl(ptsGl, halfExtentGl, M) over the locked computeUVMaxExtentGl
+frame. Never grid pixel-space uvPoints for a displayed metric.
+
+DETECTION: fill ~0.0% regardless of array; cells-sampled ≪ sample count.
+
+RESOLVED: YES — commit 486aff9 (N3); intermediates in SITE-AUDIT.md.
