@@ -32,9 +32,15 @@ export function UVMap({ uvPoints, N, pairSefdMap = null, displayMaxGl = null }) 
       displayMax_Gl = maxUV_Gl * 1.2;
     }
 
+    // displayMax_Gl is the frame's HALF-extent (edges at ±displayMax_Gl), matching
+    // computeUVMaxExtentGl and the fill metric. The previous mapping divided the
+    // full span by displayMax_Gl — i.e. treated the half-extent as a full width —
+    // silently clipping everything beyond displayMax_Gl/2 (B1: BHEX arcs at
+    // ~28.9 Gλ vanished past the 17.3 Gλ effective edge while the ±34.6 labels
+    // claimed otherwise; Earth-only coverage at 8.35 Gλ happened to fit).
     const toCanvas = (u, v) => ({
-      x: (u / displayMax_Gl + 0.5) * DST,
-      y: (v / displayMax_Gl + 0.5) * DST,
+      x: (u / (2 * displayMax_Gl) + 0.5) * DST,
+      y: (v / (2 * displayMax_Gl) + 0.5) * DST,
     });
 
     // Grid circles
