@@ -53,7 +53,7 @@ async function computePreset(data, idx) {
   const r = await runReconstruction(
     data.srcMaster.slice(),
     data.uvLite,
-    { N, noise: PRESET_NOISE[idx], method: 'clean', dishDiameter: 25, frequency: data.freqGHz,
+    { N, noise: PRESET_NOISE[idx], method: 'clean', dishDiameter: P.ehtMeanDishM, frequency: data.freqGHz,
       fovRad: data.fovRad, stationPairs: data.stationPairs, sefdMap: data.sefdMap },
   );
   data.cache[idx] = {
@@ -129,7 +129,7 @@ export const sceneC = {
     const mapUV = drawUVAxes(ctx, xs[0], py, S, data.maxGl, { label: 'u, v (Gλ)' });
     drawUVPoints(ctx, mapUV, data.uvGl, b1, { radius: 0.9 });
     panelCaption(ctx, xs[0], py, S, 'SPARSE DATA',
-      `${data.nSamples.toLocaleString('en-US')} samples · ${P.str.uvFill} of the plane`);
+      `${data.nSamples.toLocaleString('en-US')} samples · relative coverage ${P.str.uvFill}`);
     ctx.restore();
 
     // ── Arrow 1 + Panel 2: the dirty image ──

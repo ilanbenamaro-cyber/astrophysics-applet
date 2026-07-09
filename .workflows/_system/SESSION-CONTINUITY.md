@@ -130,6 +130,40 @@
 > visual law via DESIGN-LANGUAGE.md — all preserved. The tour never mutates app state mid-act (Skip/Esc
 > preserves pre-tour state for free; only Act E's "Enter the simulator" dispatches loadEHT).
 
+**Alejandro Physics Pass (N1–N5) + fenced site audit: COMPLETE** — committed 2026-07-07 (feature/alejandro-physics-pass, 6 commits, NOT merged to main)
+> Five P0 notes from Prof. Cárdenas-Avendaño, instrument-first (all N3/N4 numbers measured in Node
+> BEFORE changes; recorded in SITE-AUDIT.md):
+> N1 `c5dc4ad`: UV map axes LOCKED to the BHEX-enabled extent (computeUVMaxExtentGl → uvDisplayMaxGl
+>   → UVMap displayMaxGl) — toggling BHEX changes the data drawn, never the axes (34.6 Gλ invariant).
+> N2 `b8e7a74`: BHEX true on/off toggle (aria-pressed, never disabled); preset loads preserve BHEX;
+>   default OFF unchanged.
+> N3 `486aff9`: UV fill rebuilt — old pixel-space computeUVFill (27/262,144 cells = "0.0%", a sub-pixel
+>   rounding artifact) REMOVED; computeUVFillGl = % cells on a fixed 200×200 Gλ grid over the N1 frame.
+>   EHT 2017 1.10% → +BHEX 5.24%; 2022 1.65%; ngEHT 3.13%; app == tour to machine precision.
+> N4 `47de898`: TARGET-STRESS-TEST table (SITE-AUDIT.md) — all 5 targets correct end-to-end; two
+>   core-formula defects PROPOSED not fixed (physics fence): P1 angularRes uses geometric array max;
+>   P2 baselineStats samples BHEX at H=0. P3: worker's unreachable 25 m destructure default.
+> N5 `09064ab`: DISH_DIAMETERS added (⚠ values PENDING Alejandro confirmation; ngEHT sites per
+>   arXiv:2306.08787) + presetMeanDish default — EHT 2017 18.1 m / 2022 16.7 m / ngEHT 15.6 m,
+>   recomputed on preset change, EHT-2022 fallback on Clear All; sceneA/C/D use P.ehtMeanDishM.
+> Stage 2 `b623626` (fenced): physics-COPY fixes (ALMA/SMT noise ratio 0.15→0.07×; PhysicsNotesModal
+>   BHEX figures now interpolate TOUR_PHYSICS, hedged; INFO.uvmap locked-frame text; Act A "100 m"
+>   single-sourced), UVMap off-token colors → border family, app-wide :focus-visible + aria-pressed
+>   toggles + MetricsPanel keyboard access + Globe reduced-motion resume guard, dead code removed
+>   (EHT_PRESETS, ACT_BY_ID, 7 orphan css blocks). worker.js ZERO diff. Frozen anchors intact.
+> Verified: 16-check Node regression probe + full browser matrix on never-used ports (presets ×
+> BHEX × targets, compare mode, both tour modes, reduced motion, Esc-preserves-state, zero console
+> errors app-wide).
+
+**FINAL SHIP PASS: COMPLETE — 2026-07-09 (feature/alejandro-physics-pass, 11 commits this pass)**
+> P1–P5 DECIDED (Ilan, delegated authority) + implemented: sampled-coverage resolution,
+> track-max baseline, dish table confirmed, "Relative coverage" relabel. Bugs: B1 UV-map
+> factor-2 half-extent mapping (BHEX clipped since 8c6ba01), B2 slerp arcs + 0.85 alpha,
+> B3 compare preset-only, B4 hunt (stats edge case, stale copy, css truncation, a11y).
+> Visual pass (JetBrains Mono loaded, flat-chrome conformance, a11y font routing, compare
+> stacking, tour micro-detail). Red team: zero critical findings. All gates green; worker
+> diff EMPTY. Awaiting Ilan's "push" to deploy.
+
 **ALL PLANNED SESSIONS COMPLETE — S1 through P3 + Tour Cinematic Rewrite + Tour Art Passes + Canvas 2D Rewrite + Tour World-Class Overhaul + Tour Apple-Precision Overhaul + Tour Design-Language Conformance + Tour Engine-Real Rebuild**
 
 ---
@@ -170,6 +204,14 @@ fixes) was fast-forward-merged into local `main` on 2026-06-16 (main now at 651a
 yet live: local `main` is **59 commits ahead of `origin/main`**, and GitHub Pages deploys from
 the pushed remote — so the live site is unchanged until `git push origin main`. Recommend a
 demo/sign-off with Alejandro before that push (it deploys the research-grade tool publicly).
+
+**5. Alejandro review — RESOLVED 2026-07-09 by delegated authority.** Ilan held final
+decision authority from Prof. Cárdenas-Avendaño (spec: _prompts/tour-final-ship-pass.md):
+P1 adopted (sampled-coverage θ), P2 fixed (track max 39,291 km), P4 confirmed
+(DISH_DIAMETERS unflagged), P5 confirmed (locked-frame fill, relabeled "Relative
+coverage"), P3 deferred (worker zero-diff preserved). Implemented + gated on
+feature/alejandro-physics-pass (final ship pass, 2026-07-09); merge to main prepared —
+PUSH awaits Ilan's explicit "push" (deploys the full backlog publicly).
 
 **No code blockers** — simulator + engine-real tour are feature-complete on the branch.
 
@@ -289,6 +331,11 @@ constants.js ─ IMAGE_SIZE=512, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD, 
 ---
 
 ## LAST UPDATED
+
+2026-07-07 — Alejandro physics pass complete on feature/alejandro-physics-pass (N1 locked UV axes,
+N2 BHEX toggle, N3 locked-frame Gλ fill, N4 target stress test, N5 preset-mean dish + fenced Stage 2
+audit; 6 commits; worker zero-diff; anchors intact). NOT merged — blocker #5 (Ilan + Alejandro review
+of DISH_DIAMETERS, the fill definition, and proposals P1–P3) added. Knowledge files synced.
 
 2026-06-16 — Act B + Act C fix pass complete (feature/tour-world-class-overhaul, 2 commits): Act B
 `8f0b301` — idle Earth spin rewritten from the quantized track[headIdx] lookup + eased resume ramp

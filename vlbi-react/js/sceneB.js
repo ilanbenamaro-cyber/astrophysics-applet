@@ -14,7 +14,7 @@
 // releasing resumes the constant advance from the current angle (no eased ramp, no
 // snap). Declination drags never affect the spin. All numbers via tourPhysics.js.
 import { computeBaseline, baselineToUV, computeElevation, MIN_ELEVATION_RAD,
-         computeUVPointsGl, computeUVPoints, computeUVFill } from './uvCompute.js';
+         computeUVPointsGl, computeUVFillGl, computeUVMaxExtentGl } from './uvCompute.js';
 import { TOUR_PHYSICS as P } from './tourPhysics.js';
 import { TOKENS } from './tourTokens.js';
 import { getTourEarth } from './tourEarth.js';
@@ -65,13 +65,12 @@ export const sceneB = {
     const baselineKm = Math.hypot(b.bx, b.by, b.bz);
 
     const pairTrack = pairTrackGl(t1, t2, params.decDeg, params.freqGHz, params.durationHr);
-    const uvGl = computeUVPointsGl(tels, {
+    const uvOpts = {
       declination: params.decDeg, duration: params.durationHr, frequency: params.freqGHz,
-    });
-    const uvPx = computeUVPoints(tels, {
-      declination: params.decDeg, duration: params.durationHr, frequency: params.freqGHz,
-      fovMuas: params.fovMuas, N: 512,
-    }).uvPoints;
+    };
+    const uvGl = computeUVPointsGl(tels, uvOpts);
+    // Fill on the locked (BHEX-enabled) frame — same definition as the live app (N3).
+    const fillPct = computeUVFillGl(uvGl, computeUVMaxExtentGl(tels, uvOpts));
 
     // The main page's textured globe, read-only, with this act's stations marked.
     const earth = getTourEarth();
@@ -79,7 +78,7 @@ export const sceneB = {
 
     return {
       tels, t1, t2, baselineKm, params, earth,
-      uvGl, maxGl: uvExtentGl(uvGl), fillPct: computeUVFill(uvPx, 512),
+      uvGl, maxGl: uvExtentGl(uvGl), fillPct,
       scrub: { dragging: null, haFrac: 0.5, decDeg: params.decDeg },
       scrubTrack: pairTrack, scrubDec: params.decDeg,
       // Continuous hour-angle clock (radians). lastT = last RAF timestamp (s).
@@ -183,7 +182,7 @@ export const sceneB = {
       ctx.fillStyle = hexA(TOKENS.textSecondary, 0.8);
       ctx.font = mono(10, 600); ctx.textAlign = 'center';
       ctx.fillText('source below horizon — sampling resumes as it rises',
-        px + panelSize / 2, py + panelSize - 12);
+        px + panelSize / 2, py + panelSize - 26);   // clears the axis label row (y+size-8)
       ctx.restore();
     }
 

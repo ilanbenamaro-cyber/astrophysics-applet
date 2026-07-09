@@ -7,10 +7,7 @@
 // functions are the same logic expressed as plain calls. useSimulation.js imports them
 // back, so the live app is unchanged; tour acts import the same functions to drive real
 // engine output. The worker stays a classic, non-singleton module (one per call here).
-import { IMAGE_SIZE } from './constants.js';
-import { computeBaseline } from './uvCompute.js';
-
-const C_M_S = 299792458;
+import { IMAGE_SIZE, ARRAY_PRESETS, DISH_DIAMETERS } from './constants.js';
 
 // ── Reconstruction ───────────────────────────────────────────────────────────
 // Runs one reconstruction in its OWN worker and resolves with the result. Mirrors the
@@ -180,22 +177,38 @@ export function beamFwhm(beamDims, fovMuas, N = IMAGE_SIZE) {
   };
 }
 
-// Angular resolution string (θ = λ/B_max), or null with < 2 stations.
-// From useSimulation.js:213–229 (uses the imported computeBaseline, never a copy).
-export function angularRes(telescopes, frequency) {
-  if (telescopes.length < 2) return null;
-  let maxKm = 0;
-  for (let i = 0; i < telescopes.length; i++) {
-    for (let j = i + 1; j < telescopes.length; j++) {
-      const b = computeBaseline(telescopes[i], telescopes[j]);
-      const km = Math.sqrt(b.bx * b.bx + b.by * b.by + b.bz * b.bz);
-      if (km > maxKm) maxKm = km;
-    }
+// Angular resolution from the ACTUALLY-SAMPLED coverage (P1, Ilan delegated
+// authority from A. Cárdenas-Avendaño, 2026-07-07): θ = λ/|uv|max of the computed
+// tracks for the current target — consistent with the UV map and the tour's
+// headline rule (the geometric array max is never shown as resolution; a pair
+// that cannot co-observe the source contributes no |uv|). uvPointsGl is already
+// in Gλ, so θ[μas] = 206.265/|uv|maxGl. One decimal below 100 μas so per-target
+// values (24.7 / 23.6 / 26.7 …) stay distinguishable from the tour's rounded 25.
+export function angularResFromUV(uvPointsGl) {
+  if (!uvPointsGl || uvPointsGl.length === 0) return null;
+  let maxGl = 0;
+  for (const p of uvPointsGl) {
+    const r = Math.hypot(p.u, p.v);
+    if (r > maxGl) maxGl = r;
   }
-  if (maxKm === 0) return null;
-  const lambdaM = C_M_S / (frequency * 1e9);
-  const thetaMuas = (lambdaM / (maxKm * 1e3)) * 206265e6;
-  return thetaMuas < 1000
-    ? thetaMuas.toFixed(0) + ' μas'
-    : (thetaMuas / 1000).toFixed(2) + ' mas';
+  if (maxGl === 0) return null;
+  const thetaMuas = 206.265 / maxGl;   // (206265e6 μas/rad) / (1e9 λ/Gλ)
+  if (thetaMuas < 100)  return thetaMuas.toFixed(1) + ' μas';
+  if (thetaMuas < 1000) return thetaMuas.toFixed(0) + ' μas';
+  return (thetaMuas / 1000).toFixed(2) + ' mas';
+}
+
+// Default dish diameter (Alejandro note N5): the mean physical dish of the stations
+// in an array preset (constants.DISH_DIAMETERS), rounded to 0.1 m. The EHT 2022 mean
+// is the canonical fallback when the preset is unknown or carries no station with a
+// known dish — the note's "no EHT stations present" default.
+export function presetMeanDish(presetName) {
+  const dishes = (ARRAY_PRESETS[presetName] || [])
+    .map(s => DISH_DIAMETERS[s.name])
+    .filter(Number.isFinite);
+  if (dishes.length === 0) {
+    // Recursion guard: if EHT 2022 itself ever lacked dish data, keep the historical 25 m.
+    return presetName === 'EHT 2022' ? 25 : presetMeanDish('EHT 2022');
+  }
+  return Math.round(dishes.reduce((a, b) => a + b, 0) / dishes.length * 10) / 10;
 }

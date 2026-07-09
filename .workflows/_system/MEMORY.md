@@ -378,6 +378,7 @@ in sceneC.js already exists). Supersedes the older "N=512 ~414ms CLEAN" benchmar
 ---
 
 ## Last Updated
+2026-07-07 — Alejandro physics pass: locked-frame UV metric pattern + fence-discipline entries added (see end of file)
 2026-06-10 — Tour engine-real rebuild: new 5-act architecture + simCore/simRender + measured timing memories added; TourDiagram Canvas-2D memories marked superseded
 2026-04-28 — Canvas 2D rewrite: TourDiagram SVG pattern updated to obsolete, Canvas 2D patterns added
 2026-04-26 — Tour Art Pass: SVG filter scoping pattern, transform-box pattern added
@@ -409,3 +410,55 @@ sparse reconstructions — both mislead and made Act C look broken. Judge the re
 (it degrades gracefully with noise). Act C now uses three σ presets chosen by rendering the
 ring, not by component count. Don't lower the worker's 3σ stop to force components (worker is
 shared with the live app). See gotchas.md "Högbom CLEAN is near-inert…" + decisions.md.
+
+---
+
+### UV metrics live in Gλ on the locked frame — axes and fill share one scaler
+DATE: 2026-07-07
+CATEGORY: pattern
+APPLIES_TO: vlbi-react/js/uvCompute.js, useSimulation.js, UVMap.js, tourPhysics.js
+
+LEARNING: Alejandro pass N1+N3. The UV map's display extent is `computeUVMaxExtentGl`
+(coverage of telescopes ∪ BHEX_PRESET — BHEX-toggle-invariant by construction), and UV
+fill is `computeUVFillGl` over that SAME frame. The old pixel-space fill was a sub-pixel
+rounding artifact (27 cells of 262,144 → "0.0%"), the metric twin of the documented
+UV-display collapse gotcha.
+EVIDENCE: instrumented intermediates in SITE-AUDIT.md (N3 section); regression probe
+`stage3-regression.mjs` (16 checks) passes; app == tour fill to machine precision.
+IMPLICATION: any new coverage statistic or UV overlay must consume computeUVPointsGl +
+the locked frame — never grid pixel-space uvPoints. If the axes and a metric can use
+different frames, they will eventually disagree; share the scaler.
+
+---
+
+### Physics fence discipline: instrument first, propose what you may not fix
+DATE: 2026-07-07
+CATEGORY: workflow
+APPLIES_TO: any physics-touching pass
+
+LEARNING: The Alejandro pass ran with authority over exactly 5 notes; everything else
+physics-touching was measured and PROPOSED (SITE-AUDIT P1 angularRes-geometric-max,
+P2 baselineStats-satellite-at-H0, P3 worker 25 m destructure default) rather than fixed.
+Instrument-first paid off twice: N3's "wrong fill" was a definition problem needing a
+human choice (locked-frame vs own-aperture-disk — measured candidates presented), and
+N4's "suspicious" dec-60==dec-90 sample equality was proven CORRECT analytically
+(12 h ⇒ HA ∈ [−6h,+6h], cos H ≥ 0) before anyone "fixed" working code.
+IMPLICATION: for physics displays, present measured candidate definitions and let the
+advisor choose; never invent a target number. DISH_DIAMETERS values remain PENDING
+Alejandro confirmation.
+
+### Final ship pass complete — P1–P5 decided, B1–B4 fixed, deployed pending push
+DATE: 2026-07-09
+The five fenced physics proposals were DECIDED by Ilan under delegated authority from
+Prof. Cárdenas-Avendaño and implemented: P1 sampled-coverage resolution (24.7/23.6/
+24.8/26.7 μas per target), P2 track-max baseline (39,291 km — geometric, unfiltered),
+P4 dish table confirmed, P5 "Relative coverage" relabel (M=200 frozen). P3 stays
+deferred (worker diff zero). B1 root cause: UVMap treated the locked half-extent as a
+full width (factor-2, since 8c6ba01) — BHEX clipped. B2: chord-lerp sag on
+near-antipodal arcs + 0.5-alpha wash-out over ice. B3: compare = preset+BHEX only
+(Globe allowPlacement / TelescopeList readOnly). JetBrains Mono now actually loads.
+All gates green (P/B/V/stress + red team, zero critical findings); worker hash
+3fb15375… unchanged end-to-end. Merge to main + push = PUBLIC DEPLOY of the entire
+~59-commit backlog (tour overhaul) + this pass — push only on Ilan's explicit "push".
+Remaining HUMAN TODOs: projector-laptop CLEAN timing gate; BHEX hedge until
+Marrone/Alejandro sign-off.

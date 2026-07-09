@@ -173,9 +173,11 @@ App.js                        — global UI only: compareMode, infoKey, a11y, to
 ### Support modules
 ```
 core.js           — htm/preact re-exports (html, useState, useEffect, useRef, useMemo, useCallback)
-constants.js      — IMAGE_SIZE=512, EARTH_RADIUS_KM=6371, TELESCOPE_COLORS[17], EHT_PRESETS[8],
-                    ARRAY_PRESETS {'EHT 2017':8, 'EHT 2022':11, 'ngEHT Phase 1':17},
+constants.js      — IMAGE_SIZE=512, EARTH_RADIUS_KM=6371, TELESCOPE_COLORS[17],
+                    ARRAY_PRESETS {'EHT 2017':8, 'EHT 2022':11, 'ngEHT Phase 1':17} (EHT_PRESETS removed 2026-07-07 — dead),
                     STATION_SEFD (per-station Jy at 230 GHz: ALMA=94, NOEMA=700, …, SMT=17100, SPT=19300),
+                    DISH_DIAMETERS (physical element dish [m] per station; ngEHT sites per arXiv:2306.08787;
+                                    ⚠ PENDING Alejandro confirmation — drives presetMeanDish),
                     BHEX_PRESET (type:'space', alt 26562 km, inc 86°, RAAN 277.7°, period 12h),
                     SKY_TARGETS {M87*: dec 12.391° shadowUas 42, Sgr A*: dec -29.008° shadowUas 50,
                                  3C 279: dec -5.789° shadowUas null, Cen A: dec -43.019° shadowUas null,
@@ -184,14 +186,18 @@ constants.js      — IMAGE_SIZE=512, EARTH_RADIUS_KM=6371, TELESCOPE_COLORS[17]
 useSimulation.js  — custom React hook; all simulation state, effects, memos, and handlers.
                     App.js calls left=useSimulation() and right=useSimulation() (always both — hooks cannot be conditional).
                     Returns: telescopes, showCountryLabels, selectedPreset, selectedArrayPreset,
-                      grayscale, originalCanvas, uvPoints, stationPairs, uvPointsGl, uvFill,
+                      grayscale, originalCanvas, uvPoints, stationPairs, uvPointsGl,
+                      uvFill (useMemo — computeUVFillGl on the locked frame, no longer state),
+                      uvDisplayMaxGl (useMemo — N1 locked axes extent),
                       dirty, restored, controls, status, isComputing, uvCount, beamDims, selectedTarget,
-                      effectiveSourceFraction, angularRes, baselineStats, sefdMap, pairSefdMap,
+                      effectiveSourceFraction, ringFraction, angularRes, baselineStats, sefdMap, pairSefdMap,
                       dynamicRange, beamFwhm, bhexAdded,
                       setControls, setSelectedArrayPreset, setShowCountryLabels,
-                      handleTelescopeAdd/Remove/Toggle, handleTargetChange, handleAddBHEX,
+                      handleTelescopeAdd/Remove/Toggle, handleTargetChange,
+                      handleToggleBHEX (N2 — replaces add-only handleAddBHEX; loadEHTPresets preserves BHEX),
                       handleLoadArrayPreset, handlePresetSelect, handleFileUpload, handleReset,
-                      handleExportFITS, handleClearTelescopes, handleLoadDefaultEHT, loadEHTPresets
+                      handleExportFITS, handleClearTelescopes (also resets dish to EHT-2022 mean),
+                      handleLoadDefaultEHT, loadEHTPresets (also sets dishDiameter = presetMeanDish)
 fitsExport.js     — exportFITS(restoredData, N, controls, selectedTarget, beamDims)
                     Writes FITS binary with WCS headers: CRVAL1/2 (RA/Dec), CDELT1 (negative), CDELT2,
                     CRPIX1/2 = N/2+0.5, FREQ, BMAJ/BMIN, BUNIT='JY/BEAM', OBJECT.
@@ -205,7 +211,11 @@ uvCompute.js      — latLonToECEF, computeBaseline, computeSatelliteECEF (Keple
                       → returns { uvPoints, stationPairs }; applies 10° elevation cutoff per telescope per HA step
                     computeUVPointsGl (Gλ coords, FOV-independent — display only)
                       → same elevation cutoff logic as computeUVPoints
-                    computeUVFill, lerpColor
+                    computeUVMaxExtentGl (N1: locked display extent — coverage of telescopes ∪ BHEX_PRESET,
+                      radial max ×1.2, BHEX-toggle-invariant; UV axes AND fill share this frame)
+                    computeUVFillGl(ptsGl, halfExtentGl, M=200) (N3: % cells sampled on the locked Gλ frame;
+                      the old pixel-space computeUVFill was REMOVED — sub-pixel collapse artifact)
+                    lerpColor
 globeHelpers.js   — Three.js mesh helpers for globe, atmosphere, markers;
                     syncTelescopeMarkers (skips space telescopes; ground baselines only),
                     syncSatelliteMarkers (gold sphere at ascending node + orbital ring at 1.5× globe radius; CSS2DObject label)
@@ -220,7 +230,8 @@ simCore.js        — pure simulation core lifted from useSimulation.js (behavio
                     them back). runReconstruction(grayscale, uvPoints, params, onProgress?) → Promise — owns
                     its OWN classic worker per call (non-singleton, proven by App.js left/right), resolves
                     {dirty,restored,beamSigmaU/V,beamPA,uvCount}; TRANSFERS grayscale.buffer (pass a .slice()).
-                    Also scaleSource, buildSefdMap/buildPairSefdMap, computeDynamicRange, beamFwhm, angularRes.
+                    Also scaleSource, buildSefdMap/buildPairSefdMap, computeDynamicRange, beamFwhm, angularRes,
+                    presetMeanDish(presetName) (N5 — mean DISH_DIAMETERS of a preset; EHT-2022 fallback).
                     The hook's persistent-worker dispatch effect is UNCHANGED (only the pure memos call these).
                     Tour acts import runReconstruction directly to drive real engine output.
 simRender.js      — pure canvas renderers lifted from ContourMap/ImageCanvas (components import them back):
@@ -400,6 +411,19 @@ GitHub Pages from `main` branch root. Push to `main` = live within ~60 seconds.
 
 ## Last Updated
 
+2026-07-07 — Alejandro physics pass (feature/alejandro-physics-pass, 6 commits, NOT merged):
+  N1 locked UV axes (computeUVMaxExtentGl → uvDisplayMaxGl → UVMap displayMaxGl prop);
+  N2 handleToggleBHEX + preset-preserving loadEHTPresets; N3 computeUVFillGl on the locked
+  Gλ frame (old computeUVFill REMOVED; app==tour; EHT2017 1.10% / +BHEX 5.24%);
+  N4 TARGET-STRESS-TEST in SITE-AUDIT.md (no in-scope defects; P1 angularRes-geometric and
+  P2 baselineStats-H0 PROPOSED for Alejandro); N5 DISH_DIAMETERS + presetMeanDish default
+  (18.1/16.7/15.6 m; sceneA/C/D use P.ehtMeanDishM; slider min 3 / step 0.5). Stage 2:
+  physics-copy fixes (ALMA/SMT noise ratio 0.07×; PhysicsNotesModal BHEX via TOUR_PHYSICS;
+  INFO.uvmap locked-frame text), UVMap off-token colors → border family, app-wide
+  :focus-visible, aria-pressed on all toggles, MetricsPanel keyboard access, Globe
+  reduced-motion resume guard, dead code removed (EHT_PRESETS, ACT_BY_ID, 7 orphan css
+  blocks). worker.js zero diff. Frozen anchors intact.
+
 2026-06-10 — Tour engine-real rebuild complete (2fd3bea..64480e5, branch feature/tour-world-class-overhaul, NOT yet merged to main):
   The guided tour was rebuilt from 8 hand-drawn TourDiagram scenes into 5 engine-driven acts (A–E) whose
   visuals are genuine uvCompute/worker output. **TourCard.js and TourDiagram.js DELETED** (1,697 lines).
@@ -456,3 +480,21 @@ GitHub Pages from `main` branch root. Push to `main` = live within ~60 seconds.
 2026-04-20 — uvCompute.js: added computeUVPointsGl (Gλ display pipeline); UVMap: rewrote to use Gλ coords with auto-scale; App.js: uvPointsGl state added, fovMuas default 538→80; UV display and reconstruction pipelines are now fully independent.
 2026-04-16 — IMAGE_SIZE updated to 512; ContourMap boundary clip noted; sourceFraction default updated to 0.50; worker protocol N updated.
 2026-04-12 — Full reconstruction to cover vlbi-react as live active codebase (post Phase-1 commit bc212cb).
+
+2026-07-09 — Final ship pass (feature/alejandro-physics-pass → main):
+  P1: simCore.angularResFromUV(uvPointsGl) replaces angularRes(telescopes, frequency)
+    — Resolution = λ/|uv|max of sampled coverage, 1 decimal < 100 μas; useSimulation
+    memo depends on uvPointsGl only.
+  P2: baselineStats scans the full observation window for ground–space pairs
+    (STEPS=200, geometric, no elevation filter — consistent with the geometric
+    ground-ground part); shows for 2+ ground OR 1 ground + satellite.
+  P4: DISH_DIAMETERS confirmed (flag removed). P5: metric renamed "Relative
+    coverage" everywhere (computeUVFillGl unchanged; M=200 frozen display constant).
+  B1: UVMap toCanvas maps the half-extent correctly — x=(u/(2·displayMaxGl)+0.5)·DST;
+    2px point marks. B2: globe baseline arcs use slerp + opacity 0.85. B3: Globe
+    allowPlacement prop (default true; SimPane passes false) + TelescopeList readOnly
+    — compare mode is preset+BHEX only.
+  index.html loads JetBrains Mono (400/500/600) — --font-mono now real everywhere.
+  a11y: metrics/contour/modal-code font sizes on --fs-*; range :focus-visible ring;
+  compare stacks <1100px (end-of-file media query); tour spine label stacked under
+  the mini-UV canvas; ContourMap angularResolution prop removed (dead).

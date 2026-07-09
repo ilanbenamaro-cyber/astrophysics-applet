@@ -756,3 +756,75 @@ worker-internal, would change app behavior); switching Act C to MEM (contradicts
 TRIGGERS_REVIEW_IF: black-hole.png replaced or array changed (re-pick preset σ by rendering);
 tour duration/FOV changed (re-derive the co-visible window / IDLE pacing); a regularized imager
 replaces Högbom (the component-count proxy could become meaningful again).
+
+---
+
+### Alejandro physics pass (N1–N5): locked UV frame, BHEX toggle, Gλ fill metric, preset-mean dish
+DATE: 2026-07-07
+LAST_VERIFIED: 2026-07-07
+EXPIRES: NEVER
+STATUS: ACTIVE
+
+DECISION: Five P0 notes from Prof. Cárdenas-Avendaño, implemented with pre-approved authority over
+core behavior (branch feature/alejandro-physics-pass; everything else that pass touched was fenced
+to copy/design/a11y/dead-code):
+(1) N1 — the UV map's axes are LOCKED to the BHEX-enabled coverage extent: `computeUVMaxExtentGl`
+    (uvCompute.js) computes the extent of telescopes ∪ BHEX_PRESET (radial max ×1.2) regardless of
+    the toggle, exposed as `uvDisplayMaxGl`, passed to UVMap as `displayMaxGl`. Toggling BHEX changes
+    what is drawn, never the axes; the frame still responds to frequency/dec/duration (u=B/λ).
+(2) N2 — BHEX is a true toggle (`handleToggleBHEX`, aria-pressed, never disabled); `loadEHTPresets`
+    re-appends BHEX after swapping the ground array, so preset changes preserve the toggle. Default OFF.
+(3) N3 — UV fill is `computeUVFillGl(uvPointsGl, halfExtentGl, M=200)`: % of cells sampled on a fixed
+    M×M grid spanning the N1-locked frame, in Gλ. The old pixel-space computeUVFill was REMOVED — at
+    80 μas FOV it collapsed all EHT coverage into ~27 cells of the 512² Nyquist grid ("0.0%", a rounding
+    artifact). App, tourPhysics, sceneB, and the generic tour scene share the one new function (app==tour
+    to machine precision). Measured: EHT 2017 1.10%, +BHEX 5.24%, EHT 2022 1.65%, ngEHT 3.13%.
+    Definition chosen by Ilan from measured candidates (locked-frame grid vs own-aperture disk).
+(4) N4 — target subsystem stress-tested (TARGET-STRESS-TEST in SITE-AUDIT.md): no defects in scope;
+    two core-formula defects OUTSIDE the notes were PROPOSED not fixed (app angularRes uses the
+    geometric array max — dec-independent "24 μas"; baselineStats samples the satellite at H=0 only).
+(5) N5 — default dishDiameter = mean physical dish of the selected preset's stations
+    (`presetMeanDish` in simCore.js over new `DISH_DIAMETERS` in constants.js): EHT 2017 → 18.1 m,
+    EHT 2022 → 16.7 m, ngEHT P1 → 15.6 m; EHT-2022 mean when no EHT stations (Clear All / unknown);
+    recomputed on preset load; manual slider edits persist until then. Tour scene engine calls use
+    `P.ehtMeanDishM` (sceneA/C/D — was hardcoded 25). Dish slider min 3 m / step 0.5 m.
+RATIONALE: physics-advisor authority; instrument-first diagnosis (all N3/N4 intermediates measured in
+Node BEFORE changes and recorded in SITE-AUDIT.md). One frame for axes AND fill denominator keeps the
+two displays mutually consistent by construction.
+CRITICAL CONSTRAINT: DISH_DIAMETERS values are PENDING Alejandro confirmation (element dish for phased
+ALMA/SMA/NOEMA; ngEHT sites from arXiv:2306.08787 — BAJA/CNI/SGO 6.1 m BIMA, OVRO 10.4, HAY 37, GAM 15).
+worker.js untouched (zero diff; its `dishDiameter = 25` destructure default is unreachable — P3 proposal).
+ALTERNATIVES_REJECTED: fill on the array's own aperture disk at Δu=1/FOV (physically rigorous but the %
+DROPS when BHEX is added — reads backwards; measured 82%→69%); auto-scaling axes (the N1 defect);
+keeping the Nyquist-grid fill with more decimals (still a rounding artifact, can't distinguish arrays).
+TRIGGERS_REVIEW_IF: Alejandro revises DISH_DIAMETERS or the fill definition/M; BHEX orbit changes
+(locked extent derives from BHEX_PRESET); P1/P2/P3 proposals get sign-off (then fix angularRes/
+baselineStats/worker default).
+
+### Final ship pass: P1–P5 decided under delegated authority; B1 factor-2 root cause
+DATE: 2026-07-09
+CONTEXT: Ilan held delegated final decision authority from Prof. Cárdenas-Avendaño for
+the five fenced physics proposals (spec .workflows/_prompts/tour-final-ship-pass.md).
+DECISIONS:
+- P1 ADOPTED: displayed Resolution = θ = λ/|uv|max of the SAMPLED coverage
+  (simCore.angularResFromUV; one decimal < 100 μas). Per-target: M87* 24.7 ·
+  Sgr A* 23.6 · 3C 279 24.8 · Cen A 26.7. The geometric array max is never shown as
+  resolution (the tour's rule, now the app's too). BHEX ON honestly drops the stat.
+- P2 FIXED: Max Baseline = GEOMETRIC max over the full observation window (STEPS=200)
+  — 39,291 km / 30.1 Gλ with BHEX. Note: deliberately UNfiltered (consistent with the
+  stat's ground-ground part); the elevation-filtered sampled max would be 39,110 km.
+- P3 DEFERRED (worker diff zero this pass; remove the 25 m destructure default at the
+  next authorized worker change).
+- P4 CONFIRMED: DISH_DIAMETERS as reviewed (element dish for phased stations; LMT/SPT
+  full aperture with illuminated-aperture caveat as comment). Flag removed.
+- P5 CONFIRMED (a): locked-frame Gλ grid fill, M=200 FROZEN as a display constant;
+  relabeled "Relative coverage" everywhere so the absolute % isn't over-read.
+- B1 ROOT CAUSE recorded: UVMap toCanvas mapped x=(u/displayMax+0.5)·DST — treating
+  the half-extent as a full width — clipping everything beyond displayMax/2 since
+  8c6ba01. Rule: any canvas mapping Gλ→px must treat computeUVMaxExtentGl's value as
+  the HALF-extent (edges at ±extent).
+- Globe baseline arcs: slerp (equal-angle steps), never chord-space lerp — uniform-t
+  lerp sags near-antipodal arcs into the globe (SPT–GLT). Arc opacity 0.85 (0.5 faded
+  out over bright terrain).
+- JetBrains Mono is now LOADED (400/500/600) — the declared-not-loaded status quo is
+  over; --font-mono renders JetBrains everywhere.

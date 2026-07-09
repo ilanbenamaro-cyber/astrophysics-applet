@@ -9,17 +9,6 @@ export const TELESCOPE_COLORS = [
   '#fdcb6e','#00b894','#d63031','#e84393','#0984e3',
 ];
 
-export const EHT_PRESETS = [
-  { name:'ALMA',  lat:-23.029, lon:-67.755 },
-  { name:'APEX',  lat:-23.006, lon:-67.759 },
-  { name:'SPT',   lat:-89.99,  lon:-44.65  },
-  { name:'JCMT',  lat: 19.823, lon:-155.478},
-  { name:'SMT',   lat: 32.702, lon:-109.891},
-  { name:'IRAM',  lat: 37.066, lon: -3.392 },
-  { name:'LMT',   lat: 18.985, lon: -97.315},
-  { name:'NOEMA', lat: 44.634, lon:  5.909 },
-];
-
 export const ARRAY_PRESETS = {
   'EHT 2017': [
     { name: 'ALMA',  lat: -23.0229, lon:  -67.7552 },
@@ -74,6 +63,24 @@ export const STATION_SEFD = {
   'GAM':   10000, 'CNI':   10000, 'SGO':   10000, 'BHEX':  10000,
 };
 
+// Physical single-dish diameters [m] per station (Alejandro note N5). For phased
+// stations (ALMA, SMA, NOEMA) this is the ELEMENT dish: the primary-beam FOV the
+// worker's θ≈λ/D taper models is set per element, not by the phased sum.
+// Sources: EHT 2019 Paper II Table 1 (2017/2022 stations); ngEHT Reference Array,
+// arXiv:2306.08787 (OVRO = 10.4 m Leighton, HAY = 37 m Haystack, GAM = 15 m Africa
+// Millimetre Telescope, BAJA/CNI/SGO = refurbished 6.1 m BIMA dishes).
+// Confirmed (Ilan, delegated authority from A. Cárdenas-Avendaño, 2026-07-07).
+// LMT 50 m / SPT 10 m are full apertures — the stable version-independent values
+// (2017 ops illuminated ~32.5 m / ~6 m respectively; caveat kept here, not baked in).
+export const DISH_DIAMETERS = {
+  'ALMA': 12,   'APEX': 12,   'SMA': 6,    'LMT': 50,
+  'IRAM': 30,   'SMT': 10,    'SPT': 10,   'JCMT': 15,
+  'GLT': 12,    'NOEMA': 15,  'KP12m': 12,
+  'BAJA': 6.1,  'OVRO': 10.4, 'HAY': 37,   'GAM': 15,
+  'CNI': 6.1,   'SGO': 6.1,
+  'BHEX': 3.4,  // matches BHEX_PRESET.dishDiameter
+};
+
 export const BHEX_PRESET = {
   name: 'BHEX',
   type: 'space',
@@ -96,16 +103,16 @@ export const SKY_TARGETS = {
 
 export const INFO = {
   globe:       { title: 'Radio Telescope Globe',    body: 'Click anywhere on Earth to place a radio telescope. Every pair of telescopes forms a "baseline" — like a giant antenna spanning the distance between them. More telescopes = more baselines = sharper images.' },
-  uvmap:       { title: 'UV-Plane Coverage',        body: 'As Earth rotates, each telescope pair sweeps an arc through Fourier space (the UV-plane). Each point sampled corresponds to one spatial frequency of the sky. The axis range auto-scales to the current UV coverage extent (max baseline × 1.2) and is labeled in gigawavelengths (Gλ) — the standard unit in radio astronomy publications. Dense, uniform coverage produces higher-fidelity reconstruction.' },
+  uvmap:       { title: 'UV-Plane Coverage',        body: 'As Earth rotates, each telescope pair sweeps an arc through Fourier space (the UV-plane). Each point sampled corresponds to one spatial frequency of the sky. The axis range is fixed to the array’s BHEX-enabled coverage extent, labeled in gigawavelengths (Gλ) — so toggling BHEX changes the coverage drawn, never the axes. The relative-coverage percentage counts sampled cells on the same fixed frame: it rises as coverage grows and ranks arrays against each other, but is not an absolute completeness. Dense, uniform coverage produces higher-fidelity reconstruction.' },
   dirty:       { title: 'Dirty Image',              body: 'The raw result of taking the inverse Fourier transform of only the sampled UV points (with zeros elsewhere). Artifacts called "sidelobes" appear because we only measured some Fourier frequencies.' },
-  restored:    { title: 'Restored Image',           body: 'After applying a deconvolution algorithm (Max Entropy or CLEAN), many sidelobes are suppressed. This is closer to the true sky, but resolution is still limited by the longest baseline.' },
+  restored:    { title: 'Restored Image',           body: 'After applying a deconvolution algorithm (Max Entropy or CLEAN), many sidelobes are suppressed. This is closer to the true sky, but resolution is still limited by the longest sampled baseline.' },
   ground:      { title: 'Ground Truth',             body: 'The original image we are trying to reconstruct. In real radio astronomy, we never have this — only the raw telescope data. This simulator lets you compare what we recover vs. the actual source.' },
-  noise:       { title: 'Thermal Noise',            body: 'Radio receivers add random electronic noise to every measurement. Noise scales as sqrt(SEFD_i × SEFD_j) per baseline — ALMA (94 Jy) produces ~0.15× the noise of SMT (17,100 Jy) on shared baselines, reflecting its much larger collecting area. Higher noise amplitude makes the reconstruction blurrier and noisier.' },
+  noise:       { title: 'Thermal Noise',            body: 'Radio receivers add random electronic noise to every measurement. Noise scales as sqrt(SEFD_i × SEFD_j) per baseline — ALMA (94 Jy) produces ~0.07× the noise of SMT (17,100 Jy) on shared baselines, reflecting its much larger collecting area. Higher noise amplitude makes the reconstruction blurrier and noisier.' },
   frequency:   { title: 'Observing Frequency',      body: 'Higher frequencies (shorter wavelengths) give finer resolution because the UV coordinates scale as u = baseline/λ. The EHT observes at 230 GHz (1.3 mm wavelength) for maximum resolution.' },
   duration:    { title: 'Synthesis Duration',       body: 'Earth rotates 360° in 24 hours. Longer observations allow each baseline to sweep more of the UV-plane, improving image quality. The EHT typically observes a source for 6–12 hours per night.' },
   declination: { title: 'Source Declination',       body: 'The angular distance of the target source from the celestial equator. Sources near the equator (δ ≈ 0°) produce roughly circular UV tracks; polar sources produce more compact, circular tracks. Elevation cutoffs (min 10°) are applied per telescope — stations that cannot see the source at a given hour angle contribute no UV samples.' },
   method:      { title: 'Reconstruction Method',    body: '"Dirty only": raw IFFT with no cleanup. "CLEAN": iteratively subtracts the PSF to remove sidelobe artifacts — the standard method in radio astronomy. "Max Entropy": gradient descent maximising image entropy under a data-fidelity constraint — favours smooth, positive images used by the EHT team alongside CLEAN.' },
-  dish:        { title: 'Dish Diameter',            body: 'Larger dishes collect more signal (better sensitivity). The angular field of view of each telescope is roughly λ/D radians. This does not change the UV coverage but affects sensitivity and how much sky is imaged at once.' },
+  dish:        { title: 'Dish Diameter',            body: 'Larger dishes collect more signal (better sensitivity). The angular field of view of each telescope is roughly λ/D radians. This does not change the UV coverage but affects sensitivity and how much sky is imaged at once. The default is the mean physical dish diameter of the selected array preset (the EHT 2022 mean when no EHT stations are loaded).' },
   contours:    { title: 'Contour Overlays',         body: 'Logarithmic contour lines drawn over the reconstructed image at three brightness levels: 50% of peak (solid white), 10% of peak (semi-transparent white), and 1% of peak (dashed white). This is the standard display format in radio astronomy publications. Contours reveal the dynamic range of the reconstruction — how much faint structure exists around the bright central source.' },
   contourmap:  { title: 'Contour Map',              body: 'A professional radio astronomy contour map showing the brightness distribution. The viridis colormap (blue→green→yellow) is perceptually uniform and colorblind-safe — the standard in modern astronomy publications. White contour lines are drawn at 50%, 10%, and 2% of the peak brightness, filtered to only show where signal exceeds 2× the noise floor (estimated from border pixels). The beam ellipse in the lower-right shows the angular resolution of the array. Toggle between the CLEAN/Max Entropy reconstruction and the dirty image to see how deconvolution removes sidelobe artifacts. Angular axis labels show the true physical scale of the image in microarcseconds (μas).' },
   fov:         { title: 'Image Field of View',       body: 'The total angular size of the image in microarcseconds (μas). Sets the physical pixel scale: pixel scale = FOV / N μas/pixel. Default is 80 μas — M87* physical scale. The 2019 EHT M87* images used an ~80 μas FOV at 1–2 μas/pixel. EHT baselines sample the inner portion of the UV grid at this scale.' },

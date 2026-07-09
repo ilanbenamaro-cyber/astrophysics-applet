@@ -5,7 +5,9 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { borderLineMat, loadEarthTextures, loadCountryBoundaries, syncTelescopeMarkers, syncSatelliteMarkers } from './globeHelpers.js';
 
-export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMotion, tourActive }) {
+// allowPlacement=false disables click-to-place (B3: compare mode is preset-only);
+// rotation/zoom interaction is unaffected.
+export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMotion, tourActive, allowPlacement = true }) {
   const containerRef = useRef(null);
   const rendererRef = useRef(null);
   const labelRendererRef = useRef(null);
@@ -20,15 +22,23 @@ export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMo
   const autoRotateTimerRef = useRef(null);
   const countryLabelGroupRef = useRef(null);
   const onAddRef = useRef(onTelescopeAdd);
+  const allowPlacementRef = useRef(allowPlacement);
   const showCountryLabelsRef = useRef(showCountryLabels);
+  // Live reducedMotion for closures created in the mount-once effect (stopAutoRotate
+  // resumes rotation on a timer and must not do so under reduced motion).
+  const reducedMotionRef = useRef(reducedMotion);
 
   useEffect(() => { onAddRef.current = onTelescopeAdd; }, [onTelescopeAdd]);
+  useEffect(() => { allowPlacementRef.current = allowPlacement; }, [allowPlacement]);
   useEffect(() => { showCountryLabelsRef.current = showCountryLabels; }, [showCountryLabels]);
   useEffect(() => {
     if (!labelRendererRef.current) return;
     labelRendererRef.current.domElement.style.display = tourActive ? 'none' : '';
   }, [tourActive]);
-  useEffect(() => { if (controlsRef.current) { controlsRef.current.autoRotate = !reducedMotion; } }, [reducedMotion]);
+  useEffect(() => {
+    reducedMotionRef.current = reducedMotion;
+    if (controlsRef.current) { controlsRef.current.autoRotate = !reducedMotion; }
+  }, [reducedMotion]);
 
   // Effect 1: Initialize Three.js scene ONCE
   useEffect(() => {
@@ -179,7 +189,7 @@ export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMo
       orbitControls.autoRotate = false;
       clearTimeout(autoRotateTimerRef.current);
       autoRotateTimerRef.current = setTimeout(() => {
-        orbitControls.autoRotate = true;
+        if (!reducedMotionRef.current) orbitControls.autoRotate = true;
       }, 3000);
     };
     renderer.domElement.addEventListener('pointerdown', stopAutoRotate);
@@ -188,6 +198,7 @@ export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMo
     let downX = 0, downY = 0;
     const onPointerDown = (e) => { downX = e.clientX; downY = e.clientY; };
     const onPointerUp = (e) => {
+      if (!allowPlacementRef.current) return;
       const dx = e.clientX - downX;
       const dy = e.clientY - downY;
       if (Math.abs(dx) >= 5 || Math.abs(dy) >= 5) return;
@@ -278,6 +289,6 @@ export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMo
   return html`<div
     ref=${containerRef}
     className="globe-container"
-    aria-label="3D Earth globe — click to place radio telescopes"
+    aria-label=${allowPlacement ? '3D Earth globe — click to place radio telescopes' : '3D Earth globe'}
   ></div>`;
 }

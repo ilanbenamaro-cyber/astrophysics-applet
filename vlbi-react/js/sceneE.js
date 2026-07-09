@@ -93,7 +93,8 @@ export const sceneE = {
       ctx.stroke();
       ctx.fillStyle = TOKENS.amber;
       ctx.font = mono(10, 600); ctx.textAlign = 'center';
-      ctx.fillText('EARTH-DIAMETER LIMIT', cx, cyP - limitR - 8);
+      // below the ring — the beyond-Earth annotation owns the NE corner above it
+      ctx.fillText('EARTH-DIAMETER LIMIT', cx, cyP + limitR + 16);
       ctx.restore();
     }
     // Space baselines reaching beyond the ring (orange = beyond-Earth)
@@ -144,8 +145,13 @@ export const sceneE = {
     ctx.beginPath(); ctx.arc(sxp, syp, 4, 0, Math.PI * 2); ctx.fill();
     ctx.shadowBlur = 0;
     ctx.fillStyle = TOKENS.textSecondary; ctx.font = mono(10, 600); ctx.textAlign = 'center';
-    ctx.fillText('BHEX', sxp, syp - 9);
-    ctx.fillText(`h = ${data.satellite.orbitalAltitudeKm.toLocaleString('en-US')} km`, gcx, gcy + gR + 18);
+    // Skip the sat label while it sweeps the altitude caption's line (bottom of
+    // the orbit) — the two texts fused ("…kmBHEX"); the glowing dot still marks it.
+    const capY = gcy + gR + 18;
+    if (!(Math.abs((syp - 9) - capY) < 14 && Math.abs(sxp - gcx) < 120)) {
+      ctx.fillText('BHEX', sxp, syp - 9);
+    }
+    ctx.fillText(`h = ${data.satellite.orbitalAltitudeKm.toLocaleString('en-US')} km`, gcx, capY);
     ctx.restore();
 
     // ── Relation callout + CTA. The pending-sign-off hedge lives ONCE, in the act's

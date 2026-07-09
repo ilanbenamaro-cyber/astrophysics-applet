@@ -83,7 +83,7 @@ export function App() {
     <div className="app">
       <header className="header" style=${{ position: 'relative' }}>
         <div className="header-inner">
-          <h1>VLBI Interferometry Simulator by Ilan Benjamin Amaro (Wake Forest University)</h1>
+          <h1>VLBI Interferometry Simulator<span className="header-byline">by Ilan Benjamin Amaro (Wake Forest University)</span></h1>
           <p>Built with AI assistance and guidance by Prof. Alejandro Cárdenas-Avendaño</p>
           <p>Click the globe to place radio telescopes · Earth rotation synthesizes a virtual aperture the size of Earth</p>
         </div>
@@ -121,7 +121,7 @@ export function App() {
           ${!compareMode && left.telescopes.length >= 2 ? html`
             <span className="stat"><span className="stat-val">${left.telescopes.length}</span>telescopes</span>
             <span className="stat"><span className="stat-val">${left.telescopes.length*(left.telescopes.length-1)/2}</span>baselines</span>
-            <span className="stat"><span className="stat-val">${left.uvFill.toFixed(1)}%</span>UV fill</span>
+            <span className="stat"><span className="stat-val">${left.uvFill.toFixed(1)}%</span>relative coverage</span>
             ${left.angularRes ? html`<span className="stat"><span className="stat-val">${left.angularRes}</span>resolution</span>` : null}
           ` : null}
           ${!compareMode && html`
@@ -157,7 +157,7 @@ export function App() {
             onArrayPresetChange=${left.setSelectedArrayPreset}
             onLoadArray=${left.handleLoadArrayPreset}
             bhexAdded=${left.bhexAdded}
-            onAddBHEX=${left.handleAddBHEX}
+            onToggleBHEX=${left.handleToggleBHEX}
             onClearAll=${left.handleClearTelescopes}
             showCountryLabels=${left.showCountryLabels}
             onToggleCountryLabels=${() => left.setShowCountryLabels(v => !v)}
@@ -189,8 +189,8 @@ export function App() {
           <aside className="right-panel" aria-label="Analysis outputs">
             <section id="tour-uv" className="panel-section">
               <h2>UV Coverage <${InfoTooltip} infoKey="uvmap" onOpen=${setInfoKey} /></h2>
-              <${UVMap} uvPoints=${left.uvPointsGl} N=${IMAGE_SIZE} pairSefdMap=${left.pairSefdMap} />
-              <p className="caption">Fill: ${left.uvFill.toFixed(2)}% of spatial frequencies sampled · ${left.uvPoints.length} samples</p>
+              <${UVMap} uvPoints=${left.uvPointsGl} N=${IMAGE_SIZE} pairSefdMap=${left.pairSefdMap} displayMaxGl=${left.uvDisplayMaxGl} />
+              <p className="caption">Relative coverage: ${left.uvFill.toFixed(1)}% of the locked UV frame · ${left.uvPoints.length} samples</p>
             </section>
 
             <section id="tour-images" className="panel-section">
@@ -221,7 +221,6 @@ export function App() {
                 dirtyData=${left.dirty}
                 restoredData=${left.restored}
                 N=${IMAGE_SIZE}
-                angularResolution=${left.angularRes}
                 fovMuas=${left.controls.fovMuas}
                 controls=${left.controls}
                 onOpenInfo=${setInfoKey}

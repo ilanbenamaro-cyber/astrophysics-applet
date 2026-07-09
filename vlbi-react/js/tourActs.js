@@ -36,7 +36,7 @@ export const TOUR_ACTS = [
       tex: '\\theta \\;\\approx\\; \\frac{\\lambda}{D} \\;\\longrightarrow\\; \\frac{\\lambda}{B}',
       values: () => [
         ['λ', P.str.lambda],
-        ['D (one dish)', `100 m → θ = ${P.str.thetaDish}`],
+        ['D (one dish)', `${P.dishD_m} m → θ = ${P.str.thetaDish}`],
         ['B (Earth-wide)', `${P.str.ehtBaseline} → θ = ${P.str.thetaEht}`],
         ['gain', P.str.improvement],
       ],
@@ -108,10 +108,10 @@ export const TOUR_ACTS = [
       ],
     },
     narrative: [
-      `Begin with what the array actually records. ${P.ehtBaselineCount} baselines, even stretched by ${TOUR_DURATION_HR} hours of rotation, sample just ${P.str.uvFill} of the (u,v) plane — a few bright threads pulled from an infinite weave. The left panel shows exactly those threads: every visibility this array measures of the ring, and nothing else. Everything between the threads is simply unknown, and no algorithm can be permitted to forget that.`,
+      `Begin with what the array actually records. ${P.ehtBaselineCount} baselines, even stretched by ${TOUR_DURATION_HR} hours of rotation, chart just ${P.str.uvFill} of the surveyed (u,v) frame — a few bright threads pulled from an infinite weave. The left panel shows exactly those threads: every visibility this array measures of the ring, and nothing else. Everything between the threads is simply unknown, and no algorithm can be permitted to forget that.`,
       `Invert that sparse record and the result is honest but haunted. The middle panel is the dirty image, I_D = I_sky ⊛ B_D: every true feature convolved with the instrument's own ghost, the dirty beam B_D — the pattern this exact coverage would record for a perfect point of light. Sidelobes radiate from each bright spot; rings that are not in the sky braid through rings that are. The corruption is not noise. It is structure: the precise, computable signature of the holes in the coverage.`,
       `CLEAN (Högbom, 1974) is the exorcism, and it is almost embarrassingly simple. Find the brightest point in the dirty image; trust a fraction of it; subtract γ = 0.1 of the dirty beam centred there; repeat, hundreds upon hundreds of times, until what remains sinks below 3σ of the noise. The accumulated point model, re-convolved with a clean elliptical beam and rejoined to the residual, is the image in the right panel. Each step of the falling residual you watch is the algorithm running live in this array's actual coverage — not a recording of it.`,
-      `Real visibilities also arrive wearing thermal noise, the receivers' own warmth stirred into the signal. Drag the noise control and watch the reconstruction degrade gracefully, then collapse: CLEAN can subtract the instrument's signature, but it cannot subtract ignorance. This is why the EHT anchors itself on raw sensitivity — ALMA's system-equivalent flux density of ${P.str.almaSefd} is the quietest in the array, and pairing every station with it lifts the faintest fringes above the floor.`,
+      `Real visibilities also arrive wearing thermal noise, the receivers' own warmth stirred into the signal. Step through the three noise presets and watch the reconstruction degrade gracefully, then collapse: CLEAN can subtract the instrument's signature, but it cannot subtract ignorance. This is why the EHT anchors itself on raw sensitivity — ALMA's system-equivalent flux density of ${P.str.almaSefd} is the quietest in the array, and pairing every station with it lifts the faintest fringes above the floor.`,
       `Hold the scale in mind while the residual falls: the ring being recovered spans ${P.str.m87Shadow} inside a field of view only ${TOUR_FOV_MUAS} μas wide, resolved by a beam near ${P.str.thetaEht}. The 2019 M87* analysis ran this same logic — alongside newer methods that independently agree with it — through its ${P.str.nBaselines} of real data over months of careful work; here the whole pipeline, transform to deconvolution, completes in about a tenth of a second.`,
     ],
     transition: 'computation-complete',
@@ -185,4 +185,3 @@ export const TOUR_ACTS = [
   },
 ];
 
-export const ACT_BY_ID = Object.fromEntries(TOUR_ACTS.map(a => [a.actId, a]));

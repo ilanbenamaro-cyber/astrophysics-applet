@@ -21,6 +21,7 @@ export function SimPane({ sim, onOpenInfo, label, reducedMotion = false }) {
         <select
           className="preset-select"
           value=${sim.selectedArrayPreset}
+          aria-label="Telescope array preset"
           onChange=${e => {
             const v = e.target.value;
             sim.setSelectedArrayPreset(v);
@@ -35,6 +36,7 @@ export function SimPane({ sim, onOpenInfo, label, reducedMotion = false }) {
         <select
           className="preset-select"
           value=${sim.selectedTarget}
+          aria-label="Sky target source"
           onChange=${e => sim.handleTargetChange(e.target.value)}
           style=${{ flex: '1', minWidth: '0' }}
         >
@@ -49,6 +51,7 @@ export function SimPane({ sim, onOpenInfo, label, reducedMotion = false }) {
           showCountryLabels=${false}
           reducedMotion=${reducedMotion}
           tourActive=${false}
+          allowPlacement=${false}
         />
         <${StatusBar} status=${sim.status} isComputing=${sim.isComputing} baselineStats=${sim.baselineStats} />
         <${MetricsPanel}
@@ -85,15 +88,17 @@ export function SimPane({ sim, onOpenInfo, label, reducedMotion = false }) {
         ${showTels ? html`
           <div style=${{ padding: '0 12px 8px' }}>
             <button
-              className=${'btn btn-xs bhex-button' + (sim.bhexAdded ? ' bhex-added' : '')}
-              onClick=${sim.handleAddBHEX}
-              disabled=${sim.bhexAdded}
+              className=${'btn btn-xs bhex-button' + (sim.bhexAdded ? ' bhex-on' : '')}
+              onClick=${sim.handleToggleBHEX}
+              aria-pressed=${sim.bhexAdded}
+              title="Toggle the BHEX space telescope on or off"
               style=${{ width: '100%', marginBottom: '6px' }}
-            >${sim.bhexAdded ? 'BHEX Added ✓' : '＋ BHEX Satellite'}</button>
+            >${sim.bhexAdded ? '✓ BHEX: ON' : 'BHEX: OFF'}</button>
             <${TelescopeList}
               telescopes=${sim.telescopes}
               onRemove=${sim.handleTelescopeRemove}
               onToggleVisibility=${sim.handleToggleVisibility}
+              readOnly=${true}
             />
           </div>
         ` : null}
@@ -102,8 +107,8 @@ export function SimPane({ sim, onOpenInfo, label, reducedMotion = false }) {
       <div className="sim-pane-outputs">
         <div className="panel-section">
           <h2>UV Coverage <${InfoTooltip} infoKey="uvmap" onOpen=${onOpenInfo} /></h2>
-          <${UVMap} uvPoints=${sim.uvPointsGl} N=${IMAGE_SIZE} pairSefdMap=${sim.pairSefdMap} />
-          <p className="caption">Fill: ${sim.uvFill.toFixed(2)}% · ${sim.uvPoints.length} samples</p>
+          <${UVMap} uvPoints=${sim.uvPointsGl} N=${IMAGE_SIZE} pairSefdMap=${sim.pairSefdMap} displayMaxGl=${sim.uvDisplayMaxGl} />
+          <p className="caption">Relative coverage: ${sim.uvFill.toFixed(1)}% · ${sim.uvPoints.length} samples</p>
         </div>
 
         <div className="panel-section">
@@ -134,7 +139,6 @@ export function SimPane({ sim, onOpenInfo, label, reducedMotion = false }) {
             dirtyData=${sim.dirty}
             restoredData=${sim.restored}
             N=${IMAGE_SIZE}
-            angularResolution=${sim.angularRes}
             fovMuas=${sim.controls.fovMuas}
             controls=${sim.controls}
             onOpenInfo=${onOpenInfo}

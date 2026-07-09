@@ -3,16 +3,22 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from './core.js';
 import { IMAGE_SIZE, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD,
          BHEX_PRESET, SKY_TARGETS } from './constants.js';
-import { computeUVPoints, computeUVPointsGl, computeUVFill,
+import { computeUVPoints, computeUVPointsGl, computeUVFillGl,
+         computeUVMaxExtentGl,
          latLonToECEF, computeSatelliteECEF } from './uvCompute.js';
 import { scaleSource, zoomSource, measureRingFraction, buildSefdMap, buildPairSefdMap,
-         computeDynamicRange, beamFwhm as beamFwhmFn, angularRes as angularResFn } from './simCore.js';
+         computeDynamicRange, beamFwhm as beamFwhmFn, angularResFromUV,
+         presetMeanDish } from './simCore.js';
 import { loadImagePresetAsync } from './presets.js';
 import { exportFITS } from './fitsExport.js';
 
 const DEFAULT_CONTROLS = {
-  declination: 12.391, duration: 12, frequency: 230,
-  noise: 0, dishDiameter: 25, method: 'clean',
+  declination: SKY_TARGETS['M87*'].dec, duration: 12, frequency: 230,
+  noise: 0,
+  // N5: default dish = mean dish of the initial preset's stations (EHT 2017),
+  // recomputed on every preset load; EHT 2022 mean when no EHT stations remain.
+  dishDiameter: presetMeanDish('EHT 2017'),
+  method: 'clean',
   fovMuas: 80, sourceFraction: 0.50,
 };
 
@@ -31,7 +37,6 @@ export function useSimulation() {
   const [uvPoints, setUvPoints]                 = useState([]);
   const [stationPairs, setStationPairs]         = useState([]);
   const [uvPointsGl, setUvPointsGl]             = useState([]);
-  const [uvFill, setUvFill]                     = useState(0);
   const [dirty, setDirty]                       = useState(null);
   const [restored, setRestored]                 = useState(null);
   const [controls, setControls]                 = useState(DEFAULT_CONTROLS);
@@ -83,16 +88,25 @@ export function useSimulation() {
 
   // ── Array preset helpers ────────────────────────────────────────────────────
   function loadEHTPresets(presetName = 'EHT 2017') {
-    telIdRef.current = 0;
     const stations = ARRAY_PRESETS[presetName] || ARRAY_PRESETS['EHT 2017'];
-    setTelescopes(stations.map((s, idx) => ({
-      id: telIdRef.current++,
-      name: s.name,
-      lat: s.lat,
-      lon: s.lon,
-      color: TELESCOPE_COLORS[idx % TELESCOPE_COLORS.length],
-      visible: true,
-    })));
+    setTelescopes(prev => {
+      // BHEX is an independent toggle (N2): preset changes swap the ground
+      // array but must not silently drop the space element.
+      const keepBhex = prev.some(t => t.name === BHEX_PRESET.name);
+      telIdRef.current = 0;
+      const next = stations.map((s, idx) => ({
+        id: telIdRef.current++,
+        name: s.name,
+        lat: s.lat,
+        lon: s.lon,
+        color: TELESCOPE_COLORS[idx % TELESCOPE_COLORS.length],
+        visible: true,
+      }));
+      if (keepBhex) next.push({ id: telIdRef.current++, ...BHEX_PRESET, visible: true });
+      return next;
+    });
+    // N5: the default dish tracks the selected EHT version's mean dish.
+    setControls(c => ({ ...c, dishDiameter: presetMeanDish(presetName) }));
   }
 
   // Load EHT 2017 on mount (after short delay for worker init)
@@ -111,7 +125,6 @@ export function useSimulation() {
     const { uvPoints: uvPts, stationPairs: pairs } = computeUVPoints(telescopes, { ...controls, N: IMAGE_SIZE });
     setUvPoints(uvPts);
     setStationPairs(pairs);
-    setUvFill(computeUVFill(uvPts, IMAGE_SIZE));
     setUvPointsGl(computeUVPointsGl(telescopes, {
       declination: controls.declination,
       duration:    controls.duration,
@@ -193,14 +206,35 @@ export function useSimulation() {
   }, [uvPoints, stationPairs, scaledGrayscale, controls.noise, controls.method, controls.dishDiameter, controls.frequency, sefdMap]);
 
   // ── Derived display metrics ─────────────────────────────────────────────────
-  const angularRes = useMemo(
-    () => angularResFn(telescopes, controls.frequency),
-    [telescopes, controls.frequency]);
+  // Fixed UV-map scale (N1): the BHEX-enabled coverage extent, independent of
+  // whether BHEX is toggled — the UV axes must not move when BHEX toggles.
+  const uvDisplayMaxGl = useMemo(
+    () => computeUVMaxExtentGl(telescopes, {
+      declination: controls.declination,
+      duration:    controls.duration,
+      frequency:   controls.frequency,
+    }),
+    [telescopes, controls.declination, controls.duration, controls.frequency]);
+
+  // Relative coverage (N3, relabeled per P5): % of cells sampled on a fixed grid
+  // spanning the locked display extent above — one frame for both the axes and
+  // the metric's denominator. Comparative, not absolute completeness.
+  const uvFill = useMemo(
+    () => computeUVFillGl(uvPointsGl, uvDisplayMaxGl),
+    [uvPointsGl, uvDisplayMaxGl]);
+
+  // P1: resolution from the sampled coverage (λ/|uv|max of the computed tracks),
+  // never the geometric array max — frequency/declination/duration flow in
+  // through uvPointsGl itself.
+  const angularRes = useMemo(() => angularResFromUV(uvPointsGl), [uvPointsGl]);
 
   const baselineStats = useMemo(() => {
     const groundTels = telescopes.filter(t => t.type !== 'space');
     const spaceTels  = telescopes.filter(t => t.type === 'space');
-    if (groundTels.length < 2) return null;
+    // A baseline exists with 2+ ground stations OR 1+ ground and a satellite
+    // (1 ground + BHEX reconstructs — 354 UV samples — so its ground–space
+    // baseline must show in the stats too, not just with 2+ ground).
+    if (groundTels.length < 2 && !(groundTels.length >= 1 && spaceTels.length >= 1)) return null;
     let maxKm = 0, minKm = Infinity;
     for (let i = 0; i < groundTels.length; i++) {
       for (let j = i + 1; j < groundTels.length; j++) {
@@ -211,19 +245,29 @@ export function useSimulation() {
         if (d > 0.1 && d < minKm) minKm = d;
       }
     }
+    // P2 (Ilan, delegated authority, 2026-07-07): the ground–space baseline
+    // varies along the orbit — take the max over the full observation window,
+    // not a single H=0 snapshot (which understated BHEX ~15%: 33,543 vs
+    // 39,291 km). Geometric like the ground-ground part above (ground pairs
+    // are Earth-fixed, so their lengths are time-invariant by construction).
+    const STEPS = 200;
+    const halfDur = controls.duration * Math.PI / 24;
     for (const sat of spaceTels) {
-      const satPos = computeSatelliteECEF(sat, 0);
       for (const g of groundTels) {
         const gPos = latLonToECEF(g.lat, g.lon);
-        const d = Math.sqrt((satPos.x-gPos.x)**2 + (satPos.y-gPos.y)**2 + (satPos.z-gPos.z)**2);
-        if (d > maxKm) maxKm = d;
+        for (let s = 0; s <= STEPS; s++) {
+          const H = -halfDur + (s / STEPS) * 2 * halfDur;
+          const satPos = computeSatelliteECEF(sat, H / (2 * Math.PI) * 24);
+          const d = Math.sqrt((satPos.x-gPos.x)**2 + (satPos.y-gPos.y)**2 + (satPos.z-gPos.z)**2);
+          if (d > maxKm) maxKm = d;
+        }
       }
     }
     const lambdaM = 299792458 / (controls.frequency * 1e9);
     const maxGl = maxKm * 1e3 / lambdaM / 1e9;
     const minGl = minKm < Infinity ? minKm * 1e3 / lambdaM / 1e9 : 0;
     return { maxKm, maxGl, minGl };
-  }, [telescopes, controls.frequency]);
+  }, [telescopes, controls.frequency, controls.duration]);
 
   const dynamicRange = useMemo(() => computeDynamicRange(restored, IMAGE_SIZE), [restored]);
 
@@ -239,14 +283,11 @@ export function useSimulation() {
     }
   }, []);
 
-  const handleAddBHEX = useCallback(() => {
-    if (telescopes.some(t => t.name === 'BHEX')) return;
-    setTelescopes(prev => [...prev, {
-      id: telIdRef.current++,
-      ...BHEX_PRESET,
-      visible: true,
-    }]);
-  }, [telescopes]);
+  const handleToggleBHEX = useCallback(() => {
+    setTelescopes(prev => prev.some(t => t.name === BHEX_PRESET.name)
+      ? prev.filter(t => t.name !== BHEX_PRESET.name)
+      : [...prev, { id: telIdRef.current++, ...BHEX_PRESET, visible: true }]);
+  }, []);
 
   const handleTelescopeAdd = useCallback((lat, lon) => {
     setTelescopes(prev => {
@@ -311,6 +352,8 @@ export function useSimulation() {
   const handleClearTelescopes = useCallback(() => {
     setTelescopes([]);
     telIdRef.current = 0;
+    // N5: with no EHT stations present, the default dish is the EHT 2022 mean.
+    setControls(c => ({ ...c, dishDiameter: presetMeanDish('EHT 2022') }));
   }, []);
 
   // Exposed for Tour's loadEHT action
@@ -349,6 +392,7 @@ export function useSimulation() {
     dirty, restored,
     controls, status, isComputing, uvCount, beamDims, selectedTarget,
     // Derived
+    uvDisplayMaxGl,
     effectiveSourceFraction, ringFraction, angularRes, baselineStats,
     sefdMap, pairSefdMap, dynamicRange, beamFwhm,
     bhexAdded,
@@ -356,7 +400,7 @@ export function useSimulation() {
     setControls, setSelectedArrayPreset, setShowCountryLabels,
     // Handlers
     handleTelescopeAdd, handleTelescopeRemove, handleToggleVisibility,
-    handleTargetChange, handleAddBHEX, handleLoadArrayPreset,
+    handleTargetChange, handleToggleBHEX, handleLoadArrayPreset,
     handlePresetSelect, handleFileUpload, handleReset, handleExportFITS,
     handleClearTelescopes, handleLoadDefaultEHT,
     loadEHTPresets,

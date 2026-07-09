@@ -87,20 +87,18 @@ html, body {
   color: var(--accent-teal);
   letter-spacing: 0.02em;
 }
+/* Byline inside the h1: same copy, quieter voice — the instrument name leads. */
+.header-byline {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.03em;
+  margin-left: 8px;
+}
 .header-inner p {
   margin: 0;
   font-size: var(--fs-sm);
   color: var(--text-secondary);
-}
-.header-credit {
-  font-size: var(--fs-sm);
-  color: var(--text-secondary);
-  margin: 0;
-}
-.header-ai-note {
-  font-size: var(--fs-xs);
-  color: var(--text-secondary);
-  margin: 0;
 }
 .header-stats {
   display: flex;
@@ -119,6 +117,7 @@ html, body {
   font-size: var(--fs-lg);
   font-weight: 600;
   color: var(--accent-teal);
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 
@@ -306,8 +305,8 @@ html, body {
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 10px 12px;
-  font-family: 'Courier New', monospace;
-  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  font-size: var(--fs-base);
   color: var(--text-primary);
   overflow-x: auto;
   white-space: pre;
@@ -417,25 +416,6 @@ html, body {
 .upload-zone:hover { border-color: var(--accent-teal); background: var(--bg-2); color: var(--text-primary); }
 
 /* ── CLEAN toggle ── */
-.clean-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  font-size: 11px;
-  color: var(--accent-teal);
-  user-select: none;
-  white-space: nowrap;
-  padding: 4px 0;
-}
-.clean-toggle input[type="checkbox"] {
-  accent-color: var(--accent-teal);
-  cursor: pointer;
-  width: 13px;
-  height: 13px;
-  flex-shrink: 0;
-}
-
 /* ── Controls Panel ── */
 .control-row {
   margin-bottom: 10px;
@@ -483,30 +463,6 @@ input[type="range"]::-moz-range-thumb {
   cursor: pointer;
   border: none;
 }
-.method-row {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 10px;
-}
-.method-btn {
-  flex: 1;
-  background: var(--bg-2);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 5px 4px;
-  font-size: var(--fs-xs);
-  color: var(--text-secondary);
-  cursor: pointer;
-  text-align: center;
-  transition: all 150ms ease;
-}
-.method-btn.selected {
-  background: var(--bg-3);
-  border-color: var(--accent-teal);
-  color: var(--accent-teal);
-}
-.method-btn:hover:not(.selected) { border-color: var(--accent-amber); color: var(--text-primary); }
-
 /* ── Buttons ── */
 .btn {
   border: none;
@@ -522,8 +478,14 @@ input[type="range"]::-moz-range-thumb {
   gap: 5px;
   font-family: var(--font);
 }
-.btn:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.35); }
-.btn:active { transform: translateY(0); box-shadow: none; }
+.btn:hover { transform: translateY(-1px); border-color: var(--accent-amber); }
+.btn:active { transform: translateY(0); }
+.btn:focus-visible,
+.tel-btn:focus-visible,
+.info-btn:focus-visible {
+  outline: 2px solid var(--accent-teal);
+  outline-offset: 2px;
+}
 .btn-primary {
   background: var(--accent-teal);
   color: #000000;
@@ -608,14 +570,17 @@ input[type="range"]::-moz-range-thumb {
   justify-content: center;
 }
 
-.bhex-button:hover:not(:disabled) {
+.bhex-button:hover {
   background: rgba(255, 215, 0, 0.08);
 }
 
-.bhex-button:disabled,
-.bhex-button.bhex-added {
-  opacity: 0.5;
-  cursor: not-allowed;
+/* Toggle ON state (N2) — button stays clickable; pressed state reads as lit */
+.bhex-button.bhex-on {
+  background: rgba(255, 215, 0, 0.14);
+}
+
+.bhex-button.bhex-on:hover {
+  background: rgba(255, 215, 0, 0.2);
 }
 
 /* ── Status Bar ── */
@@ -690,7 +655,7 @@ input[type="range"]::-moz-range-thumb {
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg-1); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #4a3810; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-amber); }
 
 /* ── Accessibility panel ── */
 .a11y-wrap {
@@ -841,7 +806,7 @@ input[type="range"]::-moz-range-thumb {
 .contour-map-panel {
   margin-top: 12px;
   background: var(--bg-2);
-  border-radius: 8px;
+  border-radius: 6px;
   overflow: hidden;
   box-sizing: border-box;
   border: 1px solid var(--border);
@@ -901,7 +866,7 @@ input[type="range"]::-moz-range-thumb {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   pointer-events: none;
-  font-size: 0.68rem;
+  font-size: var(--fs-xs);
   color: rgba(255,255,255,0.9);
   text-shadow: 0 0 4px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.7);
 }
@@ -914,13 +879,13 @@ input[type="range"]::-moz-range-thumb {
   display: flex;
   justify-content: space-between;
   padding: 2px 8px;
-  font-size: 0.65rem;
+  font-size: var(--fs-xs);
   color: var(--text-secondary);
   font-family: monospace;
 }
 .contour-cb-title {
   text-align: center;
-  font-size: 0.65rem;
+  font-size: var(--fs-xs);
   color: var(--text-secondary);
   opacity: 0.75;
   padding: 0;
@@ -929,7 +894,7 @@ input[type="range"]::-moz-range-thumb {
 }
 .contour-axis-x {
   text-align: center;
-  font-size: 0.78rem;
+  font-size: var(--fs-base);
   color: var(--text-primary);
   font-weight: 500;
   padding: 2px 0 6px;
@@ -938,7 +903,7 @@ input[type="range"]::-moz-range-thumb {
 .contour-axis-y {
   writing-mode: vertical-rl;
   transform: rotate(180deg);
-  font-size: 0.75rem;
+  font-size: var(--fs-base);
   color: var(--text-secondary);
   padding: 0 4px;
   letter-spacing: 0.02em;
@@ -953,7 +918,7 @@ input[type="range"]::-moz-range-thumb {
   align-items: center;
   gap: 12px;
   padding: 4px 8px 6px;
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   color: var(--text-secondary);
 }
 .contour-cb-level { opacity: 0.4; }
@@ -964,11 +929,11 @@ input[type="range"]::-moz-range-thumb {
 }
 .contour-beam-label {
   margin-left: auto;
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   color: var(--text-primary);
 }
 .contour-map-header span {
-  font-size: 0.9rem;
+  font-size: var(--fs-lg);
   font-weight: 700;
 }
 
@@ -977,14 +942,14 @@ input[type="range"]::-moz-range-thumb {
   position: absolute;
   bottom: 36px;
   right: 8px;
-  background: rgba(8, 8, 24, 0.88);
+  background: rgba(10, 10, 10, 0.9);   /* warm-neutral (was blue-black 8,8,24) */
   border: 1px solid var(--border);
   border-radius: 6px;
   overflow: hidden;
   z-index: 5;
   min-width: 210px;
   backdrop-filter: blur(4px);
-  font-size: 0.72rem;
+  font-size: var(--fs-sm);
   font-family: var(--font-mono);
 }
 .metrics-header {
@@ -996,7 +961,7 @@ input[type="range"]::-moz-range-thumb {
   cursor: pointer;
   user-select: none;
   color: var(--text-secondary);
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -1099,18 +1064,28 @@ input[type=range]:hover::-webkit-slider-thumb {
   to   { opacity: 1; transform: translateY(0); }
 }
 .metrics-panel { animation: fadeSlideIn 0.2s ease; }
-.info-modal-content { animation: fadeSlideIn 0.2s ease; }
-
-.contour-panel:hover {
-  box-shadow: inset 0 0 0 1px rgba(196, 165, 85, 0.2);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .btn { transition: none !important; }
   .btn:hover { transform: none; box-shadow: none; }
-  .metrics-panel, .info-modal-content { animation: none !important; }
+  .metrics-panel { animation: none !important; }
 }
 [data-reduced-motion] .btn { transition: none !important; }
 [data-reduced-motion] .btn:hover { transform: none; box-shadow: none; }
-[data-reduced-motion] .metrics-panel,
-[data-reduced-motion] .info-modal-content { animation: none !important; }
+[data-reduced-motion] .metrics-panel { animation: none !important; }
+
+/* Keyboard focus for sliders — the outline:none above removes the UA ring (a11y). */
+input[type="range"]:focus-visible {
+  outline: 2px solid var(--accent-teal);
+  outline-offset: 2px;
+}
+
+/* Compare panes stack below 1100px — two-up gets cramped (~508px/pane at 1024).
+   Lives at end-of-file so it wins the cascade over the base .compare-layout rule. */
+@media (max-width: 1100px) {
+  .compare-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 4px auto;
+    overflow: visible;
+  }
+  .sim-pane { overflow: visible; }
+}

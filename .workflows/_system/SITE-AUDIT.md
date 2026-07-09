@@ -157,3 +157,306 @@ via the real engine (own worker) and renders with drawHot; default opens on 0 σ
 diff empty. **Act B** idle spin: replaced the quantized track[headIdx] lookup + eased
 resume ramp (the jerk/slowness sources) with a continuous hour-angle clock (rate×dt,
 ±12 h wrap) so it spins smoothly like the main globe.
+
+---
+
+## ADDENDUM 2026-07-07 — Alejandro physics pass (5 authorized notes + fenced audit)
+
+Spec: five P0 notes from Prof. Cárdenas-Avendaño (authority to change core behavior),
+everything else diagnose/propose-only for physics. Instrument-first: all N3/N4 numbers
+below were measured (Node probe on the pure modules, `probe-n3-n4.mjs`) BEFORE any change.
+
+### N1 — UV map rescaled with BHEX [HIGH][fix][UVMap.js:23-30]
+UVMap auto-scaled to the current coverage's radial max ×1.2, so the BHEX toggle rezoomed
+the axes. FIX: `computeUVMaxExtentGl` (uvCompute.js) = extent of coverage AS IF BHEX were
+present (telescopes ∪ BHEX_PRESET, radial max ×1.2) — toggle-invariant (measured 34.635 Gλ
+with BHEX on AND off; 52.0 Gλ at 345 GHz — still physically responsive). Exposed as
+`uvDisplayMaxGl` (useSimulation), passed to UVMap in App + SimPane.
+Tour panels intentionally NOT changed: sceneB/C/E frame their own instruments via
+`uvExtentGl` (fixed engineState → static frames), and sceneE already presents the N1
+relationship (ground-limit ring inside the BHEX-extent frame). [FLAG][low] Act B/C panel
+frames are Earth-scaled while the Act B fill gauge / Act C caption % is locked-frame
+(see N3) — wording kept frame-agnostic; a future polish could sublabel the gauge.
+
+### N3 — UV fill 0.0%/0.1% [HIGH][fix][uvCompute.js:181-190 old, useSimulation.js:114, tourPhysics.js:129-138]
+MEASURED INTERMEDIATES (before change, EHT 2017 → M87*, 12 h, 230 GHz, FOV 80 μas, N=512):
+7,298 samples → 27 unique cells of 262,144 (entire coverage inside a ±3.2 px disk; Gλ max
+8.35 vs 660 Gλ Nyquist half-grid) → 0.0103% → displayed "0.0%". +BHEX: 9,828 samples →
+271 cells → 0.1034% → "0.1%". ngEHT: 42,176 samples → 47 cells → 0.018%. ROOT CAUSE: the
+metric gridded FOV-scaled pixel-space points on the full Nyquist grid — sub-pixel collapse
+(the documented UV-display gotcha) applied to the fill; a rounding artifact, not coverage.
+The tour's "0.010 %" was the SAME computation (not a divergence).
+FIX (definition chosen by Ilan from measured candidates): `computeUVFillGl(ptsGl,
+halfExtentGl, M=200)` — % of cells sampled on a fixed M×M grid spanning the N1-locked
+frame, in Gλ. One frame for axes AND fill. Old computeUVFill removed (all 4 callers
+switched: useSimulation, tourPhysics, sceneB, tourScenes genericScene).
+MEASURED AFTER (locked frame 34.63 Gλ, M=200): EHT 2017 = 442 cells → 1.10%; +BHEX =
+2,098 → 5.24%; EHT 2022 = 658 → 1.65%; ngEHT = 1,250 → 3.13%; Sgr A* 1.55%, 3C 279 1.19%,
+Cen A 0.86%. Fill now grows with coverage and never jumps on toggle. App == tour verified
+to machine precision for the same observation (TOUR_PHYSICS.uvFillPct = 1.1050 = app path).
+Frozen anchors re-verified: 10,883 km / 25 μas / 42 μas.
+
+### N4 — TARGET-STRESS-TEST (EHT 2017, 12 h, 230 GHz; probe + live browser, 2026-07-07)
+
+Analytic (Node probe on the app's own modules) — expected vs actual per target:
+
+| Target | dec (°) | excluded by elevation | co-vis \|B\|max (pair) | θ=λ/B co-vis | θ from sampled UV | samples | max Gλ | fill (new) | browser recon |
+|---|---|---|---|---|---|---|---|---|---|
+| M87*   | 12.391  | SPT  | 10,883 km (IRAM–JCMT) | 24.7 μas | 24.7 μas | 7,298 | 8.35 | 1.10 % | ✓ (dec readout exact) |
+| Sgr A* | −29.008 | none | 11,406 km (IRAM–SPT)  | 23.6 μas | 23.6 μas | 7,660 | 8.74 | 1.55 % | ✓ |
+| 3C 279 | −5.789  | SPT  | 10,883 km (IRAM–JCMT) | 24.7 μas | 24.8 μas | 7,022 | 8.31 | 1.19 % | ✓ |
+| Cen A  | −43.019 | IRAM | 11,182 km (SMT–SPT)   | 24.0 μas | 26.7 μas | 4,842 | 7.72 | 0.86 % | ✓ |
+| Custom | slider  | —    | (keeps last dec — by design) | — | — | — | — | — | ✓ |
+
+Edge decs (Custom path): ±60/±90° all sane (dec 60 == dec 90 sample counts are CORRECT:
+12 h duration ⇒ HA ∈ [−6h,+6h] where cos H ≥ 0, so all northern stations stay visible in
+both cases — verified analytically). BHEX max ground–space |B| over the full track =
+39,291 km ≤ 2R⊕+h = 39,304 km ✓. No target produces degenerate or nonphysical coverage;
+declination flows target → handleTargetChange → controls.declination → computeUVPoints/Gl
+with the MIN_ELEVATION_RAD filter applied per station per HA step (verified end-to-end in
+the browser: all named targets reconstruct; zero console errors). Cen A's sampled-UV θ
+(26.7 μas) rightly differs from its full-track co-vis θ (24.0): the SMT–SPT co-visibility
+window falls outside the ±6 h observation — physics, not a bug.
+
+DEFECTS → PROPOSALS (core display formulas beyond the 5 notes — fenced, NOT fixed):
+- [P1][flag][simCore.js angularRes / useSimulation.js:196] The app's displayed
+  "resolution" uses the GEOMETRIC array max (11,406 km, dec-independent → "24 μas" for
+  every target), pairing stations that never co-observe the selected source. The tour
+  explicitly forbids this for its headline (ehtArrayMaxBaselineKm "never shown as
+  resolution"). Proposed fix for Alejandro sign-off: derive θ from the actually-sampled
+  coverage max (λ/|uv|max of computeUVPointsGl output) — by construction consistent with
+  the tracks; per-target values in the table above.
+- [P2][flag][useSimulation.js:214-221 baselineStats] Space-baseline max sampled at H=0
+  only; actual BHEX max over the track is 39,291 km — StatusBar's km/Gλ stats understate
+  BHEX. Proposed: scan the track (or reuse computeUVPointsGl max).
+
+Tour ↔ target consistency: the tour's dec is the M87* constant by design (fixed
+narrative); tourPhysics headline logic (SPT excluded, 10,883 km) re-verified intact.
+Evidence: n4-tour-state.png (Act A), n4-actB.png (fill gauge 1.10%), n4-actC.png
+(caption "1.1 % of the UV frame"; σ presets hold) — local session artifacts (repo-ignored).
+
+### N5 — default dish = mean of the selected EHT preset [fix][constants.js, simCore.js, useSimulation.js]
+Per-station dish data did NOT exist in the repo (STATION_SEFD only) — surfaced as the
+note predicted; Ilan approved adding published physical dish diameters. New
+`DISH_DIAMETERS` in constants.js (element dish for phased stations — ALMA 12, APEX 12,
+SMA 6, LMT 50, IRAM 30, SMT 10, SPT 10, JCMT 15, GLT 12, NOEMA 15, KP12m 12; ngEHT-only
+sites from the Reference Array paper arXiv:2306.08787 — OVRO 10.4 m Leighton, HAY 37 m
+Haystack, GAM 15 m AMT, BAJA/CNI/SGO 6.1 m refurbished BIMA; BHEX 3.4).
+⚠ PENDING Alejandro confirmation (flagged in the source comment).
+`presetMeanDish` (simCore.js): EHT 2017 → 18.1 m, EHT 2022 → 16.7 m, ngEHT P1 → 15.6 m;
+EHT-2022-mean fallback for unknown presets / cleared arrays. Wiring: DEFAULT_CONTROLS,
+loadEHTPresets (recompute on preset change; manual slider edits persist until then),
+handleClearTelescopes (no-EHT-stations fallback). Dish slider min 3 m / step 0.5 m (was
+10/5) so the new defaults and BHEX-class dishes are reachable. Stale `dishDiameter: 25`
+hardcodes replaced with the computed `P.ehtMeanDishM` in sceneA/sceneC/sceneD (tour
+engine calls now track the app default); worker.js untouched (its `= 25` destructure
+default is unreachable — params always carry dishDiameter). Verified in-browser:
+mount 18.1 → 2022 16.7 → ngEHT 15.6 → manual 42 persists → preset reload 18.1 →
+Clear All 16.7; zero console errors. Note: dish 25→18.1 widens the worker's primary-beam
+taper (1.02λ/D) — reconstruction output changes slightly for all defaults; this is the
+authorized point of the note ("changes θ=λ/D-driven displays").
+
+### Stage 2 — fenced site-wide audit (2026-07-07)
+
+Method: 3 parallel read-only sub-agents (physics / design+dead-code / a11y-responsive-perf)
++ inline tour/UX browser checks. The design+dead-code agent was cut off by the subagent
+session limit mid-run — its scope was completed INLINE (grep sweeps below), per the spec's
+budget fallback. All fixes below verified live on port 8547, zero console errors.
+
+#### 2.1 PHYSICS — PROPOSALS for Alejandro (fenced: NOT fixed)
+- [P1][flag][simCore.js angularRes] Displayed "resolution" uses the geometric array max
+  (dec-independent "24 μas"; pairs non-co-observing stations). Propose θ from the sampled
+  coverage max (per-target values in the N4 table).
+- [P2][flag][useSimulation.js baselineStats] Space baseline sampled at H=0 only; true BHEX
+  track max is 39,291 km — StatusBar understates space baselines. Propose track-max scan.
+- [P3][flag][worker.js:142] Worker's default `dishDiameter = 25` destructure is the
+  pre-N5 value. Unreachable today (all callers pass it), left untouched to keep the worker
+  diff at zero; propose removing the numeric default at the next authorized worker change.
+
+#### 2.1 PHYSICS-COPY — fixed under the copy fence (no computation touched)
+- [MED][fix][constants.js INFO.noise + PhysicsNotesModal.js] "ALMA ~0.15× the noise of
+  SMT on shared baselines" was numerically wrong: σ∝√SEFD ⇒ √(94/17,100) ≈ 0.07×. Fixed
+  in both (0.15 was the ALMA↔APEX ratio).
+- [MED][fix][PhysicsNotesModal.js BHEX §] Hardcoded, self-inconsistent BHEX figures
+  ("~27,000 km / ~20 Gλ / ~6 μas") contradicted the tour. Now interpolates
+  TOUR_PHYSICS.bhex (32,933 km, ~8 μas), hedged "B ~ R⊕ + h … pending expert sign-off".
+  (htm gotcha hit: whitespace-only text before an interpolation hole is stripped —
+  keep "at ${…}" on one line.)
+- [MED][fix][constants.js INFO.uvmap] Said axes "auto-scale to current coverage ×1.2" —
+  stale after N1. Now describes the locked BHEX-enabled frame + same-frame fill.
+- [LOW][fix][tourActs.js Act A values row + sceneA caption] literal "100 m" →
+  `${P.dishD_m} m` (single-sourced with θ).
+- [LOW][fix][useSimulation.js] DEFAULT_CONTROLS.declination literal 12.391 →
+  SKY_TARGETS['M87*'].dec (single-sourcing, value unchanged).
+- [DOC][fix] stale cross-refs: tourPhysics "useSimulation.js:224-225" → simCore
+  angularRes; tourScene uvExtentGl comment no longer claims to match the app.
+- [OK] verified correct by the sweep: baselineToUV deg/rad handling, satellite
+  t_hours mapping, fitsExport unit conversions, worker PSF/restore-beam conventions,
+  √27 vs 2√27 usage, tourActs numbers all routed through TOUR_PHYSICS.
+
+#### 2.2 DESIGN (fixed) — inline sweep after agent budget cut
+- [fix][UVMap.js] grid circles rgba(30,30,80)/axes rgba(40,40,100) (off-token blue) →
+  border-family rgba(45,34,0); axis labels fontSize 9px → var(--fs-2xs) (follows the
+  a11y font scale); fontFamily 'monospace' → var(--font-mono).
+- [fix][app.css] .modal-code 'Courier New' → var(--font-mono); .contour-map-panel
+  radius 8 → 6. [fix][tour.css] CTA radius 8 → 6.
+- [OK/licensed left as-is] .a11y-panel popover (radius 8 + shadow — floating overlay,
+  modal-class); .a11y-toggle-track 9px (pill switch); .bhex-button #FFD700 (recorded
+  license); serif grep clean ("Georgia" hit = the country name).
+
+#### 2.3 TOUR (verified holding)
+Act B continuous smooth spin + live HA/dec + 1.10% gauge ✓; Act C three σ presets
+recompute via own worker (0.03σ visibly degraded, no stall, buttons highlight) ✓;
+Act D reached ✓; Act E BHEX coverage + Earth-limit ring + single hedge ✓; presenter
+mode (?mode=presenter) = headline+equation only ✓. Screenshots: s2-actC-003sigma.png,
+s2-actE.png, s2-presenter.png (local session artifacts).
+
+#### 2.4 UX (fixed in N2/N5 + verified)
+BHEX toggle reads as a labeled ON/OFF state in both sidebar and SimPane; dish default
+visibly tracks the preset; no ambiguous drags found beyond the accepted Act B/C canvas
+controls.
+
+#### 2.5 A11Y / RESPONSIVE / PERF
+FIXED: :focus-visible ring for .btn/.tel-btn/.info-btn (app-wide); aria-pressed on
+Compare Mode, country-labels, Dirty/CLEAN, UVMap SNR toggles (BHEX had it from N2);
+aria-labels on array/target selects (AppSidebar + SimPane); MetricsPanel header now
+keyboard-operable (role=button, tabIndex, aria-expanded, Enter/Space); Globe reduced-
+motion leak fixed (auto-rotate no longer resumes 3 s after interaction under reduced
+motion — reducedMotionRef guard); meta description added to index.html.
+FLAGGED (human/design decision):
+- [FLAG][app.css .compare-layout] No breakpoint — compare mode stays two-up below
+  1100px and gets cramped on tablets; propose stacked variant or width gate.
+- [FLAG][index.html] 'JetBrains Mono' declared but never loaded (silent fallback to
+  system monospace — documented DESIGN-LANGUAGE status quo; load it or drop the name).
+PERF: computeUVMaxExtentGl adds ≈ one computeUVPointsGl per control change (~0.5–0.8 ms
+at ≤17 stations + BHEX; memo-gated, not per-frame) — negligible vs the worker; no new
+RAF/listener leaks; UVMap effect allocation-per-change only.
+
+#### 2.6 DEAD CODE (fixed, grep-proven)
+- constants.js EHT_PRESETS (superseded by ARRAY_PRESETS; 1 ref = definition) — removed.
+- tourActs.js ACT_BY_ID (1 ref = definition) — removed.
+- app.css orphan blocks removed (0 occurrences in js/ or index.html; none library-
+  generated or concat-composed): .header-credit, .header-ai-note, .clean-toggle (+input
+  rule), .method-row, .method-btn (+.selected/:hover — P1-era method buttons),
+  .info-modal-content (+reduced-motion refs), .contour-panel:hover.
+
+---
+
+## ADDENDUM 2026-07-09 — FINAL SHIP PASS (P1–P5 decided + B1–B4 + hunt)
+
+Spec: `.workflows/_prompts/tour-final-ship-pass.md`. P1–P5 DECIDED (Ilan, delegated
+authority from A. Cárdenas-Avendaño, 2026-07-07). Instrument-first throughout: a 25-check
+Node regression probe (probe-ship-pass.mjs, session artifact) ran BEFORE any change (all
+green on the untouched modules) and at every gate. Worker baseline hash
+3fb15375794db9c3a4bf66096eb730693aa3f6fc — zero diff enforced at each gate.
+
+### Phase 1 — physics (commits f698b26, 3fb57c7, ac3195f, 52bb7fd)
+- P1 [fix][simCore.js, useSimulation.js] Resolution now θ=λ/|uv|max of the sampled tracks
+  (angularResFromUV; 1 decimal < 100 μas). Browser-verified per target: M87* 24.7 ·
+  Sgr A* 23.6 · 3C 279 24.8 · Cen A 26.7; BHEX ON → 7.1 μas (real physics). Tour headline
+  25 μas / 10,883 km intact; no in-frame collision (tour is an opaque overlay).
+- P2 [fix][useSimulation.js baselineStats] Space baseline max over the full observation
+  window (STEPS=200), geometric like the ground part. MEASURED: 39,291 km / 30.1 Gλ
+  (SPT–BHEX, H=+3 h) ≤ 2R⊕+h (39,304). NOTE: the decided 39,291 is the UNFILTERED
+  geometric track max; the elevation-filtered sampled max would be 39,110 (LMT–BHEX).
+  Earth-only bit-identical (ground baselines are Earth-fixed).
+- P4 [confirm][constants.js] DISH_DIAMETERS unflagged (⚠ PENDING → confirmed, delegated
+  authority); LMT/SPT full-aperture values kept with 2017-illuminated caveat as comment.
+- P5 [relabel][7 surfaces] "UV fill" → "Relative coverage" (header stat, both captions,
+  MetricsPanel "Rel. Coverage", INFO.uvmap, tour gauge 'rel. coverage', Act B narrative
+  "of the surveyed (u,v) frame", Act C caption). Math untouched; M=200 commented as a
+  FROZEN display constant; app==tour 1.1050 to machine precision (probe).
+
+### Phase 2 — bugs
+- B1 [HIGH][fix][UVMap.js toCanvas — commit 83e7fcd] ROOT CAUSE: mapping treated the
+  half-extent as a FULL width — visible span was ±displayMax/2 (±17.3 Gλ of the 34.6
+  frame) while edge labels claimed ±34.6; BHEX arcs (|uv|max 28.86 Gλ) clipped at all
+  four edges; Earth-only (8.35) happened to fit. Present since 8c6ba01. The N1 locked
+  extent was NOT undersized; fill always used the half-extent correctly (numbers
+  unchanged). FIX: x=(u/(2·displayMax)+0.5)·DST. Screenshots: b1-before-bhex-clipped /
+  b1-after-bhex-on / b1-after-earth-only (session artifacts). Tour panels checked —
+  their (size/2)/maxGl mapping was already correct.
+- B2 [HIGH][fix][globeHelpers.js — commit 09c006e] TWO causes measured: (1) chord-space
+  lerp packs a near-antipodal pair's angular travel into the middle segments — SPT–GLT
+  (166.5°) worst chord 18.7°, polyline sagging to r=1.0015 vs globe 1.0 → arc middle
+  breaks at the limb, camera-dependent ("intermittent"). FIX: slerp — worst chord 3.33°,
+  min r 1.0146 any pair; degenerate-co-located lerp fallback. (2) 1px lines at 0.5 alpha
+  faded out over the bright Antarctic ice approaching SPT. FIX: opacity 0.85
+  (screenshot-verified). Elevation culling untouched (lives in uvCompute; probe green).
+- B3 [fix][Globe.js, TelescopeList.js, SimPane.js — commit 40aa5b0] Compare = presets +
+  BHEX only: Globe allowPlacement prop (ref-mirrored), TelescopeList readOnly, SimPane
+  passes both. Verified: pane clicks place nothing; BHEX left-only (no cross-pane leak);
+  single-pane unchanged.
+- B4 [fix][commit 8e7e3f7 + this one]:
+  - baselineStats missing with 1 ground + BHEX although reconstruction runs (354
+    samples) → stats show for any real baseline (38,510 km verified).
+  - tourActs Act C "Drag the noise control" → "Step through the three noise presets"
+    (slider removed 2026-06-16; agent-confirmed only stale control reference).
+  - INFO.restored "longest baseline" → "longest sampled baseline" (P1 framing).
+  - ContourMap dead angularResolution prop removed (+2 call sites).
+  - app.css ended mid-rule ("[data-reduced-motion] .metrics-panel," dangling, invalid
+    CSS discarded by the browser) → rule completed (animation: none).
+  - input[type=range] had outline:none with NO :focus-visible replacement → accent ring.
+  - Tour mode toggle missing aria-pressed → added.
+  - tour.css orphan .tour-equation rule (0 refs, agent grep-proven) → removed.
+
+### B4 matrix (never-used port 8437, zero app console errors throughout)
+Presets × targets × BHEX × single/compare: state coherent after BHEX 10×-toggle thrash +
+preset/target thrash mid-compute (header 9 tels / 36 baselines / 5.2% / 7.1 μas; status
+39,291 km). Compare independence: ngEHT+BHEX left vs 2022 right, targets differ, no
+leaks; preset load preserves BHEX (N2). Tour guided A–E all render (nav gated by act
+phase — by design); presenter = headline+equation (259 chars) + live canvas; Esc restores
+pre-tour state exactly. Reduced motion: tour canvas byte-identical over 2.2 s. Custom dec
++90/−90/0 sane (25.0/45.9/24.7 μas; 4020/1206/7318 samples). 1024×768: no overflow-x
+(single or compare). The only console errors ever seen were the test harness's own
+synthetic-pointer events hitting OrbitControls setPointerCapture (not app defects).
+
+### FLAGS carried to Phase 3 (visual pass) — from the render-sweep agent
+- [MED] .metrics-panel rgba(8,8,24,.88) blue-black → neutral; scrollbar hover #4a3810 →
+  token; UVMap/contour tick labels pure-white rgba → text tokens.
+- [MED] compare-layout: no <1100px stacking (panes 508px at 1024) — add breakpoint.
+- [MED] a11y font-size: hardcoded rem/px in metrics/contour/tour prose bypass --fs-* scale.
+- [MED/decide] .tour-launch-btn amber glow + .btn:hover elevation + range-thumb glow vs
+  the flat-chrome law — conform or record license.
+- [LOW] 'JetBrains Mono' declared, never loaded (load-or-drop decision); two literal
+  font-family: monospace; matchMedia reduced-motion has no change listener; non-.btn
+  buttons use UA focus ring; ocean-label cool blue (borderline Earth-license).
+- [OK/recorded] TELESCOPE_COLORS saturated palette = the app's established per-station
+  identity system (DESIGN-LANGUAGE was extracted FROM the app; sceneE license depends on
+  matching it) — not a defect; do not recolor station identity.
+- [OK] UVMap draws +v down (canvas y) while tour panels draw +v up — indistinguishable
+  under conjugate symmetry (every (u,v) has its (−u,−v) twin); convention-only, no action.
+
+### Phase 3 — visual pass (commits 35a7540, 2ad4039)
+Method: screenshot → written critique naming the weakest thing → fix → re-screenshot,
+per surface. App shell: h1 split to name+byline; stat values in --font-mono;
+JetBrains Mono ACTUALLY LOADED (was declared-only — every mono surface site-wide
+sharpened); tour CTA glow → flat brightness/lift; .btn:hover shadow → amber border;
+metrics panel warm-neutral; UV map 2px marks (1px was sub-pixel after CSS downscale);
+axis labels → tokens. A11y: metrics/contour/modal-code font sizes routed through
+--fs-* (the font-size setting now scales them). Compare stacks <1100px (end-of-file
+media query — the earlier in-file attempt lost the cascade to the base rule).
+Tour micro-detail: spine label stacked (long act names ran under the pinned equation
+block); Act B horizon caption clear of the axis label; Act E ring label moved below
+the ring + BHEX sat label suppressed while sweeping the altitude caption. Acts A/C/D
+passed the bar unchanged. GATE V: probe ALL PASS, worker hash unchanged, header
+values exact, Act E reduced-motion frame byte-identical, alt-tab cohesion holds.
+
+### Phase 4 — stress test + red team (2026-07-09)
+RED TEAM (workflow, adversarial on all changed files): hostile-input probe on the
+changed pure functions — angularResFromUV(empty/null/all-zero/NaN/tiny-array),
+computeUVFillGl(0/NaN/negative extent), extent with no telescopes (→12 Gλ fallback),
+BHEX-only (0 points, no crash), duplicate-position stations (max=0 → res stat hides),
+duration 0 — ALL graceful, no throws/NaN/Infinity. Display-consumer sweep: minGl has
+no consumers (pre-existing); CitationModal/StatusBar clean; slerp degenerate cases
+guarded (co-located → lerp fallback; exact-antipodal impossible for real stations,
+THREE normalize(0)→0 vector = hidden, no crash). ZERO critical findings.
+SWEEP: 5× tour open/close — zero GL warnings/errors, state intact; heap 32→35 MB
+over 10 reconstructions (no unbounded growth); 1920×1080 + 3840×2160 CSS-emulated —
+no overflow, tour + pinned equation render (true-4K device pass remains the HUMAN
+TODO with the projector gate); presenter mode headline+equation only; BHEX-fits
+invariant frequency-independent by construction (coverage and locked extent both
+scale as 1/λ; probe checks 230 AND 345 GHz). Zero console errors app-wide (the only
+log entries all pass were the harness's own synthetic-pointer artifacts).
+GATES: P ✓ · B ✓ · V ✓ · stress ✓. Worker diff EMPTY end-to-end
+(3fb15375794db9c3a4bf66096eb730693aa3f6fc at every gate).

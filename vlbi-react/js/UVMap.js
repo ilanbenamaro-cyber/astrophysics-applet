@@ -6,7 +6,7 @@ function snrColor(sefdA, sefdB, minSnr, maxSnr) {
   return `hsl(45, ${(t * 100).toFixed(0)}%, ${(30 + t * 30).toFixed(0)}%)`;
 }
 
-export function UVMap({ uvPoints, N, pairSefdMap = null }) {
+export function UVMap({ uvPoints, N, pairSefdMap = null, displayMaxGl = null }) {
   const canvasRef = useRef(null);
   const [axisLabel, setAxisLabel] = useState('');
   const [snrMode, setSnrMode] = useState(false);
@@ -19,23 +19,32 @@ export function UVMap({ uvPoints, N, pairSefdMap = null }) {
     ctx.fillStyle = '#0a0a0a';  // --bg-1 neutral (was off-token blue-purple; SITE-AUDIT 3.4)
     ctx.fillRect(0, 0, DST, DST);
 
-    // Find max UV distance in Gλ
-    let maxUV_Gl = 0;
-    for (const p of uvPoints) {
-      const dist = Math.sqrt(p.u*p.u + p.v*p.v);
-      if (dist > maxUV_Gl) maxUV_Gl = dist;
+    // Scale: fixed BHEX-enabled extent from the hook (N1 — axes must not move when
+    // BHEX toggles). Auto-scale from the points only as a fallback when no prop given.
+    let displayMax_Gl = displayMaxGl;
+    if (!displayMax_Gl) {
+      let maxUV_Gl = 0;
+      for (const p of uvPoints) {
+        const dist = Math.sqrt(p.u*p.u + p.v*p.v);
+        if (dist > maxUV_Gl) maxUV_Gl = dist;
+      }
+      if (maxUV_Gl === 0) maxUV_Gl = 10;
+      displayMax_Gl = maxUV_Gl * 1.2;
     }
-    if (maxUV_Gl === 0) maxUV_Gl = 10;
 
-    const displayMax_Gl = maxUV_Gl * 1.2;
-
+    // displayMax_Gl is the frame's HALF-extent (edges at ±displayMax_Gl), matching
+    // computeUVMaxExtentGl and the fill metric. The previous mapping divided the
+    // full span by displayMax_Gl — i.e. treated the half-extent as a full width —
+    // silently clipping everything beyond displayMax_Gl/2 (B1: BHEX arcs at
+    // ~28.9 Gλ vanished past the 17.3 Gλ effective edge while the ±34.6 labels
+    // claimed otherwise; Earth-only coverage at 8.35 Gλ happened to fit).
     const toCanvas = (u, v) => ({
-      x: (u / displayMax_Gl + 0.5) * DST,
-      y: (v / displayMax_Gl + 0.5) * DST,
+      x: (u / (2 * displayMax_Gl) + 0.5) * DST,
+      y: (v / (2 * displayMax_Gl) + 0.5) * DST,
     });
 
     // Grid circles
-    ctx.strokeStyle = 'rgba(30,30,80,0.6)';
+    ctx.strokeStyle = 'rgba(45,34,0,0.55)';
     ctx.lineWidth = 0.5;
     for (const frac of [0.25, 0.5, 0.75, 1.0]) {
       const r = frac * DST / 2;
@@ -45,7 +54,7 @@ export function UVMap({ uvPoints, N, pairSefdMap = null }) {
     }
 
     // Axes
-    ctx.strokeStyle = 'rgba(40,40,100,0.8)';
+    ctx.strokeStyle = 'rgba(45,34,0,0.85)';
     ctx.lineWidth = 0.5;
     ctx.beginPath(); ctx.moveTo(DST/2, 0); ctx.lineTo(DST/2, DST); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(0, DST/2); ctx.lineTo(DST, DST/2); ctx.stroke();
@@ -57,6 +66,9 @@ export function UVMap({ uvPoints, N, pairSefdMap = null }) {
 
     const useSnr = snrMode && pairSefdMap && Object.keys(pairSefdMap).length > 0;
 
+    // 2px marks: the canvas (N px) is CSS-downscaled to the panel (~322 px),
+    // so a 1px mark lands sub-pixel and the data layer — the hero — goes dim.
+    const PT = 2;
     if (useSnr) {
       // Pre-compute SNR range across all unique pairs
       let minSnr = Infinity, maxSnr = -Infinity;
@@ -73,7 +85,7 @@ export function UVMap({ uvPoints, N, pairSefdMap = null }) {
         const ix = Math.round(x);
         const iy = Math.round(y);
         if (ix >= 0 && ix < DST && iy >= 0 && iy < DST) {
-          ctx.fillRect(ix, iy, 1, 1);
+          ctx.fillRect(ix, iy, PT, PT);
         }
       }
     } else {
@@ -89,14 +101,14 @@ export function UVMap({ uvPoints, N, pairSefdMap = null }) {
           const ix = Math.round(x);
           const iy = Math.round(y);
           if (ix >= 0 && ix < DST && iy >= 0 && iy < DST) {
-            ctx.fillRect(ix, iy, 1, 1);
+            ctx.fillRect(ix, iy, PT, PT);
           }
         }
       }
     }
 
     setAxisLabel(displayMax_Gl.toFixed(1));
-  }, [uvPoints, N, snrMode, pairSefdMap]);
+  }, [uvPoints, N, snrMode, pairSefdMap, displayMaxGl]);
 
   const hasPairs = pairSefdMap && Object.keys(pairSefdMap).length > 0;
 
@@ -107,6 +119,7 @@ export function UVMap({ uvPoints, N, pairSefdMap = null }) {
           className=${'btn btn-ghost btn-xs' + (snrMode ? ' btn-active' : '')}
           style=${{ position: 'absolute', top: '4px', right: '4px', zIndex: 2, fontSize: '0.65rem', padding: '1px 5px' }}
           onClick=${() => setSnrMode(m => !m)}
+          aria-pressed=${snrMode}
           title="Toggle between baseline-pair and SNR coloring"
         >Color: ${snrMode ? 'SNR' : 'Pair'}</button>
       ` : null}
@@ -121,29 +134,29 @@ export function UVMap({ uvPoints, N, pairSefdMap = null }) {
         <span style=${{
           position: 'absolute', top: '2px', left: '50%',
           transform: 'translateX(-50%)',
-          fontSize: '9px', color: 'rgba(255,255,255,0.6)',
-          pointerEvents: 'none', fontFamily: 'monospace',
+          fontSize: 'var(--fs-2xs)', color: 'var(--text-secondary)',
+          pointerEvents: 'none', fontFamily: 'var(--font-mono)',
           textShadow: '0 0 4px rgba(0,0,0,0.9)'
         }}>+${axisLabel} Gλ</span>
         <span style=${{
           position: 'absolute', bottom: '2px', left: '50%',
           transform: 'translateX(-50%)',
-          fontSize: '9px', color: 'rgba(255,255,255,0.6)',
-          pointerEvents: 'none', fontFamily: 'monospace',
+          fontSize: 'var(--fs-2xs)', color: 'var(--text-secondary)',
+          pointerEvents: 'none', fontFamily: 'var(--font-mono)',
           textShadow: '0 0 4px rgba(0,0,0,0.9)'
         }}>−${axisLabel} Gλ</span>
         <span style=${{
           position: 'absolute', top: '50%', left: '2px',
           transform: 'translateY(-50%)',
-          fontSize: '9px', color: 'rgba(255,255,255,0.6)',
-          pointerEvents: 'none', fontFamily: 'monospace',
+          fontSize: 'var(--fs-2xs)', color: 'var(--text-secondary)',
+          pointerEvents: 'none', fontFamily: 'var(--font-mono)',
           textShadow: '0 0 4px rgba(0,0,0,0.9)'
         }}>+${axisLabel} Gλ</span>
         <span style=${{
           position: 'absolute', top: '50%', right: '2px',
           transform: 'translateY(-50%)',
-          fontSize: '9px', color: 'rgba(255,255,255,0.6)',
-          pointerEvents: 'none', fontFamily: 'monospace',
+          fontSize: 'var(--fs-2xs)', color: 'var(--text-secondary)',
+          pointerEvents: 'none', fontFamily: 'var(--font-mono)',
           textShadow: '0 0 4px rgba(0,0,0,0.9)'
         }}>−${axisLabel} Gλ</span>
       ` : null}

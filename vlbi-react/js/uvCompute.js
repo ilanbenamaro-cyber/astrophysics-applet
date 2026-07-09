@@ -1,5 +1,5 @@
 // UV-plane coverage computation: ECEF coordinates, baseline → UV, conjugate symmetry.
-import { EARTH_RADIUS_KM } from './constants.js';
+import { EARTH_RADIUS_KM, BHEX_PRESET } from './constants.js';
 
 export function latLonToECEF(lat, lon) {
   const phi = lat * Math.PI / 180;
@@ -178,13 +178,42 @@ export function computeUVPointsGl(telescopes, { declination, duration, frequency
   return pts;
 }
 
-export function computeUVFill(uvPoints, N) {
-  if (uvPoints.length === 0) return 0;
-  const seen = new Set();
-  for (const p of uvPoints) {
-    const iu = ((Math.round(p.u)) % N + N) % N;
-    const iv = ((Math.round(p.v)) % N + N) % N;
-    seen.add(iv * N + iu);
+// Fixed display extent for the UV map (Alejandro note N1): the half-extent in Gλ
+// of the coverage the array WOULD have with BHEX present — computed whether or not
+// BHEX is actually toggled on, so toggling BHEX changes what's drawn, never the axes.
+// Still responds honestly to frequency/declination/duration (u = B/λ physics).
+export function computeUVMaxExtentGl(telescopes, opts) {
+  const withBhex = telescopes.some(t => t.name === BHEX_PRESET.name)
+    ? telescopes
+    : [...telescopes, { id: -1, ...BHEX_PRESET, visible: true }];
+  const pts = computeUVPointsGl(withBhex, opts);
+  let maxGl = 0;
+  for (const p of pts) {
+    const r = Math.hypot(p.u, p.v);
+    if (r > maxGl) maxGl = r;
   }
-  return (seen.size / (N * N)) * 100;
+  if (maxGl === 0) maxGl = 10;   // matches UVMap's historical empty-coverage fallback
+  return maxGl * 1.2;
+}
+
+// Relative coverage % (Alejandro note N3; relabeled per P5, Ilan delegated
+// authority 2026-07-07): fraction of cells sampled on a fixed M×M grid
+// spanning ±halfExtentGl in Gλ — the same locked frame as the UV-map axes
+// (computeUVMaxExtentGl), so the number grows when coverage grows and never
+// jumps because axes rescaled. It is a COMPARATIVE metric (rises with
+// coverage, orders arrays: ngEHT > 2022 > 2017), not absolute completeness.
+// M = 200 is a FROZEN display constant (grid resolution of the metric), not
+// physics. Replaces the old pixel-space fill, which at 80 μas FOV collapsed
+// the entire EHT coverage into ~27 cells of the 512² Nyquist grid (0.010 % —
+// a rounding artifact, not a coverage measure).
+export function computeUVFillGl(uvPointsGl, halfExtentGl, M = 200) {
+  if (uvPointsGl.length === 0 || !(halfExtentGl > 0)) return 0;
+  const seen = new Set();
+  for (const p of uvPointsGl) {
+    const iu = Math.round((p.u / halfExtentGl + 1) / 2 * (M - 1));
+    const iv = Math.round((p.v / halfExtentGl + 1) / 2 * (M - 1));
+    if (iu < 0 || iu >= M || iv < 0 || iv >= M) continue;
+    seen.add(iv * M + iu);
+  }
+  return (seen.size / (M * M)) * 100;
 }

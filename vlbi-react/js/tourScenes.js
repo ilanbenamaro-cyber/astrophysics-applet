@@ -3,7 +3,7 @@
 //     interactive? }   where frame = { w, h, T, animPhase, mode, reducedMotion, beat }
 // The host (Tour.js) looks up SCENES[actId]; acts without a bespoke scene fall back to
 // genericScene, which still renders REAL coverage (never a fake). Phase 2 fills SCENES.
-import { computeUVPointsGl, computeUVFill, computeUVPoints } from './uvCompute.js';
+import { computeUVPointsGl, computeUVFillGl, computeUVMaxExtentGl } from './uvCompute.js';
 import { clearScene, drawUVAxes, beatT, toTelescopes, uvExtentGl } from './tourScene.js';
 import { ensureGalaxy, drawGalaxy } from './tourGalaxy.js';
 import { drawUVPoints, drawFillGauge } from './tourAnnotations.js';
@@ -18,14 +18,13 @@ const genericScene = {
   async init(engineState) {
     const tels = toTelescopes(engineState.stations, engineState.satellite);
     const { params } = engineState;
-    const uvGl = computeUVPointsGl(tels, {
+    const uvOpts = {
       declination: params.decDeg, duration: params.durationHr, frequency: params.freqGHz,
-    });
-    const uvPx = computeUVPoints(tels, {
-      declination: params.decDeg, duration: params.durationHr, frequency: params.freqGHz,
-      fovMuas: params.fovMuas, N: 512,
-    }).uvPoints;
-    return { tels, uvGl, maxGl: uvExtentGl(uvGl), fillPct: computeUVFill(uvPx, 512) };
+    };
+    const uvGl = computeUVPointsGl(tels, uvOpts);
+    // Fill on the locked (BHEX-enabled) frame — same definition as the live app (N3).
+    const fillPct = computeUVFillGl(uvGl, computeUVMaxExtentGl(tels, uvOpts));
+    return { tels, uvGl, maxGl: uvExtentGl(uvGl), fillPct };
   },
   drawFrame(ctx, frame, data) {
     const { w, h, T, reducedMotion } = frame;

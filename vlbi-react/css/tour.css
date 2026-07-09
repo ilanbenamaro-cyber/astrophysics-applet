@@ -160,14 +160,6 @@
   animation: textReveal 0.8s ease forwards;
 }
 
-.tour-equation {
-  font-size: clamp(0.85rem, 1.3vw, 1.05rem);
-  color: var(--accent-teal, #C4A555);
-  font-family: var(--font-mono, 'JetBrains Mono', monospace);
-  letter-spacing: 0.02em;
-  line-height: 1.5;
-}
-
 @keyframes textReveal {
   to { opacity: 1; transform: translateY(0); }
 }
@@ -320,19 +312,19 @@
   color: #000;
   font-weight: 700;
   font-size: 14px;
-  border-radius: 8px;
+  border-radius: 6px;
   border: none;
   cursor: pointer;
   letter-spacing: 0.5px;
-  box-shadow: 0 0 20px rgba(158, 126, 56, 0.4);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  /* flat-chrome law: prominence comes from the gold fill, not a glow */
+  transition: filter 0.15s ease, transform 0.15s ease;
   font-family: var(--font, 'Inter', sans-serif);
   white-space: nowrap;
 }
 
 .tour-launch-btn:hover {
-  box-shadow: 0 0 30px rgba(158, 126, 56, 0.7);
-  transform: scale(1.03);
+  filter: brightness(1.1);
+  transform: translateY(-1px);
 }
 
 /* ── Reduced motion ─────────────────────────────────────────────────────── */
@@ -495,8 +487,12 @@
   left: 18px;
   bottom: 8px;
   display: flex;
-  align-items: center;
-  gap: 10px;
+  /* Stacked: side-by-side the label ran under the pinned equation block on
+     long act names (M87* · APRIL 2019 · 4/5 reached x≈319 vs the block's
+     left edge ≈295). Column keeps the whole unit inside the 150px rail. */
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
   z-index: 6;
   pointer-events: none;
 }
@@ -507,6 +503,8 @@
   text-transform: uppercase;
   color: var(--text-secondary, #8888b0);
   font-family: var(--font-mono, monospace);
+  max-width: 132px;
+  line-height: 1.6;
 }
 
 /* Presenter mode: minimal text (no paragraph), larger headline */
