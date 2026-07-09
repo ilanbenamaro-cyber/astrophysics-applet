@@ -191,6 +191,7 @@ export function Tour({ actIndex, onActChange, onClose, onTourAction, reducedMoti
           <span className="tour-spinner"></span> Computing…
         </div>` : null}
         <button className="tour-mode-toggle" onClick=${() => setMode(m => m === 'presenter' ? 'guided' : 'presenter')}
+                aria-pressed=${mode === 'presenter'}
                 title="Toggle presenter / guided (P)">${mode === 'presenter' ? '◐ Presenter' : '◑ Guided'}</button>
       </div>
 

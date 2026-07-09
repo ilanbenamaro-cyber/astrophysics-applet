@@ -160,14 +160,6 @@
   animation: textReveal 0.8s ease forwards;
 }
 
-.tour-equation {
-  font-size: clamp(0.85rem, 1.3vw, 1.05rem);
-  color: var(--accent-teal, #C4A555);
-  font-family: var(--font-mono, 'JetBrains Mono', monospace);
-  letter-spacing: 0.02em;
-  line-height: 1.5;
-}
-
 @keyframes textReveal {
   to { opacity: 1; transform: translateY(0); }
 }

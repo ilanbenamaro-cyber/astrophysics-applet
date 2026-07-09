@@ -1062,4 +1062,10 @@ input[type=range]:hover::-webkit-slider-thumb {
 }
 [data-reduced-motion] .btn { transition: none !important; }
 [data-reduced-motion] .btn:hover { transform: none; box-shadow: none; }
-[data-reduced-motion] .metrics-panel,
+[data-reduced-motion] .metrics-panel { animation: none !important; }
+
+/* Keyboard focus for sliders — the outline:none above removes the UA ring (a11y). */
+input[type="range"]:focus-visible {
+  outline: 2px solid var(--accent-teal);
+  outline-offset: 2px;
+}

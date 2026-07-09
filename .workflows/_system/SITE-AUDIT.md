@@ -339,3 +339,90 @@ RAF/listener leaks; UVMap effect allocation-per-change only.
   generated or concat-composed): .header-credit, .header-ai-note, .clean-toggle (+input
   rule), .method-row, .method-btn (+.selected/:hover — P1-era method buttons),
   .info-modal-content (+reduced-motion refs), .contour-panel:hover.
+
+---
+
+## ADDENDUM 2026-07-09 — FINAL SHIP PASS (P1–P5 decided + B1–B4 + hunt)
+
+Spec: `.workflows/_prompts/tour-final-ship-pass.md`. P1–P5 DECIDED (Ilan, delegated
+authority from A. Cárdenas-Avendaño, 2026-07-07). Instrument-first throughout: a 25-check
+Node regression probe (probe-ship-pass.mjs, session artifact) ran BEFORE any change (all
+green on the untouched modules) and at every gate. Worker baseline hash
+3fb15375794db9c3a4bf66096eb730693aa3f6fc — zero diff enforced at each gate.
+
+### Phase 1 — physics (commits f698b26, 3fb57c7, ac3195f, 52bb7fd)
+- P1 [fix][simCore.js, useSimulation.js] Resolution now θ=λ/|uv|max of the sampled tracks
+  (angularResFromUV; 1 decimal < 100 μas). Browser-verified per target: M87* 24.7 ·
+  Sgr A* 23.6 · 3C 279 24.8 · Cen A 26.7; BHEX ON → 7.1 μas (real physics). Tour headline
+  25 μas / 10,883 km intact; no in-frame collision (tour is an opaque overlay).
+- P2 [fix][useSimulation.js baselineStats] Space baseline max over the full observation
+  window (STEPS=200), geometric like the ground part. MEASURED: 39,291 km / 30.1 Gλ
+  (SPT–BHEX, H=+3 h) ≤ 2R⊕+h (39,304). NOTE: the decided 39,291 is the UNFILTERED
+  geometric track max; the elevation-filtered sampled max would be 39,110 (LMT–BHEX).
+  Earth-only bit-identical (ground baselines are Earth-fixed).
+- P4 [confirm][constants.js] DISH_DIAMETERS unflagged (⚠ PENDING → confirmed, delegated
+  authority); LMT/SPT full-aperture values kept with 2017-illuminated caveat as comment.
+- P5 [relabel][7 surfaces] "UV fill" → "Relative coverage" (header stat, both captions,
+  MetricsPanel "Rel. Coverage", INFO.uvmap, tour gauge 'rel. coverage', Act B narrative
+  "of the surveyed (u,v) frame", Act C caption). Math untouched; M=200 commented as a
+  FROZEN display constant; app==tour 1.1050 to machine precision (probe).
+
+### Phase 2 — bugs
+- B1 [HIGH][fix][UVMap.js toCanvas — commit 83e7fcd] ROOT CAUSE: mapping treated the
+  half-extent as a FULL width — visible span was ±displayMax/2 (±17.3 Gλ of the 34.6
+  frame) while edge labels claimed ±34.6; BHEX arcs (|uv|max 28.86 Gλ) clipped at all
+  four edges; Earth-only (8.35) happened to fit. Present since 8c6ba01. The N1 locked
+  extent was NOT undersized; fill always used the half-extent correctly (numbers
+  unchanged). FIX: x=(u/(2·displayMax)+0.5)·DST. Screenshots: b1-before-bhex-clipped /
+  b1-after-bhex-on / b1-after-earth-only (session artifacts). Tour panels checked —
+  their (size/2)/maxGl mapping was already correct.
+- B2 [HIGH][fix][globeHelpers.js — commit 09c006e] TWO causes measured: (1) chord-space
+  lerp packs a near-antipodal pair's angular travel into the middle segments — SPT–GLT
+  (166.5°) worst chord 18.7°, polyline sagging to r=1.0015 vs globe 1.0 → arc middle
+  breaks at the limb, camera-dependent ("intermittent"). FIX: slerp — worst chord 3.33°,
+  min r 1.0146 any pair; degenerate-co-located lerp fallback. (2) 1px lines at 0.5 alpha
+  faded out over the bright Antarctic ice approaching SPT. FIX: opacity 0.85
+  (screenshot-verified). Elevation culling untouched (lives in uvCompute; probe green).
+- B3 [fix][Globe.js, TelescopeList.js, SimPane.js — commit 40aa5b0] Compare = presets +
+  BHEX only: Globe allowPlacement prop (ref-mirrored), TelescopeList readOnly, SimPane
+  passes both. Verified: pane clicks place nothing; BHEX left-only (no cross-pane leak);
+  single-pane unchanged.
+- B4 [fix][commit 8e7e3f7 + this one]:
+  - baselineStats missing with 1 ground + BHEX although reconstruction runs (354
+    samples) → stats show for any real baseline (38,510 km verified).
+  - tourActs Act C "Drag the noise control" → "Step through the three noise presets"
+    (slider removed 2026-06-16; agent-confirmed only stale control reference).
+  - INFO.restored "longest baseline" → "longest sampled baseline" (P1 framing).
+  - ContourMap dead angularResolution prop removed (+2 call sites).
+  - app.css ended mid-rule ("[data-reduced-motion] .metrics-panel," dangling, invalid
+    CSS discarded by the browser) → rule completed (animation: none).
+  - input[type=range] had outline:none with NO :focus-visible replacement → accent ring.
+  - Tour mode toggle missing aria-pressed → added.
+  - tour.css orphan .tour-equation rule (0 refs, agent grep-proven) → removed.
+
+### B4 matrix (never-used port 8437, zero app console errors throughout)
+Presets × targets × BHEX × single/compare: state coherent after BHEX 10×-toggle thrash +
+preset/target thrash mid-compute (header 9 tels / 36 baselines / 5.2% / 7.1 μas; status
+39,291 km). Compare independence: ngEHT+BHEX left vs 2022 right, targets differ, no
+leaks; preset load preserves BHEX (N2). Tour guided A–E all render (nav gated by act
+phase — by design); presenter = headline+equation (259 chars) + live canvas; Esc restores
+pre-tour state exactly. Reduced motion: tour canvas byte-identical over 2.2 s. Custom dec
++90/−90/0 sane (25.0/45.9/24.7 μas; 4020/1206/7318 samples). 1024×768: no overflow-x
+(single or compare). The only console errors ever seen were the test harness's own
+synthetic-pointer events hitting OrbitControls setPointerCapture (not app defects).
+
+### FLAGS carried to Phase 3 (visual pass) — from the render-sweep agent
+- [MED] .metrics-panel rgba(8,8,24,.88) blue-black → neutral; scrollbar hover #4a3810 →
+  token; UVMap/contour tick labels pure-white rgba → text tokens.
+- [MED] compare-layout: no <1100px stacking (panes 508px at 1024) — add breakpoint.
+- [MED] a11y font-size: hardcoded rem/px in metrics/contour/tour prose bypass --fs-* scale.
+- [MED/decide] .tour-launch-btn amber glow + .btn:hover elevation + range-thumb glow vs
+  the flat-chrome law — conform or record license.
+- [LOW] 'JetBrains Mono' declared, never loaded (load-or-drop decision); two literal
+  font-family: monospace; matchMedia reduced-motion has no change listener; non-.btn
+  buttons use UA focus ring; ocean-label cool blue (borderline Earth-license).
+- [OK/recorded] TELESCOPE_COLORS saturated palette = the app's established per-station
+  identity system (DESIGN-LANGUAGE was extracted FROM the app; sceneE license depends on
+  matching it) — not a defect; do not recolor station identity.
+- [OK] UVMap draws +v down (canvas y) while tour panels draw +v up — indistinguishable
+  under conjugate symmetry (every (u,v) has its (−u,−v) twin); convention-only, no action.
