@@ -451,7 +451,7 @@ Alejandro confirmation.
 DATE: 2026-07-09
 The five fenced physics proposals were DECIDED by Ilan under delegated authority from
 Prof. Cárdenas-Avendaño and implemented: P1 sampled-coverage resolution (24.7/23.6/
-24.8/26.7 μas per target), P2 observed-track max baseline (39,109 km — elevation-filtered, Ilan pre-push override; geometric 39,291 rejected),
+24.8/26.7 μas per target), P2 target-observing max baseline (ground co-visible-in-window: M87* Earth-only 10,883 = tour headline; BHEX observed-track 39,109 — two Ilan pre-push overrides; geometric 11,406/39,291 rejected),
 P4 dish table confirmed, P5 "Relative coverage" relabel (M=200 frozen). P3 stays
 deferred (worker diff zero). B1 root cause: UVMap treated the locked half-extent as a
 full width (factor-2, since 8c6ba01) — BHEX clipped. B2: chord-lerp sag on

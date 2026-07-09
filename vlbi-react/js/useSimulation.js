@@ -236,9 +236,33 @@ export function useSimulation() {
     // (1 ground + BHEX reconstructs — 354 UV samples — so its ground–space
     // baseline must show in the stats too, not just with 2+ ground).
     if (groundTels.length < 2 && !(groundTels.length >= 1 && spaceTels.length >= 1)) return null;
+    // P2 (Ilan, delegated authority, 2026-07-07; refined at pre-push review
+    // 2026-07-09): the stats count only TARGET-OBSERVING baselines — same
+    // principle as P1. Ground pairs must be CO-VISIBLE (both stations clear the
+    // elevation cutoff at the same hour angle) somewhere in the observation
+    // window; ground–space samples require the ground station to see the target.
+    // M87* Earth-only: 10,883 km IRAM–JCMT (matches the tour headline), never
+    // the geometric 11,406 IRAM–SPT (SPT can't see M87*). With BHEX at M87*:
+    // 39,109 km LMT–BHEX over the observed track (H=0 snapshot understated ~15%).
+    const STEPS = 200;
+    const halfDur = controls.duration * Math.PI / 24;
+    const decRad = controls.declination * Math.PI / 180;
+    const seesAt = groundTels.map(g => {
+      const row = new Uint8Array(STEPS + 1);
+      for (let s = 0; s <= STEPS; s++) {
+        const H = -halfDur + (s / STEPS) * 2 * halfDur;
+        row[s] = computeElevation(g.lat, H, decRad) >= MIN_ELEVATION_RAD ? 1 : 0;
+      }
+      return row;
+    });
     let maxKm = 0, minKm = Infinity;
     for (let i = 0; i < groundTels.length; i++) {
       for (let j = i + 1; j < groundTels.length; j++) {
+        let coVisible = false;
+        for (let s = 0; s <= STEPS; s++) {
+          if (seesAt[i][s] && seesAt[j][s]) { coVisible = true; break; }
+        }
+        if (!coVisible) continue;
         const pA = latLonToECEF(groundTels[i].lat, groundTels[i].lon);
         const pB = latLonToECEF(groundTels[j].lat, groundTels[j].lon);
         const d = Math.sqrt((pA.x-pB.x)**2 + (pA.y-pB.y)**2 + (pA.z-pB.z)**2);
@@ -246,16 +270,6 @@ export function useSimulation() {
         if (d > 0.1 && d < minKm) minKm = d;
       }
     }
-    // P2 (Ilan, delegated authority, 2026-07-07; refined 2026-07-09): the
-    // ground–space baseline varies along the orbit — take the max over the
-    // OBSERVED track (same 200-step hour-angle grid + elevation filter as the
-    // UV computation), not a single H=0 snapshot (which understated BHEX ~15%:
-    // 33,543 km). Same principle as P1: the stat counts only baselines whose
-    // ground station actually observes the target — 39,109 km (LMT–BHEX) for
-    // M87*, not the 39,291 geometric max (SPT–BHEX; SPT never sees M87*).
-    const STEPS = 200;
-    const halfDur = controls.duration * Math.PI / 24;
-    const decRad = controls.declination * Math.PI / 180;
     for (const sat of spaceTels) {
       for (const g of groundTels) {
         const gPos = latLonToECEF(g.lat, g.lon);
@@ -268,6 +282,9 @@ export function useSimulation() {
         }
       }
     }
+    // No target-observing baseline at all (e.g. an all-northern array at dec −90):
+    // hide the stat, consistent with the resolution stat (no UV samples exist).
+    if (maxKm === 0) return null;
     const lambdaM = 299792458 / (controls.frequency * 1e9);
     const maxGl = maxKm * 1e3 / lambdaM / 1e9;
     const minGl = minKm < Infinity ? minKm * 1e3 / lambdaM / 1e9 : 0;

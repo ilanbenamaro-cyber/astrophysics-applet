@@ -810,13 +810,19 @@ DECISIONS:
   (simCore.angularResFromUV; one decimal < 100 μas). Per-target: M87* 24.7 ·
   Sgr A* 23.6 · 3C 279 24.8 · Cen A 26.7. The geometric array max is never shown as
   resolution (the tour's rule, now the app's too). BHEX ON honestly drops the stat.
-- P2 FIXED: Max Baseline = max over the OBSERVED track (STEPS=200, elevation-filtered
-  — the ground station must actually see the target, same principle as P1):
-  39,109 km / 30.0 Gλ with BHEX at M87* (LMT–BHEX; converges to 39,110 with finer
-  stepping). SUPERSEDES the geometric-unfiltered 39,291 first implemented earlier the
-  same day (Ilan override 2026-07-09 at the pre-push review: the geometric max paired
-  SPT–BHEX although SPT never sees M87*). Ground-ground part remains geometric
-  (unchanged this pass).
+- P2 FIXED (final form, two pre-push overrides by Ilan 2026-07-09): Max Baseline
+  counts only TARGET-OBSERVING baselines — same principle as P1.
+  · Ground–space: max over the observed track (STEPS=200, ground station must see
+    the target): 39,109 km / 30.0 Gλ with BHEX at M87* (LMT–BHEX; 39,110 at finer
+    stepping). Supersedes the geometric-unfiltered 39,291 (SPT–BHEX — SPT never
+    sees M87*) implemented earlier the same day.
+  · Ground–ground: pairs must be CO-VISIBLE within the observation window (both
+    stations clear the 10° cutoff at the same hour angle). M87* Earth-only:
+    10,883 km / 8.3 Gλ IRAM–JCMT — StatusBar now matches the tour headline;
+    Sgr A*: 11,406 (IRAM–SPT co-visible there). If no target-observing baseline
+    exists at all, the stat hides (null), consistent with the resolution stat.
+  Verified live per target (port 8118) + probe (M87* 10,883 / Sgr A* 11,406 /
+  dec −90 southern-pairs 7,032 / BHEX 39,109).
 - P3 DEFERRED (worker diff zero this pass; remove the 25 m destructure default at the
   next authorized worker change).
 - P4 CONFIRMED: DISH_DIAMETERS as reviewed (element dish for phased stations; LMT/SPT
