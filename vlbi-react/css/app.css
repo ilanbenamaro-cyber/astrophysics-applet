@@ -306,7 +306,7 @@ html, body {
   border-radius: 6px;
   padding: 10px 12px;
   font-family: var(--font-mono);
-  font-size: 0.78rem;
+  font-size: var(--fs-base);
   color: var(--text-primary);
   overflow-x: auto;
   white-space: pre;
@@ -866,7 +866,7 @@ input[type="range"]::-moz-range-thumb {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   pointer-events: none;
-  font-size: 0.68rem;
+  font-size: var(--fs-xs);
   color: rgba(255,255,255,0.9);
   text-shadow: 0 0 4px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.7);
 }
@@ -879,13 +879,13 @@ input[type="range"]::-moz-range-thumb {
   display: flex;
   justify-content: space-between;
   padding: 2px 8px;
-  font-size: 0.65rem;
+  font-size: var(--fs-xs);
   color: var(--text-secondary);
   font-family: monospace;
 }
 .contour-cb-title {
   text-align: center;
-  font-size: 0.65rem;
+  font-size: var(--fs-xs);
   color: var(--text-secondary);
   opacity: 0.75;
   padding: 0;
@@ -894,7 +894,7 @@ input[type="range"]::-moz-range-thumb {
 }
 .contour-axis-x {
   text-align: center;
-  font-size: 0.78rem;
+  font-size: var(--fs-base);
   color: var(--text-primary);
   font-weight: 500;
   padding: 2px 0 6px;
@@ -903,7 +903,7 @@ input[type="range"]::-moz-range-thumb {
 .contour-axis-y {
   writing-mode: vertical-rl;
   transform: rotate(180deg);
-  font-size: 0.75rem;
+  font-size: var(--fs-base);
   color: var(--text-secondary);
   padding: 0 4px;
   letter-spacing: 0.02em;
@@ -918,7 +918,7 @@ input[type="range"]::-moz-range-thumb {
   align-items: center;
   gap: 12px;
   padding: 4px 8px 6px;
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   color: var(--text-secondary);
 }
 .contour-cb-level { opacity: 0.4; }
@@ -929,11 +929,11 @@ input[type="range"]::-moz-range-thumb {
 }
 .contour-beam-label {
   margin-left: auto;
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   color: var(--text-primary);
 }
 .contour-map-header span {
-  font-size: 0.9rem;
+  font-size: var(--fs-lg);
   font-weight: 700;
 }
 
@@ -949,7 +949,7 @@ input[type="range"]::-moz-range-thumb {
   z-index: 5;
   min-width: 210px;
   backdrop-filter: blur(4px);
-  font-size: 0.72rem;
+  font-size: var(--fs-sm);
   font-family: var(--font-mono);
 }
 .metrics-header {
@@ -961,7 +961,7 @@ input[type="range"]::-moz-range-thumb {
   cursor: pointer;
   user-select: none;
   color: var(--text-secondary);
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -1077,4 +1077,15 @@ input[type=range]:hover::-webkit-slider-thumb {
 input[type="range"]:focus-visible {
   outline: 2px solid var(--accent-teal);
   outline-offset: 2px;
+}
+
+/* Compare panes stack below 1100px — two-up gets cramped (~508px/pane at 1024).
+   Lives at end-of-file so it wins the cascade over the base .compare-layout rule. */
+@media (max-width: 1100px) {
+  .compare-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 4px auto;
+    overflow: visible;
+  }
+  .sim-pane { overflow: visible; }
 }

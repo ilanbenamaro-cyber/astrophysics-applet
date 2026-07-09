@@ -487,8 +487,12 @@
   left: 18px;
   bottom: 8px;
   display: flex;
-  align-items: center;
-  gap: 10px;
+  /* Stacked: side-by-side the label ran under the pinned equation block on
+     long act names (M87* · APRIL 2019 · 4/5 reached x≈319 vs the block's
+     left edge ≈295). Column keeps the whole unit inside the 150px rail. */
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
   z-index: 6;
   pointer-events: none;
 }
@@ -499,6 +503,8 @@
   text-transform: uppercase;
   color: var(--text-secondary, #8888b0);
   font-family: var(--font-mono, monospace);
+  max-width: 132px;
+  line-height: 1.6;
 }
 
 /* Presenter mode: minimal text (no paragraph), larger headline */

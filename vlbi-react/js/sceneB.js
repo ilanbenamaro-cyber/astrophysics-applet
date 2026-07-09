@@ -182,7 +182,7 @@ export const sceneB = {
       ctx.fillStyle = hexA(TOKENS.textSecondary, 0.8);
       ctx.font = mono(10, 600); ctx.textAlign = 'center';
       ctx.fillText('source below horizon — sampling resumes as it rises',
-        px + panelSize / 2, py + panelSize - 12);
+        px + panelSize / 2, py + panelSize - 26);   // clears the axis label row (y+size-8)
       ctx.restore();
     }
 
