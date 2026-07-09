@@ -231,7 +231,10 @@ export function useSimulation() {
   const baselineStats = useMemo(() => {
     const groundTels = telescopes.filter(t => t.type !== 'space');
     const spaceTels  = telescopes.filter(t => t.type === 'space');
-    if (groundTels.length < 2) return null;
+    // A baseline exists with 2+ ground stations OR 1+ ground and a satellite
+    // (1 ground + BHEX reconstructs — 354 UV samples — so its ground–space
+    // baseline must show in the stats too, not just with 2+ ground).
+    if (groundTels.length < 2 && !(groundTels.length >= 1 && spaceTels.length >= 1)) return null;
     let maxKm = 0, minKm = Infinity;
     for (let i = 0; i < groundTels.length; i++) {
       for (let j = i + 1; j < groundTels.length; j++) {

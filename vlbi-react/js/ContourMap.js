@@ -6,7 +6,7 @@ import { InfoTooltip } from './InfoTooltip.js';
 import { drawContour, CONTOUR_LEVELS, fmtVal } from './simRender.js';
 
 // ── ContourMap ────────────────────────────────────────────────────────────────
-export function ContourMap({ dirtyData, restoredData, N, angularResolution, fovMuas, controls,
+export function ContourMap({ dirtyData, restoredData, N, fovMuas, controls,
                              onOpenInfo, beamSigmaU = 2, beamSigmaV = 2, beamPA = 0,
                              dynamicRange = 0 }) {
   const [displayMode, setDisplayMode]   = useState('dirty');

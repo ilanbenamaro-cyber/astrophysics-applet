@@ -139,7 +139,6 @@ export function SimPane({ sim, onOpenInfo, label, reducedMotion = false }) {
             dirtyData=${sim.dirty}
             restoredData=${sim.restored}
             N=${IMAGE_SIZE}
-            angularResolution=${sim.angularRes}
             fovMuas=${sim.controls.fovMuas}
             controls=${sim.controls}
             onOpenInfo=${onOpenInfo}

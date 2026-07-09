@@ -221,7 +221,6 @@ export function App() {
                 dirtyData=${left.dirty}
                 restoredData=${left.restored}
                 N=${IMAGE_SIZE}
-                angularResolution=${left.angularRes}
                 fovMuas=${left.controls.fovMuas}
                 controls=${left.controls}
                 onOpenInfo=${setInfoKey}
