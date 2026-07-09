@@ -458,7 +458,9 @@ full width (factor-2, since 8c6ba01) — BHEX clipped. B2: chord-lerp sag on
 near-antipodal arcs + 0.5-alpha wash-out over ice. B3: compare = preset+BHEX only
 (Globe allowPlacement / TelescopeList readOnly). JetBrains Mono now actually loads.
 All gates green (P/B/V/stress + red team, zero critical findings); worker hash
-3fb15375… unchanged end-to-end. Merge to main + push = PUBLIC DEPLOY of the entire
-~59-commit backlog (tour overhaul) + this pass — push only on Ilan's explicit "push".
+3fb15375… unchanged end-to-end. Merge to main done 2026-07-09; push = PUBLIC
+DEPLOY of this pass's 21 commits (the tour overhaul was already pushed/live —
+origin/main sat at cac1df0, so the old 59-commit-backlog note was stale) — push only
+on Ilan's explicit "push".
 Remaining HUMAN TODOs: projector-laptop CLEAN timing gate; BHEX hedge until
 Marrone/Alejandro sign-off.

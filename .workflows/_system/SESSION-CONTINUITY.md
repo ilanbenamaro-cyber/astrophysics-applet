@@ -198,12 +198,9 @@ Push to `main` → live within ~60 seconds.
 
 **3. Tour projector timing — OPEN (soft, before the talk).** The engine-real tour's Act C runs CLEAN live in both modes because the dev-machine gate measured CLEAN ≈ 98 ms (< 300 ms). This must be re-measured on the actual projector-class laptop (CPU-bound JS). If CLEAN > 300 ms there, switch presenter-mode Act C to precomputed playback of cached real frames (the never-stall timeout→cache fallback in sceneC.js already exists). Numbers + decision rule in TOUR-ENGINE-AUDIT.md §2.
 
-**4. Merge to main DONE; live deploy (push) PENDING — 2026-06-16.** The entire tour overhaul
-(world-class → apple-precision → design-language → engine-real rebuild → final pass → Act B/C
-fixes) was fast-forward-merged into local `main` on 2026-06-16 (main now at 651aa2e). It is NOT
-yet live: local `main` is **59 commits ahead of `origin/main`**, and GitHub Pages deploys from
-the pushed remote — so the live site is unchanged until `git push origin main`. Recommend a
-demo/sign-off with Alejandro before that push (it deploys the research-grade tool publicly).
+**4. Tour overhaul deploy — RESOLVED (verified 2026-07-09).** origin/main sits at cac1df0
+(2026-06-16 post-merge sync): the tour overhaul WAS pushed and is live. The pending push now
+covers only the physics/ship-pass commits (see #5).
 
 **5. Alejandro review — RESOLVED 2026-07-09 by delegated authority.** Ilan held final
 decision authority from Prof. Cárdenas-Avendaño (spec: _prompts/tour-final-ship-pass.md):
@@ -211,7 +208,7 @@ P1 adopted (sampled-coverage θ), P2 fixed (track max 39,291 km), P4 confirmed
 (DISH_DIAMETERS unflagged), P5 confirmed (locked-frame fill, relabeled "Relative
 coverage"), P3 deferred (worker zero-diff preserved). Implemented + gated on
 feature/alejandro-physics-pass (final ship pass, 2026-07-09); merge to main prepared —
-PUSH awaits Ilan's explicit "push" (deploys the full backlog publicly).
+PUSH awaits Ilan's explicit "push" (deploys this pass's 21 commits; the tour overhaul is already live).
 
 **No code blockers** — simulator + engine-real tour are feature-complete on the branch.
 
