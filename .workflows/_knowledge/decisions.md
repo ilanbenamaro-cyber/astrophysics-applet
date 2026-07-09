@@ -810,9 +810,13 @@ DECISIONS:
   (simCore.angularResFromUV; one decimal < 100 μas). Per-target: M87* 24.7 ·
   Sgr A* 23.6 · 3C 279 24.8 · Cen A 26.7. The geometric array max is never shown as
   resolution (the tour's rule, now the app's too). BHEX ON honestly drops the stat.
-- P2 FIXED: Max Baseline = GEOMETRIC max over the full observation window (STEPS=200)
-  — 39,291 km / 30.1 Gλ with BHEX. Note: deliberately UNfiltered (consistent with the
-  stat's ground-ground part); the elevation-filtered sampled max would be 39,110 km.
+- P2 FIXED: Max Baseline = max over the OBSERVED track (STEPS=200, elevation-filtered
+  — the ground station must actually see the target, same principle as P1):
+  39,109 km / 30.0 Gλ with BHEX at M87* (LMT–BHEX; converges to 39,110 with finer
+  stepping). SUPERSEDES the geometric-unfiltered 39,291 first implemented earlier the
+  same day (Ilan override 2026-07-09 at the pre-push review: the geometric max paired
+  SPT–BHEX although SPT never sees M87*). Ground-ground part remains geometric
+  (unchanged this pass).
 - P3 DEFERRED (worker diff zero this pass; remove the 25 m destructure default at the
   next authorized worker change).
 - P4 CONFIRMED: DISH_DIAMETERS as reviewed (element dish for phased stations; LMT/SPT

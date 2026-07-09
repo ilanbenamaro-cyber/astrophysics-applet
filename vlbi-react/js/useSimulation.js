@@ -5,7 +5,8 @@ import { IMAGE_SIZE, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD,
          BHEX_PRESET, SKY_TARGETS } from './constants.js';
 import { computeUVPoints, computeUVPointsGl, computeUVFillGl,
          computeUVMaxExtentGl,
-         latLonToECEF, computeSatelliteECEF } from './uvCompute.js';
+         latLonToECEF, computeSatelliteECEF,
+         computeElevation, MIN_ELEVATION_RAD } from './uvCompute.js';
 import { scaleSource, zoomSource, measureRingFraction, buildSefdMap, buildPairSefdMap,
          computeDynamicRange, beamFwhm as beamFwhmFn, angularResFromUV,
          presetMeanDish } from './simCore.js';
@@ -245,18 +246,22 @@ export function useSimulation() {
         if (d > 0.1 && d < minKm) minKm = d;
       }
     }
-    // P2 (Ilan, delegated authority, 2026-07-07): the ground–space baseline
-    // varies along the orbit — take the max over the full observation window,
-    // not a single H=0 snapshot (which understated BHEX ~15%: 33,543 vs
-    // 39,291 km). Geometric like the ground-ground part above (ground pairs
-    // are Earth-fixed, so their lengths are time-invariant by construction).
+    // P2 (Ilan, delegated authority, 2026-07-07; refined 2026-07-09): the
+    // ground–space baseline varies along the orbit — take the max over the
+    // OBSERVED track (same 200-step hour-angle grid + elevation filter as the
+    // UV computation), not a single H=0 snapshot (which understated BHEX ~15%:
+    // 33,543 km). Same principle as P1: the stat counts only baselines whose
+    // ground station actually observes the target — 39,109 km (LMT–BHEX) for
+    // M87*, not the 39,291 geometric max (SPT–BHEX; SPT never sees M87*).
     const STEPS = 200;
     const halfDur = controls.duration * Math.PI / 24;
+    const decRad = controls.declination * Math.PI / 180;
     for (const sat of spaceTels) {
       for (const g of groundTels) {
         const gPos = latLonToECEF(g.lat, g.lon);
         for (let s = 0; s <= STEPS; s++) {
           const H = -halfDur + (s / STEPS) * 2 * halfDur;
+          if (computeElevation(g.lat, H, decRad) < MIN_ELEVATION_RAD) continue;
           const satPos = computeSatelliteECEF(sat, H / (2 * Math.PI) * 24);
           const d = Math.sqrt((satPos.x-gPos.x)**2 + (satPos.y-gPos.y)**2 + (satPos.z-gPos.z)**2);
           if (d > maxKm) maxKm = d;
@@ -267,7 +272,7 @@ export function useSimulation() {
     const maxGl = maxKm * 1e3 / lambdaM / 1e9;
     const minGl = minKm < Infinity ? minKm * 1e3 / lambdaM / 1e9 : 0;
     return { maxKm, maxGl, minGl };
-  }, [telescopes, controls.frequency, controls.duration]);
+  }, [telescopes, controls.frequency, controls.duration, controls.declination]);
 
   const dynamicRange = useMemo(() => computeDynamicRange(restored, IMAGE_SIZE), [restored]);
 

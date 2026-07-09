@@ -355,10 +355,10 @@ green on the untouched modules) and at every gate. Worker baseline hash
   (angularResFromUV; 1 decimal < 100 μas). Browser-verified per target: M87* 24.7 ·
   Sgr A* 23.6 · 3C 279 24.8 · Cen A 26.7; BHEX ON → 7.1 μas (real physics). Tour headline
   25 μas / 10,883 km intact; no in-frame collision (tour is an opaque overlay).
-- P2 [fix][useSimulation.js baselineStats] Space baseline max over the full observation
-  window (STEPS=200), geometric like the ground part. MEASURED: 39,291 km / 30.1 Gλ
-  (SPT–BHEX, H=+3 h) ≤ 2R⊕+h (39,304). NOTE: the decided 39,291 is the UNFILTERED
-  geometric track max; the elevation-filtered sampled max would be 39,110 (LMT–BHEX).
+- P2 [fix][useSimulation.js baselineStats] Space baseline max over the OBSERVED track
+  (STEPS=200, elevation-filtered per Ilan's pre-push override 2026-07-09 — same
+  principle as P1). MEASURED: 39,109 km / 30.0 Gλ (LMT–BHEX, H≈−5.4 h) ≤ 2R⊕+h;
+  the geometric-unfiltered max would be 39,291 (SPT–BHEX — SPT never sees M87*).
   Earth-only bit-identical (ground baselines are Earth-fixed).
 - P4 [confirm][constants.js] DISH_DIAMETERS unflagged (⚠ PENDING → confirmed, delegated
   authority); LMT/SPT full-aperture values kept with 2017-illuminated caveat as comment.
