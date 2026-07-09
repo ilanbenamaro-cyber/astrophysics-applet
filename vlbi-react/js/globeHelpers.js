@@ -229,14 +229,30 @@ export function syncTelescopeMarkers(markerGroup, baselineGroup, telescopes) {
       const p2 = latLonToThreeJS(t2.lat, t2.lon);
       const STEPS = 50;
       const points = [];
+      // Slerp (uniform ANGULAR spacing), not chord-space lerp: uniform-t lerp
+      // concentrates nearly all the angular travel of a near-antipodal pair
+      // (SPT–GLT spans 166.6°) into the middle few segments — 18.7°-long
+      // straight chords that sag to radius 1.0015, grazing the globe surface
+      // (1.0), so the arc's middle visually breaks. Equal-angle steps keep
+      // every chord ≤ ~3.3° (sag ≤ 0.04% of R) for any station pair.
+      const u1 = p1.clone().normalize();
+      const u2 = p2.clone().normalize();
+      const omega = Math.acos(Math.max(-1, Math.min(1, u1.dot(u2))));
+      const sinOmega = Math.sin(omega);
       for (let s = 0; s <= STEPS; s++) {
         const t = s / STEPS;
-        const v = new THREE.Vector3().lerpVectors(p1, p2, t).normalize().multiplyScalar(1.015);
-        points.push(v);
+        const v = sinOmega > 1e-6
+          ? u1.clone().multiplyScalar(Math.sin((1 - t) * omega) / sinOmega)
+              .add(u2.clone().multiplyScalar(Math.sin(t * omega) / sinOmega))
+          : new THREE.Vector3().lerpVectors(u1, u2, t);   // co-located stations (ALMA/APEX-class)
+        points.push(v.normalize().multiplyScalar(1.015));
       }
       const geo = new THREE.BufferGeometry().setFromPoints(points);
       const blendColor = new THREE.Color(lerpColor(t1.color, t2.color, 0.5));
-      const mat = new THREE.LineBasicMaterial({ color: blendColor, opacity: 0.5, transparent: true });
+      // 0.85, not 0.5: at 50% alpha a 1px line blends into bright terrain
+      // (arcs visibly faded out over the Antarctic ice sheet approaching SPT —
+      // the second half of the "baselines don't fully connect" report).
+      const mat = new THREE.LineBasicMaterial({ color: blendColor, opacity: 0.85, transparent: true });
       baselineGroup.add(new THREE.Line(geo, mat));
     }
   }
