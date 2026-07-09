@@ -14,7 +14,7 @@ import { latLonToECEF, computeElevation, MIN_ELEVATION_RAD, computeUVPointsGl,
 import { presetMeanDish } from './simCore.js';
 
 const C_M_S        = 299792458;   // speed of light [m/s]
-const RAD_TO_UAS   = 206265e6;    // radians → microarcseconds (matches simCore.js angularRes)
+const RAD_TO_UAS   = 206265e6;    // radians → microarcseconds (matches simCore.js angularResFromUV)
 const RAD_TO_ARCSEC = 206265;     // radians → arcseconds
 
 // The setup the tour narrates: EHT primary band + a GBT-class single aperture.
@@ -23,7 +23,7 @@ export const SINGLE_DISH_D_M = 100;
 
 // ── Canonical formulas (kept identical to the simulator) ────────────────────────
 export function lambdaM(freqGHz)            { return C_M_S / (freqGHz * 1e9); }
-// θ = λ/B (NO 1.22 factor) — matches simCore.js angularRes
+// θ = λ/B (NO 1.22 factor) — same convention as simCore.js angularResFromUV (θ = 1/|uv|)
 export function thetaUas(baselineKm, lam)   { return (lam / (baselineKm * 1e3)) * RAD_TO_UAS; }
 export function thetaArcsec(apertureM, lam) { return (lam / apertureM) * RAD_TO_ARCSEC; }
 // |u| = B/λ in gigawavelengths — matches uvCompute.js kmToGl
@@ -89,7 +89,7 @@ function powTimes(v) {                       // 114063 → "1.1 × 10⁵×"
   return `${mant.toFixed(1)} × 10${sup}×`;
 }
 export const fmt = {
-  uas:    v => `${v.toFixed(0)} μas`,        // integer μas — matches app angularRes .toFixed(0)
+  uas:    v => `${v.toFixed(0)} μas`,        // integer μas — the tour's headline convention (the app shows one decimal below 100 μas since P1)
   uas1:   v => `${v.toFixed(1)} μas`,
   arcsec: v => `${v.toFixed(1)}″`,
   km:     v => `${Math.round(v).toLocaleString('en-US')} km`,

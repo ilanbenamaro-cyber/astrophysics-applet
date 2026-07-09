@@ -7,7 +7,7 @@ import { computeUVPoints, computeUVPointsGl, computeUVFillGl,
          computeUVMaxExtentGl,
          latLonToECEF, computeSatelliteECEF } from './uvCompute.js';
 import { scaleSource, zoomSource, measureRingFraction, buildSefdMap, buildPairSefdMap,
-         computeDynamicRange, beamFwhm as beamFwhmFn, angularRes as angularResFn,
+         computeDynamicRange, beamFwhm as beamFwhmFn, angularResFromUV,
          presetMeanDish } from './simCore.js';
 import { loadImagePresetAsync } from './presets.js';
 import { exportFITS } from './fitsExport.js';
@@ -222,9 +222,10 @@ export function useSimulation() {
     () => computeUVFillGl(uvPointsGl, uvDisplayMaxGl),
     [uvPointsGl, uvDisplayMaxGl]);
 
-  const angularRes = useMemo(
-    () => angularResFn(telescopes, controls.frequency),
-    [telescopes, controls.frequency]);
+  // P1: resolution from the sampled coverage (λ/|uv|max of the computed tracks),
+  // never the geometric array max — frequency/declination/duration flow in
+  // through uvPointsGl itself.
+  const angularRes = useMemo(() => angularResFromUV(uvPointsGl), [uvPointsGl]);
 
   const baselineStats = useMemo(() => {
     const groundTels = telescopes.filter(t => t.type !== 'space');

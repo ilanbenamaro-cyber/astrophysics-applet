@@ -8,9 +8,6 @@
 // back, so the live app is unchanged; tour acts import the same functions to drive real
 // engine output. The worker stays a classic, non-singleton module (one per call here).
 import { IMAGE_SIZE, ARRAY_PRESETS, DISH_DIAMETERS } from './constants.js';
-import { computeBaseline } from './uvCompute.js';
-
-const C_M_S = 299792458;
 
 // ── Reconstruction ───────────────────────────────────────────────────────────
 // Runs one reconstruction in its OWN worker and resolves with the result. Mirrors the
@@ -180,24 +177,25 @@ export function beamFwhm(beamDims, fovMuas, N = IMAGE_SIZE) {
   };
 }
 
-// Angular resolution string (θ = λ/B_max), or null with < 2 stations.
-// From useSimulation.js:213–229 (uses the imported computeBaseline, never a copy).
-export function angularRes(telescopes, frequency) {
-  if (telescopes.length < 2) return null;
-  let maxKm = 0;
-  for (let i = 0; i < telescopes.length; i++) {
-    for (let j = i + 1; j < telescopes.length; j++) {
-      const b = computeBaseline(telescopes[i], telescopes[j]);
-      const km = Math.sqrt(b.bx * b.bx + b.by * b.by + b.bz * b.bz);
-      if (km > maxKm) maxKm = km;
-    }
+// Angular resolution from the ACTUALLY-SAMPLED coverage (P1, Ilan delegated
+// authority from A. Cárdenas-Avendaño, 2026-07-07): θ = λ/|uv|max of the computed
+// tracks for the current target — consistent with the UV map and the tour's
+// headline rule (the geometric array max is never shown as resolution; a pair
+// that cannot co-observe the source contributes no |uv|). uvPointsGl is already
+// in Gλ, so θ[μas] = 206.265/|uv|maxGl. One decimal below 100 μas so per-target
+// values (24.7 / 23.6 / 26.7 …) stay distinguishable from the tour's rounded 25.
+export function angularResFromUV(uvPointsGl) {
+  if (!uvPointsGl || uvPointsGl.length === 0) return null;
+  let maxGl = 0;
+  for (const p of uvPointsGl) {
+    const r = Math.hypot(p.u, p.v);
+    if (r > maxGl) maxGl = r;
   }
-  if (maxKm === 0) return null;
-  const lambdaM = C_M_S / (frequency * 1e9);
-  const thetaMuas = (lambdaM / (maxKm * 1e3)) * 206265e6;
-  return thetaMuas < 1000
-    ? thetaMuas.toFixed(0) + ' μas'
-    : (thetaMuas / 1000).toFixed(2) + ' mas';
+  if (maxGl === 0) return null;
+  const thetaMuas = 206.265 / maxGl;   // (206265e6 μas/rad) / (1e9 λ/Gλ)
+  if (thetaMuas < 100)  return thetaMuas.toFixed(1) + ' μas';
+  if (thetaMuas < 1000) return thetaMuas.toFixed(0) + ' μas';
+  return (thetaMuas / 1000).toFixed(2) + ' mas';
 }
 
 // Default dish diameter (Alejandro note N5): the mean physical dish of the stations
