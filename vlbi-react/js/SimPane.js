@@ -51,6 +51,7 @@ export function SimPane({ sim, onOpenInfo, label, reducedMotion = false }) {
           showCountryLabels=${false}
           reducedMotion=${reducedMotion}
           tourActive=${false}
+          allowPlacement=${false}
         />
         <${StatusBar} status=${sim.status} isComputing=${sim.isComputing} baselineStats=${sim.baselineStats} />
         <${MetricsPanel}
@@ -97,6 +98,7 @@ export function SimPane({ sim, onOpenInfo, label, reducedMotion = false }) {
               telescopes=${sim.telescopes}
               onRemove=${sim.handleTelescopeRemove}
               onToggleVisibility=${sim.handleToggleVisibility}
+              readOnly=${true}
             />
           </div>
         ` : null}
