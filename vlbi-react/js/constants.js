@@ -69,7 +69,9 @@ export const STATION_SEFD = {
 // Sources: EHT 2019 Paper II Table 1 (2017/2022 stations); ngEHT Reference Array,
 // arXiv:2306.08787 (OVRO = 10.4 m Leighton, HAY = 37 m Haystack, GAM = 15 m Africa
 // Millimetre Telescope, BAJA/CNI/SGO = refurbished 6.1 m BIMA dishes).
-// ⚠ PENDING confirmation by Prof. Cárdenas-Avendaño (added 2026-07-07).
+// Confirmed (Ilan, delegated authority from A. Cárdenas-Avendaño, 2026-07-07).
+// LMT 50 m / SPT 10 m are full apertures — the stable version-independent values
+// (2017 ops illuminated ~32.5 m / ~6 m respectively; caveat kept here, not baked in).
 export const DISH_DIAMETERS = {
   'ALMA': 12,   'APEX': 12,   'SMA': 6,    'LMT': 50,
   'IRAM': 30,   'SMT': 10,    'SPT': 10,   'JCMT': 15,
