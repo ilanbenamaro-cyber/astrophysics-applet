@@ -102,7 +102,7 @@ export function drawUVPoints(ctx, mapUV, points, frac = 1, opts = {}) {
 // Arc gauge animating to a real UV-fill percentage. `pct` is the target (0–100),
 // `frac` eases the sweep in.
 export function drawFillGauge(ctx, cx, cy, r, pct, frac = 1, opts = {}) {
-  const { label = 'UV fill' } = opts;
+  const { label = 'rel. coverage' } = opts;   // P5: comparative metric, not absolute fill
   const a0 = -Math.PI / 2;
   const shown = pct * ease(clamp01(frac));
   const a1 = a0 + (shown / 100) * Math.PI * 2;

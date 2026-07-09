@@ -121,7 +121,7 @@ export function App() {
           ${!compareMode && left.telescopes.length >= 2 ? html`
             <span className="stat"><span className="stat-val">${left.telescopes.length}</span>telescopes</span>
             <span className="stat"><span className="stat-val">${left.telescopes.length*(left.telescopes.length-1)/2}</span>baselines</span>
-            <span className="stat"><span className="stat-val">${left.uvFill.toFixed(1)}%</span>UV fill</span>
+            <span className="stat"><span className="stat-val">${left.uvFill.toFixed(1)}%</span>relative coverage</span>
             ${left.angularRes ? html`<span className="stat"><span className="stat-val">${left.angularRes}</span>resolution</span>` : null}
           ` : null}
           ${!compareMode && html`
@@ -190,7 +190,7 @@ export function App() {
             <section id="tour-uv" className="panel-section">
               <h2>UV Coverage <${InfoTooltip} infoKey="uvmap" onOpen=${setInfoKey} /></h2>
               <${UVMap} uvPoints=${left.uvPointsGl} N=${IMAGE_SIZE} pairSefdMap=${left.pairSefdMap} displayMaxGl=${left.uvDisplayMaxGl} />
-              <p className="caption">Fill: ${left.uvFill.toFixed(1)}% of the UV frame sampled · ${left.uvPoints.length} samples</p>
+              <p className="caption">Relative coverage: ${left.uvFill.toFixed(1)}% of the locked UV frame · ${left.uvPoints.length} samples</p>
             </section>
 
             <section id="tour-images" className="panel-section">

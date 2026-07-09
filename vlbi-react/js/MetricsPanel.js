@@ -24,7 +24,7 @@ export function MetricsPanel({ beamFwhm, dynamicRange, uvFill, uvCount, baseline
           <span className="metrics-value">${beamFwhm.major.toFixed(1)} × ${beamFwhm.minor.toFixed(1)} μas</span>
           <span className="metrics-label">Dynamic Range</span>
           <span className="metrics-value">${dynamicRange > 0 ? dynamicRange.toFixed(0) + ':1' : '—'}</span>
-          <span className="metrics-label">UV Fill</span>
+          <span className="metrics-label">Rel. Coverage</span>
           <span className="metrics-value">${uvFill.toFixed(1)}%</span>
           <span className="metrics-label">UV Samples</span>
           <span className="metrics-value">${uvCount.toLocaleString()}</span>

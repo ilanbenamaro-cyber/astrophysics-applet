@@ -216,8 +216,9 @@ export function useSimulation() {
     }),
     [telescopes, controls.declination, controls.duration, controls.frequency]);
 
-  // UV fill (N3): % of cells sampled on a fixed grid spanning the locked display
-  // extent above — one frame for both the axes and the fill denominator.
+  // Relative coverage (N3, relabeled per P5): % of cells sampled on a fixed grid
+  // spanning the locked display extent above — one frame for both the axes and
+  // the metric's denominator. Comparative, not absolute completeness.
   const uvFill = useMemo(
     () => computeUVFillGl(uvPointsGl, uvDisplayMaxGl),
     [uvPointsGl, uvDisplayMaxGl]);
