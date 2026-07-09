@@ -241,19 +241,29 @@ export function useSimulation() {
         if (d > 0.1 && d < minKm) minKm = d;
       }
     }
+    // P2 (Ilan, delegated authority, 2026-07-07): the ground–space baseline
+    // varies along the orbit — take the max over the full observation window,
+    // not a single H=0 snapshot (which understated BHEX ~15%: 33,543 vs
+    // 39,291 km). Geometric like the ground-ground part above (ground pairs
+    // are Earth-fixed, so their lengths are time-invariant by construction).
+    const STEPS = 200;
+    const halfDur = controls.duration * Math.PI / 24;
     for (const sat of spaceTels) {
-      const satPos = computeSatelliteECEF(sat, 0);
       for (const g of groundTels) {
         const gPos = latLonToECEF(g.lat, g.lon);
-        const d = Math.sqrt((satPos.x-gPos.x)**2 + (satPos.y-gPos.y)**2 + (satPos.z-gPos.z)**2);
-        if (d > maxKm) maxKm = d;
+        for (let s = 0; s <= STEPS; s++) {
+          const H = -halfDur + (s / STEPS) * 2 * halfDur;
+          const satPos = computeSatelliteECEF(sat, H / (2 * Math.PI) * 24);
+          const d = Math.sqrt((satPos.x-gPos.x)**2 + (satPos.y-gPos.y)**2 + (satPos.z-gPos.z)**2);
+          if (d > maxKm) maxKm = d;
+        }
       }
     }
     const lambdaM = 299792458 / (controls.frequency * 1e9);
     const maxGl = maxKm * 1e3 / lambdaM / 1e9;
     const minGl = minKm < Infinity ? minKm * 1e3 / lambdaM / 1e9 : 0;
     return { maxKm, maxGl, minGl };
-  }, [telescopes, controls.frequency]);
+  }, [telescopes, controls.frequency, controls.duration]);
 
   const dynamicRange = useMemo(() => computeDynamicRange(restored, IMAGE_SIZE), [restored]);
 
