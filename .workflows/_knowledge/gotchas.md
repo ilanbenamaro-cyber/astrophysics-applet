@@ -583,7 +583,7 @@ RESOLVED: N/A — invariants to preserve.
 □ After touching useSimulation/ContourMap/ImageCanvas (they import simCore/simRender back), re-verify the live app reconstructs on a fresh port (G12) — these are behavior-neutral extractions and must remain so.
 □ UV fill/extent: metrics use computeUVFillGl + computeUVMaxExtentGl (Gλ, locked BHEX frame). Never grid pixel-space uvPoints for a metric (sub-pixel collapse). Axes and fill share ONE frame (uvDisplayMaxGl).
 □ BHEX toggle: loadEHTPresets must re-append BHEX when it was on (N2) — a preset swap silently dropping BHEX is a regression.
-□ DISH_DIAMETERS (constants.js) is PENDING Alejandro confirmation — do not treat as validated; presetMeanDish drives the default dish (EHT 2017→18.1, 2022→16.7, ngEHT→15.6; 2022-mean fallback).
+□ DISH_DIAMETERS (constants.js) CONFIRMED 2026-07-09 (Ilan, delegated authority from A. Cárdenas-Avendaño); presetMeanDish drives the default dish (EHT 2017→18.1, 2022→16.7, ngEHT→15.6; 2022-mean fallback). The BHEX "pending sign-off" hedge is a SEPARATE flag and remains.
 □ htm strips whitespace-only text at line breaks next to ${…} holes — keep "word ${…}" on one line in prose templates.
 □ ⚠ Tour timing gate must be re-run on the projector laptop before the Harvard talk: if CLEAN > 300 ms there, switch presenter-mode Act C to cached-frame playback (numbers in TOUR-ENGINE-AUDIT.md §2).
 □ computeUVPoints/computeUVPointsGl REQUIRE `color` on every telescope object (they call lerpColor on pair colours) — a station list without color crashes at module load. tourPhysics's fill computation passes a dummy '#C4A555'.
@@ -718,3 +718,45 @@ frame. Never grid pixel-space uvPoints for a displayed metric.
 DETECTION: fill ~0.0% regardless of array; cells-sampled ≪ sample count.
 
 RESOLVED: YES — commit 486aff9 (N3); intermediates in SITE-AUDIT.md.
+
+---
+
+### Gλ→px canvas mappings: computeUVMaxExtentGl is a HALF-extent
+DATE_DISCOVERED: 2026-07-09
+AREA: vlbi-react/js/UVMap.js (fixed); any future canvas drawing Gλ coordinates
+SEVERITY: HIGH (display)
+
+WHAT HAPPENED: BHEX UV coverage clipped at all four frame edges (B1). UVMap's
+toCanvas mapped x=(u/displayMax+0.5)·DST — the visible span was ±displayMax/2
+(±17.3 Gλ of the locked 34.6 frame) while the edge labels claimed ±34.6. Present
+since the original Gλ pipeline (8c6ba01); Earth-only coverage (8.35 Gλ) happened to
+fit, masking it until BHEX (28.9 Gλ).
+
+HOW TO AVOID: computeUVMaxExtentGl (and uvDisplayMaxGl) is the frame's HALF-extent —
+edges at ±extent. Mapping: x=(u/(2·extent)+0.5)·DST, or scale=(size/2)/extent like
+the tour's drawUVAxes (which was always correct). computeUVFillGl also treats it as
+a half-extent. When adding any Gλ canvas, cross-check a point at the extent lands at
+the frame edge, not outside.
+
+RESOLVED: YES — commit 83e7fcd (before/after screenshots in session artifacts).
+
+---
+
+### Globe great-circle arcs: chord-lerp under-samples near-antipodal pairs; 0.5-alpha lines vanish over ice
+DATE_DISCOVERED: 2026-07-09
+AREA: vlbi-react/js/globeHelpers.js syncTelescopeMarkers baseline arcs
+SEVERITY: MEDIUM (display)
+
+WHAT HAPPENED: "Baselines sometimes don't fully connect" (B2). Two causes:
+(1) uniform chord-space lerp+normalize packs a near-antipodal pair's angular travel
+into the middle few segments — SPT–GLT (166.5°) had 18.7°-long chords sagging to
+radius 1.0015 vs the globe's 1.0, so the arc's middle broke at the limb,
+camera-angle-dependent. (2) 1px LineBasicMaterial at 0.5 alpha faded out over the
+bright Antarctic ice approaching SPT.
+
+HOW TO AVOID: slerp (equal ANGULAR steps) for on-sphere polylines — worst chord
+Ω/STEPS for any pair; guard sinΩ≈0 with a lerp fallback (co-located stations). Keep
+arc opacity ≥0.85 over photo terrain. Do NOT confuse far-side limb occlusion
+(correct) with these defects — rotate the globe to distinguish.
+
+RESOLVED: YES — commit 09c006e.

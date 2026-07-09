@@ -800,3 +800,31 @@ keeping the Nyquist-grid fill with more decimals (still a rounding artifact, can
 TRIGGERS_REVIEW_IF: Alejandro revises DISH_DIAMETERS or the fill definition/M; BHEX orbit changes
 (locked extent derives from BHEX_PRESET); P1/P2/P3 proposals get sign-off (then fix angularRes/
 baselineStats/worker default).
+
+### Final ship pass: P1–P5 decided under delegated authority; B1 factor-2 root cause
+DATE: 2026-07-09
+CONTEXT: Ilan held delegated final decision authority from Prof. Cárdenas-Avendaño for
+the five fenced physics proposals (spec .workflows/_prompts/tour-final-ship-pass.md).
+DECISIONS:
+- P1 ADOPTED: displayed Resolution = θ = λ/|uv|max of the SAMPLED coverage
+  (simCore.angularResFromUV; one decimal < 100 μas). Per-target: M87* 24.7 ·
+  Sgr A* 23.6 · 3C 279 24.8 · Cen A 26.7. The geometric array max is never shown as
+  resolution (the tour's rule, now the app's too). BHEX ON honestly drops the stat.
+- P2 FIXED: Max Baseline = GEOMETRIC max over the full observation window (STEPS=200)
+  — 39,291 km / 30.1 Gλ with BHEX. Note: deliberately UNfiltered (consistent with the
+  stat's ground-ground part); the elevation-filtered sampled max would be 39,110 km.
+- P3 DEFERRED (worker diff zero this pass; remove the 25 m destructure default at the
+  next authorized worker change).
+- P4 CONFIRMED: DISH_DIAMETERS as reviewed (element dish for phased stations; LMT/SPT
+  full aperture with illuminated-aperture caveat as comment). Flag removed.
+- P5 CONFIRMED (a): locked-frame Gλ grid fill, M=200 FROZEN as a display constant;
+  relabeled "Relative coverage" everywhere so the absolute % isn't over-read.
+- B1 ROOT CAUSE recorded: UVMap toCanvas mapped x=(u/displayMax+0.5)·DST — treating
+  the half-extent as a full width — clipping everything beyond displayMax/2 since
+  8c6ba01. Rule: any canvas mapping Gλ→px must treat computeUVMaxExtentGl's value as
+  the HALF-extent (edges at ±extent).
+- Globe baseline arcs: slerp (equal-angle steps), never chord-space lerp — uniform-t
+  lerp sags near-antipodal arcs into the globe (SPT–GLT). Arc opacity 0.85 (0.5 faded
+  out over bright terrain).
+- JetBrains Mono is now LOADED (400/500/600) — the declared-not-loaded status quo is
+  over; --font-mono renders JetBrains everywhere.

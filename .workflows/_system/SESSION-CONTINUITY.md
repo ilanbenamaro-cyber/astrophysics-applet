@@ -155,6 +155,15 @@
 > BHEX × targets, compare mode, both tour modes, reduced motion, Esc-preserves-state, zero console
 > errors app-wide).
 
+**FINAL SHIP PASS: COMPLETE — 2026-07-09 (feature/alejandro-physics-pass, 11 commits this pass)**
+> P1–P5 DECIDED (Ilan, delegated authority) + implemented: sampled-coverage resolution,
+> track-max baseline, dish table confirmed, "Relative coverage" relabel. Bugs: B1 UV-map
+> factor-2 half-extent mapping (BHEX clipped since 8c6ba01), B2 slerp arcs + 0.85 alpha,
+> B3 compare preset-only, B4 hunt (stats edge case, stale copy, css truncation, a11y).
+> Visual pass (JetBrains Mono loaded, flat-chrome conformance, a11y font routing, compare
+> stacking, tour micro-detail). Red team: zero critical findings. All gates green; worker
+> diff EMPTY. Awaiting Ilan's "push" to deploy.
+
 **ALL PLANNED SESSIONS COMPLETE — S1 through P3 + Tour Cinematic Rewrite + Tour Art Passes + Canvas 2D Rewrite + Tour World-Class Overhaul + Tour Apple-Precision Overhaul + Tour Design-Language Conformance + Tour Engine-Real Rebuild**
 
 ---
@@ -196,14 +205,13 @@ yet live: local `main` is **59 commits ahead of `origin/main`**, and GitHub Page
 the pushed remote — so the live site is unchanged until `git push origin main`. Recommend a
 demo/sign-off with Alejandro before that push (it deploys the research-grade tool publicly).
 
-**5. Alejandro review of the physics-pass outputs — OPEN (2026-07-07).** Before
-feature/alejandro-physics-pass merges to main: (a) DISH_DIAMETERS values (element dish for
-phased stations; ngEHT sites from arXiv:2306.08787) are flagged PENDING in constants.js;
-(b) the N3 fill definition (locked-frame Gλ grid, M=200) was chosen by Ilan from measured
-candidates — confirm; (c) proposals P1 (angularRes geometric-max → sampled-coverage θ),
-P2 (baselineStats BHEX at H=0 → track max 39,291 km), P3 (worker 25 m destructure default)
-await sign-off in SITE-AUDIT.md "Stage 2 — 2.1 PHYSICS". Ilan reviews first; do NOT merge
-or push until cleared.
+**5. Alejandro review — RESOLVED 2026-07-09 by delegated authority.** Ilan held final
+decision authority from Prof. Cárdenas-Avendaño (spec: _prompts/tour-final-ship-pass.md):
+P1 adopted (sampled-coverage θ), P2 fixed (track max 39,291 km), P4 confirmed
+(DISH_DIAMETERS unflagged), P5 confirmed (locked-frame fill, relabeled "Relative
+coverage"), P3 deferred (worker zero-diff preserved). Implemented + gated on
+feature/alejandro-physics-pass (final ship pass, 2026-07-09); merge to main prepared —
+PUSH awaits Ilan's explicit "push" (deploys the full backlog publicly).
 
 **No code blockers** — simulator + engine-real tour are feature-complete on the branch.
 

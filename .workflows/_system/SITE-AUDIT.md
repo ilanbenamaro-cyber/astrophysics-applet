@@ -426,3 +426,37 @@ synthetic-pointer events hitting OrbitControls setPointerCapture (not app defect
   matching it) — not a defect; do not recolor station identity.
 - [OK] UVMap draws +v down (canvas y) while tour panels draw +v up — indistinguishable
   under conjugate symmetry (every (u,v) has its (−u,−v) twin); convention-only, no action.
+
+### Phase 3 — visual pass (commits 35a7540, 2ad4039)
+Method: screenshot → written critique naming the weakest thing → fix → re-screenshot,
+per surface. App shell: h1 split to name+byline; stat values in --font-mono;
+JetBrains Mono ACTUALLY LOADED (was declared-only — every mono surface site-wide
+sharpened); tour CTA glow → flat brightness/lift; .btn:hover shadow → amber border;
+metrics panel warm-neutral; UV map 2px marks (1px was sub-pixel after CSS downscale);
+axis labels → tokens. A11y: metrics/contour/modal-code font sizes routed through
+--fs-* (the font-size setting now scales them). Compare stacks <1100px (end-of-file
+media query — the earlier in-file attempt lost the cascade to the base rule).
+Tour micro-detail: spine label stacked (long act names ran under the pinned equation
+block); Act B horizon caption clear of the axis label; Act E ring label moved below
+the ring + BHEX sat label suppressed while sweeping the altitude caption. Acts A/C/D
+passed the bar unchanged. GATE V: probe ALL PASS, worker hash unchanged, header
+values exact, Act E reduced-motion frame byte-identical, alt-tab cohesion holds.
+
+### Phase 4 — stress test + red team (2026-07-09)
+RED TEAM (workflow, adversarial on all changed files): hostile-input probe on the
+changed pure functions — angularResFromUV(empty/null/all-zero/NaN/tiny-array),
+computeUVFillGl(0/NaN/negative extent), extent with no telescopes (→12 Gλ fallback),
+BHEX-only (0 points, no crash), duplicate-position stations (max=0 → res stat hides),
+duration 0 — ALL graceful, no throws/NaN/Infinity. Display-consumer sweep: minGl has
+no consumers (pre-existing); CitationModal/StatusBar clean; slerp degenerate cases
+guarded (co-located → lerp fallback; exact-antipodal impossible for real stations,
+THREE normalize(0)→0 vector = hidden, no crash). ZERO critical findings.
+SWEEP: 5× tour open/close — zero GL warnings/errors, state intact; heap 32→35 MB
+over 10 reconstructions (no unbounded growth); 1920×1080 + 3840×2160 CSS-emulated —
+no overflow, tour + pinned equation render (true-4K device pass remains the HUMAN
+TODO with the projector gate); presenter mode headline+equation only; BHEX-fits
+invariant frequency-independent by construction (coverage and locked extent both
+scale as 1/λ; probe checks 230 AND 345 GHz). Zero console errors app-wide (the only
+log entries all pass were the harness's own synthetic-pointer artifacts).
+GATES: P ✓ · B ✓ · V ✓ · stress ✓. Worker diff EMPTY end-to-end
+(3fb15375794db9c3a4bf66096eb730693aa3f6fc at every gate).

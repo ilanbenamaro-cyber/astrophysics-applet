@@ -446,3 +446,19 @@ N4's "suspicious" dec-60==dec-90 sample equality was proven CORRECT analytically
 IMPLICATION: for physics displays, present measured candidate definitions and let the
 advisor choose; never invent a target number. DISH_DIAMETERS values remain PENDING
 Alejandro confirmation.
+
+### Final ship pass complete — P1–P5 decided, B1–B4 fixed, deployed pending push
+DATE: 2026-07-09
+The five fenced physics proposals were DECIDED by Ilan under delegated authority from
+Prof. Cárdenas-Avendaño and implemented: P1 sampled-coverage resolution (24.7/23.6/
+24.8/26.7 μas per target), P2 track-max baseline (39,291 km — geometric, unfiltered),
+P4 dish table confirmed, P5 "Relative coverage" relabel (M=200 frozen). P3 stays
+deferred (worker diff zero). B1 root cause: UVMap treated the locked half-extent as a
+full width (factor-2, since 8c6ba01) — BHEX clipped. B2: chord-lerp sag on
+near-antipodal arcs + 0.5-alpha wash-out over ice. B3: compare = preset+BHEX only
+(Globe allowPlacement / TelescopeList readOnly). JetBrains Mono now actually loads.
+All gates green (P/B/V/stress + red team, zero critical findings); worker hash
+3fb15375… unchanged end-to-end. Merge to main + push = PUBLIC DEPLOY of the entire
+~59-commit backlog (tour overhaul) + this pass — push only on Ilan's explicit "push".
+Remaining HUMAN TODOs: projector-laptop CLEAN timing gate; BHEX hedge until
+Marrone/Alejandro sign-off.

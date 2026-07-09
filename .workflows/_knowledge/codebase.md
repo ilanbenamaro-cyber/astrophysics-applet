@@ -480,3 +480,21 @@ GitHub Pages from `main` branch root. Push to `main` = live within ~60 seconds.
 2026-04-20 — uvCompute.js: added computeUVPointsGl (Gλ display pipeline); UVMap: rewrote to use Gλ coords with auto-scale; App.js: uvPointsGl state added, fovMuas default 538→80; UV display and reconstruction pipelines are now fully independent.
 2026-04-16 — IMAGE_SIZE updated to 512; ContourMap boundary clip noted; sourceFraction default updated to 0.50; worker protocol N updated.
 2026-04-12 — Full reconstruction to cover vlbi-react as live active codebase (post Phase-1 commit bc212cb).
+
+2026-07-09 — Final ship pass (feature/alejandro-physics-pass → main):
+  P1: simCore.angularResFromUV(uvPointsGl) replaces angularRes(telescopes, frequency)
+    — Resolution = λ/|uv|max of sampled coverage, 1 decimal < 100 μas; useSimulation
+    memo depends on uvPointsGl only.
+  P2: baselineStats scans the full observation window for ground–space pairs
+    (STEPS=200, geometric, no elevation filter — consistent with the geometric
+    ground-ground part); shows for 2+ ground OR 1 ground + satellite.
+  P4: DISH_DIAMETERS confirmed (flag removed). P5: metric renamed "Relative
+    coverage" everywhere (computeUVFillGl unchanged; M=200 frozen display constant).
+  B1: UVMap toCanvas maps the half-extent correctly — x=(u/(2·displayMaxGl)+0.5)·DST;
+    2px point marks. B2: globe baseline arcs use slerp + opacity 0.85. B3: Globe
+    allowPlacement prop (default true; SimPane passes false) + TelescopeList readOnly
+    — compare mode is preset+BHEX only.
+  index.html loads JetBrains Mono (400/500/600) — --font-mono now real everywhere.
+  a11y: metrics/contour/modal-code font sizes on --fs-*; range :focus-visible ring;
+  compare stacks <1100px (end-of-file media query); tour spine label stacked under
+  the mini-UV canvas; ContourMap angularResolution prop removed (dead).
