@@ -316,15 +316,15 @@
   border: none;
   cursor: pointer;
   letter-spacing: 0.5px;
-  box-shadow: 0 0 20px rgba(158, 126, 56, 0.4);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  /* flat-chrome law: prominence comes from the gold fill, not a glow */
+  transition: filter 0.15s ease, transform 0.15s ease;
   font-family: var(--font, 'Inter', sans-serif);
   white-space: nowrap;
 }
 
 .tour-launch-btn:hover {
-  box-shadow: 0 0 30px rgba(158, 126, 56, 0.7);
-  transform: scale(1.03);
+  filter: brightness(1.1);
+  transform: translateY(-1px);
 }
 
 /* ── Reduced motion ─────────────────────────────────────────────────────── */

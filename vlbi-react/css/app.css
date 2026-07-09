@@ -87,6 +87,14 @@ html, body {
   color: var(--accent-teal);
   letter-spacing: 0.02em;
 }
+/* Byline inside the h1: same copy, quieter voice — the instrument name leads. */
+.header-byline {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.03em;
+  margin-left: 8px;
+}
 .header-inner p {
   margin: 0;
   font-size: var(--fs-sm);
@@ -109,6 +117,7 @@ html, body {
   font-size: var(--fs-lg);
   font-weight: 600;
   color: var(--accent-teal);
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 
@@ -469,8 +478,8 @@ input[type="range"]::-moz-range-thumb {
   gap: 5px;
   font-family: var(--font);
 }
-.btn:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.35); }
-.btn:active { transform: translateY(0); box-shadow: none; }
+.btn:hover { transform: translateY(-1px); border-color: var(--accent-amber); }
+.btn:active { transform: translateY(0); }
 .btn:focus-visible,
 .tel-btn:focus-visible,
 .info-btn:focus-visible {
@@ -646,7 +655,7 @@ input[type="range"]::-moz-range-thumb {
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg-1); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #4a3810; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-amber); }
 
 /* ── Accessibility panel ── */
 .a11y-wrap {
@@ -933,7 +942,7 @@ input[type="range"]::-moz-range-thumb {
   position: absolute;
   bottom: 36px;
   right: 8px;
-  background: rgba(8, 8, 24, 0.88);
+  background: rgba(10, 10, 10, 0.9);   /* warm-neutral (was blue-black 8,8,24) */
   border: 1px solid var(--border);
   border-radius: 6px;
   overflow: hidden;

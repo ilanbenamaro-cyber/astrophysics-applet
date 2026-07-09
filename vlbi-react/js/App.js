@@ -83,7 +83,7 @@ export function App() {
     <div className="app">
       <header className="header" style=${{ position: 'relative' }}>
         <div className="header-inner">
-          <h1>VLBI Interferometry Simulator by Ilan Benjamin Amaro (Wake Forest University)</h1>
+          <h1>VLBI Interferometry Simulator<span className="header-byline">by Ilan Benjamin Amaro (Wake Forest University)</span></h1>
           <p>Built with AI assistance and guidance by Prof. Alejandro Cárdenas-Avendaño</p>
           <p>Click the globe to place radio telescopes · Earth rotation synthesizes a virtual aperture the size of Earth</p>
         </div>

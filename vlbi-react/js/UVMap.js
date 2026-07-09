@@ -66,6 +66,9 @@ export function UVMap({ uvPoints, N, pairSefdMap = null, displayMaxGl = null }) 
 
     const useSnr = snrMode && pairSefdMap && Object.keys(pairSefdMap).length > 0;
 
+    // 2px marks: the canvas (N px) is CSS-downscaled to the panel (~322 px),
+    // so a 1px mark lands sub-pixel and the data layer — the hero — goes dim.
+    const PT = 2;
     if (useSnr) {
       // Pre-compute SNR range across all unique pairs
       let minSnr = Infinity, maxSnr = -Infinity;
@@ -82,7 +85,7 @@ export function UVMap({ uvPoints, N, pairSefdMap = null, displayMaxGl = null }) 
         const ix = Math.round(x);
         const iy = Math.round(y);
         if (ix >= 0 && ix < DST && iy >= 0 && iy < DST) {
-          ctx.fillRect(ix, iy, 1, 1);
+          ctx.fillRect(ix, iy, PT, PT);
         }
       }
     } else {
@@ -98,7 +101,7 @@ export function UVMap({ uvPoints, N, pairSefdMap = null, displayMaxGl = null }) 
           const ix = Math.round(x);
           const iy = Math.round(y);
           if (ix >= 0 && ix < DST && iy >= 0 && iy < DST) {
-            ctx.fillRect(ix, iy, 1, 1);
+            ctx.fillRect(ix, iy, PT, PT);
           }
         }
       }
@@ -131,28 +134,28 @@ export function UVMap({ uvPoints, N, pairSefdMap = null, displayMaxGl = null }) 
         <span style=${{
           position: 'absolute', top: '2px', left: '50%',
           transform: 'translateX(-50%)',
-          fontSize: 'var(--fs-2xs)', color: 'rgba(255,255,255,0.6)',
+          fontSize: 'var(--fs-2xs)', color: 'var(--text-secondary)',
           pointerEvents: 'none', fontFamily: 'var(--font-mono)',
           textShadow: '0 0 4px rgba(0,0,0,0.9)'
         }}>+${axisLabel} Gλ</span>
         <span style=${{
           position: 'absolute', bottom: '2px', left: '50%',
           transform: 'translateX(-50%)',
-          fontSize: 'var(--fs-2xs)', color: 'rgba(255,255,255,0.6)',
+          fontSize: 'var(--fs-2xs)', color: 'var(--text-secondary)',
           pointerEvents: 'none', fontFamily: 'var(--font-mono)',
           textShadow: '0 0 4px rgba(0,0,0,0.9)'
         }}>−${axisLabel} Gλ</span>
         <span style=${{
           position: 'absolute', top: '50%', left: '2px',
           transform: 'translateY(-50%)',
-          fontSize: 'var(--fs-2xs)', color: 'rgba(255,255,255,0.6)',
+          fontSize: 'var(--fs-2xs)', color: 'var(--text-secondary)',
           pointerEvents: 'none', fontFamily: 'var(--font-mono)',
           textShadow: '0 0 4px rgba(0,0,0,0.9)'
         }}>+${axisLabel} Gλ</span>
         <span style=${{
           position: 'absolute', top: '50%', right: '2px',
           transform: 'translateY(-50%)',
-          fontSize: 'var(--fs-2xs)', color: 'rgba(255,255,255,0.6)',
+          fontSize: 'var(--fs-2xs)', color: 'var(--text-secondary)',
           pointerEvents: 'none', fontFamily: 'var(--font-mono)',
           textShadow: '0 0 4px rgba(0,0,0,0.9)'
         }}>−${axisLabel} Gλ</span>
