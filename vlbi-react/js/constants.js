@@ -6,6 +6,10 @@ export const EARTH_RADIUS_KM = 6371;
 // Compare-mode panes are narrower, so they start further out to frame the whole array.
 export const COMPARE_CAMERA_DISTANCE = 4.2;
 
+// When a space telescope (BHEX) is toggled on, ease the globe camera out to here so
+// the full orbit ring (drawn at radius 1.5 in globeHelpers) is visible, not clipped.
+export const BHEX_VIEW_DISTANCE = 4.5;
+
 export const TELESCOPE_COLORS = [
   '#ff6b6b','#4ecdc4','#feca57','#48dbfb',
   '#ff9f43','#a29bfe','#55efc4','#fd79a8',
