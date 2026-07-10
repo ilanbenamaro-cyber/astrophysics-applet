@@ -36,6 +36,7 @@ export function Tour({ actIndex, onActChange, onClose, onTourAction, reducedMoti
 
   const canvasRef  = useRef(null);
   const rootRef    = useRef(null);
+  const bodyRef    = useRef(null);   // scrollable prose panel — reset to top per act
   const rafRef     = useRef(0);
   const dataRef    = useRef(null);
   const startRef   = useRef(0);
@@ -47,6 +48,11 @@ export function Tour({ actIndex, onActChange, onClose, onTourAction, reducedMoti
   // The textured tour Earth is a module singleton shared by Acts B and E;
   // release its WebGL context when the tour itself closes.
   useEffect(() => () => disposeTourEarth(), []);
+
+  // .tour-body is a persistent scroll container (no key) whose scrollTop carries over
+  // between acts. Reset to the top on every act change so each act opens at its first
+  // line — runs after the new act's DOM is committed; covers guided and presenter modes.
+  useEffect(() => { if (bodyRef.current) bodyRef.current.scrollTop = 0; }, [actIndex]);
 
   // ── Scene lifecycle: init (maybe async) → RAF draw → reveal text ──
   useEffect(() => {
@@ -216,7 +222,7 @@ export function Tour({ actIndex, onActChange, onClose, onTourAction, reducedMoti
           </div>
         </div>
 
-        <div className="tour-body">
+        <div className="tour-body" ref=${bodyRef}>
           <div className="tour-headline">${act.headline}</div>
 
           ${mode === 'guided' ? act.narrative.map((p, i) => html`
