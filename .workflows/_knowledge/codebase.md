@@ -504,3 +504,9 @@ GitHub Pages from `main` branch root. Push to `main` = live within ~60 seconds.
   sim.handleToggleBHEX/sim.bhexAdded; the Telescopes accordion now holds only the
   read-only TelescopeList. Tour.js: bodyRef on .tour-body + effect keyed on actIndex
   resets scrollTop=0 on every act change (both modes).
+  Globe auto-zoom: when a space telescope (BHEX) appears/disappears, the animate loop
+  eases camera distance toward zoomTargetRef (BHEX_VIEW_DISTANCE=4.5 on / initial on
+  off) — set only on the presence flip in the telescopes effect. Orbit ring is drawn
+  at radius 1.5 (globeHelpers VISUAL_R), so 2.8 clipped it; 4.5 frames it. Ease scales
+  camera.position BEFORE OrbitControls.update() and nulls the target once settled so
+  manual zoom isn't fought.
