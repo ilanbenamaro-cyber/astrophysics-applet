@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { borderLineMat, loadEarthTextures, loadCountryBoundaries, syncTelescopeMarkers, syncSatelliteMarkers } from './globeHelpers.js';
+import { BHEX_VIEW_DISTANCE } from './constants.js';
 
 // allowPlacement=false disables click-to-place (B3: compare mode is preset-only);
 // rotation/zoom interaction is unaffected.
@@ -21,6 +22,10 @@ export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMo
   const animFrameRef = useRef(null);
   const autoRotateTimerRef = useRef(null);
   const countryLabelGroupRef = useRef(null);
+  // Camera auto-zoom when a space telescope (BHEX) appears/disappears: the animate loop
+  // eases camera distance toward zoomTargetRef (null = idle, hands control back to user).
+  const zoomTargetRef = useRef(null);
+  const prevHasSatelliteRef = useRef(false);
   const onAddRef = useRef(onTelescopeAdd);
   const allowPlacementRef = useRef(allowPlacement);
   const showCountryLabelsRef = useRef(showCountryLabels);
@@ -235,6 +240,23 @@ export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMo
     const _occVec = new THREE.Vector3();
     function animate() {
       animFrameRef.current = requestAnimationFrame(animate);
+
+      // Ease the camera distance toward a target set on BHEX toggle. Scale BEFORE
+      // update() so OrbitControls derives its spherical radius from the new position
+      // (autorotate/damping then compose cleanly); clear the target once settled so
+      // manual zoom is never fought.
+      if (zoomTargetRef.current != null) {
+        const cur = camera.position.length();
+        const tgt = zoomTargetRef.current;
+        if (Math.abs(cur - tgt) < 0.02) {
+          camera.position.multiplyScalar(tgt / cur);
+          zoomTargetRef.current = null;
+        } else {
+          const next = cur + (tgt - cur) * 0.08;
+          camera.position.multiplyScalar(next / cur);
+        }
+      }
+
       orbitControls.update();
 
       for (const group of [markerGroup, satelliteGroup, countryLabelGroup]) {
@@ -285,6 +307,15 @@ export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMo
     if (!markerGroup || !baselineGroup) return;
     syncTelescopeMarkers(markerGroup, baselineGroup, telescopes);
     if (satelliteGroup) syncSatelliteMarkers(satelliteGroup, telescopes);
+
+    // On the transition of BHEX presence, zoom out to reveal the full orbit ring
+    // (or back to the default framing when it's removed). Only fires on the flip, so
+    // adding/removing ground stations never yanks the camera.
+    const hasSatellite = telescopes.some(t => t.type === 'space');
+    if (hasSatellite !== prevHasSatelliteRef.current) {
+      prevHasSatelliteRef.current = hasSatellite;
+      zoomTargetRef.current = hasSatellite ? BHEX_VIEW_DISTANCE : initialCameraDistance;
+    }
   }, [telescopes]);
 
   return html`<div
