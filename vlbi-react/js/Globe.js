@@ -7,7 +7,7 @@ import { borderLineMat, loadEarthTextures, loadCountryBoundaries, syncTelescopeM
 
 // allowPlacement=false disables click-to-place (B3: compare mode is preset-only);
 // rotation/zoom interaction is unaffected.
-export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMotion, tourActive, allowPlacement = true }) {
+export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMotion, tourActive, allowPlacement = true, initialCameraDistance = 2.8 }) {
   const containerRef = useRef(null);
   const rendererRef = useRef(null);
   const labelRendererRef = useRef(null);
@@ -169,9 +169,10 @@ export function Globe({ telescopes, onTelescopeAdd, showCountryLabels, reducedMo
     loadEarthTextures(earthMat, () => cancelled);
     loadCountryBoundaries(scene, countryLabelGroup, () => cancelled);
 
-    // Camera
+    // Camera. initialCameraDistance is read once at mount (this effect runs once);
+    // compare mode passes a larger value to frame the whole array from load.
     const camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 1000);
-    camera.position.set(0, 0, 2.8);
+    camera.position.set(0, 0, initialCameraDistance);
     cameraRef.current = camera;
 
     // OrbitControls
