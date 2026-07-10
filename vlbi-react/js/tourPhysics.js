@@ -140,7 +140,7 @@ const uvFillPct = computeUVFillGl(
 
 // BHEX: characteristic baseline ~ orbital RADIUS. This is an oversimplification —
 // the true ground-to-satellite baseline is geometry-dependent (up to ~2R⊕+h).
-// PENDING expert sign-off (Marrone / Alejandro). Never present as a clean equality.
+// Framing approved (Marrone / Alejandro); characteristic ~, never a clean equality.
 const bhexCharKm = EARTH_RADIUS_KM + BHEX_PRESET.orbitalAltitudeKm;
 const bhexTheta  = thetaUas(bhexCharKm, LAM);
 
@@ -176,7 +176,6 @@ export const TOUR_PHYSICS = Object.freeze({
     altitudeKm:   BHEX_PRESET.orbitalAltitudeKm,
     charRadiusKm: bhexCharKm,
     thetaUas:     bhexTheta,
-    pending:      true,
   }),
   // Single-source symbolic formulas — so Act 5 and Act 6 can never diverge again.
   bcFormula:        '√27 · GM/c²',        // critical impact parameter = shadow RADIUS

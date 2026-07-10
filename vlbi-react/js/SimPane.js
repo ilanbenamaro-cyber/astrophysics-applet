@@ -1,6 +1,6 @@
 // SimPane — compact single-simulation pane for compare mode.
 import { html, useState } from './core.js';
-import { IMAGE_SIZE, SKY_TARGETS } from './constants.js';
+import { IMAGE_SIZE, SKY_TARGETS, COMPARE_CAMERA_DISTANCE } from './constants.js';
 import { Globe } from './Globe.js';
 import { UVMap } from './UVMap.js';
 import { ImageCanvas, OriginalImagePanel } from './ImageCanvas.js';
@@ -44,6 +44,16 @@ export function SimPane({ sim, onOpenInfo, label, reducedMotion = false }) {
         </select>
       </div>
 
+      <div className="sim-pane-bhex-row">
+        <button
+          className=${'btn btn-xs bhex-button' + (sim.bhexAdded ? ' bhex-on' : '')}
+          onClick=${sim.handleToggleBHEX}
+          aria-pressed=${sim.bhexAdded}
+          title="Toggle the BHEX space telescope on or off"
+          style=${{ width: '100%' }}
+        >${sim.bhexAdded ? '✓ BHEX Satellite: ON' : 'BHEX Satellite: OFF'}</button>
+      </div>
+
       <div className="sim-pane-globe">
         <${Globe}
           telescopes=${sim.telescopes}
@@ -52,6 +62,7 @@ export function SimPane({ sim, onOpenInfo, label, reducedMotion = false }) {
           reducedMotion=${reducedMotion}
           tourActive=${false}
           allowPlacement=${false}
+          initialCameraDistance=${COMPARE_CAMERA_DISTANCE}
         />
         <${StatusBar} status=${sim.status} isComputing=${sim.isComputing} baselineStats=${sim.baselineStats} />
         <${MetricsPanel}
@@ -87,13 +98,6 @@ export function SimPane({ sim, onOpenInfo, label, reducedMotion = false }) {
         </button>
         ${showTels ? html`
           <div style=${{ padding: '0 12px 8px' }}>
-            <button
-              className=${'btn btn-xs bhex-button' + (sim.bhexAdded ? ' bhex-on' : '')}
-              onClick=${sim.handleToggleBHEX}
-              aria-pressed=${sim.bhexAdded}
-              title="Toggle the BHEX space telescope on or off"
-              style=${{ width: '100%', marginBottom: '6px' }}
-            >${sim.bhexAdded ? '✓ BHEX: ON' : 'BHEX: OFF'}</button>
             <${TelescopeList}
               telescopes=${sim.telescopes}
               onRemove=${sim.handleTelescopeRemove}

@@ -498,3 +498,9 @@ GitHub Pages from `main` branch root. Push to `main` = live within ~60 seconds.
   a11y: metrics/contour/modal-code font sizes on --fs-*; range :focus-visible ring;
   compare stacks <1100px (end-of-file media query); tour spine label stacked under
   the mini-UV canvas; ContourMap angularResolution prop removed (dead).
+  Globe: initialCameraDistance prop (default 2.8) sets the mount camera z; SimPane
+  passes COMPARE_CAMERA_DISTANCE (4.2, constants.js) so compare panes start zoomed
+  out. SimPane surfaces one per-pane BHEX toggle (.sim-pane-bhex-row) reusing
+  sim.handleToggleBHEX/sim.bhexAdded; the Telescopes accordion now holds only the
+  read-only TelescopeList. Tour.js: bodyRef on .tour-body + effect keyed on actIndex
+  resets scrollTop=0 on every act change (both modes).

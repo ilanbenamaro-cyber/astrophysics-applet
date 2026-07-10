@@ -2,6 +2,10 @@
 export const IMAGE_SIZE = 512;
 export const EARTH_RADIUS_KM = 6371;
 
+// Globe camera distance (Earth radius = 1 world unit; OrbitControls clamps 1.4–6).
+// Compare-mode panes are narrower, so they start further out to frame the whole array.
+export const COMPARE_CAMERA_DISTANCE = 4.2;
+
 export const TELESCOPE_COLORS = [
   '#ff6b6b','#4ecdc4','#feca57','#48dbfb',
   '#ff9f43','#a29bfe','#55efc4','#fd79a8',

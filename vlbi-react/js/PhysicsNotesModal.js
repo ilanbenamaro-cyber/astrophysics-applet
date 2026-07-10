@@ -1,5 +1,5 @@
 // Physics Notes modal — implementation methodology and references.
-// BHEX figures interpolate TOUR_PHYSICS (single source; hedged pending sign-off).
+// BHEX figures interpolate TOUR_PHYSICS (single source; characteristic ~ relation).
 import { html, useEffect } from './core.js';
 import { TOUR_PHYSICS as P } from './tourPhysics.js';
 
@@ -73,7 +73,7 @@ v = (−Bx·sin(δ)·cos(H) + By·sin(δ)·sin(H) + Bz·cos(δ)) / λ</pre>
           12-hour period. Ground–space baselines reach a characteristic scale
           B ~ R⊕ + h ≈ ${P.str.bhexRadius} — roughly 3× the maximum EHT ground baseline —
           for a characteristic ~${P.str.bhexTheta} resolution probing the M87* photon ring
-          (order-of-magnitude relation, pending expert sign-off). Reference: Johnson et al.
+          (order-of-magnitude relation). Reference: Johnson et al.
           (2024), arXiv:2406.12917.
         </p>
 

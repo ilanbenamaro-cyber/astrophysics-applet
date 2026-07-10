@@ -1019,6 +1019,11 @@ input[type="range"]::-moz-range-thumb {
   letter-spacing: 0.08em;
   white-space: nowrap;
 }
+.sim-pane-bhex-row {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-1);
+}
 .sim-pane-globe {
   position: relative;
   height: 280px;

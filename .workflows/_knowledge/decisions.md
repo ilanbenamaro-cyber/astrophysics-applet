@@ -838,3 +838,19 @@ DECISIONS:
   out over bright terrain).
 - JetBrains Mono is now LOADED (400/500/600) — the declared-not-loaded status quo is
   over; --font-mono renders JetBrains everywhere.
+
+--- 2026-07-10 · Three small post-deploy fixes (branch fix/three-small-post-deploy) ---
+- BHEX framing APPROVED (Marrone/Alejandro). The "pending sign-off"/⚠ marker is
+  removed from every rendered surface (Act E liveEquation status row in tourActs.js;
+  Physics Notes modal parenthetical) plus the dead `pending` flag in tourPhysics.js.
+  DECISION: approval clears the sign-off gate; it does NOT upgrade the relation to an
+  equality. "B_char ∼ R⊕ + h" stays a CHARACTERISTIC (order-of-magnitude) relation,
+  never "=", everywhere (tourActs equation, sceneE callout, PhysicsNotesModal).
+- Compare-mode globe starts more zoomed out: Globe gained an initialCameraDistance
+  prop (default 2.8 = single mode unchanged); compare panes pass
+  COMPARE_CAMERA_DISTANCE=4.2 (constants.js), within OrbitControls' 1.4–6 clamp.
+  View-only; no UV/physics change.
+- Compare-mode BHEX toggle was already per-pane but buried in the collapsed Telescopes
+  accordion. DECISION: promote one always-visible BHEX toggle per pane (under the pane
+  header), remove the accordion duplicate. Each pane stays independent (own
+  useSimulation → own worker); default OFF; placement still disabled (B3).
