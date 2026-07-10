@@ -2,9 +2,8 @@
 // Real space-VLBI coverage: the BHEX element (computeSatelliteECEF + the ground–space
 // branch of computeUVPointsGl) extends baselines BEYOND Earth's diameter. The Earth-only
 // limit is drawn as a ring; the space baselines (orange) reach past it.
-// INTEGRITY (master prompt §5, G3): geometry is real, but the baseline relation is hedged
-// — characteristic ~ R⊕ + h, never a clean equality. The sign-off hedge is stated ONCE,
-// in the act's equation box (tourActs.js). Final beat hands off to the live simulator.
+// INTEGRITY (master prompt §5, G3): geometry is real, and the baseline relation stays
+// characteristic ~ R⊕ + h, never a clean equality. Final beat hands off to the live simulator.
 import { computeUVPointsGl, computeSatelliteECEF } from './uvCompute.js';
 import { BHEX_PRESET } from './constants.js';
 import { TOUR_PHYSICS as P } from './tourPhysics.js';
@@ -154,8 +153,8 @@ export const sceneE = {
     ctx.fillText(`h = ${data.satellite.orbitalAltitudeKm.toLocaleString('en-US')} km`, gcx, capY);
     ctx.restore();
 
-    // ── Relation callout + CTA. The pending-sign-off hedge lives ONCE, in the act's
-    // equation box (tourActs.js liveEquation) — not repeated here (W1.4). ──
+    // ── Relation callout + CTA. Characteristic relation only (~ R⊕ + h), never an
+    // equality; the equation box (tourActs.js liveEquation) carries the same framing. ──
     if (b3 > 0) {
       ctx.save();
       ctx.globalAlpha = ease(b3);

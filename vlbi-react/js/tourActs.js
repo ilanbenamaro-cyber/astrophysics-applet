@@ -169,8 +169,6 @@ export const TOUR_ACTS = [
         ['altitude h', `${BHEX_PRESET.orbitalAltitudeKm.toLocaleString('en-US')} km`],
         ['B characteristic', P.str.bhexRadius],
         ['θ (characteristic)', P.str.bhexTheta],
-        // The ONE place the integrity hedge is stated (W1.4) — on the relation itself.
-        ['status', '⚠ pending sign-off (Marrone/Alejandro)'],
       ],
     },
     narrative: [
