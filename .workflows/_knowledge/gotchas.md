@@ -760,3 +760,19 @@ arc opacity ≥0.85 over photo terrain. Do NOT confuse far-side limb occlusion
 (correct) with these defects — rotate the globe to distinguish.
 
 RESOLVED: YES — commit 09c006e.
+
+---
+
+GOTCHA: Tour act text opened scrolled to the middle, not the top.
+CAUSE: .tour-body (Tour.js) is a single PERSISTENT scroll container — no `key`, the
+Tour component stays mounted across acts (only actIndex changes). Its scrollTop
+carried over from the previous act; a new, shorter act's content swapped in place and
+browser scroll anchoring held a mid-content position.
+HOW TO AVOID: when content swaps inside a persistent scroll container (no per-item
+key/remount), explicitly reset scrollTop on the keying change. Here: bodyRef +
+useEffect(() => { if (bodyRef.current) bodyRef.current.scrollTop = 0; }, [actIndex]).
+Runs after the new act's DOM commits; narrative <p>s render synchronously (independent
+of the phase fade), so it lands on the new content's top. Same element in guided and
+presenter modes → one reset covers both. Presenter mode has no scrollable prose, so
+it's a harmless no-op there.
+RESOLVED: YES — branch fix/three-small-post-deploy.
