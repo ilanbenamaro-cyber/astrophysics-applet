@@ -9,6 +9,7 @@ import { PhysicsNotesModal } from './PhysicsNotesModal.js';
 import { CitationModal } from './CitationModal.js';
 import { UVMap } from './UVMap.js';
 import { ImageCanvas, OriginalImagePanel } from './ImageCanvas.js';
+import { SourceNotice } from './SourceNotice.js';
 import { ContourMap } from './ContourMap.js';
 import { StatusBar } from './StatusBar.js';
 import { MetricsPanel } from './MetricsPanel.js';
@@ -169,6 +170,8 @@ export function App() {
             onTargetChange=${left.handleTargetChange}
             effectiveSourceFraction=${left.effectiveSourceFraction}
             ringFraction=${left.ringFraction}
+            inverted=${left.controls.invert}
+            onToggleInvert=${left.handleToggleInvert}
             compareMode=${compareMode}
             onToggleCompare=${handleToggleCompare}
           />
@@ -195,9 +198,10 @@ export function App() {
 
             <section id="tour-images" className="panel-section">
               <h2>Image Reconstruction</h2>
+              <${SourceNotice} suitability=${left.sourceSuitability} inverted=${left.controls.invert} onToggleInvert=${left.handleToggleInvert} />
               <div className="images-row">
                 <${OriginalImagePanel}
-                  canvas=${left.originalCanvas}
+                  canvas=${left.scaledSourceCanvas}
                   label="Ground Truth"
                   infoKey="ground"
                   onOpenInfo=${setInfoKey}

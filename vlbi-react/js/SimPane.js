@@ -119,7 +119,7 @@ export function SimPane({ sim, onOpenInfo, label, reducedMotion = false }) {
           <h2>Image Reconstruction</h2>
           <div className="images-row">
             <${OriginalImagePanel}
-              canvas=${sim.originalCanvas}
+              canvas=${sim.scaledSourceCanvas}
               label="Ground Truth"
               infoKey="ground"
               onOpenInfo=${onOpenInfo}
