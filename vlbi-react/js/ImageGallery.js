@@ -1,6 +1,6 @@
 import { html, useRef } from './core.js';
 
-export function ImageGallery({ selected, onSelect, onUpload }) {
+export function ImageGallery({ selected, onSelect, onUpload, inverted = false, onToggleInvert }) {
   const fileRef = useRef(null);
   const presets = [
     { name: 'blackhole', label: 'Black Hole', icon: '⬤' },
@@ -48,5 +48,14 @@ export function ImageGallery({ selected, onSelect, onUpload }) {
     <p style=${{ fontSize: '11px', color: 'var(--text-secondary)', textAlign: 'center', margin: '4px 0 0' }}>
       Images are processed locally and never stored or transmitted
     </p>
+    ${onToggleInvert ? html`
+      <button
+        className=${'btn btn-ghost btn-xs invert-toggle' + (inverted ? ' is-on' : '')}
+        style=${{ width: '100%', marginTop: '6px', justifyContent: 'center' }}
+        onClick=${onToggleInvert}
+        aria-pressed=${inverted}
+        title="Invert brightness so dark ink becomes the emitter on dark sky — real sources are bright on dark"
+      >${inverted ? '✓ Inverted (ink = emission)' : 'Invert brightness (ink → emission)'}</button>
+    ` : null}
   </div>`;
 }

@@ -560,6 +560,31 @@ input[type="range"]::-moz-range-thumb {
   margin-bottom: 4px;
 }
 
+/* ── Source suitability notice (computed teaching moment, not an error) ── */
+.source-notice {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent-teal);
+  background: var(--bg-1);
+  border-radius: 4px;
+  padding: 10px 12px;
+  margin: 0 0 12px;
+}
+.source-notice-title {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--accent-teal);
+  margin-bottom: 4px;
+}
+.source-notice-body {
+  font-size: var(--fs-xs, 0.72rem);
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 0;
+}
+.source-notice-body strong { color: var(--text-primary); font-weight: 700; }
+.source-notice-invert { margin-top: 8px; }
+.source-notice-invert.is-on { border-color: var(--accent-teal); color: var(--accent-teal); }
+
 /* ── BHEX Button ── */
 .bhex-button {
   border: 1px solid #FFD700;

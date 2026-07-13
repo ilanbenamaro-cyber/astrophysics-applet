@@ -9,7 +9,7 @@ import { computeUVPoints, computeUVPointsGl, computeUVFillGl,
          computeElevation, MIN_ELEVATION_RAD } from './uvCompute.js';
 import { scaleSource, zoomSource, measureRingFraction, buildSefdMap, buildPairSefdMap,
          computeDynamicRange, beamFwhm as beamFwhmFn, angularResFromUV,
-         presetMeanDish } from './simCore.js';
+         presetMeanDish, computeSourceRadialPower, assessSourceSuitability } from './simCore.js';
 import { loadImagePresetAsync } from './presets.js';
 import { drawHot } from './simRender.js';
 import { exportFITS } from './fitsExport.js';
@@ -22,6 +22,7 @@ const DEFAULT_CONTROLS = {
   dishDiameter: presetMeanDish('EHT 2017'),
   method: 'clean',
   fovMuas: 80, sourceFraction: 0.50,
+  invert: false,   // when true, dark ink becomes the emitter on dark sky (custom sources)
 };
 
 const IMAGE_PRESETS = {
@@ -139,16 +140,28 @@ export function useSimulation() {
   // Radial-peak measurement is only meaningful for ring-like sources, so the value
   // is sanity-banded — outside [0.2, 0.95] (point-like / extended sources) it falls
   // back to 1 and the legacy frame-fraction behavior is preserved unchanged.
+  // Invert (Item 3): dark-on-light logos are the inverse of a real source. When on,
+  // reflect brightness so the ink becomes the emitter on dark sky. Returns the SAME
+  // array reference when off, so every downstream memo (and the ring path) is untouched.
+  const effectiveGrayscale = useMemo(() => {
+    if (!grayscale || !controls.invert) return grayscale;
+    let mx = 0;
+    for (let i = 0; i < grayscale.length; i++) if (grayscale[i] > mx) mx = grayscale[i];
+    const out = new Float64Array(grayscale.length);
+    for (let i = 0; i < grayscale.length; i++) out[i] = mx - grayscale[i];
+    return out;
+  }, [grayscale, controls.invert]);
+
   const ringFraction = useMemo(() => {
-    if (!grayscale) return 1;
+    if (!effectiveGrayscale) return 1;
     // Only meaningful for a ring/black-hole target. Radial-peak measurement returned a
     // spurious ~0.89 for the WFU seal (a logo has no ring), which then mis-scaled it.
     // Skip it for non-shadow targets (Custom/arbitrary uploads) — they scale by frame.
     const target = SKY_TARGETS[selectedTarget];
     if (!target || target.shadowUas == null) return 1;
-    const f = measureRingFraction(grayscale, IMAGE_SIZE);
+    const f = measureRingFraction(effectiveGrayscale, IMAGE_SIZE);
     return (f >= 0.2 && f <= 0.95) ? f : 1;
-  }, [grayscale, selectedTarget]);
+  }, [effectiveGrayscale, selectedTarget]);
 
   // ── Derived source fraction ─────────────────────────────────────────────────
   // For named targets the RING (not the frame) must span shadowUas of the FOV:
@@ -165,9 +178,9 @@ export function useSimulation() {
   // ── Scaled source image ─────────────────────────────────────────────────────
   const scaledGrayscale = useMemo(
     () => effectiveSourceFraction >= 1
-      ? zoomSource(grayscale, effectiveSourceFraction, IMAGE_SIZE)
-      : scaleSource(grayscale, effectiveSourceFraction, IMAGE_SIZE),
-    [grayscale, effectiveSourceFraction]);
+      ? zoomSource(effectiveGrayscale, effectiveSourceFraction, IMAGE_SIZE)
+      : scaleSource(effectiveGrayscale, effectiveSourceFraction, IMAGE_SIZE),
+    [effectiveGrayscale, effectiveSourceFraction]);
 
   // Ground-truth preview: what the array actually images (the scaled/positioned source),
   // rendered in the same hot colormap as the reconstruction so the two are honestly
@@ -179,6 +192,20 @@ export function useSimulation() {
     drawHot(cv.getContext('2d'), scaledGrayscale, IMAGE_SIZE);
     return cv;
   }, [scaledGrayscale]);
+
+  // ── Source suitability (computed diagnostic) ─────────────────────────────────
+  // FFT the RAW image once per source (what the user actually uploaded, before the
+  // frame-scaling that would mask the problem); the array-dependent band split is cheap.
+  const sourceRadialPower = useMemo(
+    () => computeSourceRadialPower(effectiveGrayscale, IMAGE_SIZE, controls.fovMuas),
+    [effectiveGrayscale, controls.fovMuas]);
+
+  const sourceSuitability = useMemo(() => {
+    if (!sourceRadialPower || uvPointsGl.length === 0) return null;
+    let uMax = 0;
+    for (const p of uvPointsGl) { const r = Math.hypot(p.u, p.v); if (r > uMax) uMax = r; }
+    return assessSourceSuitability(sourceRadialPower, uMax, controls.fovMuas);
+  }, [sourceRadialPower, uvPointsGl, controls.fovMuas]);
 
   // ── SEFD maps ───────────────────────────────────────────────────────────────
   const sefdMap = useMemo(() => buildSefdMap(telescopes, STATION_SEFD), [telescopes]);
@@ -322,6 +349,10 @@ export function useSimulation() {
     }
   }, []);
 
+  const handleToggleInvert = useCallback(() => {
+    setControls(c => ({ ...c, invert: !c.invert }));
+  }, []);
+
   const handleToggleBHEX = useCallback(() => {
     setTelescopes(prev => prev.some(t => t.name === BHEX_PRESET.name)
       ? prev.filter(t => t.name !== BHEX_PRESET.name)
@@ -438,14 +469,14 @@ export function useSimulation() {
     controls, status, isComputing, uvCount, beamDims, selectedTarget,
     // Derived
     uvDisplayMaxGl,
-    effectiveSourceFraction, ringFraction, angularRes, baselineStats,
+    effectiveSourceFraction, ringFraction, angularRes, baselineStats, sourceSuitability,
     sefdMap, pairSefdMap, dynamicRange, beamFwhm,
     bhexAdded,
     // Setters needed by App.js
     setControls, setSelectedArrayPreset, setShowCountryLabels,
     // Handlers
     handleTelescopeAdd, handleTelescopeRemove, handleToggleVisibility,
-    handleTargetChange, handleToggleBHEX, handleLoadArrayPreset,
+    handleTargetChange, handleToggleInvert, handleToggleBHEX, handleLoadArrayPreset,
     handlePresetSelect, handleFileUpload, handleReset, handleExportFITS,
     handleClearTelescopes, handleLoadDefaultEHT,
     loadEHTPresets,

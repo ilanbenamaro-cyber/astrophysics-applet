@@ -13,6 +13,7 @@ export function AppSidebar({
   onClearAll, showCountryLabels, onToggleCountryLabels,
   controls, onControlChange, onOpenInfo, onReset,
   selectedTarget, onTargetChange, effectiveSourceFraction, ringFraction,
+  inverted = false, onToggleInvert = null,
   compareMode = false, onToggleCompare = null,
 }) {
   return html`
@@ -28,7 +29,7 @@ export function AppSidebar({
       ` : null}
       <section className="sidebar-section">
         <h2>Source Image <${InfoTooltip} infoKey="ground" onOpen=${onOpenInfo} /></h2>
-        <${ImageGallery} selected=${selectedPreset} onSelect=${onPresetSelect} onUpload=${onFileUpload} />
+        <${ImageGallery} selected=${selectedPreset} onSelect=${onPresetSelect} onUpload=${onFileUpload} inverted=${inverted} onToggleInvert=${onToggleInvert} />
       </section>
 
       <section className="sidebar-section">
