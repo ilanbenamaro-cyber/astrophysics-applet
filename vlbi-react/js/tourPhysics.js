@@ -8,7 +8,7 @@
 // Coordinate math (latLonToECEF) is IMPORTED from uvCompute.js, never copied:
 // it is the one place we cannot allow drift (Dan Marrone caught a longitude
 // sign error there once — fixed in 54c855b — and a copy could silently diverge).
-import { EARTH_RADIUS_KM, ARRAY_PRESETS, SKY_TARGETS, BHEX_PRESET, STATION_SEFD } from './constants.js';
+import { EARTH_RADIUS_KM, ARRAY_PRESETS, SKY_TARGETS, BHEX_PRESET, STATION_SEFD, formatTargetDistance } from './constants.js';
 import { latLonToECEF, computeElevation, MIN_ELEVATION_RAD, computeUVPointsGl,
          computeUVFillGl, computeUVMaxExtentGl } from './uvCompute.js';
 import { presetMeanDish } from './simCore.js';
@@ -96,8 +96,6 @@ export const fmt = {
   gl:     v => `${v.toFixed(1)} Gλ`,
   mm:     v => `${v.toFixed(1)} mm`,
   pow:    powTimes,
-  mpc:    v => `${v} Mpc`,                    // "16.8 Mpc" (source values are pre-rounded)
-  mly:    v => `${v} million light-years`,    // "55 million light-years"
 };
 
 // ── Computed-at-load truth ──────────────────────────────────────────────────────
@@ -199,8 +197,8 @@ export const TOUR_PHYSICS = Object.freeze({
     ngStations:   `${NGEHT.length} stations`,          // "17 stations"
     almaSefd:     `${STATION_SEFD['ALMA']} Jy`,        // "94 Jy"
     m87Shadow:    fmt.uas(SKY_TARGETS['M87*'].shadowUas),  // "42 μas"
-    m87DistLy:    fmt.mly(SKY_TARGETS['M87*'].distanceMly),                             // "55 million light-years"
-    m87Distance:  `${fmt.mpc(SKY_TARGETS['M87*'].distanceMpc)} · ${fmt.mly(SKY_TARGETS['M87*'].distanceMly)}`, // dual: "16.8 Mpc · 55 million light-years"
+    m87DistLy:    formatTargetDistance(SKY_TARGETS['M87*']).ly,     // "55 million light-years"
+    m87Distance:  formatTargetDistance(SKY_TARGETS['M87*']).value,  // dual: "16.8 Mpc or 55 million light-years"
     sgrAShadow:   fmt.uas(SKY_TARGETS['Sgr A*'].shadowUas),// "50 μas"
     bhexRadius:   fmt.km(bhexCharKm),                 // "32,933 km"
     bhexTheta:    fmt.uas(bhexTheta),                 // "8 μas"
