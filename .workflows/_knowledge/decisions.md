@@ -854,3 +854,21 @@ DECISIONS:
   accordion. DECISION: promote one always-visible BHEX toggle per pane (under the pane
   header), remove the accordion duplicate. Each pane stays independent (own
   useSimulation → own worker); default OFF; placement still disabled (B3).
+
+--- 2026-07-13 · Tour target distances (branch fix/tour-target-distances) ---
+- SOURCED target distances added to SKY_TARGETS (physics-before-validation rule):
+  M87* 16.8 Mpc / 55 Mly [EHT 2019 Paper VI, arXiv:1906.11243]; Sgr A* 8.15 kpc /
+  26,700 ly [GRAVITY Collaboration]; Cen A 3.8 Mpc / 12 Mly [Harris et al. 2010,
+  arXiv:0911.3180]. Each cited in a constants.js comment.
+- 3C 279 DECISION: it is a cosmological-redshift quasar (z≈0.536) — "distance" is
+  ambiguous (luminosity/comoving/light-travel differ). Stored as redshift +
+  light-travel time ~5.4 Gyr (standard ΛCDM, H0≈70), explicitly labeled NOT a metric
+  distance. No distanceMpc field. Do not paper over cosmological distance again.
+- The guided tour is HARDWIRED to M87* (tourActs.js:10, every act), so only M87*'s
+  distance is displayed (Act D / First Light). The other three targets are sourced
+  data enriching the shared model; they have no tour display surface today. If the
+  tour is ever made target-aware, the data + formatting pattern is already in place.
+- Distance rendered in the muted prose tier (dual units "16.8 Mpc · 55 million
+  light-years"), never the gold live-computation layer. The two former hardcoded
+  "55 million light-years" literals are now single-sourced via P.str.m87Distance /
+  m87DistLy. Frozen anchors (10,883 / 25 / 42 μas / 2√27) untouched.

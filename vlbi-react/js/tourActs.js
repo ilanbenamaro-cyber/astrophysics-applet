@@ -124,7 +124,7 @@ export const TOUR_ACTS = [
     chapter: 'Chapter III · The Frontier',
     title: 'First Light',
     conceptTag: 'M87* · April 2019',
-    headline: `A ${P.str.m87Shadow} shadow, 55 million light-years away.`,
+    headline: `A ${P.str.m87Shadow} shadow, ${P.str.m87DistLy} away.`,
     compute: 'precompute',
     engineState: {
       stations: ARRAY_PRESETS['EHT 2017'],
@@ -141,7 +141,7 @@ export const TOUR_ACTS = [
       ],
     },
     narrative: [
-      `On 10 April 2019 the Event Horizon Telescope released the first image humanity has ever made of a black hole: M87*, the central mass of the galaxy Messier 87, 55 million light-years away in the Virgo cluster. The left panel is that measurement — radio light gathered across one April week in 2017 by ${P.str.nStations} scattered over the planet, correlated, calibrated, and reconstructed. No artist drew any part of it.`,
+      `On 10 April 2019 the Event Horizon Telescope released the first image humanity has ever made of a black hole: M87*, the central mass of the galaxy Messier 87, ${P.str.m87Distance} away in the Virgo cluster. The left panel is that measurement — radio light gathered across one April week in 2017 by ${P.str.nStations} scattered over the planet, correlated, calibrated, and reconstructed. No artist drew any part of it.`,
       `The dark centre is not the event horizon itself but its shadow: the silhouette gravity casts when spacetime bends light around a mass. General relativity fixes its angular diameter at ${P.shadowDiamFormula} — the mass M sets the physical size, the distance d projects it onto our sky, and the strange coefficient 2√27 is pure geometry, the capture cross-section for photons that skim the hole. For six and a half billion suns at M87*'s distance the prediction is ${P.str.m87Shadow}. The bright ring around the darkness is lensed light, bent through the hole's vicinity and flung toward us, brighter on the side rotating our way.`,
       `${P.str.m87Shadow} deserves a pause. It is roughly the angle an orange would subtend on the surface of the Moon, seen from Earth — and it is not much larger than the ${P.str.thetaEht} the array can resolve at all. The image exists inside a margin of barely a factor of two between the size of the thing and the sharpest scale a planet-wide instrument reaches. A slightly smaller Earth, a slightly longer wavelength, and there would have been no ring — only an unresolved smudge where a prediction went untested.`,
       `The right panel is this simulator — the instrument you have been driving through every act — given the same ring and the same ${P.str.nStations}, run through the same sparse coverage and the same deconvolution, finding the same shadow. Neither side is an artist's impression: one is measured light; the other is the same mathematics, executed before your eyes. The image was not taken. It was computed — and the computation is small enough to hold in your hands.`,
