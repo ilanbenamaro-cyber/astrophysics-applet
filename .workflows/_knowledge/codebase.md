@@ -515,3 +515,8 @@ GitHub Pages from `main` branch root. Push to `main` = live within ~60 seconds.
   NOT a metric distance). tourPhysics fmt.mpc/fmt.mly build P.str.m87Distance (dual) and
   m87DistLy; Act D headline + narrative (tourActs.js) read them — the tour is M87*-only,
   so only M87*'s distance displays. Distance lives in muted prose, not the gold eqval tier.
+  formatTargetDistance(target) in constants.js is the single source for the dual-unit
+  string (separator "or"): metric "Distance" for M87*/Sgr A*/Cen A, "Light-travel" for
+  3C 279 (z + light-travel, never a metric distance), null for Custom. tourPhysics reads
+  it (m87Distance/m87DistLy); ControlsPanel renders {label}: {value} under the Dec: readout
+  (live app, target-aware).
