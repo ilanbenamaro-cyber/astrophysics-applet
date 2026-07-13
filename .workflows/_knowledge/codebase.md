@@ -510,3 +510,8 @@ GitHub Pages from `main` branch root. Push to `main` = live within ~60 seconds.
   at radius 1.5 (globeHelpers VISUAL_R), so 2.8 clipped it; 4.5 frames it. Ease scales
   camera.position BEFORE OrbitControls.update() and nulls the target once settled so
   manual zoom isn't fought.
+  Target distances: SKY_TARGETS entries carry sourced distance fields (M87*/Cen A
+  distanceMpc+distanceMly; Sgr A* distanceKpc+distanceLy; 3C 279 redshift+lightTravelGyr,
+  NOT a metric distance). tourPhysics fmt.mpc/fmt.mly build P.str.m87Distance (dual) and
+  m87DistLy; Act D headline + narrative (tourActs.js) read them — the tour is M87*-only,
+  so only M87*'s distance displays. Distance lives in muted prose, not the gold eqval tier.
