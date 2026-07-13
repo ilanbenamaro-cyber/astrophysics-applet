@@ -101,11 +101,19 @@ export const BHEX_PRESET = {
   color: '#FFD700',
 };
 
+// Distances are SOURCED (physics-before-validation rule) and cited per entry. 3C 279 is a
+// cosmological-redshift source: "distance" is ambiguous (luminosity/comoving/light-travel
+// differ), so it carries redshift + light-travel time, explicitly NOT a metric distance.
+// Only the tour's M87* distance is displayed today; the rest enrich the shared target model.
 export const SKY_TARGETS = {
-  'M87*':   { ra: 187.706, dec: 12.391,  description: 'Supermassive BH in Virgo A — primary EHT target', shadowUas: 42   },
-  'Sgr A*': { ra: 266.417, dec: -29.008, description: 'Milky Way galactic center BH',                     shadowUas: 50   },
-  '3C 279': { ra: 194.047, dec: -5.789,  description: 'Bright blazar, primary EHT calibrator',            shadowUas: null },
-  'Cen A':  { ra: 201.365, dec: -43.019, description: 'Nearest radio galaxy (NGC 5128)',                  shadowUas: null },
+  // Distance 16.8 (-0.7/+0.8) Mpc ≈ 55 Mly — EHT 2019 Paper VI (arXiv:1906.11243)
+  'M87*':   { ra: 187.706, dec: 12.391,  description: 'Supermassive BH in Virgo A — primary EHT target', shadowUas: 42,   distanceMpc: 16.8, distanceMly: 55 },
+  // Distance 8.15 kpc ≈ 26,700 ly — GRAVITY Collaboration (Galactic-center R0)
+  'Sgr A*': { ra: 266.417, dec: -29.008, description: 'Milky Way galactic center BH',                     shadowUas: 50,   distanceKpc: 8.15, distanceLy: 26700 },
+  // z ≈ 0.536; light-travel time ~5.4 Gyr (standard ΛCDM, H0≈70) — NOT a metric distance
+  '3C 279': { ra: 194.047, dec: -5.789,  description: 'Bright blazar, primary EHT calibrator',            shadowUas: null, redshift: 0.536, lightTravelGyr: 5.4 },
+  // Distance 3.8 ± 0.1 Mpc ≈ 12 Mly — Harris, Rejkuba & Harris 2010 (arXiv:0911.3180)
+  'Cen A':  { ra: 201.365, dec: -43.019, description: 'Nearest radio galaxy (NGC 5128)',                  shadowUas: null, distanceMpc: 3.8,  distanceMly: 12 },
   'Custom': { ra: null,    dec: null,     description: 'Set declination and source size manually',         shadowUas: null },
 };
 
