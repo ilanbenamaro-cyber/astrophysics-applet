@@ -11,6 +11,7 @@ import { scaleSource, zoomSource, measureRingFraction, buildSefdMap, buildPairSe
          computeDynamicRange, beamFwhm as beamFwhmFn, angularResFromUV,
          presetMeanDish } from './simCore.js';
 import { loadImagePresetAsync } from './presets.js';
+import { drawHot } from './simRender.js';
 import { exportFITS } from './fitsExport.js';
 
 const DEFAULT_CONTROLS = {
@@ -140,9 +141,14 @@ export function useSimulation() {
   // back to 1 and the legacy frame-fraction behavior is preserved unchanged.
   const ringFraction = useMemo(() => {
     if (!grayscale) return 1;
+    // Only meaningful for a ring/black-hole target. Radial-peak measurement returned a
+    // spurious ~0.89 for the WFU seal (a logo has no ring), which then mis-scaled it.
+    // Skip it for non-shadow targets (Custom/arbitrary uploads) — they scale by frame.
+    const target = SKY_TARGETS[selectedTarget];
+    if (!target || target.shadowUas == null) return 1;
     const f = measureRingFraction(grayscale, IMAGE_SIZE);
     return (f >= 0.2 && f <= 0.95) ? f : 1;
-  }, [grayscale]);
+  }, [grayscale, selectedTarget]);
 
   // ── Derived source fraction ─────────────────────────────────────────────────
   // For named targets the RING (not the frame) must span shadowUas of the FOV:
@@ -162,6 +168,17 @@ export function useSimulation() {
       ? zoomSource(grayscale, effectiveSourceFraction, IMAGE_SIZE)
       : scaleSource(grayscale, effectiveSourceFraction, IMAGE_SIZE),
     [grayscale, effectiveSourceFraction]);
+
+  // Ground-truth preview: what the array actually images (the scaled/positioned source),
+  // rendered in the same hot colormap as the reconstruction so the two are honestly
+  // comparable — not the raw, unscaled upload the user dropped in.
+  const scaledSourceCanvas = useMemo(() => {
+    if (!scaledGrayscale) return null;
+    const cv = document.createElement('canvas');
+    cv.width = IMAGE_SIZE; cv.height = IMAGE_SIZE;
+    drawHot(cv.getContext('2d'), scaledGrayscale, IMAGE_SIZE);
+    return cv;
+  }, [scaledGrayscale]);
 
   // ── SEFD maps ───────────────────────────────────────────────────────────────
   const sefdMap = useMemo(() => buildSefdMap(telescopes, STATION_SEFD), [telescopes]);
@@ -342,11 +359,14 @@ export function useSimulation() {
         setGrayscale(gs);
         setOriginalCanvas(previewCanvas);
         setSelectedPreset(name);
+        // The black-hole image IS the M87* target; the WFU seal is a logo, not a sky
+        // source — image it as Custom so it is never scaled or labeled as M87*.
+        handleTargetChange(name === 'blackhole' ? 'M87*' : 'Custom');
       }).catch(() => {
         setStatus({ msg: 'Failed to load image: ' + name, type: 'error' });
       });
     }
-  }, []);
+  }, [handleTargetChange]);
 
   const handleFileUpload = useCallback((file) => {
     const img = new Image();
@@ -364,6 +384,9 @@ export function useSimulation() {
       setGrayscale(gs);
       setOriginalCanvas(canvas);
       setSelectedPreset(null);
+      // A user upload is never the M87* target — do not scale it to the 42 μas shadow
+      // or label it with M87*'s dec/distance (it keeps the current declination).
+      setSelectedTarget('Custom');
       URL.revokeObjectURL(url);
     };
     img.onerror = () => URL.revokeObjectURL(url);
@@ -409,7 +432,7 @@ export function useSimulation() {
   return {
     // State
     telescopes, showCountryLabels, selectedPreset, selectedArrayPreset,
-    grayscale, originalCanvas,
+    grayscale, originalCanvas, scaledSourceCanvas,
     uvPoints, stationPairs, uvPointsGl, uvFill,
     dirty, restored,
     controls, status, isComputing, uvCount, beamDims, selectedTarget,

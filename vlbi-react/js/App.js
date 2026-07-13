@@ -197,7 +197,7 @@ export function App() {
               <h2>Image Reconstruction</h2>
               <div className="images-row">
                 <${OriginalImagePanel}
-                  canvas=${left.originalCanvas}
+                  canvas=${left.scaledSourceCanvas}
                   label="Ground Truth"
                   infoKey="ground"
                   onOpenInfo=${setInfoKey}
