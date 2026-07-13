@@ -1,6 +1,6 @@
 import { html, useState, useEffect } from './core.js';
 import { InfoTooltip } from './InfoTooltip.js';
-import { SKY_TARGETS } from './constants.js';
+import { SKY_TARGETS, formatTargetDistance } from './constants.js';
 
 export function ControlsPanel({ controls, onChange, onOpenInfo, selectedTarget = 'Custom', onTargetChange, effectiveSourceFraction, ringFraction = 1 }) {
   // Local text state for FOV input so the user can type freely before committing
@@ -28,6 +28,7 @@ export function ControlsPanel({ controls, onChange, onOpenInfo, selectedTarget =
     : sliders;
 
   const target = SKY_TARGETS[selectedTarget];
+  const dist = formatTargetDistance(target);
 
   return html`<div>
     <div className="control-row">
@@ -56,6 +57,11 @@ export function ControlsPanel({ controls, onChange, onOpenInfo, selectedTarget =
       ${selectedTarget !== 'Custom' ? html`
         <div style=${{ fontSize: 'var(--fs-xs, 0.7rem)', opacity: 0.85 }}>
           Dec: ${target.dec.toFixed(3)}°
+        </div>
+      ` : null}
+      ${dist ? html`
+        <div style=${{ fontSize: 'var(--fs-xs, 0.7rem)', opacity: 0.85 }}>
+          ${dist.label}: ${dist.value}
         </div>
       ` : null}
     </div>

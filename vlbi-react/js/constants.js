@@ -117,6 +117,22 @@ export const SKY_TARGETS = {
   'Custom': { ra: null,    dec: null,     description: 'Set declination and source size manually',         shadowUas: null },
 };
 
+// Formats a target's distance for display, honestly per measure: a metric distance in
+// dual units for the galaxies / Galactic center, and light-travel (never a metric
+// "distance") for the cosmological-redshift quasar 3C 279. Returns { label, value, ly }
+// or null when no distance data exists (e.g. Custom). Single source for both the tour
+// and the live-app target readout.
+export function formatTargetDistance(target) {
+  if (!target) return null;
+  if (target.distanceMpc != null)
+    return { label: 'Distance', value: `${target.distanceMpc} Mpc or ${target.distanceMly} million light-years`, ly: `${target.distanceMly} million light-years` };
+  if (target.distanceKpc != null)
+    return { label: 'Distance', value: `${target.distanceKpc} kpc or ${target.distanceLy.toLocaleString('en-US')} light-years`, ly: `${target.distanceLy.toLocaleString('en-US')} light-years` };
+  if (target.redshift != null)
+    return { label: 'Light-travel', value: `~${target.lightTravelGyr} billion light-years (z ≈ ${target.redshift})`, ly: `~${target.lightTravelGyr} billion light-years` };
+  return null;
+}
+
 export const INFO = {
   globe:       { title: 'Radio Telescope Globe',    body: 'Click anywhere on Earth to place a radio telescope. Every pair of telescopes forms a "baseline" — like a giant antenna spanning the distance between them. More telescopes = more baselines = sharper images.' },
   uvmap:       { title: 'UV-Plane Coverage',        body: 'As Earth rotates, each telescope pair sweeps an arc through Fourier space (the UV-plane). Each point sampled corresponds to one spatial frequency of the sky. The axis range is fixed to the array’s BHEX-enabled coverage extent, labeled in gigawavelengths (Gλ) — so toggling BHEX changes the coverage drawn, never the axes. The relative-coverage percentage counts sampled cells on the same fixed frame: it rises as coverage grows and ranks arrays against each other, but is not an absolute completeness. Dense, uniform coverage produces higher-fidelity reconstruction.' },
