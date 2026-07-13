@@ -872,3 +872,22 @@ DECISIONS:
   light-years"), never the gold live-computation layer. The two former hardcoded
   "55 million light-years" literals are now single-sourced via P.str.m87Distance /
   m87DistLy. Frozen anchors (10,883 / 25 / 42 μas / 2√27) untouched.
+
+--- 2026-07-13 · Source-image pipeline (branch fix/custom-source-path) ---
+- DIAGNOSTIC (see .workflows/_system/SOURCE-IMAGE-DIAGNOSTIC.md): the WFU-seal "blob" is
+  measured, correct physics — 97.6% of the seal's power is zero-spacing (DC) flux the
+  array never samples; only 0.5% is measurable (vs 39.5% for the black-hole ring). Verdict
+  (C): physics-dominant, PLUS real custom-path bugs.
+- FIX (Item 1): uploads + the WFU-seal preset now set selectedTarget='Custom' (blackhole
+  preset → M87*), so a custom image is never scaled to the 42 μas shadow nor labeled with
+  M87*'s dec/distance. measureRingFraction is gated to shadow targets (it returned a bogus
+  ~0.89 for the seal). Ground Truth panel now shows the SCALED source (drawHot), not the
+  raw upload. HARD GATE met: black-hole ring reconstructs byte-identically (CLEAN/Dirty
+  canvas hashes unchanged at noise=0).
+- TEACHING (Items 2-3): a computed suitability notice (simCore.computeSourceRadialPower +
+  assessSourceSuitability) states measured numbers (DC%, measurable%, resolution elements,
+  beam) and explains the aperture-synthesis limit. Triggers are PHYSICAL not tuned: fires
+  only when DC>50% OR measurable<10% — the ring (26%/40%) never trips it. A labeled Invert
+  toggle (default OFF) reflects brightness so ink becomes the emitter; inverting the seal
+  clears the notice. All routed through effectiveGrayscale (same ref when off → ring
+  byte-identical). worker.js untouched throughout.

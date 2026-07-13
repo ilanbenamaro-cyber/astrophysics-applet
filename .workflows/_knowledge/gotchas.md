@@ -776,3 +776,26 @@ of the phase fade), so it lands on the new content's top. Same element in guided
 presenter modes → one reset covers both. Presenter mode has no scrollable prose, so
 it's a harmless no-op there.
 RESOLVED: YES — branch fix/three-small-post-deploy.
+
+---
+
+GOTCHA: Uploaded/custom source images were silently imaged (and labeled) as M87*.
+CAUSE: handleFileUpload / handlePresetSelect set the source but never set
+selectedTarget, so it stayed at the mount default 'M87*'. effectiveSourceFraction keys
+off the TARGET (shadowUas), so a logo got force-scaled to the 42 μas shadow and the
+readout claimed "Dec 12.391° · 16.8 Mpc." Also measureRingFraction ran on every source
+(bogus ~0.89 "ring" for the seal).
+HOW TO AVOID: on any custom/upload source, setSelectedTarget('Custom'); map presets to
+their true target (blackhole→M87*, wfu-seal→Custom). Gate measureRingFraction to shadow
+targets. RESOLVED: YES — branch fix/custom-source-path.
+
+GOTCHA: htm drops the space between text and a <strong>/element when a NEWLINE sits at
+the boundary (e.g. "only\n  <strong>0.5%</strong>" renders "only0.5%"). Word-to-word
+newlines collapse to a space fine; only text↔element boundaries lose it.
+HOW TO AVOID: keep the needed space on the SAME source line as the tag
+("only <strong>…</strong> of"), or interpolate ${' '}. Seen building SourceNotice.js.
+
+TECHNIQUE: byte-identical reconstruction gate. At noise=0 the worker + CLEAN are
+deterministic, so hash the rendered CLEAN/Dirty canvas ImageData (FNV-1a over the bytes)
+before and after a scaling-touching change; compare on a FRESH never-used port. Used to
+prove the ring path was untouched by the custom-source fixes.

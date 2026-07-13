@@ -520,3 +520,11 @@ GitHub Pages from `main` branch root. Push to `main` = live within ~60 seconds.
   3C 279 (z + light-travel, never a metric distance), null for Custom. tourPhysics reads
   it (m87Distance/m87DistLy); ControlsPanel renders {label}: {value} under the Dec: readout
   (live app, target-aware).
+  Custom-source path: handleFileUpload / handlePresetSelect set selectedTarget='Custom'
+  (blackhole→M87*); ringFraction is gated to shadow targets; effectiveGrayscale applies the
+  Invert toggle (controls.invert, default off; same array ref when off) feeding scaledGrayscale,
+  ringFraction, and the source spectrum. scaledSourceCanvas (drawHot of scaledGrayscale) is the
+  Ground Truth panel. simCore.computeSourceRadialPower (one FFT/source) + assessSourceSuitability
+  (cheap band split vs u_max; DC>50% or measurable<10% → poor) drive SourceNotice.js, rendered
+  above the reconstruction. Invert toggle lives in ImageGallery (threaded via AppSidebar) and in
+  the notice. worker.js unchanged.
