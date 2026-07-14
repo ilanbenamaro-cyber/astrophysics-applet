@@ -89,6 +89,14 @@ export const DISH_DIAMETERS = {
   'BHEX': 3.4,  // matches BHEX_PRESET.dishDiameter
 };
 
+// Custom-image regime (Alejandro's prescription, CUSTOM-SOURCE-PHYSICS.md): a user image
+// never inherits a target's astrophysical units — it gets its own angular scale. The image
+// fills a fixed fraction of the field, and the default field is EHT 2017's measured sweet
+// spot from the recovery sweep (recovery peaks near 800 μas; occupancy ∝ 1/FOV² degrades
+// larger fields), so a first upload demonstrably reconstructs with the default array.
+export const CUSTOM_SOURCE_FRACTION = 0.9;
+export const CUSTOM_DEFAULT_FOV_UAS = 800;
+
 export const BHEX_PRESET = {
   name: 'BHEX',
   type: 'space',

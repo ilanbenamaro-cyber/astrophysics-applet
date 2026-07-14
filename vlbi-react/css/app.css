@@ -561,6 +561,37 @@ input[type="range"]::-moz-range-thumb {
 }
 
 
+/* ── Resolution budget (Custom-regime teaching panel — muted tier) ── */
+.res-budget {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent-teal);
+  background: var(--bg-1);
+  border-radius: 4px;
+  padding: 10px 12px;
+  margin: 0 0 12px;
+}
+.res-budget-title {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--accent-teal);
+  margin-bottom: 4px;
+}
+.res-budget-body {
+  font-size: var(--fs-xs, 0.72rem);
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 0 0 8px;
+}
+.res-budget-body strong { color: var(--text-primary); font-weight: 700; }
+.res-budget-ladder {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+}
+.res-budget-ladder-label {
+  font-size: var(--fs-xs, 0.72rem);
+  color: var(--text-secondary);
+}
+.res-budget-step.is-current { border-color: var(--accent-teal); color: var(--accent-teal); }
+
 /* ── BHEX Button ── */
 .bhex-button {
   border: 1px solid #FFD700;

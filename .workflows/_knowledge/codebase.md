@@ -524,7 +524,13 @@ GitHub Pages from `main` branch root. Push to `main` = live within ~60 seconds.
   (blackhole→M87*); ringFraction is gated to shadow targets; effectiveGrayscale applies the
   Invert toggle (controls.invert, default off; same array ref when off) feeding scaledGrayscale,
   ringFraction, and the source spectrum. scaledSourceCanvas (drawHot of scaledGrayscale) is the
-  Ground Truth panel. simCore.computeSourceRadialPower (one FFT/source) + assessSourceSuitability
-  (cheap band split vs u_max; DC>50% or measurable<10% → poor) drive SourceNotice.js, rendered
-  above the reconstruction. Invert toggle lives in ImageGallery (threaded via AppSidebar) and in
-  the notice. worker.js unchanged.
+  Ground Truth panel. Invert toggle lives in ImageGallery (threaded via AppSidebar).
+  [2026-07-14: SourceNotice.js + computeSourceRadialPower/assessSourceSuitability REMOVED —
+  wrong physics (see gotchas CORRECTION).] worker.js unchanged.
+  Custom regime (2026-07-14): CUSTOM_DEFAULT_FOV_UAS=800 / CUSTOM_SOURCE_FRACTION=0.9 in
+  constants.js; handleTargetChange seeds/restores them on regime entry/exit (ref-mirrored
+  previous target). ControlsPanel's Custom slider = "Image size on sky" (μas/mas).
+  ResolutionBudget.js (Custom only) computes N_res = imageSize/beam.major, occupancy =
+  distinct mask cells / π·r_max² from uvPoints (worker's round-and-wrap quantization), and
+  hosts the add-elements ladder (setSelectedArrayPreset+handleLoadArrayPreset, handleToggleBHEX).
+  Rendered in App.js above the reconstruction (single mode).

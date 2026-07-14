@@ -799,3 +799,20 @@ TECHNIQUE: byte-identical reconstruction gate. At noise=0 the worker + CLEAN are
 deterministic, so hash the rendered CLEAN/Dirty canvas ImageData (FNV-1a over the bytes)
 before and after a scaling-touching change; compare on a FRESH never-used port. Used to
 prove the ring path was untouched by the custom-source fixes.
+
+---
+
+CORRECTION (2026-07-14, from Prof. Cárdenas-Avendaño — we shipped wrong physics):
+DC/zero-spacing is NOT why detailed images fail to reconstruct. The DC bin is one Fourier
+coefficient — the image mean; losing u=0 costs the absolute zero level (a constant
+offset), NOT the structure. Real VLBI lacks it on every observation and images fine. The
+"97.6% of power in DC" statistic is near-tautological for any bright-background image and
+explains nothing. THE ACTUAL CAUSE: detail below the beam at the imposed angular scale —
+the seal was being imaged inside an M87*-shadow-sized field ("putting the seal in another
+Galaxy"). NEVER let a user image inherit a target's astrophysical units. Measured proof:
+CUSTOM-SOURCE-PHYSICS.md — at its own scale the seal reconstructs (ngEHT@1600 μas NCC
+0.953, lettering legible), improving monotonically with elements; and there is an OPTIMUM
+(coverage occupancy ∝ 1/FOV², EHT 2017 peaks ≈800 μas — enlarging past it degrades).
+LESSON FOR US: a statistic that is near-tautological for the input class (bright
+background ⇒ dominant DC) explains nothing — test explanations against controls that
+differ only in the suspected property (the coarse-W control isolated detail as the cause).

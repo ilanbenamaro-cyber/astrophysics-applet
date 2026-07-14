@@ -2,7 +2,8 @@
 // App.js keeps only global UI state (modals, a11y, tour).
 import { useState, useEffect, useCallback, useRef, useMemo } from './core.js';
 import { IMAGE_SIZE, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD,
-         BHEX_PRESET, SKY_TARGETS } from './constants.js';
+         BHEX_PRESET, SKY_TARGETS,
+         CUSTOM_SOURCE_FRACTION, CUSTOM_DEFAULT_FOV_UAS } from './constants.js';
 import { computeUVPoints, computeUVPointsGl, computeUVFillGl,
          computeUVMaxExtentGl,
          latLonToECEF, computeSatelliteECEF,
@@ -164,9 +165,12 @@ export function useSimulation() {
   }, [effectiveGrayscale, selectedTarget]);
 
   // ── Derived source fraction ─────────────────────────────────────────────────
-  // For named targets the RING (not the frame) must span shadowUas of the FOV:
-  // frame factor = (shadowUas / fov) / measured ring fraction. Factors > 1 zoom
-  // (center-crop) the source; < 1 shrink it — same math the tour's Acts C/D use.
+  // Two regimes (CUSTOM-SOURCE-PHYSICS.md): astrophysical targets keep target-derived
+  // units — the RING (not the frame) must span shadowUas of the FOV: frame factor =
+  // (shadowUas / fov) / measured ring fraction (>1 zooms/center-crops; <1 shrinks —
+  // same math the tour's Acts C/D use). A Custom image carries NO astrophysical units:
+  // its angular size = sourceFraction × fovMuas, both user-set; entering the Custom
+  // regime seeds them to the sweep-measured recoverable default (handleTargetChange).
   const effectiveSourceFraction = useMemo(() => {
     const target = SKY_TARGETS[selectedTarget];
     if (target && target.shadowUas !== null) {
@@ -328,10 +332,27 @@ export function useSimulation() {
     [beamDims, controls.fovMuas]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
+  // Regime switches change UNITS, so the field resets with them: entering Custom gives
+  // the image its own default scale (the sweep-measured EHT 2017 sweet spot); returning
+  // to a named target restores the astrophysical default field. Named→named switches
+  // leave the user's FOV alone (existing behavior). Ref mirrors selectedTarget so this
+  // stable callback can see the previous regime.
+  const selectedTargetRef = useRef('M87*');
   const handleTargetChange = useCallback((name) => {
+    const wasCustom = selectedTargetRef.current === 'Custom';
+    selectedTargetRef.current = name;
     setSelectedTarget(name);
-    if (name !== 'Custom') {
-      setControls(c => ({ ...c, declination: SKY_TARGETS[name].dec }));
+    if (name === 'Custom') {
+      if (!wasCustom) setControls(c => ({
+        ...c, fovMuas: CUSTOM_DEFAULT_FOV_UAS, sourceFraction: CUSTOM_SOURCE_FRACTION,
+      }));
+    } else {
+      setControls(c => ({
+        ...c,
+        declination: SKY_TARGETS[name].dec,
+        fovMuas:         wasCustom ? DEFAULT_CONTROLS.fovMuas         : c.fovMuas,
+        sourceFraction:  wasCustom ? DEFAULT_CONTROLS.sourceFraction  : c.sourceFraction,
+      }));
     }
   }, []);
 
@@ -401,14 +422,14 @@ export function useSimulation() {
       setGrayscale(gs);
       setOriginalCanvas(canvas);
       setSelectedPreset(null);
-      // A user upload is never the M87* target — do not scale it to the 42 μas shadow
-      // or label it with M87*'s dec/distance (it keeps the current declination).
-      setSelectedTarget('Custom');
+      // A user upload is never the M87* target — enter the Custom regime, which also
+      // gives the image its own default angular scale (never the 42 μas shadow field).
+      handleTargetChange('Custom');
       URL.revokeObjectURL(url);
     };
     img.onerror = () => URL.revokeObjectURL(url);
     img.src = url;
-  }, []);
+  }, [handleTargetChange]);
 
   // Exposed for Tour's resetForTour action
   const handleClearTelescopes = useCallback(() => {
@@ -432,6 +453,7 @@ export function useSimulation() {
       setOriginalCanvas(previewCanvas);
       setSelectedPreset('blackhole');
     });
+    selectedTargetRef.current = 'M87*';
     setSelectedTarget('M87*');
     setControls(DEFAULT_CONTROLS);
     setStatus({ msg: 'Reset. Place telescopes to begin.', type: '' });

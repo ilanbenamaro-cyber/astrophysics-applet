@@ -891,3 +891,22 @@ DECISIONS:
   toggle (default OFF) reflects brightness so ink becomes the emitter; inverting the seal
   clears the notice. All routed through effectiveGrayscale (same ref when off → ring
   byte-identical). worker.js untouched throughout.
+  [SUPERSEDED 2026-07-14: the zero-spacing/DC explanation above was WRONG (Alejandro's
+  correction) — the notice was removed; see the 2026-07-14 entry + gotchas CORRECTION.]
+
+--- 2026-07-14 · Custom-source physics correction (branch fix/custom-source-physics-correction) ---
+- Alejandro REJECTED our zero-spacing framing; he is right (see gotchas CORRECTION). The
+  wrong notice was pulled from the live site first (Phase 0, pushed alone).
+- MEASURED (CUSTOM-SOURCE-PHYSICS.md, 39-cell sweep through the real worker): at its own
+  angular scale the seal reconstructs; recovery = f(scale, elements) jointly; occupancy
+  ∝ 1/FOV² gives each array an optimum (EHT 2017 ≈ 800 μas).
+- DECISION — TWO-REGIME SCALING: astrophysical targets keep target-derived units (shadow
+  scaling, ring fraction, dec — ring path byte-identical, hash-verified twice); Custom
+  images carry NO astrophysical units — entering the regime seeds fovMuas=800 (measured
+  sweet spot) + sourceFraction=0.9 via handleTargetChange; leaving restores astrophysical
+  defaults (regime switch = unit switch; named→named preserves user FOV). The Custom size
+  slider is labeled "Image size on sky" (μas/mas).
+- TEACHING: ResolutionBudget panel (Custom only, never the ring) surfaces live computed
+  N_res, beam, and occupancy, and teaches the OPTIMUM (not "more is better") + an
+  add-elements ladder (2017→2022→ngEHT→+BHEX) that demonstrably resolves the user's
+  image (verified: one click to ngEHT makes the seal legible). No DC language anywhere.

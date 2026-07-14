@@ -1,3 +1,15 @@
+# ⚠ SUPERSEDED (2026-07-14) — the physics verdict below is WRONG
+
+**Prof. Cárdenas-Avendaño rejected the zero-spacing/DC framing in this report, and he is
+right.** The DC bin is the image mean; losing u=0 costs the zero level, not structure. The
+real cause is detail below the beam at an imposed astrophysical angular scale. See
+**CUSTOM-SOURCE-PHYSICS.md** (the measured recovery sweep) for the corrected verdict, and
+the gotchas.md CORRECTION entry. The pipeline *bug findings* below (target inheritance,
+ring-fraction misapplication, ground-truth mismatch) remain valid; the *physics
+explanation* does not.
+
+---
+
 # Source-Image Pipeline Diagnostic — VLBI Simulator
 
 **Date:** 2026-07-13 · **Scope:** vlbi-react/ · **Phase 1 (diagnose only — no code changed, worker diff empty)**

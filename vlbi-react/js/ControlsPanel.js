@@ -95,9 +95,12 @@ export function ControlsPanel({ controls, onChange, onOpenInfo, selectedTarget =
     ${selectedTarget === 'Custom' ? html`
       <div className="control-row">
         <div className="control-label">
-          SOURCE SIZE
+          IMAGE SIZE ON SKY
           <${InfoTooltip} infoKey="sourceSize" onOpen=${onOpenInfo} />
-          <span className="val">${Math.round(controls.sourceFraction * controls.fovMuas)} <span style=${{ fontSize: 'var(--fs-sm)', textTransform: 'none' }}>μas</span></span>
+          <span className="val">${(() => {
+            const uas = controls.sourceFraction * controls.fovMuas;
+            return uas >= 1000 ? (uas / 1000).toFixed(2) + ' mas' : Math.round(uas) + ' μas';
+          })()}</span>
         </div>
         <input
           type="range"
@@ -106,8 +109,11 @@ export function ControlsPanel({ controls, onChange, onOpenInfo, selectedTarget =
           step="0.01"
           value=${controls.sourceFraction}
           onInput=${(e) => onChange('sourceFraction', parseFloat(e.target.value))}
-          aria-label="Source angular size"
+          aria-label="Image angular size on sky"
         />
+        <div style=${{ fontSize: 'var(--fs-xs, 0.7rem)', opacity: 0.65, fontStyle: 'italic' }}>
+          Your image's own angular scale — independent of any astrophysical target
+        </div>
       </div>
     ` : target?.shadowUas !== null && target?.shadowUas !== undefined ? html`
       <div style=${{ fontSize: 'var(--fs-xs, 0.7rem)', opacity: 0.85, marginBottom: '4px' }}>
