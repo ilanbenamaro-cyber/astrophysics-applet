@@ -9,6 +9,7 @@ import { PhysicsNotesModal } from './PhysicsNotesModal.js';
 import { CitationModal } from './CitationModal.js';
 import { UVMap } from './UVMap.js';
 import { ImageCanvas, OriginalImagePanel } from './ImageCanvas.js';
+import { ResolutionBudget } from './ResolutionBudget.js';
 import { ContourMap } from './ContourMap.js';
 import { StatusBar } from './StatusBar.js';
 import { MetricsPanel } from './MetricsPanel.js';
@@ -197,6 +198,17 @@ export function App() {
 
             <section id="tour-images" className="panel-section">
               <h2>Image Reconstruction</h2>
+              <${ResolutionBudget}
+                selectedTarget=${left.selectedTarget}
+                controls=${left.controls}
+                beamFwhm=${left.beamFwhm}
+                uvPoints=${left.uvPoints}
+                selectedArrayPreset=${left.selectedArrayPreset}
+                onArrayPresetChange=${left.setSelectedArrayPreset}
+                onLoadArray=${left.handleLoadArrayPreset}
+                bhexAdded=${left.bhexAdded}
+                onToggleBHEX=${left.handleToggleBHEX}
+              />
               <div className="images-row">
                 <${OriginalImagePanel}
                   canvas=${left.scaledSourceCanvas}
