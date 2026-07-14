@@ -9,7 +9,7 @@ import { computeUVPoints, computeUVPointsGl, computeUVFillGl,
          computeElevation, MIN_ELEVATION_RAD } from './uvCompute.js';
 import { scaleSource, zoomSource, measureRingFraction, buildSefdMap, buildPairSefdMap,
          computeDynamicRange, beamFwhm as beamFwhmFn, angularResFromUV,
-         presetMeanDish, computeSourceRadialPower, assessSourceSuitability } from './simCore.js';
+         presetMeanDish } from './simCore.js';
 import { loadImagePresetAsync } from './presets.js';
 import { drawHot } from './simRender.js';
 import { exportFITS } from './fitsExport.js';
@@ -192,20 +192,6 @@ export function useSimulation() {
     drawHot(cv.getContext('2d'), scaledGrayscale, IMAGE_SIZE);
     return cv;
   }, [scaledGrayscale]);
-
-  // ── Source suitability (computed diagnostic) ─────────────────────────────────
-  // FFT the RAW image once per source (what the user actually uploaded, before the
-  // frame-scaling that would mask the problem); the array-dependent band split is cheap.
-  const sourceRadialPower = useMemo(
-    () => computeSourceRadialPower(effectiveGrayscale, IMAGE_SIZE, controls.fovMuas),
-    [effectiveGrayscale, controls.fovMuas]);
-
-  const sourceSuitability = useMemo(() => {
-    if (!sourceRadialPower || uvPointsGl.length === 0) return null;
-    let uMax = 0;
-    for (const p of uvPointsGl) { const r = Math.hypot(p.u, p.v); if (r > uMax) uMax = r; }
-    return assessSourceSuitability(sourceRadialPower, uMax, controls.fovMuas);
-  }, [sourceRadialPower, uvPointsGl, controls.fovMuas]);
 
   // ── SEFD maps ───────────────────────────────────────────────────────────────
   const sefdMap = useMemo(() => buildSefdMap(telescopes, STATION_SEFD), [telescopes]);
@@ -469,7 +455,7 @@ export function useSimulation() {
     controls, status, isComputing, uvCount, beamDims, selectedTarget,
     // Derived
     uvDisplayMaxGl,
-    effectiveSourceFraction, ringFraction, angularRes, baselineStats, sourceSuitability,
+    effectiveSourceFraction, ringFraction, angularRes, baselineStats,
     sefdMap, pairSefdMap, dynamicRange, beamFwhm,
     bhexAdded,
     // Setters needed by App.js
