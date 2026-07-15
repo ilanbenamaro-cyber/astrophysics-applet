@@ -378,6 +378,7 @@ in sceneC.js already exists). Supersedes the older "N=512 ~414ms CLEAN" benchmar
 ---
 
 ## Last Updated
+2026-07-15 — Zero-spacing correction lesson added (measured-but-tautological statistics; two-regime scaling pattern; controls isolate causes); 2026-07-09 entry's BHEX-hedge TODO closed (approved 2026-07-10)
 2026-07-07 — Alejandro physics pass: locked-frame UV metric pattern + fence-discipline entries added (see end of file)
 2026-06-10 — Tour engine-real rebuild: new 5-act architecture + simCore/simRender + measured timing memories added; TourDiagram Canvas-2D memories marked superseded
 2026-04-28 — Canvas 2D rewrite: TourDiagram SVG pattern updated to obsolete, Canvas 2D patterns added
@@ -463,4 +464,32 @@ DEPLOY of this pass's 21 commits (the tour overhaul was already pushed/live —
 origin/main sat at cac1df0, so the old 59-commit-backlog note was stale) — push only
 on Ilan's explicit "push".
 Remaining HUMAN TODOs: projector-laptop CLEAN timing gate; BHEX hedge until
-Marrone/Alejandro sign-off.
+Marrone/Alejandro sign-off. [UPDATE 2026-07-10: BHEX framing APPROVED — hedge removed,
+characteristic "~ R⊕+h" retained. Only the projector timing gate remains.]
+
+---
+
+### Measured-but-tautological statistics still mislead — the zero-spacing lesson
+DATE: 2026-07-15
+CATEGORY: workflow
+APPLIES_TO: any physics explanation shipped to users; any diagnostic pass
+
+LEARNING: We followed instrument-first discipline (measured 97.6% of the seal's power in
+the DC bin) and STILL shipped a wrong explanation, because the statistic was near-
+tautological for the input class: any bright-background image concentrates |FFT|² power
+at u=0, and losing the zero-spacing measurement costs only the absolute zero level, not
+structure — real VLBI images without it on every observation. Alejandro rejected the
+framing; the 39-cell recovery sweep (CUSTOM-SOURCE-PHYSICS.md) established the real cause:
+detail below the beam at an imposed astrophysical angular scale. The decisive tool was a
+CONTROL differing only in the suspected property (coarse bold "W" recovered with 8 stations
+where the fine seal could not).
+EVIDENCE: wrong notice shipped 2026-07-13 (4aff3a6), pulled 2026-07-14 (01b940c, pushed
+alone — confidently-wrong copy is worse than none); correction shipped 2026-07-15 (b42894d).
+IMPLICATION: (1) Measuring a number is not the same as testing an explanation — ask
+whether the statistic could be true of ANY input in its class. (2) Test causal claims with
+controls that isolate the suspected variable. (3) User images must NEVER inherit a
+target's astrophysical units — the two-regime scaling (astrophysical targets keep
+target-derived units; Custom images get their own "Image size on sky", seeded at the
+measured EHT 2017 sweet spot ≈800 μas) is now the permanent pattern. (4) Recovery is a
+JOINT function of angular scale and element count with an optimum (occupancy ∝ 1/FOV²) —
+"more scale" and "more elements" are not interchangeable.

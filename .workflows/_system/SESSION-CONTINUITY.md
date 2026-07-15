@@ -162,7 +162,34 @@
 > B3 compare preset-only, B4 hunt (stats edge case, stale copy, css truncation, a11y).
 > Visual pass (JetBrains Mono loaded, flat-chrome conformance, a11y font routing, compare
 > stacking, tour micro-detail). Red team: zero critical findings. All gates green; worker
-> diff EMPTY. Awaiting Ilan's "push" to deploy.
+> diff EMPTY. PUSHED 2026-07-10 — live.
+
+**POST-DEPLOY PASSES: ALL COMPLETE + LIVE (2026-07-10 → 2026-07-15)**
+> 2026-07-10 `89bb48b`: three small fixes — BHEX "pending sign-off" marker REMOVED
+>   (Marrone/Alejandro APPROVED the framing; "characteristic ~ R⊕+h" retained verbatim);
+>   compare mode starts zoomed out + per-pane BHEX toggle surfaced; tour text scroll-to-top.
+> 2026-07-10 `85a36cc`: main globe eases camera out (4.5) when BHEX toggled on so the
+>   orbit ring (drawn at radius 1.5) is visible; back to default on removal.
+> 2026-07-13 `07fb334`: sourced target distances in SKY_TARGETS (M87* 16.8 Mpc [EHT VI],
+>   Sgr A* 8.15 kpc [GRAVITY], Cen A 3.8 Mpc [Harris+10]; 3C 279 = z 0.536 + light-travel
+>   ~5.4 Gyr, NOT a metric distance); tour Act D shows M87*'s distance (tour is M87*-only).
+> 2026-07-13 `e4ce3a3`: distance readout under Dec: in live app (formatTargetDistance,
+>   "or" separator); target-aware; 3C 279 labeled "Light-travel".
+> 2026-07-13 `4aff3a6`: source-image diagnostic + custom-path fixes — uploads/wfu-seal set
+>   selectedTarget='Custom' (were silently imaged AS M87*); measureRingFraction gated to
+>   shadow targets; Ground Truth shows the scaled source; Invert toggle added.
+>   ⚠ its zero-spacing notice shipped WRONG PHYSICS — superseded below.
+> 2026-07-14 `01b940c` (pushed alone, urgent): the wrong DC/zero-spacing notice PULLED.
+> 2026-07-15 `b42894d`: custom-source physics correction — Alejandro rejected our DC
+>   framing (he is right: losing u=0 costs the zero level, not structure). Measured 39-cell
+>   sweep (CUSTOM-SOURCE-PHYSICS.md + montages) confirms his claim: at its own scale the
+>   seal reconstructs (ngEHT@1600 μas NCC 0.953); recovery = f(scale, elements); occupancy
+>   ∝ 1/FOV² gives each array an optimum (EHT 2017 ≈ 800 μas). Shipped: TWO-REGIME SCALING
+>   (Custom images never inherit astrophysical units; regime entry seeds fov 800/fraction
+>   0.9 = 720 μas default that actually recovers; "Image size on sky" slider) +
+>   ResolutionBudget panel (live N_res/beam/occupancy, the optimum lesson, add-elements
+>   ladder 2017→2022→ngEHT→+BHEX — one click makes the seal legible). Ring path
+>   byte-identical throughout (FNV hash gate, twice); worker diff EMPTY end-to-end.
 
 **ALL PLANNED SESSIONS COMPLETE — S1 through P3 + Tour Cinematic Rewrite + Tour Art Passes + Canvas 2D Rewrite + Tour World-Class Overhaul + Tour Apple-Precision Overhaul + Tour Design-Language Conformance + Tour Engine-Real Rebuild**
 
@@ -185,8 +212,8 @@ Push to `main` → live within ~60 seconds.
 
 | Person | Role | Context |
 |--------|------|---------|
-| Prof. Alejandro Cárdenas-Avendaño | Physics advisor, Wake Forest University | Meeting needed before Phase 2. Angular size is the open question. |
-| Dan Marrone | EHT scientist | External validator of array geometry. Caught longitude sign error (fixed in 54c855b). |
+| Prof. Alejandro Cárdenas-Avendaño | Physics advisor, Wake Forest University | Approved BHEX characteristic framing (2026-07-10). Rejected our zero-spacing seal explanation (2026-07-14) — his correction measured, confirmed, and shipped (CUSTOM-SOURCE-PHYSICS.md is his copy of the evidence). |
+| Dan Marrone | EHT scientist | External validator of array geometry. Caught longitude sign error (fixed in 54c855b). Co-approved BHEX framing. |
 
 ---
 
@@ -210,7 +237,16 @@ coverage"), P3 deferred (worker zero-diff preserved). Implemented + gated on
 feature/alejandro-physics-pass (final ship pass, 2026-07-09); merge to main prepared —
 PUSH awaits Ilan's explicit "push" (deploys this pass's 21 commits; the tour overhaul is already live).
 
-**No code blockers** — simulator + engine-real tour are feature-complete on the branch.
+**6. BHEX sign-off — RESOLVED 2026-07-10.** Marrone/Alejandro APPROVED the characteristic
+framing; the "pending sign-off" marker was removed everywhere (the "~ R⊕+h" relation stays,
+never an equality).
+
+**7. Custom-source physics — RESOLVED 2026-07-15.** Alejandro's correction (detail below
+the beam at an imposed astrophysical scale — never DC/zero-spacing) measured, confirmed,
+and shipped as two-regime scaling + the ResolutionBudget teaching panel. See gotchas.md
+CORRECTION entry.
+
+**No code blockers** — simulator + engine-real tour + post-deploy passes are all live on main.
 
 ---
 
@@ -242,14 +278,13 @@ Full VLBI simulation pipeline — S1 through S12c complete:
 
 ## WHAT TO DO NEXT
 
-The simulator AND the engine-real tour are feature-complete on `feature/tour-world-class-overhaul`.
+Everything is LIVE on main (origin at `b42894d`, 2026-07-15). No branches pending.
 
 1. **⚠ Re-run the tour timing gate on the projector laptop** before the talk (Blocker #3). If CLEAN > 300 ms there, flip presenter-mode Act C to cached-frame playback.
-2. **Demo session with Prof. Cárdenas-Avendaño** — walk through the new engine-real tour (5 acts A–E, presenter mode via ?mode=presenter), compare mode (EHT 2017 vs ngEHT Phase 1), metrics panel. Confirm the BHEX "characteristic ~ R⊕+h · pending sign-off" framing in Act E with Marrone/Alejandro.
-3. **Merge `feature/tour-world-class-overhaul` → main** (Blocker #4) to deploy the tour overhaul. Nothing on this branch is live yet.
-4. **Harvard EHT talk preparation** — presenter-mode tour for the talk; a reference compare-mode screenshot (EHT 2017 vs ngEHT Phase 1, both CLEAN on M87* @ 230 GHz).
-5. **Future enhancements** (no specific session planned; all require Alejandro sign-off): multi-component sources; dynamic source structure; frequency-dependent source size; re-expose Export FITS button.
-6. **Knowledge base is current as of 2026-06-16** — synced post Act B + Act C fix pass.
+2. **Send Alejandro the sweep evidence** — `.workflows/_system/CUSTOM-SOURCE-PHYSICS.md` + the two sweep montages (his correction, confirmed by measurement; the live site now demonstrates it: upload the seal, click the array ladder).
+3. **Harvard EHT talk preparation** — presenter-mode tour; a reference compare-mode screenshot (EHT 2017 vs ngEHT Phase 1, both CLEAN on M87* @ 230 GHz). The custom-upload + array-ladder demo is a strong live moment.
+4. **Future enhancements** (all require Alejandro sign-off): multi-component sources; dynamic source structure; frequency-dependent source size; re-expose Export FITS button.
+5. **Knowledge base is current as of 2026-07-15** — synced post custom-source physics correction.
 
 ---
 
@@ -328,6 +363,14 @@ constants.js ─ IMAGE_SIZE=512, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD, 
 ---
 
 ## LAST UPDATED
+
+2026-07-15 — All post-deploy passes live (see POST-DEPLOY PASSES block): ship pass pushed
+2026-07-10; BHEX sign-off resolved (approved); three-fixes + globe zoom + target distances +
+Dec readout + custom-path fixes shipped 2026-07-10..13; the wrong zero-spacing notice pulled
+2026-07-14 (Phase 0, pushed alone); custom-source physics correction (two-regime scaling +
+ResolutionBudget + add-elements ladder, backed by the measured 39-cell sweep) pushed
+2026-07-15 as b42894d. Blockers #5/#6/#7 resolved; #3 (projector timing) remains the only
+open item. All merged branches deleted; knowledge files synced.
 
 2026-07-07 — Alejandro physics pass complete on feature/alejandro-physics-pass (N1 locked UV axes,
 N2 BHEX toggle, N3 locked-frame Gλ fill, N4 target stress test, N5 preset-mean dish + fenced Stage 2
