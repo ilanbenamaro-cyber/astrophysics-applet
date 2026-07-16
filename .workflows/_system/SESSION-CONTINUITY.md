@@ -376,8 +376,8 @@ constants.js ─ IMAGE_SIZE=512, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD, 
 
 ## LAST UPDATED
 
-2026-07-16 — BHEX-seal diagnosis + honest labeling (fix/bhex-seal-diagnosis, merged — PENDING
-PUSH): Alejandro asked why BHEX doesn't help the seal. MEASURED across scales (real worker,
+2026-07-16 — BHEX-seal diagnosis + honest labeling + PUSHED (671fc55..b01ed10, live):
+Alejandro asked why BHEX doesn't help the seal. MEASURED across scales (real worker,
 never-used ports) — it's BOTH (1) correct physics and (2) a grid artifact. Cause 3 (bug) ruled
 out (BHEX baselines present + counted in custom uvPoints). Cause 2: BHEX's ~30 Gλ baselines wrap
 off the N=512 mask above ~1,760 μas (0% aliased ≤1,760; 11/39/83% at 2.0k/2.4k/3.2k). Cause 1
