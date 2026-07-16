@@ -376,7 +376,7 @@ constants.js ─ IMAGE_SIZE=512, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD, 
 
 ## LAST UPDATED
 
-2026-07-16 — Root redirect added (d3d6d4c, PENDING PUSH): the GitHub Pages bare URL served
+2026-07-16 — Root redirect added + PUSHED (d3d6d4c..c00e8bf, live): the GitHub Pages bare URL served
 the OLD standalone Leaflet build; the live React app is at /vlbi-react/. Root index.html is
 now a redirect (JS location.replace preserving query/hash + meta-refresh + fallback link, all
 relative paths). The old Leaflet app is preserved + still runnable as legacy-leaflet.html
