@@ -1,3 +1,20 @@
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Node (not used today — no bundler — but guard against future tooling)
+node_modules/
+
+# Local dev / test scratch
 .playwright-mcp/
 test-results/
-*.png
+*.log
+
+# Local HTTP server artifacts
+.python-http-server.pid
+
+# NOTE: image assets are tracked deliberately (assets/, docs/). Do NOT add a blanket
+# *.png / *.jpg ignore — it silently un-tracks the app's source images and README shots.
