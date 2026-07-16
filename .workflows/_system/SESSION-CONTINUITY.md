@@ -190,7 +190,7 @@
 >   ResolutionBudget panel (live N_res/beam/occupancy, the optimum lesson, add-elements
 >   ladder 2017→2022→ngEHT→+BHEX — one click makes the seal legible). Ring path
 >   byte-identical throughout (FNV hash gate, twice); worker diff EMPTY end-to-end.
-> 2026-07-16 (fix/contour-freeze, merged — PUSH AWAITS ILAN): freeze-fix-invert-stress
+> 2026-07-16 (fix/contour-freeze, PUSHED b42894d..53b1541 — live): freeze-fix-invert-stress
 >   pass. Ilan's reported "ladder freezes the entire site" DIAGNOSED BY MEASUREMENT
 >   (the prompt's sync/cascade hypothesis disproven — reconstruction was always async,
 >   1 per click): groupSegments (simRender.js contour island filter) was O(S²·|group|)
@@ -289,9 +289,8 @@ Full VLBI simulation pipeline — S1 through S12c complete:
 
 ## WHAT TO DO NEXT
 
-**PENDING PUSH (2026-07-16):** the contour-freeze fix + Invert stress pass is merged to
-local main — push awaits Ilan's explicit "push" (also carries the 0915a6b docs sync).
-Origin sits at `b42894d` (2026-07-15).
+Everything is LIVE on main (origin at `53b1541`, pushed 2026-07-16 — carries the
+contour-freeze fix + Invert stress pass and the 0915a6b docs sync).
 
 1. **⚠ Re-run the tour timing gate on the projector laptop** before the talk (Blocker #3). If CLEAN > 300 ms there, flip presenter-mode Act C to cached-frame playback.
 2. **Send Alejandro the sweep evidence** — `.workflows/_system/CUSTOM-SOURCE-PHYSICS.md` + the two sweep montages (his correction, confirmed by measurement; the live site now demonstrates it: upload the seal, click the array ladder).
@@ -380,8 +379,8 @@ constants.js ─ IMAGE_SIZE=512, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD, 
 2026-07-16 — Contour-freeze fix + Invert stress pass complete (fix/contour-freeze):
 groupSegments rewritten linear (20,585 ms → ≤64 ms, measured, worst-case recipe);
 full Invert matrix green; ring hashes intact twice on fresh ports; worker diff EMPTY;
-gotchas/MEMORY/codebase synced. Merged to local main — PUSH AWAITS ILAN. Blocker #3
-(projector timing) remains the only open item.
+gotchas/MEMORY/codebase synced. PUSHED to main 2026-07-16 (b42894d..53b1541) — live.
+Blocker #3 (projector timing) remains the only open item.
 
 2026-07-15 — All post-deploy passes live (see POST-DEPLOY PASSES block): ship pass pushed
 2026-07-10; BHEX sign-off resolved (approved); three-fixes + globe zoom + target distances +
