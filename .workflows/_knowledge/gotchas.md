@@ -816,3 +816,39 @@ CUSTOM-SOURCE-PHYSICS.md — at its own scale the seal reconstructs (ngEHT@1600 
 LESSON FOR US: a statistic that is near-tautological for the input class (bright
 background ⇒ dominant DC) explains nothing — test explanations against controls that
 differ only in the suspected property (the coarse-W control isolated detail as the cause).
+
+---
+
+### groupSegments contour clustering froze the site for 20+ s — per-result display work must be linear
+DATE_DISCOVERED: 2026-07-16
+AREA: vlbi-react/js/simRender.js — groupSegments (ContourMap island filter)
+SEVERITY: HIGH
+
+WHAT HAPPENED: Stepping the ResolutionBudget array ladder "froze the entire site."
+Measured (never-used port, Worker.postMessage wrap + longtask observer + rAF-gap
+monitor): reconstruction was NOT the cause — the async worker path fired exactly one
+reconstruction per click (86–175 ms in-worker). The freeze was a single synchronous
+main-thread task AFTER each result: groupSegments, the contour island filter, at
+20,585 ms on the striped seal dirty image (EHT 2017 @ FOV 2000 μas — 9,836 segments,
+15.45e9 comparisons).
+
+ROOT CAUSE: two defects compounding. (1) rescan-until-stable clustering is worst-case
+O(S²·|group|); (2) its proximity test compared ONLY x-coordinates (y never checked),
+bridging distant rows into one giant group (8,706 of 9,836 segments) — making every
+scan worst-case AND defeating the island filter's purpose. Cost scales with SEGMENT
+COUNT, which explodes exactly in the physically-interesting striped regime the panel
+teaches, so the teaching control was the trigger, never the culprit.
+
+HOW TO AVOID: (1) Any work that runs per reconstruction result on the main thread
+(ContourMap/effects) must be near-linear in its input — measure the worst case
+(sparse array + max custom FOV + detail-rich source), not the default. (2) When a
+"freeze on X" is reported, instrument BEFORE hypothesizing: count worker posts/results,
+longtask durations, rAF gaps — here the obvious suspect (sync reconstruction) was
+disproven in one measurement. (3) groupSegments is now spatial-hash + union-find on
+tol-quantized endpoints (true 2-D adjacency, tol=0.1 unchanged); keep it linear —
+never reintroduce pairwise group scans.
+
+DETECTION: page freezes right AFTER "Reconstruction complete", duration grows with
+FOV/striping; longtask entry matching the ContourMap effect.
+
+RESOLVED: YES — commit 04dcca4 (measured 20,585 ms → ≤64 ms on the identical recipe).
