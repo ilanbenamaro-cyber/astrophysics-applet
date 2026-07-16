@@ -376,6 +376,14 @@ constants.js ─ IMAGE_SIZE=512, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD, 
 
 ## LAST UPDATED
 
+2026-07-16 — Root redirect added (d3d6d4c, PENDING PUSH): the GitHub Pages bare URL served
+the OLD standalone Leaflet build; the live React app is at /vlbi-react/. Root index.html is
+now a redirect (JS location.replace preserving query/hash + meta-refresh + fallback link, all
+relative paths). The old Leaflet app is preserved + still runnable as legacy-leaflet.html
+(relative js/css/assets paths intact). React app UNTOUCHED (vlbi-react/ diff EMPTY);
+/vlbi-react/ still loads directly; verified all 3 paths on a fresh port. README + CLAUDE.md
+updated (Leaflet relabeled "legacy", React = the live app). History intact (199→200).
+
 2026-07-16 — Public-repo cleanup pass complete + PUSHED (cc55864..d089ff4, live):
 secret/PII sweep of tree AND full history — NO secrets, NO tree PII; only finding = three
 machine-fallback committer identities baked in history (@Ilans-MacBook-Air.local /
