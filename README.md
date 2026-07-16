@@ -86,8 +86,9 @@ the product, start with `.workflows/_knowledge/` (codebase, decisions, gotchas) 
 `.workflows/_system/` (session continuity, physics audits).
 
 > **Note on the two apps:** the polished, actively-developed app is under
-> [`vlbi-react/`](vlbi-react/) (the live link above). An earlier standalone Leaflet-based
-> version lives at the repository root and is retained for history; it is not the current app.
+> [`vlbi-react/`](vlbi-react/) (the live link above), and the site root redirects there. An
+> earlier standalone Leaflet-based version is preserved as
+> [`legacy-leaflet.html`](legacy-leaflet.html) for history; it is not the current app.
 
 ## Credits & license
 

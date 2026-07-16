@@ -1,149 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>VLBI Simulator — Radio Telescope Interferometry</title>
-    <meta name="description" content="Interactive simulator of Very Long Baseline Interferometry (VLBI) image reconstruction. Place radio telescopes on a world map, explore UV-plane coverage, and see how the Event Horizon Telescope reconstructs images of black holes." />
-    <link rel="stylesheet" href="css/style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VLBI Interferometry Simulator</title>
+  <meta name="description" content="Interactive, research-grade simulator of Very Long Baseline Interferometry (VLBI) image reconstruction — the technique behind the Event Horizon Telescope's black-hole images." />
+
+  <!-- The live app lives in /vlbi-react/. This root page exists only to forward the
+       bare URL there. Three layers, most immediate first: JS replace() (also carries
+       any ?query/#hash and keeps the stub out of back-button history), then a meta
+       refresh for no-JS clients, then a visible link as the final fallback. Paths are
+       relative so this works identically on GitHub Pages (…/astrophysics-applet/) and
+       when served locally. -->
+  <link rel="canonical" href="./vlbi-react/" />
+  <meta http-equiv="refresh" content="0; url=./vlbi-react/" />
+  <script>
+    location.replace('./vlbi-react/' + location.search + location.hash);
+  </script>
+
+  <style>
+    :root { color-scheme: dark; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: #0a0a0a;
+      color: #e8e6e1;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      line-height: 1.6;
+    }
+    main { padding: 2rem; }
+    .spark { color: #c4a555; letter-spacing: 0.02em; font-weight: 600; }
+    p { margin: 0.4rem 0; color: #b8b4ac; }
+    a {
+      color: #c4a555;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(196, 165, 85, 0.4);
+      padding-bottom: 1px;
+    }
+    a:hover { border-bottom-color: #c4a555; }
+  </style>
 </head>
 <body>
-
-<header>
-    <div class="header-inner">
-        <div>
-            <h1>Radio Telescope Interferometry Simulator</h1>
-            <p>Place telescopes on the world map, explore UV-plane coverage, and watch sparse Fourier sampling reconstruct your image — simulating how the Event Horizon Telescope images a black hole.</p>
-        </div>
-    </div>
-</header>
-
-<main>
-
-    <!-- Controls bar -->
-    <section class="controls">
-
-        <div class="control-group">
-            <label for="image-upload">Image to reconstruct</label>
-            <input type="file" id="image-upload" accept="image/*" />
-        </div>
-
-        <div class="control-group">
-            <label>Sample image</label>
-            <div class="sample-buttons">
-                <button class="sample-btn" data-sample="ring">Ring</button>
-                <button class="sample-btn" data-sample="double">Double</button>
-                <button class="sample-btn" data-sample="gaussian">Gaussian</button>
-                <button class="sample-btn" data-sample="jet">Jet</button>
-            </div>
-        </div>
-
-        <div class="control-group">
-            <label for="declination">
-                Declination: <span id="declination-val">45°</span>
-                <button class="info-btn" data-info-key="declination" aria-label="About declination">?</button>
-            </label>
-            <input type="range" id="declination" min="-90" max="90" value="45" step="1" />
-        </div>
-
-        <div class="control-group">
-            <label for="ha-range">
-                Hour angle: <span id="ha-range-val">±90°</span>
-                <button class="info-btn" data-info-key="ha-range" aria-label="About hour angle range">?</button>
-            </label>
-            <input type="range" id="ha-range" min="10" max="360" value="180" step="10" />
-        </div>
-
-        <div class="control-group buttons">
-            <button id="load-presets">Load EHT Presets</button>
-            <button id="clear-telescopes">Clear</button>
-            <button id="save-uv">Save UV</button>
-            <button id="save-reconstruction">Save Image</button>
-            <label class="clean-toggle">
-                <input type="checkbox" id="use-clean"> CLEAN
-            </label>
-        </div>
-
-        <p id="status" class="status"></p>
-
-    </section>
-
-    <!-- Three panels -->
-    <div class="panels">
-
-        <!-- Panel 1: Telescope map -->
-        <section class="panel panel--map">
-            <h2>
-                Telescope Array
-                <span class="panel-h2-right">
-                    <span class="hint">Click map to add &middot; click dot to remove</span>
-                    <button class="info-btn" data-info-key="telescope-array" aria-label="About telescope arrays">?</button>
-                </span>
-            </h2>
-            <div id="map"></div>
-            <details id="baseline-details" style="display:none">
-                <summary>Baseline lengths</summary>
-                <table id="baseline-table">
-                    <thead>
-                        <tr><th>Telescope A</th><th>Telescope B</th><th>Length</th></tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </details>
-        </section>
-
-        <!-- Panel 2: UV-plane -->
-        <section class="panel">
-            <h2>
-                UV-Plane Coverage
-                <span class="panel-h2-right">
-                    <span id="uv-count" class="hint"></span>
-                    <button class="info-btn" data-info-key="uv-plane" aria-label="About the UV-plane">?</button>
-                </span>
-            </h2>
-            <canvas id="uv-canvas" width="256" height="256"></canvas>
-            <div class="dirty-beam-row">
-                <div class="dirty-beam-col">
-                    <p class="sub-label">Point Spread Function</p>
-                    <canvas id="dirty-beam-canvas" width="128" height="128"></canvas>
-                </div>
-            </div>
-            <p class="caption">Each arc is one baseline tracked through Earth rotation. Wider spread &rarr; sharper reconstruction.</p>
-        </section>
-
-        <!-- Panel 3: Reconstruction -->
-        <section class="panel">
-            <h2>
-                Image Reconstruction
-                <button class="info-btn" data-info-key="reconstruction" aria-label="About image reconstruction">?</button>
-            </h2>
-            <div class="image-row">
-                <div class="image-col">
-                    <p class="image-label">Original</p>
-                    <canvas id="original-canvas" width="256" height="256"></canvas>
-                </div>
-                <div class="image-col">
-                    <p class="image-label" id="recon-label">Dirty Image</p>
-                    <canvas id="reconstructed-canvas" width="256" height="256"></canvas>
-                </div>
-            </div>
-        </section>
-
-    </div>
-</main>
-
-<!-- math.js for FFT (no Globe.gl — map uses Canvas 2D API) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.0/math.min.js"></script>
-
-<!-- App modules -->
-<script src="js/fft2d.js"></script>
-<script src="js/interferometry.js"></script>
-<script src="js/imageProcessor.js"></script>
-<script src="js/sampleImages.js"></script>
-<script src="js/landMask.js"></script>
-<script src="js/mapController.js?v=3"></script>
-<script src="js/infoModal.js"></script>
-<script src="js/app.js"></script>
-
+  <main>
+    <p class="spark">VLBI Interferometry Simulator</p>
+    <p>Loading the simulator…</p>
+    <p><a href="./vlbi-react/">Continue to the simulator &rarr;</a></p>
+  </main>
 </body>
 </html>

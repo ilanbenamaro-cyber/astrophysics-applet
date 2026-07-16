@@ -4,8 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Status
 
-Pure-JS web applet — radio telescope interferometry (VLBI) image reconstruction simulator.
-No backend, no build step. Open `index.html` directly in a browser.
+Radio telescope interferometry (VLBI) image reconstruction simulator. No backend, no build
+step. The live app is in `vlbi-react/`; the root `index.html` is a redirect to it. An earlier
+standalone plain-JS build is preserved as `legacy-leaflet.html`.
 
 ## Workflow System
 
@@ -43,9 +44,11 @@ Deployed via GitHub Pages from `main` branch root. Push to `main` to redeploy.
 
 ## Architecture
 
-Two independent UIs share the same scientific domain:
+Two independent UIs share the same scientific domain. `vlbi-react/` is the live app; the
+root `index.html` is a redirect stub that forwards the bare URL to it.
 
-**`index.html` (primary)** — Plain JS, no build step. Script load order is a hard dependency:
+**`legacy-leaflet.html` (legacy standalone)** — the earlier Plain-JS build (formerly the root
+`index.html`), preserved and still runnable. No build step. Script load order is a hard dependency:
 ```
 math.js (CDN) → Leaflet (CDN) → fft2d.js → interferometry.js → imageProcessor.js → sampleImages.js → mapController.js → infoModal.js → app.js
 ```
@@ -58,7 +61,7 @@ math.js (CDN) → Leaflet (CDN) → fft2d.js → interferometry.js → imageProc
 - `infoModal.js` — info/help modal logic
 - `app.js` — coordinator: event wiring, debounced `runReconstruction()` (50ms), status updates
 
-**`vlbi-react/index.html` (companion)** — Standalone React 18 + Three.js app using ES import maps (no npm/build). Renders a 3D globe with telescope placement. Fully self-contained; shares no code with the primary app.
+**`vlbi-react/index.html` (the live app)** — Standalone React 18 + Three.js app using ES import maps (no npm/build). Renders a 3D globe with telescope placement. Fully self-contained; shares no code with the legacy Leaflet build.
 
 **Reconstruction pipeline** (`app.js` → `reconstructImage` in `imageProcessor.js`):
 ```
@@ -76,8 +79,8 @@ All callers must use `runReconstruction()`, never `_reconstruct()` directly (deb
 
 ## Build / Run / Test
 
-**Primary app:** Open `index.html` in a browser. No server, no build step.
-**React companion:** Open `vlbi-react/index.html` in a browser (requires internet for ESM CDN imports).
+**Live app (React):** Open `vlbi-react/index.html` in a browser (requires internet for ESM CDN imports). The root `index.html` redirects here.
+**Legacy standalone:** Open `legacy-leaflet.html` in a browser. No server, no build step.
 
 **Manual verification checklist** (no automated test runner):
 1. Upload a recognizable image → original renders in the right panel
