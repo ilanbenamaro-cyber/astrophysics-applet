@@ -873,3 +873,37 @@ suspect a broad ignore — check `git check-ignore -v path/img.png`.
 
 RESOLVED: YES — commit 60063fe (public-repo cleanup): blanket `*.png` replaced with
 location-scoped scratch ignores; app assets + docs/ screenshots track normally.
+
+---
+
+### BHEX baselines alias off the N=512 grid above ~1,760 μas custom FOV — never display "BHEX on" silently there
+DATE_DISCOVERED: 2026-07-16
+AREA: vlbi-react/js/worker.js buildMask; ResolutionBudget.js; any custom-source BHEX display
+SEVERITY: MEDIUM (physics display honesty)
+
+WHAT HAPPENED: Prof. Cárdenas-Avendaño saw no improvement adding BHEX to the seal. Measured
+(CUSTOM-SOURCE-PHYSICS.md "BHEX CONTRIBUTION"): it is BOTH correct physics AND a grid artifact,
+at different scales. buildMask maps a baseline to the FFT grid at centered pixel radius
+(B/λ)·FOV_rad and wraps with ((round(c)%N)+N)%N. BHEX's ~30 Gλ max baseline crosses the ±N/2=256
+Nyquist edge at custom FOV ≈ 1,760 μas; above that a growing fraction of BHEX samples fold to
+WRONG bins (0% ≤1,760; 11%/39%/83% at 2.0k/2.4k/3.2k μas). So "BHEX on" at large custom fields
+silently omits/corrupts part of its coverage.
+
+ROOT CAUSE: only the custom regime uses large FOV (astrophysical targets sit at ~80 μas where
+everything is compressed near grid center). The wrap is per-axis; ground baselines never reach
+Nyquist at these scales, so ANY over-±256 sample is BHEX — a cheap live aliasing detector.
+
+HOW TO AVOID: (1) never surface "BHEX on" as if fully represented at custom FOV past the onset —
+show an honest, computed caveat (ResolutionBudget derives the onset from the actual max sample
+radius, radius ∝ FOV, floored; never a 1,760 literal). (2) Don't "fix" by raising N or touching
+buildMask — N=512 is frozen and the worker is import-free + ring-hash-locked; the honest label is
+the correct fix. (3) At on-grid scales BHEX DOES contribute (mask cells ~double, beam sharpens
+9.4→3.9 μas @400) but NCC barely moves once the ground array already recovers the source — long
+baselines add resolution, not dense coverage. That is a teachable lesson, not a bug.
+
+DETECTION: BHEX toggle changes mask-cell count but not the recovered image at large custom FOV;
+per-axis |u-N/2| or |v-N/2| > N/2 for BHEX samples.
+
+RESOLVED: YES (display) — ResolutionBudget shows a computed aliasing caveat above the onset and a
+"long baselines ≠ dense coverage" explanation below it (commits 3686da6, d05dc79). The engine
+limit itself is inherent to N=512 and left as-is (honestly labeled).

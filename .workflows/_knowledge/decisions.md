@@ -910,3 +910,21 @@ DECISIONS:
   N_res, beam, and occupancy, and teaches the OPTIMUM (not "more is better") + an
   add-elements ladder (2017→2022→ngEHT→+BHEX) that demonstrably resolves the user's
   image (verified: one click to ngEHT makes the seal legible). No DC language anywhere.
+
+---
+
+### Custom-source BHEX: honest aliasing caveat + "long baselines ≠ dense coverage" lesson
+DATE: 2026-07-16
+CATEGORY: physics-display behavior
+The BHEX-seal diagnosis (CUSTOM-SOURCE-PHYSICS.md "BHEX CONTRIBUTION") found Alejandro's "BHEX
+doesn't help the seal" is BOTH correct physics (≤~1,760 μas: BHEX on-grid, doubles mask cells +
+sharpens the beam, but adds little NCC once the ground array already recovers the source) AND a
+grid-aliasing artifact (>~1,760 μas: BHEX baselines wrap off the N=512 mask). DECISION: surface
+both in ResolutionBudget (Custom-only), never the ring. (1) Above the computed grid onset, an
+amber caveat states BHEX's longest baselines fold back and are only partly represented, with a
+live "reduce below ~X" threshold derived from the actual max sample radius (radius ∝ FOV, floored
+for conservatism) — single-sourced, never a literal. (2) On-grid, a teachable note gives the live
+BHEX-vs-ground baseline counts and states BHEX extends resolution (a sharper beam), not coverage
+density. Rejected: raising N / touching buildMask to keep BHEX on-grid — N=512 is frozen and the
+worker is import-free + ring-hash-locked; the honest label is the correct, non-regressing fix.
+Worker untouched; ring path byte-identical (CLEAN 2154452775 / Dirty 1389367993, two fresh ports).

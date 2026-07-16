@@ -376,6 +376,19 @@ constants.js ─ IMAGE_SIZE=512, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD, 
 
 ## LAST UPDATED
 
+2026-07-16 — BHEX-seal diagnosis + honest labeling (fix/bhex-seal-diagnosis, merged — PENDING
+PUSH): Alejandro asked why BHEX doesn't help the seal. MEASURED across scales (real worker,
+never-used ports) — it's BOTH (1) correct physics and (2) a grid artifact. Cause 3 (bug) ruled
+out (BHEX baselines present + counted in custom uvPoints). Cause 2: BHEX's ~30 Gλ baselines wrap
+off the N=512 mask above ~1,760 μas (0% aliased ≤1,760; 11/39/83% at 2.0k/2.4k/3.2k). Cause 1
+(≤1,600 μas, on-grid): BHEX doubles mask cells + sharpens the beam (ngEHT 9.4→3.9 μas @400) but
+NCC gain shrinks 0.014→0.0004 across 400→1,600 μas — the ground array already recovers the seal;
+long baselines add resolution, not dense coverage. Deliverable appended to CUSTOM-SOURCE-PHYSICS.md
+(BHEX CONTRIBUTION — for Alejandro). Fix: ResolutionBudget (Custom-only) now shows a computed
+aliasing caveat above onset + a live-count "long baselines ≠ dense coverage" note below it. Worker
+UNTOUCHED; ring byte-identical (CLEAN 2154452775 / Dirty 1389367993, two fresh ports); zero
+console errors.
+
 2026-07-16 — Root redirect added + PUSHED (d3d6d4c..c00e8bf, live): the GitHub Pages bare URL served
 the OLD standalone Leaflet build; the live React app is at /vlbi-react/. Root index.html is
 now a redirect (JS location.replace preserving query/hash + meta-refresh + fallback link, all
