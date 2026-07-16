@@ -112,5 +112,14 @@ export function ResolutionBudget({
           about <strong>${bhexInfo.onsetFov ? fmtFovRounded(bhexInfo.onsetFov) : '—'}</strong> to
           include BHEX fully.
         </p>` : null}
+      ${bhexInfo && !bhexInfo.aliased ? html`
+        <p className="res-budget-note" role="note">
+          BHEX adds <strong>${bhexInfo.bhexBaselines}</strong> very long space baselines to the
+          array's <strong>${bhexInfo.groundBaselines}</strong> ground baselines — that
+          extends <strong>resolution</strong> (a sharper beam), not coverage density. Where the
+          ground array already resolves your image at this size, the extra reach refines the
+          result more than it transforms it; its largest gains are at small image sizes and on
+          the finest detail.
+        </p>` : null}
     </div>`;
 }
