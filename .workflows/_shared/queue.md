@@ -2,5 +2,5 @@
 <!-- Items waiting to be picked up by an instance -->
 <!-- Format: - [ ] [TASK] — assigned to: [instance] — priority: HIGH/MED/LOW -->
 
-- [ ] Read _shared/handoff-2026-07-15-1000.md, then execute _prompts/freeze-fix-invert-stress.md (unread prepared pass) — assigned to: next instance — priority: HIGH
-  <!-- 2026-07-15 handoff: custom-source physics correction LIVE (b42894d); ring byte-identical; only open blocker = projector timing gate (human). -->
+- [x] Read _shared/handoff-2026-07-15-1000.md, then execute _prompts/freeze-fix-invert-stress.md (unread prepared pass) — assigned to: next instance — priority: HIGH
+  <!-- COMPLETED 2026-07-16: freeze diagnosed by measurement (groupSegments quadratic, NOT sync reconstruction) + fixed linear (20.6 s → ≤64 ms); Invert matrix green; merged to local main (bf92068) — PUSH AWAITS ILAN. -->
