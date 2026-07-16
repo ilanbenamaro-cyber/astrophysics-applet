@@ -203,6 +203,7 @@ export function App() {
                 controls=${left.controls}
                 beamFwhm=${left.beamFwhm}
                 uvPoints=${left.uvPoints}
+                telescopes=${left.telescopes}
                 selectedArrayPreset=${left.selectedArrayPreset}
                 onArrayPresetChange=${left.setSelectedArrayPreset}
                 onLoadArray=${left.handleLoadArrayPreset}
