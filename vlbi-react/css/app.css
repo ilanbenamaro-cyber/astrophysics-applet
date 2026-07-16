@@ -591,6 +591,23 @@ input[type="range"]::-moz-range-thumb {
   color: var(--text-secondary);
 }
 .res-budget-step.is-current { border-color: var(--accent-teal); color: var(--accent-teal); }
+.res-budget-note {
+  font-size: var(--fs-xs, 0.72rem);
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 8px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.res-budget-note strong { color: var(--text-primary); font-weight: 700; }
+.res-budget-note-warn {
+  border-top: none;
+  padding: 6px 8px;
+  border-left: 2px solid var(--accent-amber);
+  background: var(--bg-2);
+  border-radius: 3px;
+}
+.res-budget-note-warn strong { color: var(--accent-amber); }
 
 /* ── BHEX Button ── */
 .bhex-button {

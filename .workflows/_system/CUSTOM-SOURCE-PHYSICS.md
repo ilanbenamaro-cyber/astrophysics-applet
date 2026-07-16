@@ -152,3 +152,75 @@ core), which is why fitted N_res saturates ~130; the λ/B budget in §1.2 is the
    square recovers on first upload; power users scale up + add elements to chase lettering).
 3. Teach the true lesson with live numbers: detail ⇒ high spatial frequencies ⇒ long baselines /
    more elements — and the 2017→2022→ngEHT→+BHEX ladder demonstrably resolves an uploaded logo.
+
+---
+
+## BHEX CONTRIBUTION — why adding BHEX barely changes the seal (2026-07-16)
+
+**Prompted by:** Prof. Cárdenas-Avendaño observed that adding BHEX gives no noticeable
+improvement recovering the seal, and found that confusing — physically a long space baseline
+should help. Measured across scales (never-used port, real worker via `simCore.runReconstruction`,
+same method as §1.3) to distinguish three causes: (1) coverage-limited/correct physics,
+(2) grid-aliasing artifact, (3) a real custom-regime bug.
+
+### Cause 3 (real bug): RULED OUT
+BHEX ground–space baselines ARE present and counted in the custom-regime `uvPoints`. At 800 μas:
+EHT 2017 = 7,298 ground + **2,530 BHEX** samples; ngEHT Phase 1 = 42,176 ground + **5,872 BHEX**.
+`computeUVPoints` builds ground–space pairs identically for custom and astrophysical targets;
+only the FOV scale differs. BHEX is in the math.
+
+### Cause 2 (grid aliasing): CONFIRMED — threshold ≈ 1,760 μas
+A baseline lands on the N=512 FFT grid at centered pixel radius `(B/λ)·FOV_rad`; `buildMask`
+(worker.js) maps it with `((round(c)%N)+N)%N` — a **wrap**, so any BHEX sample beyond ±N/2 = 256 px
+folds to a *wrong* bin (aliases). BHEX's max baseline ≈ 30 Gλ crosses 256 px at ≈ 1,760 μas.
+Measured (ngEHT, fraction of 5,872 BHEX samples aliased vs custom FOV):
+
+| FOV μas | 400 | 800 | 1,200 | 1,400 | 1,600 | 1,760 | 1,800 | 2,000 | 2,400 | 3,200 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| max BHEX px radius | 58 | 117 | 175 | 204 | 234 | 257 | 263 | 292 | 350 | 467 |
+| % BHEX aliased | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 11.1 | 38.8 | 82.8 |
+
+Below ≈1,760 μas BHEX is fully on-grid; above it a growing fraction folds to wrong frequencies.
+So above that scale the UI shows "BHEX on" while the math omits/corrupts part of it — an engine
+limit (N=512 grid), not physics, and one the app must not present silently.
+
+### Cause 1 (coverage-limited / correct physics): CONFIRMED at the seal's recoverable scales
+Delta sweep (seal at 0.9×FOV, dec 12.391°, 12 h, 230 GHz, CLEAN, noise 0, dish = preset mean;
+NCC = zero-mean cross-correlation of CLEAN vs the scaled truth):
+
+| Array | FOV μas | NCC off | NCC on | ΔNCC | mask cells off→on | fitted beam μas off→on | BHEX aliased |
+|---|---|---|---|---|---|---|---|
+| EHT 2017 | 400 | 0.7511 | 0.7582 | **+0.0071** | 257 → 1,725 | — | 0 |
+| EHT 2017 | 800 | 0.8245 | 0.8254 | +0.0009 | 603 → 2,341 | — | 0 |
+| EHT 2017 | 1,600 | 0.7614 | 0.7614 | 0.0000 | 1,339 → 3,155 | — | 0 |
+| EHT 2017 | 2,400 | 0.7358 | 0.7358 | 0.0000 | 1,959 → 3,783 | — | 1,038 (41%) |
+| ngEHT | 400 | 0.9192 | 0.9329 | **+0.0137** | 689 → 3,627 | 9.4×9.4 → **3.9×2.8** | 0 |
+| ngEHT | 800 | 0.9403 | 0.9432 | +0.0029 | 2,157 → 6,395 | 10.9×9.4 → **5.5×5.5** | 0 |
+| ngEHT | 1,600 | 0.9533 | 0.9537 | +0.0004 | 5,841 → 10,689 | 12.5×12.5 → 11.0×11.0 | 0 |
+| ngEHT | 2,400 | 0.9198 | 0.9199 | +0.0001 | 9,877 → 14,809 | 16.6×16.6 → **16.6×16.6** | 2,280 (39%) |
+
+Where BHEX is on-grid (≤1,600 μas), it **is** contributing: it roughly **doubles the sampled mask
+cells** and **sharpens the beam** (ngEHT 9.4→3.9 μas @400, 10.9→5.5 @800). Alejandro's intuition
+is correct — the space baseline adds real high-frequency coverage/resolution. **But its effect on
+the seal's legibility (NCC) shrinks toward zero as FOV grows** (ΔNCC 0.014 → 0.003 → 0.0004 for
+ngEHT across 400→800→1,600) because at the seal's recoverable scales the **ground array alone
+already recovers it** (NCC ≈ 0.94–0.95); BHEX then adds resolution that an already-recovered,
+pixel-limited target can't reward. That is the lesson: **a few very long baselines add resolution,
+not the dense coverage that was already sufficient.** At 2,400 μas the beam stops sharpening
+entirely (16.6→16.6) — that is cause (2) aliasing, not physics.
+
+### Verdict per scale
+- **≤ ~1,600 μas (on-grid):** cause (1). BHEX included, doubles mask cells, sharpens the beam;
+  NCC gain small and shrinking because the ground array already recovers the seal. Biggest genuine
+  gain at small fields (ngEHT @400: ΔNCC +0.014, beam 9.4→3.9) where the source is still
+  resolution-limited.
+- **> ~1,760 μas (off-grid):** cause (2). BHEX baselines alias (11%→39%→83% at 2k/2.4k/3.2k μas);
+  the beam stops sharpening; "BHEX on" is partly a display fiction.
+- **Cause (3): excluded.**
+
+**One line for Alejandro:** BHEX *is* in the reconstruction and does add high-frequency coverage
+(mask cells ~double; beam sharpens 9→4 μas at small fields) — your intuition holds — but at the
+scales where the seal is legible the ground array has already recovered it, so BHEX's extra
+resolution refines rather than rescues (ΔNCC ≈ 0.0004 at 1,600 μas); and above ≈1,760 μas BHEX
+aliases off our 512² grid (a tool limit, not physics), so past that scale "BHEX on" is partly
+fictitious. It is BOTH (1) and (2), at different scales.

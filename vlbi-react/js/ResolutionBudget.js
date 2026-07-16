@@ -9,11 +9,44 @@ import { IMAGE_SIZE, CUSTOM_DEFAULT_FOV_UAS } from './constants.js';
 
 const ARRAY_LADDER = ['EHT 2017', 'EHT 2022', 'ngEHT Phase 1'];
 
+// Floor a μas field to a friendly 50-μas step and format (μas / mas). Floored (not
+// rounded) so a "reduce below X" threshold is conservative — X never overstates the
+// aliasing onset, so staying under it is always safe.
+function fmtFovRounded(uas) {
+  const r = Math.floor(uas / 50) * 50;
+  return r >= 1000 ? (r / 1000) + ' mas' : r + ' μas';
+}
+
 export function ResolutionBudget({
-  selectedTarget, controls, beamFwhm, uvPoints,
+  selectedTarget, controls, beamFwhm, uvPoints, telescopes = [],
   selectedArrayPreset, onArrayPresetChange, onLoadArray,
   bhexAdded, onToggleBHEX,
 }) {
+  // BHEX honesty (CUSTOM-SOURCE-PHYSICS.md "BHEX CONTRIBUTION", 2026-07-16). BHEX's ~30 Gλ
+  // baselines land near/over the N=512 grid's Nyquist edge at large custom fields: above
+  // ~1,760 μas they wrap (alias) in worker.buildMask, so "BHEX on" silently omits part of
+  // its coverage. Detect aliasing from the SAME pixel coords buildMask sees (a sample past
+  // ±N/2 on either axis wraps); ground baselines never reach that radius at these scales,
+  // so any over-Nyquist sample is BHEX. The onset field is derived live (radius ∝ FOV),
+  // never a literal. Counts feed the "long baselines ≠ dense coverage" lesson.
+  const bhexInfo = useMemo(() => {
+    if (!bhexAdded || !uvPoints || uvPoints.length === 0) return null;
+    const half = IMAGE_SIZE / 2;
+    let maxAxis = 0, aliasedCount = 0;
+    for (const p of uvPoints) {
+      const au = Math.abs(p.u - half), av = Math.abs(p.v - half);
+      const m = au > av ? au : av;
+      if (m > maxAxis) maxAxis = m;
+      if (Math.round(au) > half || Math.round(av) > half) aliasedCount++;
+    }
+    const nGround = telescopes.filter(t => t.visible !== false && t.type !== 'space').length;
+    return {
+      aliased: aliasedCount > 0,
+      groundBaselines: (nGround * (nGround - 1)) / 2,
+      bhexBaselines: nGround,   // each ground station × the one BHEX satellite
+      onsetFov: maxAxis > 0 ? (controls.fovMuas * half) / maxAxis : null,
+    };
+  }, [bhexAdded, uvPoints, telescopes, controls.fovMuas]);
   // Coverage occupancy: distinct mask cells (worker's exact quantization) over the
   // sampled u,v disk area — the honest sparsity measure that falls as the field grows.
   const occupancy = useMemo(() => {
@@ -71,5 +104,22 @@ export function ResolutionBudget({
           title="Toggle the BHEX space telescope"
         >${bhexAdded ? '✓ +BHEX' : '+BHEX'}</button>
       </div>
+      ${bhexInfo && bhexInfo.aliased ? html`
+        <p className="res-budget-note res-budget-note-warn" role="note">
+          At this image size, BHEX's longest baselines reach past the reconstruction grid and
+          fold back — its space coverage is only <strong>partly represented</strong> here.
+          Reduce the image size below
+          about <strong>${bhexInfo.onsetFov ? fmtFovRounded(bhexInfo.onsetFov) : '—'}</strong> to
+          include BHEX fully.
+        </p>` : null}
+      ${bhexInfo && !bhexInfo.aliased ? html`
+        <p className="res-budget-note" role="note">
+          BHEX adds <strong>${bhexInfo.bhexBaselines}</strong> very long space baselines to the
+          array's <strong>${bhexInfo.groundBaselines}</strong> ground baselines — that
+          extends <strong>resolution</strong> (a sharper beam), not coverage density. Where the
+          ground array already resolves your image at this size, the extra reach refines the
+          result more than it transforms it; its largest gains are at small image sizes and on
+          the finest detail.
+        </p>` : null}
     </div>`;
 }
