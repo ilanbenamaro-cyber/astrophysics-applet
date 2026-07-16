@@ -852,3 +852,24 @@ DETECTION: page freezes right AFTER "Reconstruction complete", duration grows wi
 FOV/striping; longtask entry matching the ContourMap effect.
 
 RESOLVED: YES — commit 04dcca4 (measured 20,585 ms → ≤64 ms on the identical recipe).
+
+---
+
+### A blanket `*.png` in .gitignore silently un-tracks app assets AND hides scratch
+DATE_DISCOVERED: 2026-07-16
+AREA: .gitignore
+SEVERITY: LOW (repo hygiene)
+
+WHAT HAPPENED: .gitignore contained a bare `*.png`. Effect: (1) it could not un-track
+already-committed app assets (assets/*.png stayed tracked, which is why the app kept
+working), but (2) it hid ~54 stray root scratch screenshots + .workflows/_tmp/ (8.9M) from
+`git status` entirely, and (3) it would silently refuse to add any NEW legitimate image
+(e.g. README screenshots — they didn't appear in `git status` until the rule was dropped).
+
+HOW TO AVOID: never blanket-ignore a format the project legitimately ships (png/jpg for an
+image-heavy app). Ignore scratch by LOCATION (`.playwright-mcp/`, `test-results/`,
+`.workflows/_tmp/`), not by extension. When a `git add path/img.png` seems to do nothing,
+suspect a broad ignore — check `git check-ignore -v path/img.png`.
+
+RESOLVED: YES — commit 60063fe (public-repo cleanup): blanket `*.png` replaced with
+location-scoped scratch ignores; app assets + docs/ screenshots track normally.
