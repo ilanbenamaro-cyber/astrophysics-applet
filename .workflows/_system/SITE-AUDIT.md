@@ -463,3 +463,25 @@ scale as 1/λ; probe checks 230 AND 345 GHz). Zero console errors app-wide (the 
 log entries all pass were the harness's own synthetic-pointer artifacts).
 GATES: P ✓ · B ✓ · V ✓ · stress ✓. Worker diff EMPTY end-to-end
 (3fb15375794db9c3a4bf66096eb730693aa3f6fc at every gate).
+
+### Freeze diagnosis — recover-detail ladder (2026-07-16, freeze-fix-invert-stress pass)
+REPORT: stepping the ResolutionBudget array ladder "glitches and freezes the entire site."
+MEASURED (never-used port 8641, no-cache; Worker.postMessage wrap + PerformanceObserver
+longtask + rAF-gap monitor): the prompt's sync/cascade hypothesis is DISPROVEN —
+reconstruction stays async via the debounced worker path; every rung click = exactly 1
+postMessage → 1 result (86–175 ms in-worker, CLEAN, 7.3k–48k UV samples); no render loop;
+no worker leak (1 persistent worker per useSimulation, terminated on unmount).
+THE FREEZE is a single synchronous main-thread long task AFTER the worker result lands:
+180 ms (2017@720 μas) → 380 ms (2022@720) → 505 ms (ngEHT+BHEX@1.8 mas) →
+20,585 ms (EHT 2017 @ FOV 2000 μas seal) — rAF gap identical; page recovers afterwards.
+ROOT CAUSE: groupSegments (simRender.js:102, ContourMap's contour island filter) is
+worst-case O(S²·|group|): rescan-until-stable clustering whose proximity test compares
+ONLY x-coordinates (y never checked). The striped dirty image at sparse-array/large-FOV
+emits 9,836 marching-squares segments at the 50% level; measured on that exact dirty:
+marchingSquares = 19.9 ms; groupSegments = 15.45 BILLION comparisons → 3 groups, largest
+8,706/9,836 segments (~20.6 s in-app). The x-only test bridges distant rows into one
+giant group — making every scan worst-case AND defeating the island filter's intent.
+The ladder is innocent (one setState + one loadEHTPresets per click); ANY reconstruction-
+triggering control freezes identically at those settings (FOV commit at 2000 → 505 ms).
+FIX (Path A): groupSegments internals → spatial-hash on tol-quantized endpoints +
+union-find (true 2-D adjacency, tol=0.1 unchanged); same signature/return shape.

@@ -98,35 +98,56 @@ function marchingSquares(data, N, threshold) {
   return segments;
 }
 
-// ── Group segments into connected components by proximity ──
+// ── Group segments into connected components by endpoint adjacency ──
+// Linear-time spatial-hash + union-find. The previous rescan-until-stable clustering was
+// worst-case O(S²·|group|) and froze the main thread for 20.6 s on the 9,836-segment
+// striped dirty image (EHT 2017 @ FOV 2000 μas — measured 15.45e9 comparisons; SITE-AUDIT
+// 2026-07-16). Its proximity test also compared only x-coordinates, bridging distant rows
+// into one giant group. Adjacency here is the intended 2-D test: endpoints within tol on
+// BOTH axes connect (marching squares emits exactly-shared endpoints on shared cell edges,
+// so tol — unchanged at 0.1 — only absorbs float noise).
 function groupSegments(segments, tol) {
-  const groups = [];
-  const used = new Array(segments.length).fill(false);
-  for (let i = 0; i < segments.length; i++) {
-    if (used[i]) continue;
-    const group = [segments[i]];
-    used[i] = true;
-    let added = true;
-    while (added) {
-      added = false;
-      for (let j = 0; j < segments.length; j++) {
-        if (used[j]) continue;
-        const s = segments[j];
-        for (const g of group) {
-          if (
-            Math.abs(s.x0 - g.x0) < tol || Math.abs(s.x0 - g.x1) < tol ||
-            Math.abs(s.x1 - g.x0) < tol || Math.abs(s.x1 - g.x1) < tol
-          ) {
-            group.push(s);
-            used[j] = true;
-            added = true;
-            break;
+  const n = segments.length;
+  if (n === 0) return [];
+  const parent = new Int32Array(n);
+  for (let i = 0; i < n; i++) parent[i] = i;
+  const find = (i) => {
+    while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; }
+    return i;
+  };
+  // Hash each endpoint into a tol-sized grid cell; candidates for adjacency can only
+  // live in the endpoint's own or the 8 neighboring cells.
+  const cells = new Map();   // "cx,cy" → [{x, y, seg}, …]
+  const addEndpoint = (x, y, seg) => {
+    const cx = Math.round(x / tol), cy = Math.round(y / tol);
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        const bucket = cells.get((cx + dx) + ',' + (cy + dy));
+        if (!bucket) continue;
+        for (const p of bucket) {
+          if (Math.abs(p.x - x) < tol && Math.abs(p.y - y) < tol) {
+            const ra = find(p.seg), rb = find(seg);
+            if (ra !== rb) parent[rb] = ra;
           }
         }
-        if (added) break;
       }
     }
-    groups.push(group);
+    const key = cx + ',' + cy;
+    let own = cells.get(key);
+    if (!own) { own = []; cells.set(key, own); }
+    own.push({ x, y, seg });
+  };
+  for (let i = 0; i < n; i++) {
+    addEndpoint(segments[i].x0, segments[i].y0, i);
+    addEndpoint(segments[i].x1, segments[i].y1, i);
+  }
+  const byRoot = new Map();
+  const groups = [];
+  for (let i = 0; i < n; i++) {
+    const root = find(i);
+    let group = byRoot.get(root);
+    if (!group) { group = []; byRoot.set(root, group); groups.push(group); }
+    group.push(segments[i]);
   }
   return groups;
 }

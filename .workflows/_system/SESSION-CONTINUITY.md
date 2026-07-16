@@ -190,6 +190,17 @@
 >   ResolutionBudget panel (live N_res/beam/occupancy, the optimum lesson, add-elements
 >   ladder 2017→2022→ngEHT→+BHEX — one click makes the seal legible). Ring path
 >   byte-identical throughout (FNV hash gate, twice); worker diff EMPTY end-to-end.
+> 2026-07-16 (fix/contour-freeze, merged — PUSH AWAITS ILAN): freeze-fix-invert-stress
+>   pass. Ilan's reported "ladder freezes the entire site" DIAGNOSED BY MEASUREMENT
+>   (the prompt's sync/cascade hypothesis disproven — reconstruction was always async,
+>   1 per click): groupSegments (simRender.js contour island filter) was O(S²·|group|)
+>   with an x-only proximity test → 20,585 ms main-thread task after each result on
+>   striped custom-FOV dirty images (9,836 segments, 15.45e9 comparisons). Fixed with
+>   spatial-hash + union-find (true 2-D adjacency, tol=0.1 unchanged): same recipe now
+>   ≤64 ms; rapid 8-click ladder → 3 debounced reconstructions, max 108 ms. Invert
+>   stress matrix PASSED (polarity flips, ladder/size/upload/compare interactions,
+>   rapid ×10 collapses to 1 recompute, ring hashes restore exactly on toggle-off).
+>   Ring gate twice on 2 fresh ports; worker diff EMPTY; zero console errors.
 
 **ALL PLANNED SESSIONS COMPLETE — S1 through P3 + Tour Cinematic Rewrite + Tour Art Passes + Canvas 2D Rewrite + Tour World-Class Overhaul + Tour Apple-Precision Overhaul + Tour Design-Language Conformance + Tour Engine-Real Rebuild**
 
@@ -278,7 +289,9 @@ Full VLBI simulation pipeline — S1 through S12c complete:
 
 ## WHAT TO DO NEXT
 
-Everything is LIVE on main (origin at `b42894d`, 2026-07-15). No branches pending.
+**PENDING PUSH (2026-07-16):** the contour-freeze fix + Invert stress pass is merged to
+local main — push awaits Ilan's explicit "push" (also carries the 0915a6b docs sync).
+Origin sits at `b42894d` (2026-07-15).
 
 1. **⚠ Re-run the tour timing gate on the projector laptop** before the talk (Blocker #3). If CLEAN > 300 ms there, flip presenter-mode Act C to cached-frame playback.
 2. **Send Alejandro the sweep evidence** — `.workflows/_system/CUSTOM-SOURCE-PHYSICS.md` + the two sweep montages (his correction, confirmed by measurement; the live site now demonstrates it: upload the seal, click the array ladder).
@@ -363,6 +376,12 @@ constants.js ─ IMAGE_SIZE=512, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD, 
 ---
 
 ## LAST UPDATED
+
+2026-07-16 — Contour-freeze fix + Invert stress pass complete (fix/contour-freeze):
+groupSegments rewritten linear (20,585 ms → ≤64 ms, measured, worst-case recipe);
+full Invert matrix green; ring hashes intact twice on fresh ports; worker diff EMPTY;
+gotchas/MEMORY/codebase synced. Merged to local main — PUSH AWAITS ILAN. Blocker #3
+(projector timing) remains the only open item.
 
 2026-07-15 — All post-deploy passes live (see POST-DEPLOY PASSES block): ship pass pushed
 2026-07-10; BHEX sign-off resolved (approved); three-fixes + globe zoom + target distances +
