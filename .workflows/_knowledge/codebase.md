@@ -325,7 +325,7 @@ Applied as Gaussian envelope to dirty image (multiplication in image space befor
 **ContourMap rendering** (`vlbi-react/js/ContourMap.js`):
 - Viridis colormap on canvas (bilinearUpscale from N×N source to canvas DST=512; at N=512 this is identity)
 - Contours via marching squares (`marchingSquares`)
-- Island filter: `groupSegments(segs, tol=0.1)` → discard groups where `groupBBoxMaxDim < 15`
+- Island filter: `groupSegments(segs, tol=0.1)` → discard groups where `groupBBoxMaxDim < 15`. Since 2026-07-16 (04dcca4): linear-time spatial-hash + union-find on tol-quantized endpoints (true 2-D adjacency). The original rescan clustering was O(S²·|group|) with an x-only proximity test — froze the site 20.6 s on striped custom-FOV dirty images (see gotchas). Keep it linear.
 - Boundary clip: segments where either endpoint has scaled canvas coord < 1 or > DST-1 are discarded (prevents edge-connecting artifacts from boundary marching-squares cells)
 - Adaptive DR thresholds: DR<80 → 50% only; DR 80-200 → 50%+10%; DR>200 → all three levels
 - Canvas draws: viridis pixels, contour line segments, beam ellipse shape, axis tick marks, colorbar gradient, colorbar intermediate ticks, contour level tick marks above bar

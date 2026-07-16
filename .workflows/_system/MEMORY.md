@@ -493,3 +493,24 @@ target-derived units; Custom images get their own "Image size on sky", seeded at
 measured EHT 2017 sweet spot ≈800 μas) is now the permanent pattern. (4) Recovery is a
 JOINT function of angular scale and element count with an optimum (occupancy ∝ 1/FOV²) —
 "more scale" and "more elements" are not interchangeable.
+
+---
+
+### Freeze reports: measure the event loop before hypothesizing the pipeline
+DATE: 2026-07-16
+CATEGORY: workflow
+APPLIES_TO: any "the site freezes/glitches on X" report
+
+LEARNING: The prepared prompt's strong hypothesis (ladder runs reconstruction
+synchronously / fires a cascade) was DISPROVEN by the first measurement: a
+Worker.postMessage wrap + PerformanceObserver('longtask') + rAF-gap monitor showed
+exactly 1 async reconstruction per click and a single 20,585 ms main-thread task AFTER
+the result — groupSegments (contour island filter), O(S²·|group|) with an x-only
+proximity test, exploding precisely in the striped large-FOV regime the panel teaches.
+Three probes, ~15 minutes, zero code changes to diagnose.
+IMPLICATION: (1) for freeze reports, instrument posts/results/longtasks/rAF FIRST — the
+trigger control is usually innocent; the cost hides in what runs per result. (2) Any
+per-result main-thread work must be near-linear and must be measured at the worst case
+(sparse array × max custom FOV × detail-rich source), not the default. (3) The fix
+pattern: spatial-hash + union-find replaces pairwise proximity clustering at identical
+semantics (fixed 20,585 → ≤64 ms, same recipe).
