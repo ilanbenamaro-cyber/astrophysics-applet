@@ -376,7 +376,7 @@ constants.js ─ IMAGE_SIZE=512, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD, 
 
 ## LAST UPDATED
 
-2026-07-16 — Public-repo cleanup pass complete (3 new commits on main, PENDING PUSH):
+2026-07-16 — Public-repo cleanup pass complete + PUSHED (cc55864..d089ff4, live):
 secret/PII sweep of tree AND full history — NO secrets, NO tree PII; only finding = three
 machine-fallback committer identities baked in history (@Ilans-MacBook-Air.local /
 @Mac.localdomain / @mac.myfiosgateway.com), already public, left intact (no history rewrite);
@@ -384,8 +384,10 @@ recommend setting git config going forward. Cleanup: proper .gitignore (dropped 
 *.png that was un-tracking app assets + hiding scratch); removed .playwright-mcp/ +
 test-results/ + stale vlbi-react-load.png from tracking, deleted 54 untracked root scratch
 PNGs + .workflows/_tmp/ (8.9M); tracked the 6 _prompts/*.md. Added README.md + MIT LICENSE +
-2 fresh docs/ screenshots. History INTACT (194→197, cc55864 unchanged); app/physics/worker/
-assets diff EMPTY. Push awaits Ilan.
+2 fresh docs/ screenshots. History INTACT (194→198, cc55864 unchanged); app/physics/worker/
+assets diff EMPTY. PUSHED 2026-07-16 — README/LICENSE/docs verified live on GitHub.
+⚠ Recommended follow-up (not done): set `git config user.name/user.email` so commits stop
+falling back to the machine hostname (already-public history left intact, no rewrite).
 
 2026-07-16 — Contour-freeze fix + Invert stress pass complete (fix/contour-freeze):
 groupSegments rewritten linear (20,585 ms → ≤64 ms, measured, worst-case recipe);
