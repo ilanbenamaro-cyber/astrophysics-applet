@@ -91,11 +91,16 @@ export const DISH_DIAMETERS = {
 
 // Custom-image regime (Alejandro's prescription, CUSTOM-SOURCE-PHYSICS.md): a user image
 // never inherits a target's astrophysical units — it gets its own angular scale. The image
-// fills a fixed fraction of the field, and the default field is EHT 2017's measured sweet
-// spot from the recovery sweep (recovery peaks near 800 μas; occupancy ∝ 1/FOV² degrades
-// larger fields), so a first upload demonstrably reconstructs with the default array.
+// fills a fixed fraction of the field.
 export const CUSTOM_SOURCE_FRACTION = 0.9;
-export const CUSTOM_DEFAULT_FOV_UAS = 800;
+// The default field is the measured on-grid "BHEX window" (USER-IMAGE BHEX WINDOW section):
+// at ~350 μas with EHT 2022 the Earth-only reconstruction is legibly partial and adding
+// BHEX visibly completes it (the two-regime landing point; handleTargetChange also loads
+// EHT 2022 there). Users can rescale via the size slider.
+export const CUSTOM_DEFAULT_FOV_UAS = 350;
+// The EHT 2017 coverage sweet spot (recovery peaks near here; occupancy ∝ 1/FOV² degrades
+// larger fields) — used only in the ResolutionBudget coverage lesson, NOT as the default.
+export const EHT2017_SWEETSPOT_FOV_UAS = 800;
 
 export const BHEX_PRESET = {
   name: 'BHEX',

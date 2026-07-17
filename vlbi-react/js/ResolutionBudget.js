@@ -5,7 +5,7 @@
 // a sweet spot. Every number is computed live from the engine; nothing is a literal.
 // Rendered only for Custom sources — astrophysical targets (the ring) never see it.
 import { html, useMemo } from './core.js';
-import { IMAGE_SIZE, CUSTOM_DEFAULT_FOV_UAS } from './constants.js';
+import { IMAGE_SIZE, EHT2017_SWEETSPOT_FOV_UAS } from './constants.js';
 
 const ARRAY_LADDER = ['EHT 2017', 'EHT 2022', 'ngEHT Phase 1'];
 
@@ -84,7 +84,7 @@ export function ResolutionBudget({
         baselines then cover less of the u,v plane — occupancy is
         now <strong>${occupancy != null ? occupancy.toFixed(1) : '—'}%</strong> and falls
         as 1/FOV² — so each array has a sweet spot (measured
-        ≈ ${CUSTOM_DEFAULT_FOV_UAS} μas for EHT 2017); enlarge past it and striping
+        ≈ ${EHT2017_SWEETSPOT_FOV_UAS} μas for EHT 2017); enlarge past it and striping
         returns. Adding stations or BHEX raises both at once.
       </p>
       <div className="res-budget-ladder" role="group" aria-label="Add elements — watch detail return">
