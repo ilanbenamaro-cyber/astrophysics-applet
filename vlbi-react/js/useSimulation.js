@@ -29,6 +29,7 @@ const DEFAULT_CONTROLS = {
 const IMAGE_PRESETS = {
   'blackhole': '../assets/black-hole.png',
   'wfu-seal':  '../assets/wfu-seal.png',
+  'restarget': '../assets/resolution-target.png',
 };
 
 export function useSimulation() {
