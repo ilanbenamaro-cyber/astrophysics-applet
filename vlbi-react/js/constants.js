@@ -101,6 +101,10 @@ export const CUSTOM_DEFAULT_FOV_UAS = 350;
 // The EHT 2017 coverage sweet spot (recovery peaks near here; occupancy ∝ 1/FOV² degrades
 // larger fields) — used only in the ResolutionBudget coverage lesson, NOT as the default.
 export const EHT2017_SWEETSPOT_FOV_UAS = 800;
+// Above this custom field, BHEX's ~30 Gλ baselines alias off the N=512 grid (measured,
+// CUSTOM-SOURCE-PHYSICS.md "BHEX CONTRIBUTION"). The guided "add BHEX" prompt only appears
+// at/below it, where enabling BHEX genuinely helps on-grid.
+export const BHEX_ONGRID_CEILING_UAS = 1760;
 
 export const BHEX_PRESET = {
   name: 'BHEX',
