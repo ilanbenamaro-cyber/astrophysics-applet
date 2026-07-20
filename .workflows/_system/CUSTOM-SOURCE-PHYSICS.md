@@ -267,4 +267,23 @@ window is real, the seal is just not its ideal showcase. Hence: ship a bold demo
 resolution target) that showcases the clean completion, default the user-image regime to the
 window (EHT 2022 @ 350 μas, BHEX off), and add a guided "add BHEX" moment.
 
+### The WFU seal at the default window (the case Alejandro asked about — stated plainly)
+The default lands the user-image regime at **EHT 2022 @ 350 μas** (image ≈ 315 μas). At that
+setting the two shipped/test images behave very differently, and this is honest physics, not a
+tuning failure:
+- **Resolution Target (bold):** Earth-only = soft blob → **+BHEX = clear concentric rings +
+  cross** (ΔNCC +0.044). The dramatic "aha" the default is tuned for.
+- **WFU Seal (fine-detail logo):** Earth-only = a soft blob with faint structure; **+BHEX = a
+  real but MODEST, SPECKLY refinement** (ΔNCC ≈ +0.015, beam 10.5 → 2.9 μas). Finer texture
+  appears, but the ring lettering does **not** become legible. Measured at EHT 2022: seal ΔNCC
+  0.014 @300 / 0.015 @350 / 0.010 @400 μas. So if you load the WFU Seal at the default and
+  toggle BHEX, you see a subtle change, **not** the ring-completion the Resolution Target shows.
+
+Why: BHEX adds **resolution**, not the dense **coverage** a fine-detail logo needs (the last-pass
+lesson). The seal is *under-scaled* at 315 μas, and at the larger field where the seal *is*
+legible (~800–1,600 μas) BHEX adds ≈nothing (ΔNCC→0). **There is no on-grid scale where the
+detailed seal alone gives a crisp BHEX "aha"** — it needs more ground elements / a larger field,
+which one long space baseline cannot supply. That is exactly why we ship the bold Resolution
+Target as the showcase and keep the honest coverage/aliasing notes for when users explore the seal.
+
 **Astrophysical path untouched** — this phase read only; no reconstruction math or hashes changed.
