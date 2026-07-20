@@ -224,3 +224,66 @@ scales where the seal is legible the ground array has already recovered it, so B
 resolution refines rather than rescues (ΔNCC ≈ 0.0004 at 1,600 μas); and above ≈1,760 μas BHEX
 aliases off our 512² grid (a tool limit, not physics), so past that scale "BHEX on" is partly
 fictitious. It is BOTH (1) and (2), at different scales.
+
+---
+
+## USER-IMAGE BHEX WINDOW — where adding BHEX honestly, visibly resolves detail (2026-07-17)
+
+**Prompted by:** Alejandro wants the user-image regime to be a "watch it resolve" experience —
+Earth-only shows partial recovery, adding BHEX gives a NOTICEABLE, honest, computed improvement
+(finer detail visibly appearing), with BHEX kept ON-GRID (below the ~1,760 μas ceiling). Swept
+scale × array below the ceiling on two images (the WFU seal + a synthesized concentric-ring
+target, so the default isn't seal-overfit); every cell is a real worker CLEAN.
+
+### The window: EHT 2022 @ ~300–350 μas
+All swept cells (200–1,600 μas) are ON-GRID (0% BHEX aliased). The BHEX NCC delta peaks at small
+FOV and shrinks with scale (consistent for both images); the beam sharpens 3–4× (real resolution):
+
+| Array | image | Δ@200/300 | Δ@400 | Δ@600 | Δ@800 | beam off→on @~350 |
+|---|---|---|---|---|---|---|
+| EHT 2017 | seal | +0.023 (200) | +0.007 | +0.002 | +0.001 | 11 → 3 μas |
+| EHT 2022 | seal | +0.047 (200) | +0.010 | +0.003 | +0.002 | 10.5 → 2.9 μas |
+| ngEHT | seal | +0.031 (200) | +0.014 | +0.004 | +0.003 | 8.8 → 2.9 μas |
+| EHT 2022 | rings | +0.044 (300) | +0.028 | +0.008 | +0.005 | 10.5 → 2.9 μas |
+| ngEHT | rings | +0.053 (300) | +0.032 | +0.011 | +0.006 | 8.8 → 2.9 μas |
+
+**Visual verdict (real CLEAN before/after):**
+- **EHT 2022 @ 300–350 μas is the honest window.** Bold/simple content completes cleanly — the
+  ring target goes **soft blob → clear concentric rings + cross ticks** (ΔNCC +0.044): Earth-only
+  legibly partial, +BHEX visibly completes it, fully on-grid. This is the "aha."
+- **EHT 2017 rejected as the demo array** — 8 stations too sparse; seal/rings stay banded mush
+  before and after (no clean "before").
+- **ngEHT rejected as the demo array** — ground recovery is *already legible* Earth-only (no
+  "partial before"); BHEX only refines. (Largest raw deltas, but fails the "partial → completed"
+  intent.)
+
+**The catch (stated honestly):** the effect is CONTENT-DEPENDENT. BHEX adds *resolution*, not the
+dense *coverage* a fine-detail logo needs (the last-pass lesson, reconfirmed). Bold, low-detail
+images complete cleanly at EHT 2022 @ ~300–350 μas; the shipped WFU seal (dense fine lettering)
+shows only a *real-but-modest/speckly* improvement there — at the small FOV where BHEX's delta is
+large the seal is under-scaled, and at the large FOV where the seal is legible BHEX adds ≈nothing
+(ΔNCC→0). There is no on-grid scale where the detailed seal ALONE gives a crisp BHEX "aha"; the
+window is real, the seal is just not its ideal showcase. Hence: ship a bold demo image (a
+resolution target) that showcases the clean completion, default the user-image regime to the
+window (EHT 2022 @ 350 μas, BHEX off), and add a guided "add BHEX" moment.
+
+### The WFU seal at the default window (the case Alejandro asked about — stated plainly)
+The default lands the user-image regime at **EHT 2022 @ 350 μas** (image ≈ 315 μas). At that
+setting the two shipped/test images behave very differently, and this is honest physics, not a
+tuning failure:
+- **Resolution Target (bold):** Earth-only = soft blob → **+BHEX = clear concentric rings +
+  cross** (ΔNCC +0.044). The dramatic "aha" the default is tuned for.
+- **WFU Seal (fine-detail logo):** Earth-only = a soft blob with faint structure; **+BHEX = a
+  real but MODEST, SPECKLY refinement** (ΔNCC ≈ +0.015, beam 10.5 → 2.9 μas). Finer texture
+  appears, but the ring lettering does **not** become legible. Measured at EHT 2022: seal ΔNCC
+  0.014 @300 / 0.015 @350 / 0.010 @400 μas. So if you load the WFU Seal at the default and
+  toggle BHEX, you see a subtle change, **not** the ring-completion the Resolution Target shows.
+
+Why: BHEX adds **resolution**, not the dense **coverage** a fine-detail logo needs (the last-pass
+lesson). The seal is *under-scaled* at 315 μas, and at the larger field where the seal *is*
+legible (~800–1,600 μas) BHEX adds ≈nothing (ΔNCC→0). **There is no on-grid scale where the
+detailed seal alone gives a crisp BHEX "aha"** — it needs more ground elements / a larger field,
+which one long space baseline cannot supply. That is exactly why we ship the bold Resolution
+Target as the showcase and keep the honest coverage/aliasing notes for when users explore the seal.
+
+**Astrophysical path untouched** — this phase read only; no reconstruction math or hashes changed.

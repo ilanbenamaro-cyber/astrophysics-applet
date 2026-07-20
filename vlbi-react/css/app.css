@@ -608,6 +608,30 @@ input[type="range"]::-moz-range-thumb {
   border-radius: 3px;
 }
 .res-budget-note-warn strong { color: var(--accent-amber); }
+.res-budget-note-guide {
+  border-top: none;
+  margin: 8px 0 8px;
+  padding: 6px 8px;
+  border-left: 2px solid var(--accent-teal);
+  background: var(--bg-2);
+  border-radius: 3px;
+}
+.res-budget-note-guide strong { color: var(--accent-teal); }
+/* Quiet call-to-action on the +BHEX rung while the guide is showing — a thin accent ring
+   that breathes; static under reduced motion. Must not out-bright the gold data layer. */
+.res-budget-step.is-suggested {
+  border-color: var(--accent-teal);
+  color: var(--accent-teal);
+  animation: bhexSuggestPulse 2.4s ease-in-out infinite;
+}
+@keyframes bhexSuggestPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(196, 165, 85, 0); }
+  50%      { box-shadow: 0 0 0 2px rgba(196, 165, 85, 0.35); }
+}
+[data-reduced-motion] .res-budget-step.is-suggested {
+  animation: none;
+  box-shadow: 0 0 0 1px rgba(196, 165, 85, 0.45);
+}
 
 /* ── BHEX Button ── */
 .bhex-button {

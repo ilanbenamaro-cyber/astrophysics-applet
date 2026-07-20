@@ -5,6 +5,7 @@ export function ImageGallery({ selected, onSelect, onUpload, inverted = false, o
   const presets = [
     { name: 'blackhole', label: 'Black Hole', icon: '⬤' },
     { name: 'wfu-seal',  label: 'WFU Seal',   icon: null },
+    { name: 'restarget', label: 'Resolution Target', icon: '◎' },
   ];
 
   const handleFileChange = (e) => {

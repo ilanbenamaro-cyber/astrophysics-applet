@@ -5,7 +5,7 @@
 // a sweet spot. Every number is computed live from the engine; nothing is a literal.
 // Rendered only for Custom sources — astrophysical targets (the ring) never see it.
 import { html, useMemo } from './core.js';
-import { IMAGE_SIZE, CUSTOM_DEFAULT_FOV_UAS } from './constants.js';
+import { IMAGE_SIZE, EHT2017_SWEETSPOT_FOV_UAS, BHEX_ONGRID_CEILING_UAS } from './constants.js';
 
 const ARRAY_LADDER = ['EHT 2017', 'EHT 2022', 'ngEHT Phase 1'];
 
@@ -71,6 +71,12 @@ export function ResolutionBudget({
   const beamMaj = beamFwhm && beamFwhm.major;
   const nRes = beamMaj ? Math.max(1, Math.round(sizeUas / beamMaj)) : null;
 
+  // Guided "add BHEX" moment (USER-IMAGE BHEX WINDOW): on a user image at an on-grid scale,
+  // BHEX is off by default (Earth-only) — prompt the user to add the space baseline, which
+  // is the real, visible completion (the panel's beam/N_res jump live when it's enabled).
+  // Only where BHEX genuinely helps on-grid; past the aliasing ceiling the caveat takes over.
+  const showGuide = !bhexAdded && controls.fovMuas <= BHEX_ONGRID_CEILING_UAS;
+
   return html`
     <div className="res-budget" role="note">
       <div className="res-budget-title">How much detail can this array recover?</div>
@@ -84,9 +90,15 @@ export function ResolutionBudget({
         baselines then cover less of the u,v plane — occupancy is
         now <strong>${occupancy != null ? occupancy.toFixed(1) : '—'}%</strong> and falls
         as 1/FOV² — so each array has a sweet spot (measured
-        ≈ ${CUSTOM_DEFAULT_FOV_UAS} μas for EHT 2017); enlarge past it and striping
+        ≈ ${EHT2017_SWEETSPOT_FOV_UAS} μas for EHT 2017); enlarge past it and striping
         returns. Adding stations or BHEX raises both at once.
       </p>
+      ${showGuide ? html`
+        <p className="res-budget-note res-budget-note-guide" role="note">
+          This Earth-sized array leaves fine detail <strong>unresolved</strong> at this scale.
+          Add the space baseline — <strong>BHEX</strong> — below and watch the finer structure
+          resolve.
+        </p>` : null}
       <div className="res-budget-ladder" role="group" aria-label="Add elements — watch detail return">
         <span className="res-budget-ladder-label">Add elements — watch detail return:</span>
         ${ARRAY_LADDER.map(name => html`
@@ -98,7 +110,7 @@ export function ResolutionBudget({
           >${name.replace(' Phase 1', ' Ph1')}</button>
         `)}
         <button
-          className=${'btn btn-xs res-budget-step' + (bhexAdded ? ' is-current' : '')}
+          className=${'btn btn-xs res-budget-step' + (bhexAdded ? ' is-current' : '') + (showGuide ? ' is-suggested' : '')}
           onClick=${onToggleBHEX}
           aria-pressed=${bhexAdded}
           title="Toggle the BHEX space telescope"

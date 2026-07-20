@@ -928,3 +928,45 @@ BHEX-vs-ground baseline counts and states BHEX extends resolution (a sharper bea
 density. Rejected: raising N / touching buildMask to keep BHEX on-grid — N=512 is frozen and the
 worker is import-free + ring-hash-locked; the honest label is the correct, non-regressing fix.
 Worker untouched; ring path byte-identical (CLEAN 2154452775 / Dirty 1389367993, two fresh ports).
+
+---
+
+### User-image regime defaults to the measured BHEX window (two-regime array scoping)
+DATE: 2026-07-17
+CATEGORY: product / physics-display behavior
+The USER-IMAGE BHEX WINDOW diagnosis (CUSTOM-SOURCE-PHYSICS.md) found an honest, on-grid
+window where adding BHEX visibly completes a partial Earth-only reconstruction: EHT 2022 @
+~350 μas. DECISION (Ilan, this pass): make the user-image (Custom) regime a "watch it resolve"
+experience.
+1. TWO-REGIME ARRAY SCOPING: entering Custom seeds fov 350 (CUSTOM_DEFAULT_FOV_UAS 800→350) +
+   loads EHT 2022 + BHEX off; leaving Custom for an astrophysical target restores EHT 2017 +
+   BHEX off, so M87*'s frozen anchors are byte-identical (verified, two fresh ports).
+   Astrophysical↔astrophysical never touches the array/BHEX (deliberate BHEX exploration of a
+   named target preserved).
+2. BOLD DEMO IMAGE: added a bold "Resolution Target" preset (assets/resolution-target.png) whose
+   concentric rings complete cleanly at the window (soft blob → resolved rings + cross, ΔNCC
+   +0.044) — the honest showcase.
+3. GUIDED MOMENT: ResolutionBudget prompts "add the space baseline — BHEX" with a quiet accent
+   ring on the +BHEX rung (reduced-motion static), gated below the on-grid ceiling
+   (BHEX_ONGRID_CEILING_UAS) so it never prompts where BHEX aliases (the caveat covers that). The
+   "after" is the genuine live N_res/beam jump (24.7→6.8 μas) from a real CLEAN — never faked.
+
+CONTENT-DEPENDENCE (explicit, because it is the crux and the case Alejandro asked about): the
+BHEX gain at the default window depends on image content. BHEX adds RESOLUTION, not the dense
+COVERAGE a fine-detail logo needs (last pass's lesson). At the default (EHT 2022 @ 350 μas ⇒
+image ≈ 315 μas):
+  • The bold Resolution Target completes cleanly: soft blob → clear concentric rings + cross
+    (ΔNCC +0.044). This is the dramatic "aha" the default is tuned to show.
+  • THE WFU SEAL behaves only MODESTLY: Earth-only is a soft blob with faint structure; enabling
+    BHEX gives a real-but-SPECKLY refinement (ΔNCC ≈ +0.015, beam 10.5→2.9 μas) — finer texture
+    appears but the ring lettering does NOT become legible. The seal is under-scaled at 315 μas,
+    and at the larger scale where the seal IS legible (~800–1,600 μas) BHEX adds ≈nothing
+    (ΔNCC→0). There is no on-grid scale where the detailed seal alone gives a crisp BHEX "aha" —
+    it needs coverage (more ground elements / larger field), which a single long space baseline
+    does not supply. So: if you load the WFU Seal at the default and toggle BHEX you see a subtle,
+    speckly change, not the ring-completion the Resolution Target shows; that is honest physics,
+    not a bug.
+
+Rejected: EHT 2017 as the demo array (too sparse — banded mush) and ngEHT (ground already
+legible — no "partial before"). Decoupled EHT2017_SWEETSPOT_FOV_UAS (800, the coverage-lesson
+number) from the default so the ResolutionBudget copy stays correct. Worker/ring untouched.

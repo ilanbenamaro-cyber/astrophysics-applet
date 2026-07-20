@@ -29,6 +29,7 @@ const DEFAULT_CONTROLS = {
 const IMAGE_PRESETS = {
   'blackhole': '../assets/black-hole.png',
   'wfu-seal':  '../assets/wfu-seal.png',
+  'restarget': '../assets/resolution-target.png',
 };
 
 export function useSimulation() {
@@ -91,12 +92,15 @@ export function useSimulation() {
   }, []);
 
   // ── Array preset helpers ────────────────────────────────────────────────────
-  function loadEHTPresets(presetName = 'EHT 2017') {
+  // forceNoBhex: drop any BHEX element instead of preserving it. Used only on entry to the
+  // user-image regime, where the guided moment must start Earth-only (BHEX off) so enabling
+  // it is the visible jump. Normal preset swaps keep BHEX (N2).
+  function loadEHTPresets(presetName = 'EHT 2017', { forceNoBhex = false } = {}) {
     const stations = ARRAY_PRESETS[presetName] || ARRAY_PRESETS['EHT 2017'];
     setTelescopes(prev => {
       // BHEX is an independent toggle (N2): preset changes swap the ground
       // array but must not silently drop the space element.
-      const keepBhex = prev.some(t => t.name === BHEX_PRESET.name);
+      const keepBhex = !forceNoBhex && prev.some(t => t.name === BHEX_PRESET.name);
       telIdRef.current = 0;
       const next = stations.map((s, idx) => ({
         id: telIdRef.current++,
@@ -332,20 +336,27 @@ export function useSimulation() {
     [beamDims, controls.fovMuas]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
-  // Regime switches change UNITS, so the field resets with them: entering Custom gives
-  // the image its own default scale (the sweep-measured EHT 2017 sweet spot); returning
-  // to a named target restores the astrophysical default field. Named→named switches
-  // leave the user's FOV alone (existing behavior). Ref mirrors selectedTarget so this
-  // stable callback can see the previous regime.
+  // TWO REGIMES (USER-IMAGE BHEX WINDOW, 2026-07-17). Regime switches change UNITS *and*
+  // the ground array, so the field resets with them. Entering the user-image (Custom)
+  // regime lands on the measured on-grid BHEX window — CUSTOM_DEFAULT_FOV_UAS with EHT 2022
+  // (the array where Earth-only is partial and adding BHEX visibly completes it), BHEX OFF
+  // so the guided add-BHEX moment starts Earth-only. Leaving Custom for an astrophysical
+  // target restores EHT 2017 (+ the physical default field) so M87*'s frozen anchors are
+  // exactly preserved. Named→named switches leave the array + FOV alone (existing behavior).
+  // Ref mirrors selectedTarget so this stable callback can see the previous regime.
   const selectedTargetRef = useRef('M87*');
   const handleTargetChange = useCallback((name) => {
     const wasCustom = selectedTargetRef.current === 'Custom';
     selectedTargetRef.current = name;
     setSelectedTarget(name);
     if (name === 'Custom') {
-      if (!wasCustom) setControls(c => ({
-        ...c, fovMuas: CUSTOM_DEFAULT_FOV_UAS, sourceFraction: CUSTOM_SOURCE_FRACTION,
-      }));
+      if (!wasCustom) {
+        setControls(c => ({
+          ...c, fovMuas: CUSTOM_DEFAULT_FOV_UAS, sourceFraction: CUSTOM_SOURCE_FRACTION,
+        }));
+        loadEHTPresets('EHT 2022', { forceNoBhex: true });
+        setSelectedArrayPreset('EHT 2022');
+      }
     } else {
       setControls(c => ({
         ...c,
@@ -353,6 +364,14 @@ export function useSimulation() {
         fovMuas:         wasCustom ? DEFAULT_CONTROLS.fovMuas         : c.fovMuas,
         sourceFraction:  wasCustom ? DEFAULT_CONTROLS.sourceFraction  : c.sourceFraction,
       }));
+      if (wasCustom) {
+        // Return to the canonical astrophysical default: EHT 2017, BHEX off — so the frozen
+        // anchors (θ, baseline, fill) are exactly restored. (Astrophysical→astrophysical
+        // switches never reset BHEX, so deliberate BHEX exploration of a named target is
+        // preserved; only leaving the user-image regime resets it.)
+        loadEHTPresets('EHT 2017', { forceNoBhex: true });
+        setSelectedArrayPreset('EHT 2017');
+      }
     }
   }, []);
 
