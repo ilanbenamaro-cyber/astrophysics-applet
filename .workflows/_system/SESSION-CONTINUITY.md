@@ -376,6 +376,20 @@ constants.js ─ IMAGE_SIZE=512, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD, 
 
 ## LAST UPDATED
 
+2026-07-17 — User-image BHEX window (feat/user-image-bhex-window, merged — PENDING PUSH):
+Alejandro wants the user-image regime to "watch it resolve" — Earth-only partial, +BHEX visibly
+completes it, on-grid + honest. Swept scale × array below the ~1,760 μas ceiling (seal + a ring
+target). WINDOW = EHT 2022 @ ~300–350 μas (EHT 2017 too sparse; ngEHT already-legible). Shipped:
+(1) bold "Resolution Target" preset (assets/resolution-target.png) that completes cleanly
+(soft blob → rings, ΔNCC +0.044); (2) user-image default → EHT 2022 @ 350 μas + BHEX off with
+two-regime array scoping (astrophysical restores EHT 2017 + BHEX off — M87* anchors byte-
+identical, verified two fresh ports); (3) guided "add BHEX" moment in ResolutionBudget (accent
+ring on +BHEX rung, reduced-motion static, live 24.7→6.8 μas jump — real CLEAN, never faked).
+CONTENT-DEPENDENT (explicit, the case Alejandro asked): the WFU SEAL at the default shows only a
+modest/speckly BHEX refinement (ΔNCC ≈0.015), NOT a crisp aha — it needs coverage not resolution;
+the bold demo image is the showcase. Worker/ring untouched; aliasing caveat still fires; zero
+console errors. 5 commits (eef4dcd..75f0b5d) merged to main; awaiting push.
+
 2026-07-16 — BHEX-seal diagnosis + honest labeling + PUSHED (671fc55..b01ed10, live):
 Alejandro asked why BHEX doesn't help the seal. MEASURED across scales (real worker,
 never-used ports) — it's BOTH (1) correct physics and (2) a grid artifact. Cause 3 (bug) ruled
