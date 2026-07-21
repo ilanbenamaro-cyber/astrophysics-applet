@@ -376,7 +376,7 @@ constants.js ─ IMAGE_SIZE=512, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD, 
 
 ## LAST UPDATED
 
-2026-07-17 — User-image BHEX window (feat/user-image-bhex-window, merged — PENDING PUSH):
+2026-07-17 — User-image BHEX window + PUSHED (7015f07..f6eb5e4, live):
 Alejandro wants the user-image regime to "watch it resolve" — Earth-only partial, +BHEX visibly
 completes it, on-grid + honest. Swept scale × array below the ~1,760 μas ceiling (seal + a ring
 target). WINDOW = EHT 2022 @ ~300–350 μas (EHT 2017 too sparse; ngEHT already-legible). Shipped:
@@ -388,7 +388,7 @@ ring on +BHEX rung, reduced-motion static, live 24.7→6.8 μas jump — real CL
 CONTENT-DEPENDENT (explicit, the case Alejandro asked): the WFU SEAL at the default shows only a
 modest/speckly BHEX refinement (ΔNCC ≈0.015), NOT a crisp aha — it needs coverage not resolution;
 the bold demo image is the showcase. Worker/ring untouched; aliasing caveat still fires; zero
-console errors. 5 commits (eef4dcd..75f0b5d) merged to main; awaiting push.
+console errors. PUSHED 2026-07-17 (7015f07..f6eb5e4) — live.
 
 2026-07-16 — BHEX-seal diagnosis + honest labeling + PUSHED (671fc55..b01ed10, live):
 Alejandro asked why BHEX doesn't help the seal. MEASURED across scales (real worker,
