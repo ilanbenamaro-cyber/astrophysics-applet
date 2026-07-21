@@ -292,7 +292,7 @@ function reconstruct(grayscale, uvPoints, params, emitProgress) {
       }
     }
 
-    // Estimate restore-beam sigma from dirty-beam FWHM in both U and V directions.
+    // Estimate restore-beam sigma from the dirty-beam HWHM in both U and V directions.
     // PSF peak is at index 0 by IFFT convention.
     // U-axis: scan row 0 (column index j); V-axis: scan column 0 (row index j, stride N).
     const halfMaxVal = psf[0] / 2;
@@ -304,8 +304,11 @@ function reconstruct(grayscale, uvPoints, params, emitProgress) {
     for (let j = 1; j < N / 2; j++) {
       if (psf[j * N] <= halfMaxVal) { halfWidthV = j; break; }
     }
-    beamSigmaU = Math.max(1.5, halfWidthU / 2.355);
-    beamSigmaV = Math.max(1.5, halfWidthV / 2.355);
+    // halfWidthU/V are the HWHM: scanned from the PSF peak to the half-maximum point.
+    const fwhmU = 2 * halfWidthU;               // HWHM → FWHM
+    const fwhmV = 2 * halfWidthV;
+    beamSigmaU = Math.max(1.5, fwhmU / 2.3548); // FWHM → Gaussian sigma
+    beamSigmaV = Math.max(1.5, fwhmV / 2.3548);
 
     // Build elliptical Gaussian restore beam centered at [0][0] (periodic/IFFT convention).
     // i = row index → v direction (sigmaV); j = column index → u direction (sigmaU).
