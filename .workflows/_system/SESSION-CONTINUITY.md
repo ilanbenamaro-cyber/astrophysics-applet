@@ -23,6 +23,9 @@
 
 **Four-Session Display+Physics Upgrade: COMPLETE** — committed 2026-04-23 as S4/S5/S6/S7
 > S4 `79b49a9`: Elliptical CLEAN restore beam (dual-axis PSF scan → sigmaU/sigmaV)
+>   ⚠ SUPERSEDED 2026-07-21: the scan yielded the HWHM but was divided by 2.3548 as if FWHM,
+>   so sigma was 2× too small (over-sharpened beam). Fixed in `2f7b258`; CLEAN hash re-baselined
+>   2154452775 → 1397912851 (Alejandro sign-off). See decisions.md 2026-07-21.
 > S5 `ba2c024`: Elevation cutoffs (10°) — SPT excluded at M87*, GLT excluded at Sgr A*
 > S6 `6f74122`: Axis tick fix, baseline stats in StatusBar, modal updates (SEFD/BHEX/ngEHT refs)
 > S7 `c938dca`: Sky target selector — M87*, Sgr A*, 3C 279, Cen A, Custom; auto-sets declination

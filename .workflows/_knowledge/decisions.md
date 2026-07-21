@@ -970,3 +970,30 @@ image ≈ 315 μas):
 Rejected: EHT 2017 as the demo array (too sparse — banded mush) and ngEHT (ground already
 legible — no "partial before"). Decoupled EHT2017_SWEETSPOT_FOV_UAS (800, the coverage-lesson
 number) from the default so the ResolutionBudget copy stays correct. Worker/ring untouched.
+
+---
+
+### CLEAN ring hash re-baselined: restore-beam sigma fixed (HWHM→FWHM) — P0
+DATE: 2026-07-21
+CATEGORY: physics correctness (deliberate reconstruction change)
+Prof. Cárdenas-Avendaño SIGNED OFF on fixing the audited restore-beam defect
+(`.workflows/_shared/custom-regime-audit-2026-07-21.md`, CHECK 2). ROOT CAUSE: worker.js's
+restore-beam scan measures `halfWidthU/V` = the PSF peak→half-max distance = the **HWHM**, but
+the code divided it by 2.3548 as if it were the FWHM, so `beamSigma` was **2× too small** since
+S4 (79b49a9, 2026-04-23). Two consequences: (a) the CLEAN restore beam was ~2× too narrow →
+CLEAN over-sharpened; (b) every displayed "Beam FWHM" was actually the HWHM (½ the true FWHM).
+FIX (commit 2f7b258, worker.js only, self-documenting, both axes): `fwhm = 2*halfWidth` (HWHM→
+FWHM) then `sigma = fwhm/2.3548` (FWHM→sigma). One site corrects the restore kernel AND all
+display consumers (MetricsPanel, ResolutionBudget N_res, ContourMap ellipse, FITS BMAJ).
+Verified point-source PSF: displayed Beam FWHM now 20.5 μas (= measured true FWHM; was 10.25 =
+the HWHM). M87* now ~2 beams across the 42 μas shadow (physically correct — EHT marginally
+resolves M87*).
+
+**RING HASH RE-BASELINE:** CLEAN `2154452775` → **`1397912851`** (M87*, EHT 2017, black-hole,
+noise 0, N=512). Reproduced across two never-used ports (8543, 8467). **Dirty `1389367993` did
+NOT change** (the restore beam is post-deconvolution; the dirty image is pre-deconvolution) — it
+was the control and held on both ports. Ground Truth `1904227387` unchanged. λ/B & geometry
+anchors UNMOVED (θ 24.7/23.6/24.8/26.7; max baseline 10,883 km; 2√27; 42 μas; BHEX framing).
+Tour Acts A–E + Act C/D reconstructions still read correctly; CLEAN timing ~119 ms (< budget);
+zero console errors. Old→new applies to every forward-looking gate assertion (prompt-file
+invariant blocks updated); dated historical records left as-is.

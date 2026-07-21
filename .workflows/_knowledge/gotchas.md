@@ -907,3 +907,36 @@ per-axis |u-N/2| or |v-N/2| > N/2 for BHEX samples.
 RESOLVED: YES (display) — ResolutionBudget shows a computed aliasing caveat above the onset and a
 "long baselines ≠ dense coverage" explanation below it (commits 3686da6, d05dc79). The engine
 limit itself is inherent to N=512 and left as-is (honestly labeled).
+
+---
+
+### HWHM mislabelled as FWHM — the restore-beam sigma was 2× too small (fixed 2026-07-21)
+DATE_DISCOVERED: 2026-07-21
+AREA: vlbi-react/js/worker.js — CLEAN restore-beam sigma; every displayed "Beam FWHM"
+SEVERITY: HIGH (physics correctness; latent since S4)
+
+WHAT HAPPENED: the restore-beam scan finds the PSF peak→half-max distance — the **HWHM** — but
+the code divided it by 2.3548 as if it were the **FWHM**, so the Gaussian sigma was ½ its correct
+value. The CLEAN restore beam was ~2× too narrow (over-sharpened) and the MetricsPanel "Beam FWHM"
+readout showed the HWHM (half the true FWHM). Surfaced only when the user-image guided moment put
+"Beam FWHM 10.3" next to "Resolution 24.7" (λ/B) — a 2.4× mismatch a physicist spots instantly.
+
+HOW TO AVOID:
+- **Name the quantity by what the code measures.** A "scan from peak to half-max" yields the
+  HWHM, not the FWHM. FWHM = 2·HWHM = 2.3548·sigma; HWHM = 1.1774·sigma. Convert explicitly:
+  `fwhm = 2*hwhm; sigma = fwhm/2.3548`. Do NOT feed an HWHM into a `/2.3548` that elsewhere takes
+  a genuine FWHM (the primary-beam taper 1.02λ/D is a real FWHM — its `/2.355` is correct; don't
+  "fix by symmetry").
+- **Ring hashes gate the reconstruction ARRAY, not derived display values.** The frozen CLEAN
+  hash locked in the (wrong) restore beam for months; the wrong "Beam FWHM" number was never
+  hash-gated, so it drifted unchecked. When a displayed physics number looks off, don't assume a
+  green hash means it's right — the hash covers the pixels, not the labels.
+- **No display-only fix exists here:** `beamSigmaU/V` feeds BOTH the display AND the CLEAN restore
+  kernel, so correcting the label necessarily changes the reconstruction (and the ring hash).
+  Fixing it required Alejandro sign-off + a deliberate hash re-baseline (2154452775 → 1397912851;
+  Dirty 1389367993 unchanged — it's pre-deconvolution). See decisions.md 2026-07-21.
+
+DETECTION: displayed "Beam FWHM" ≈ ½ the λ/B "Resolution" for the same config, or ≈ ½ the
+directly-measured point-source PSF FWHM.
+
+RESOLVED: YES — commit 2f7b258 (worker.js, sigma conversion + comment only).
