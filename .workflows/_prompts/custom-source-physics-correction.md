@@ -44,7 +44,7 @@ change ever seems needed). ALL existing physics untouched: frozen anchors 10,883
 25 μas / 42 μas / 2√27; per-target θ (M87* 24.7 etc.); target-observing max baseline;
 "Relative coverage" fill; dish means; BHEX characteristic framing. **THE BLACK-HOLE /
 RING PATH MUST REMAIN BYTE-IDENTICAL** — it is the scientifically validated path and the
-tour depends on it (hash-verify: CLEAN 2154452775 / Dirty 1389367993, 42 μas, DR, beam).
+tour depends on it (hash-verify: CLEAN 1397912851 / Dirty 1389367993, 42 μas, DR, beam).
 This pass touches the CUSTOM/UPLOAD path only. Public Tour signature, autoActions,
 App.js wiring unchanged. Verify on a NEVER-USED port (stale-module gotcha). Use vision
 self-critique on every visual. Commit per phase; PAUSE before the push.
@@ -170,7 +170,7 @@ GATES  (binary; vision-verified; never-used port; single + compare modes)
       ring-fraction, no distance/dec-derived sizing); a labeled angular-size control
       exists with a Phase-1-informed default that actually reconstructs well by default.
   G3  RING PATH BYTE-IDENTICAL: black-hole reconstruction hashes unchanged
-      (CLEAN 2154452775 / Dirty 1389367993), 42 μas ring, DR, beam — verified twice on
+      (CLEAN 1397912851 / Dirty 1389367993), 42 μas ring, DR, beam — verified twice on
       fresh ports, before and after every scaling-touching change.
   G4  ALL frozen anchors + per-target θ + max baseline + fill + dish means intact
       (regression probe). Worker diff EMPTY.

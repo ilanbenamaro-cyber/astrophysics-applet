@@ -24,7 +24,7 @@ so MEASURE which it is first.
 
 <invariants>
 vlbi-react/ only; worker.js classic + zero imports (diff must stay EMPTY). Black-hole/
-ring path byte-identical (CLEAN 2154452775 / Dirty 1389367993). All frozen anchors +
+ring path byte-identical (CLEAN 1397912851 / Dirty 1389367993). All frozen anchors +
 per-target θ + max baseline + fill + dish means intact. The corrected custom-source
 physics (own-scale, the true detail→high-frequency→elements teaching, the 1/FOV² optimum)
 stays correct — this pass fixes PERFORMANCE/STABILITY, not the physics. Public Tour

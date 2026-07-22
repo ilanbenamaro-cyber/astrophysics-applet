@@ -23,6 +23,9 @@
 
 **Four-Session Display+Physics Upgrade: COMPLETE** — committed 2026-04-23 as S4/S5/S6/S7
 > S4 `79b49a9`: Elliptical CLEAN restore beam (dual-axis PSF scan → sigmaU/sigmaV)
+>   ⚠ SUPERSEDED 2026-07-21: the scan yielded the HWHM but was divided by 2.3548 as if FWHM,
+>   so sigma was 2× too small (over-sharpened beam). Fixed in `2f7b258`; CLEAN hash re-baselined
+>   2154452775 → 1397912851 (Alejandro sign-off). See decisions.md 2026-07-21.
 > S5 `ba2c024`: Elevation cutoffs (10°) — SPT excluded at M87*, GLT excluded at Sgr A*
 > S6 `6f74122`: Axis tick fix, baseline stats in StatusBar, modal updates (SEFD/BHEX/ngEHT refs)
 > S7 `c938dca`: Sky target selector — M87*, Sgr A*, 3C 279, Cen A, Custom; auto-sets declination
@@ -375,6 +378,18 @@ constants.js ─ IMAGE_SIZE=512, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD, 
 ---
 
 ## LAST UPDATED
+
+2026-07-21 — P0 restore-beam HWHM/FWHM fix (fix/restore-beam-hwhm branch, NOT merged, NOT pushed):
+the audit (custom-regime-audit-2026-07-21.md, CHECK 2) found the CLEAN restore beam was built from
+the PSF HWHM divided by 2.3548 as if FWHM → beam 2× too narrow since S4. Alejandro signed off.
+Fixed (2f7b258, worker.js sigma conversion + comment only): fwhm=2·halfWidth → sigma=fwhm/2.3548.
+Displayed Beam FWHM now = true FWHM (20.5 μas, was 10.25 = HWHM); M87* ~2 beams across the 42 μas
+shadow (physically correct). **CLEAN ring hash RE-BASELINED 2154452775 → 1397912851** (reproduced
+two fresh ports); **Dirty 1389367993 unchanged** (control; restore is post-deconvolution). λ/B θ +
+geometry anchors unmoved; tour Acts A–E + Act C/D read correctly; CLEAN 119 ms; zero console errors.
+Docs: decisions.md (authoritative old→new) + gotchas.md (HWHM/FWHM trap) + S4 marked SUPERSEDED +
+forward-looking prompt invariants updated. Artifact: beam-fix-before-after-2026-07-21.md. 3 commits
+(2f7b258, d58ce2b, ab5b5ef) on the branch — awaiting Ilan's review of the before/after, then merge+push.
 
 2026-07-17 — User-image BHEX window + PUSHED (7015f07..f6eb5e4, live):
 Alejandro wants the user-image regime to "watch it resolve" — Earth-only partial, +BHEX visibly
