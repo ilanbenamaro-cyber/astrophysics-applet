@@ -2,5 +2,5 @@
 <!-- Items waiting to be picked up by an instance -->
 <!-- Format: - [ ] [TASK] — assigned to: [instance] — priority: HIGH/MED/LOW -->
 
-- [x] Read _shared/handoff-2026-07-15-1000.md, then execute _prompts/freeze-fix-invert-stress.md (unread prepared pass) — assigned to: next instance — priority: HIGH
-  <!-- COMPLETED 2026-07-16: freeze diagnosed by measurement (groupSegments quadratic, NOT sync reconstruction) + fixed linear (20.6 s → ≤64 ms); Invert matrix green; PUSHED 2026-07-16 (b42894d..53b1541) — live. -->
+- [ ] PASS 2 — re-measure the user-image BHEX window with the CORRECTED beam (the CUSTOM-SOURCE-PHYSICS.md sweep is INVALID, measured with the old 2×-narrow beam); then set + DOCUMENT the Custom default FOV (audit Check 4), and add the seal content-dependence caveat to the upload UI (audit Check 5, cleared to ship) — assigned to: next instance — priority: HIGH
+  <!-- 2026-07-21 handoff: P0 restore-beam fix LIVE on main (8bcbc30). CLEAN hash re-baselined 2154452775→1397912851; Dirty unchanged 1389367993. N_res now ~15 not 31. Read handoff-2026-07-21-2015.md first. -->

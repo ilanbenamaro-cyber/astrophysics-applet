@@ -379,7 +379,7 @@ constants.js ─ IMAGE_SIZE=512, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD, 
 
 ## LAST UPDATED
 
-2026-07-21 — P0 restore-beam HWHM/FWHM fix (fix/restore-beam-hwhm branch, NOT merged, NOT pushed):
+2026-07-21 — P0 restore-beam HWHM/FWHM fix — MERGED + PUSHED to main (c5331da..8bcbc30, LIVE):
 the audit (custom-regime-audit-2026-07-21.md, CHECK 2) found the CLEAN restore beam was built from
 the PSF HWHM divided by 2.3548 as if FWHM → beam 2× too narrow since S4. Alejandro signed off.
 Fixed (2f7b258, worker.js sigma conversion + comment only): fwhm=2·halfWidth → sigma=fwhm/2.3548.
@@ -388,8 +388,12 @@ shadow (physically correct). **CLEAN ring hash RE-BASELINED 2154452775 → 13979
 two fresh ports); **Dirty 1389367993 unchanged** (control; restore is post-deconvolution). λ/B θ +
 geometry anchors unmoved; tour Acts A–E + Act C/D read correctly; CLEAN 119 ms; zero console errors.
 Docs: decisions.md (authoritative old→new) + gotchas.md (HWHM/FWHM trap) + S4 marked SUPERSEDED +
-forward-looking prompt invariants updated. Artifact: beam-fix-before-after-2026-07-21.md. 3 commits
-(2f7b258, d58ce2b, ab5b5ef) on the branch — awaiting Ilan's review of the before/after, then merge+push.
+forward-looking prompt invariants updated. Artifact: beam-fix-before-after-2026-07-21.md. Merged
+`8bcbc30` and PUSHED (verified on fresh port: Dirty 1389367993 / CLEAN 1397912851 / beam 20.5 μas).
+⚠ NEXT = PASS 2: the user-image BHEX ΔNCC sweep is INVALIDATED (measured with the old 2×-narrow
+beam) — re-measure every NCC + the window; N_res is now ~15 not 31; the Custom 350 default is still
+UNDOCUMENTED (re-tune from re-swept numbers + write the rationale = audit Check 4); audit Check 5
+(seal content-dependence caveat not reaching uploaders) is a separate cleared-to-ship UI fix.
 
 2026-07-17 — User-image BHEX window + PUSHED (7015f07..f6eb5e4, live):
 Alejandro wants the user-image regime to "watch it resolve" — Earth-only partial, +BHEX visibly
