@@ -379,6 +379,18 @@ constants.js ─ IMAGE_SIZE=512, TELESCOPE_COLORS, ARRAY_PRESETS, STATION_SEFD, 
 
 ## LAST UPDATED
 
+2026-07-21 — P0 restore-beam HWHM/FWHM fix (fix/restore-beam-hwhm branch, NOT merged, NOT pushed):
+the audit (custom-regime-audit-2026-07-21.md, CHECK 2) found the CLEAN restore beam was built from
+the PSF HWHM divided by 2.3548 as if FWHM → beam 2× too narrow since S4. Alejandro signed off.
+Fixed (2f7b258, worker.js sigma conversion + comment only): fwhm=2·halfWidth → sigma=fwhm/2.3548.
+Displayed Beam FWHM now = true FWHM (20.5 μas, was 10.25 = HWHM); M87* ~2 beams across the 42 μas
+shadow (physically correct). **CLEAN ring hash RE-BASELINED 2154452775 → 1397912851** (reproduced
+two fresh ports); **Dirty 1389367993 unchanged** (control; restore is post-deconvolution). λ/B θ +
+geometry anchors unmoved; tour Acts A–E + Act C/D read correctly; CLEAN 119 ms; zero console errors.
+Docs: decisions.md (authoritative old→new) + gotchas.md (HWHM/FWHM trap) + S4 marked SUPERSEDED +
+forward-looking prompt invariants updated. Artifact: beam-fix-before-after-2026-07-21.md. 3 commits
+(2f7b258, d58ce2b, ab5b5ef) on the branch — awaiting Ilan's review of the before/after, then merge+push.
+
 2026-07-17 — User-image BHEX window + PUSHED (7015f07..f6eb5e4, live):
 Alejandro wants the user-image regime to "watch it resolve" — Earth-only partial, +BHEX visibly
 completes it, on-grid + honest. Swept scale × array below the ~1,760 μas ceiling (seal + a ring
